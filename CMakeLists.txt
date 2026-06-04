@@ -30,6 +30,7 @@ endif()
 
 add_executable(nemisis_game
     game/src/GameApp.cpp
+    game/src/input/InputBindings.cpp
     game/src/main.cpp
     game/src/movement/MovementSystem.cpp
     game/src/weapons/WeaponSystem.cpp
@@ -55,3 +56,16 @@ else()
 endif()
 
 enable_testing()
+
+add_executable(nemisis_movement_replay_tests
+    game/src/movement/MovementSystem.cpp
+    tests/movement_replay_tests.cpp
+)
+
+target_include_directories(nemisis_movement_replay_tests
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/game/include
+)
+
+target_link_libraries(nemisis_movement_replay_tests PRIVATE Novacore::Engine)
+add_test(NAME nemisis_movement_replay_tests COMMAND nemisis_movement_replay_tests)

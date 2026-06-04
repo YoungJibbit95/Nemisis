@@ -43,6 +43,13 @@ Code foundation:
 - `nemisis::movement::PlayerMovementState`
 - `nemisis::movement::MovementSystem`
 
+Replay foundation:
+
+- `nemisis_movement_replay_tests`
+- Sprint distance replay.
+- Jump -> double-jump replay.
+- Dash cooldown replay.
+
 ## Core States
 
 - Grounded.
@@ -133,7 +140,6 @@ Movement is acceptable when:
 - Reconciliation is bounded.
 - MKB and controller both feel intentional.
 - Movement tech (Wall Runs, Dashes, Slides) is measurable and consistent.
-
 
 
 

@@ -12,6 +12,8 @@ MKB and controller are both first-class. The engine does not treat controller as
 4. Device-specific processing.
 5. Gameplay command generation.
 
+The current code foundation uses NovaCore `InputActionMap` and Nemisis-owned default action names/bindings in `nemisis::input`.
+
 ## MKB
 
 Support:
