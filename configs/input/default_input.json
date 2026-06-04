@@ -4,6 +4,18 @@
     "sensitivity_y": 1.0,
     "ads_multiplier": 0.85
   },
+  "actions": {
+    "jump": "Space",
+    "double_jump": "Space",
+    "dash": "LeftAlt",
+    "slide": "C",
+    "sprint": "LeftShift",
+    "tactical_sprint": "LeftShiftDoubleTap",
+    "mantle": "Space",
+    "fire": "MouseLeft",
+    "ads": "MouseRight",
+    "reload": "R"
+  },
   "controller": {
     "look_sensitivity_x": 1.0,
     "look_sensitivity_y": 1.0,

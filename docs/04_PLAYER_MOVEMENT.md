@@ -36,6 +36,13 @@ Movement consumes a normalized `PlayerInputCommand`:
 
 MKB and controller produce the same command shape.
 
+Code foundation:
+
+- `nemisis::player::PlayerInputCommand`
+- `nemisis::movement::MovementTuning`
+- `nemisis::movement::PlayerMovementState`
+- `nemisis::movement::MovementSystem`
+
 ## Core States
 
 - Grounded.
@@ -126,7 +133,6 @@ Movement is acceptable when:
 - Reconciliation is bounded.
 - MKB and controller both feel intentional.
 - Movement tech (Wall Runs, Dashes, Slides) is measurable and consistent.
-
 
 
 

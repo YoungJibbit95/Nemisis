@@ -1,5 +1,8 @@
 #pragma once
 
+#include "nemisis/movement/MovementSystem.hpp"
+#include "nemisis/weapons/WeaponSystem.hpp"
+
 #include "novacore/core/Application.hpp"
 #include "novacore/ecs/World.hpp"
 #include "novacore/platform/Input.hpp"
@@ -22,7 +25,9 @@ private:
     novacore::platform::Window window_;
     novacore::render::Renderer renderer_;
     novacore::ecs::World world_;
+    movement::MovementSystem movement_;
+    movement::PlayerMovementState localMovementState_;
+    weapons::WeaponSystem weapons_;
 };
 
 } // namespace nemisis::game
-

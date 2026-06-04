@@ -22,6 +22,7 @@ endif()
 
 if(NOVACORE_ENGINE_ROOT AND EXISTS "${NOVACORE_ENGINE_ROOT}/CMakeLists.txt")
     set(NOVACORE_BUILD_SERVER OFF CACHE BOOL "Build the NovaCore dedicated server executable" FORCE)
+    set(NOVACORE_BUILD_TESTS OFF CACHE BOOL "Build NovaCore smoke tests" FORCE)
     add_subdirectory("${NOVACORE_ENGINE_ROOT}" "${CMAKE_BINARY_DIR}/Novacore-Engine")
 else()
     find_package(Novacore CONFIG REQUIRED)
@@ -30,6 +31,8 @@ endif()
 add_executable(nemisis_game
     game/src/GameApp.cpp
     game/src/main.cpp
+    game/src/movement/MovementSystem.cpp
+    game/src/weapons/WeaponSystem.cpp
 )
 
 target_include_directories(nemisis_game

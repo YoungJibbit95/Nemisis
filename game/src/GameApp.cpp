@@ -23,7 +23,10 @@ void GameApp::onStartup() {
     world_.addComponent(camera, novacore::ecs::TransformComponent{});
     world_.addComponent(camera, novacore::ecs::CameraComponent{});
 
+    weapons_.registerPrototypeLoadout();
+
     novacore::core::logInfo("game", "Nemisis sandbox camera entity created");
+    novacore::core::logInfo("game", "Prototype weapon registry initialized");
 }
 
 void GameApp::onShutdown() {
@@ -32,7 +35,10 @@ void GameApp::onShutdown() {
 }
 
 void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
-    (void)context;
+    nemisis::player::PlayerInputCommand command{};
+    command.tick = context.tickIndex;
+
+    localMovementState_ = movement_.simulate(localMovementState_, command, static_cast<float>(context.fixedDeltaSeconds));
 }
 
 void GameApp::onFrame(const novacore::core::FrameContext& context) {
@@ -54,4 +60,3 @@ bool GameApp::isHeadless() const {
 }
 
 } // namespace nemisis::game
-

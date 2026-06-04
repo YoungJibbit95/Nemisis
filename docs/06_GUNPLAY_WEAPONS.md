@@ -92,6 +92,12 @@ Weapon data is hot-reloadable:
 - ADS time.
 - Movement multipliers.
 
+Code foundation:
+
+- `nemisis::weapons::WeaponDefinition`
+- `nemisis::weapons::DamageProfile`
+- `nemisis::weapons::WeaponSystem`
+
 ## Feedback
 
 Client feedback:
