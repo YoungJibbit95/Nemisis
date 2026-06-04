@@ -16,6 +16,8 @@ Nemisis game code is split by gameplay responsibility and consumes NovaCore thro
 - NovaCore input actions map raw controls into game actions.
 - Movement consumes commands and fixed delta time.
 - Weapons are registered through data-like definitions before real hot-load parsing arrives.
+- Movement and weapon systems now consume NovaCore parsed config documents.
+- Config reloads reapply tuning at runtime through `ConfigRegistry`.
 - Game code may create NovaCore entities, but must not reach into NovaCore internals.
 
 ## First Acceptance

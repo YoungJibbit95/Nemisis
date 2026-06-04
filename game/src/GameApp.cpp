@@ -3,15 +3,17 @@
 #include "novacore/core/Log.hpp"
 
 #include <array>
+#include <string_view>
 
 namespace nemisis::game {
 
 void GameApp::onStartup() {
     actions_ = input::createDefaultActionMap();
-    configTracker_.track("configs/input/default_input.json");
-    configTracker_.track("configs/movement/player_movement.json");
-    configTracker_.track("configs/weapons/core_trio.json");
-    configTracker_.track("configs/game_modes/tdm_control.json");
+    configRegistry_.watchJson("input", "configs/input/default_input.json");
+    configRegistry_.watchJson("movement", "configs/movement/player_movement.json");
+    configRegistry_.watchJson("weapons", "configs/weapons/core_trio.json");
+    configRegistry_.watchJson("modes", "configs/game_modes/tdm_control.json");
+    applyLoadedConfigs();
 
     novacore::platform::WindowDesc windowDesc{};
     windowDesc.title = "Nemisis - M1 Thin Spine";
@@ -29,11 +31,13 @@ void GameApp::onStartup() {
     world_.addComponent(camera, novacore::ecs::TransformComponent{});
     world_.addComponent(camera, novacore::ecs::CameraComponent{});
 
-    weapons_.registerPrototypeLoadout();
+    if (weapons_.weaponCount() == 0) {
+        weapons_.registerPrototypeLoadout();
+    }
 
     novacore::core::logInfo("game", "Nemisis sandbox camera entity created");
     novacore::core::logInfo("game", "Prototype weapon registry initialized");
-    novacore::core::logInfo("game", "Default input action map and config tracking initialized");
+    novacore::core::logInfo("game", "Default input action map and config registry initialized");
 }
 
 void GameApp::onShutdown() {
@@ -52,9 +56,12 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
     (void)context;
     window_.pollEvents(input_);
 
-    for (const auto& change : configTracker_.pollChanges()) {
-        if (change.contentMayHaveChanged) {
-            novacore::core::logInfo("game", "Detected config file change");
+    for (const auto& event : configRegistry_.pollReloads()) {
+        if (event.loaded) {
+            applyConfig(event.name);
+            novacore::core::logInfo("game", "Reloaded config: " + event.name);
+        } else {
+            novacore::core::logWarning("game", "Config reload failed: " + event.name);
         }
     }
 
@@ -70,6 +77,28 @@ bool GameApp::shouldQuit() const {
 
 bool GameApp::isHeadless() const {
     return window_.isHeadless();
+}
+
+void GameApp::applyConfig(std::string_view name) {
+    if (name == "movement") {
+        const auto* document = configRegistry_.find("movement");
+        if (document != nullptr) {
+            movement_.setTuning(movement::movementTuningFromConfig(*document, movement_.tuning()));
+        }
+        return;
+    }
+
+    if (name == "weapons") {
+        const auto* document = configRegistry_.find("weapons");
+        if (document != nullptr && !weapons_.loadFromConfig(*document)) {
+            weapons_.registerPrototypeLoadout();
+        }
+    }
+}
+
+void GameApp::applyLoadedConfigs() {
+    applyConfig("movement");
+    applyConfig("weapons");
 }
 
 } // namespace nemisis::game

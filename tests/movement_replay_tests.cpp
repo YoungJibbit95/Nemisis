@@ -1,4 +1,7 @@
 #include "nemisis/movement/MovementSystem.hpp"
+#include "nemisis/movement/MovementConfig.hpp"
+
+#include "novacore/core/ConfigDocument.hpp"
 
 #include <cstdint>
 #include <cstdlib>
@@ -76,12 +79,30 @@ void testDashCooldownReplay() {
     expect(state.velocity.x <= velocityAfterDash + 0.001F, "dash cannot be repeated during cooldown");
 }
 
+void testMovementTuningConfigReplay() {
+    constexpr std::string_view json = R"({
+        "sprint_speed": 10.0,
+        "dash": { "impulse": 12.0, "cooldown": 1.25 },
+        "wall_run": { "speed": 9.0, "max_duration": 1.5, "wall_jump_impulse": 7.0 }
+    })";
+
+    novacore::core::ConfigDocument document;
+    const auto result = novacore::core::parseJsonConfig(json, document);
+    expect(result.ok(), "movement tuning json parses");
+
+    const auto tuning = nemisis::movement::movementTuningFromConfig(document);
+    expectNear(tuning.sprintSpeed, 10.0F, 0.001F, "sprint speed loads from config");
+    expectNear(tuning.dashImpulse, 12.0F, 0.001F, "dash impulse loads from config");
+    expectNear(tuning.wallRunSpeed, 9.0F, 0.001F, "wall run speed loads from config");
+}
+
 } // namespace
 
 int main() {
     testSprintReplay();
     testJumpDoubleJumpReplay();
     testDashCooldownReplay();
+    testMovementTuningConfigReplay();
 
     if (failures > 0) {
         std::cerr << failures << " movement replay test(s) failed\n";

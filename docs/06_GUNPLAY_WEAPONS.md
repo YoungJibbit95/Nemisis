@@ -97,6 +97,7 @@ Code foundation:
 - `nemisis::weapons::WeaponDefinition`
 - `nemisis::weapons::DamageProfile`
 - `nemisis::weapons::WeaponSystem`
+- `WeaponSystem::loadFromConfig`
 
 ## Feedback
 
