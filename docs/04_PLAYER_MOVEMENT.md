@@ -2,7 +2,7 @@
 
 ## Movement Goal
 
-Movement is a core identity system. It should feel fast and expressive like an Apex-lite arena shooter while remaining server-validatable for competitive play.
+Movement is a core identity system. It should feel fast, fluid, and highly expressive, blending the best of Titanfall, Apex Legends, and Black Ops mechanics, while remaining server-validatable for competitive play.
 
 ## Controller Model
 
@@ -26,9 +26,10 @@ Movement consumes a normalized `PlayerInputCommand`:
 - Move vector.
 - Look delta.
 - Jump.
-- Crouch.
-- Sprint.
-- Slide.
+- Double Jump.
+- Crouch/Slide.
+- Sprint / Tactical Sprint.
+- Dash.
 - Mantle request.
 - Fire/ADS/reload actions.
 - Device source metadata.
@@ -39,44 +40,46 @@ MKB and controller produce the same command shape.
 
 - Grounded.
 - Airborne.
-- Sprinting.
+- Sprinting / Tactical Sprinting.
 - Sliding.
 - Crouched.
 - Mantling.
+- Wall Running.
 - Stunned/disabled.
 
 State transitions must be deterministic enough for prediction/reconciliation.
 
 ## Movement Features
 
-V1 planned features:
+Planned features:
 
 - Walk.
-- Sprint.
+- Sprint / Tactical Sprint (with stamina/cooldown).
 - Crouch.
-- Slide.
-- Jump.
-- Air control.
+- Slide (momentum-based).
+- Jump / Double Jump.
+- Dash (multi-directional, tactical cooldown).
+- Wall Run (geometry-locked, allows Wall Jump).
 - Mantle.
-- Advanced movement tech hooks.
+- Strafing / Air Strafing.
 
-Advanced tech examples:
+Advanced tech requirements:
 
 - Momentum-preserving slide jumps.
-- Timing-sensitive jump/slide transitions.
-- Wall interaction hooks for later movement tech.
+- Fluid chaining of Wall Run -> Wall Jump -> Double Jump.
+- Timing-sensitive transitions.
 - Air acceleration caps that reward skill without breaking validation.
 
 ## Server Validation
 
 The server validates:
 
-- Maximum speed envelope.
+- Maximum speed envelope (including Dash/Tactical Sprint bursts).
 - Acceleration envelope.
 - Allowed state transitions.
-- Cooldowns.
+- Cooldowns (Dash, Tactical Sprint).
 - Grounded/airborne claims.
-- Mantle targets.
+- Wall Run and Mantle targets.
 
 Validation should correct impossible states without punishing normal client prediction drift.
 
@@ -104,12 +107,12 @@ Movement replay tests record input commands and expected positions. These tests 
 
 Movement tuning should live in hot-reload data:
 
-- Max walk speed.
-- Sprint speed.
-- Slide impulse.
-- Slide friction.
-- Air acceleration.
-- Jump velocity.
+- Max walk speed / Sprint speed / Tactical Sprint speed.
+- Dash impulse / cooldown.
+- Slide impulse / friction.
+- Air acceleration / Air strafe capability.
+- Jump velocity / Double Jump impulse.
+- Wall Run speed / duration / friction.
 - Mantle range and duration.
 - Crouch height.
 - Controller curves.
@@ -122,7 +125,7 @@ Movement is acceptable when:
 - Server can replay commands.
 - Reconciliation is bounded.
 - MKB and controller both feel intentional.
-- Movement tech is measurable instead of accidental.
+- Movement tech (Wall Runs, Dashes, Slides) is measurable and consistent.
 
 
 

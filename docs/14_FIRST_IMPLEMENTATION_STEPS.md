@@ -6,51 +6,44 @@ Create:
 
 - `CMakeLists.txt`
 - `CMakePresets.json`
-- `vcpkg.json`
-- `engine/include`
-- `engine/src`
+- NovaCore dependency lookup.
+- `game/include/nemisis`
 - `game/src`
-- `server/src`
-- `tools`
 - `assets`
 - `configs`
-- `shaders`
 - `docs`
 
 Acceptance:
 
-- Root contains all expected folders.
-- Build files describe engine, game, and server targets.
+- Root contains all expected game folders.
+- Build files describe the game target and its NovaCore dependency.
 
-## Step 2 - Core Runtime
-
-Implement:
-
-- Logging.
-- Assert macros.
-- Fixed timestep application loop.
-- Config placeholder.
-
-Acceptance:
-
-- Game and server can share runtime loop code.
-- Server can run without window/render code.
-
-## Step 3 - ECS M1
+## Step 2 - Game Runtime
 
 Implement:
 
-- `EntityId`.
-- Entity create/destroy.
-- Liveness checks.
-- Basic components.
-- Minimal component storage.
+- Thin `main.cpp`.
+- `nemisis::game::GameApp`.
+- NovaCore runtime loop integration.
+- Sandbox scene bootstrap.
 
 Acceptance:
 
-- Create/destroy works.
-- Stale IDs fail liveness.
-- Destroy removes components.
+- Game uses NovaCore instead of copying engine code.
+- Game-specific code lives outside `main.cpp`.
+
+## Step 3 - Game ECS Usage
+
+Implement:
+
+- Camera entity creation.
+- Game-owned system boundaries.
+- Future player/weapon/mode system folders.
+
+Acceptance:
+
+- Game creates entities through NovaCore APIs.
+- No NovaCore internals are copied into Nemisis.
 
 ## Step 4 - Platform/Input
 
@@ -82,20 +75,18 @@ Acceptance:
 - Game can call begin/end frame.
 - Renderer state logs backend used.
 
-## Step 6 - Server/Net Skeleton
+## Step 6 - Server/Net Usage
 
 Implement:
 
-- Server config.
-- Fixed tick server loop.
-- Client session placeholder.
-- Loopback message queue.
+- Direct-connect UI hooks later.
+- Client session usage through NovaCore.
+- Game-mode replication requirements.
 
 Acceptance:
 
-- Dedicated server executable starts.
-- Server ticks at target tick rate.
-- Loopback abstraction exists for later listen-server path.
+- Dedicated server runtime defaults remain in NovaCore.
+- Nemisis only owns game rules and match requirements.
 
 ## Step 7 - Verification
 

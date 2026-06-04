@@ -2,25 +2,25 @@
 
 ## Vision
 
-Nemesis is a custom commercial-ready FPS engine and 6v6 arena shooter. It uses modern references for feel, not as code bases:
+Nemisis is the game layer for a custom commercial-ready FPS project built on the NovaCore Engine. It uses modern references for feel, not as code bases:
 
-- Apex-like momentum and skill expression.
+- Titanfall/Apex-like momentum and skill expression.
 - BO-like readable gunfights and short-to-mid TTK.
 - Controller and MKB both treated as primary competitive inputs.
-- Custom C++23 engine with Vulkan-first rendering.
+- Custom C++23 NovaCore engine with Vulkan-first rendering.
 - No Source, Unity, Unreal, Godot, or other game engine base.
 
-The first milestone is not a polished shooter. It is an engine spine where renderer, sandbox world, ECS, input, and server loop exist together early enough that future decisions are made against a running architecture.
+The first milestone is not a polished shooter. It is a game spine where Nemisis consumes NovaCore cleanly, boots a sandbox client, creates game-owned systems around engine APIs, and keeps game data separate from engine/server runtime defaults.
 
 ## Non-Negotiable Criteria
 
-- Ground-up engine ownership.
+- Ground-up engine ownership through the separate NovaCore repository.
 - Cross-platform architecture.
 - Windows/Linux first-class; macOS later through MoltenVK.
 - Low-level dependencies are allowed only when they do not become a game engine.
 - Commercial licensing must be possible.
-- The server is authoritative.
-- Dedicated and listen server use the same simulation code.
+- The server is authoritative through NovaCore.
+- Dedicated and listen server use NovaCore's shared simulation code.
 - Large-map streaming is architected early, but first playable map remains controlled.
 - Hot-reload data drives tuning.
 - MKB and controller support are first-class.
@@ -44,36 +44,34 @@ Goal: a clean project that can grow without reshuffling every week.
 
 Deliverables:
 
-- CMake/vcpkg project.
-- Engine library, game executable, server executable.
-- Basic logging, asserts, config placeholder.
-- Fixed timestep runtime loop.
-- Directory structure for engine, game, server, tools, assets, configs, shaders, docs.
+- CMake project with NovaCore dependency resolution.
+- Game executable.
+- Thin `main.cpp` plus `nemisis::game::GameApp`.
+- Directory structure for game code, assets, configs, and docs.
 
 Definition of done:
 
 - CMake configure works when toolchain exists.
-- Targets are named and separated.
-- The engine can be linked by both game and server.
+- Game target is named and separated.
+- NovaCore can be consumed as sibling checkout or installed package.
 
 ### M1 - Thin Spine
 
-Goal: renderer, sandbox, ECS, input, and net/server loop all exist in minimal form.
+Goal: sandbox client, game app layer, ECS usage, input, and renderer calls all exist through NovaCore APIs.
 
 Deliverables:
 
-- SDL3 window/input backend with fallback.
-- Vulkan renderer placeholder with clear-frame intent and null fallback.
-- Custom ECS with entity creation/destruction and minimal components.
+- NovaCore window/input backend with fallback.
+- NovaCore renderer placeholder with clear-frame intent and null fallback.
+- Game creates a sandbox camera entity through NovaCore ECS.
 - Sandbox scene creates a camera entity.
-- Server executable starts a fixed tick loop.
-- Loopback/direct-connect abstraction exists.
+- Game configs stay game-owned.
 
 Definition of done:
 
 - Game starts, opens a window when SDL3 exists, and runs frames.
-- Server starts and ticks.
-- ECS can create/destroy entities safely.
+- No engine internals are copied into Nemisis.
+- Game code lives outside `main.cpp`.
 - Input layer reports MKB and controller availability.
 
 ### M2 - Renderer Core
@@ -258,11 +256,10 @@ Definition of done:
 
 Do first:
 
-- Engine spine.
-- ECS.
-- Basic renderer.
-- Input.
-- Server loop.
+- NovaCore dependency integration.
+- Thin client/game spine.
+- Basic renderer usage.
+- Input/action config.
 - Movement commands.
 - Weapon data model.
 

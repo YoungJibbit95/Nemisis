@@ -1,13 +1,13 @@
-# Nemesis
+# Nemisis
 
 A 6v6 competitive arena shooter built on the **NovaCore Engine**. Fast-paced gameplay with advanced movement mechanics, precise gunplay, and skill-based combat.
 
 ## Overview
 
-Nemesis is a ground-up game project targeting a commercial-ready competitive FPS experience with:
+Nemisis is a ground-up game project targeting a commercial-ready competitive FPS experience with:
 
 - 6v6 team-based gameplay
-- Advanced movement system (Apex-like with BO-like TTK)
+- Advanced movement system blending Titanfall, Apex-style flow, and BO-like TTK
 - Precise gunplay and weapon balance
 - Multiple game modes
 - Custom networking architecture
@@ -15,7 +15,8 @@ Nemesis is a ground-up game project targeting a commercial-ready competitive FPS
 
 ## Project Structure
 
-- `game/` - Game logic and main executable
+- `game/include/nemisis/` - Game-layer headers
+- `game/src/` - Game implementation and executable entrypoint
 - `configs/` - Game configuration files (modes, weapons, movement, input)
 - `assets/` - Game assets (models, textures, animations)
 - `docs/` - Game design and implementation documentation
@@ -29,7 +30,7 @@ Nemesis is a ground-up game project targeting a commercial-ready competitive FPS
 
 ## Build Instructions
 
-The game requires the NovaCore Engine to be available in your build environment.
+The game resolves NovaCore from `NOVACORE_ENGINE_ROOT`, then `../Novacore-Engine`, then an installed `Novacore` CMake package.
 
 ### With full support:
 
@@ -38,7 +39,7 @@ cmake --preset windows-msvc-debug
 cmake --build --preset windows-msvc-debug
 ```
 
-### Without external dependencies:
+### Sibling checkout fallback:
 
 ```powershell
 cmake --preset local-debug-no-deps
