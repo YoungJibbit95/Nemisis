@@ -9,26 +9,26 @@
 
 namespace {
 
-class GameApp final : public riftline::core::IApplicationDelegate {
+class GameApp final : public novacore::core::IApplicationDelegate {
 public:
     void onStartup() override {
-        riftline::platform::WindowDesc windowDesc{};
-        windowDesc.title = "Project Riftline - M1 Thin Spine";
+        novacore::platform::WindowDesc windowDesc{};
+        windowDesc.title = "Nemesis - M1 Thin Spine";
         windowDesc.width = 1280;
         windowDesc.height = 720;
         windowDesc.preferVulkan = true;
 
         window_.create(windowDesc);
 
-        riftline::render::RendererCreateInfo rendererInfo{};
+        novacore::render::RendererCreateInfo rendererInfo{};
         renderer_.create(window_, rendererInfo);
 
         const auto camera = world_.createEntity();
-        world_.addComponent(camera, riftline::ecs::NameComponent{"main_camera"});
-        world_.addComponent(camera, riftline::ecs::TransformComponent{});
-        world_.addComponent(camera, riftline::ecs::CameraComponent{});
+        world_.addComponent(camera, novacore::ecs::NameComponent{"main_camera"});
+        world_.addComponent(camera, novacore::ecs::TransformComponent{});
+        world_.addComponent(camera, novacore::ecs::CameraComponent{});
 
-        riftline::core::logInfo("game", "Sandbox camera entity created");
+        novacore::core::logInfo("game", "Sandbox camera entity created");
     }
 
     void onShutdown() override {
@@ -36,15 +36,15 @@ public:
         window_.shutdown();
     }
 
-    void onFixedTick(const riftline::core::FrameContext& context) override {
+    void onFixedTick(const novacore::core::FrameContext& context) override {
         (void)context;
     }
 
-    void onFrame(const riftline::core::FrameContext& context) override {
+    void onFrame(const novacore::core::FrameContext& context) override {
         (void)context;
         window_.pollEvents(input_);
 
-        riftline::render::RenderFrameInfo frameInfo{};
+        novacore::render::RenderFrameInfo frameInfo{};
         frameInfo.clearColor = std::array<float, 4>{0.025F, 0.035F, 0.055F, 1.0F};
         renderer_.beginFrame(frameInfo);
         renderer_.endFrame();
@@ -59,10 +59,10 @@ public:
     }
 
 private:
-    riftline::platform::InputSystem input_;
-    riftline::platform::Window window_;
-    riftline::render::Renderer renderer_;
-    riftline::ecs::World world_;
+    novacore::platform::InputSystem input_;
+    novacore::platform::Window window_;
+    novacore::render::Renderer renderer_;
+    novacore::ecs::World world_;
 };
 
 } // namespace
@@ -70,17 +70,23 @@ private:
 int main() {
     GameApp game;
 
-    riftline::core::ApplicationDesc desc{};
-    desc.name = "riftline_game";
+    novacore::core::ApplicationDesc desc{};
+    desc.name = "nemesis_game";
     desc.fixedTickHz = 60.0;
     desc.maxFrames = 0;
 
-#if !RIFTLINE_HAS_SDL3
+#if !NOVACORE_HAS_SDL3
     desc.maxFrames = 5;
 #endif
 
-    riftline::core::Application app(desc);
+    novacore::core::Application app(desc);
     app.run(game);
     return 0;
 }
+
+
+
+
+
+
 

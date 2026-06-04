@@ -2,7 +2,7 @@
 
 ## Vision
 
-Project Riftline is a custom commercial-ready FPS engine and 6v6 arena shooter. It uses modern references for feel, not as code bases:
+Nemesis is a custom commercial-ready FPS engine and 6v6 arena shooter. It uses modern references for feel, not as code bases:
 
 - Apex-like momentum and skill expression.
 - BO-like readable gunfights and short-to-mid TTK.
@@ -275,4 +275,10 @@ Do not do first:
 - Motion matching.
 - Massive map content.
 - Photoreal asset production.
+
+
+
+
+
+
 

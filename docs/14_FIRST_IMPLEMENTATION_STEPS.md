@@ -108,3 +108,9 @@ cmake --build --preset windows-msvc-debug
 
 If CMake/MSVC/Ninja/Vulkan SDK are missing, verification is limited to file inspection.
 
+
+
+
+
+
+

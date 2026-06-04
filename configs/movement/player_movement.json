@@ -1,5 +1,5 @@
 {
-  "profile": "riftline_default_advanced",
+  "profile": "NOVACORE_default_advanced",
   "walk_speed": 5.2,
   "sprint_speed": 7.4,
   "crouch_speed": 3.1,
@@ -21,4 +21,11 @@
     "max_position_error": 0.35
   }
 }
+
+
+
+
+
+
+
 

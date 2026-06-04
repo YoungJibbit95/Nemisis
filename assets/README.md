@@ -4,3 +4,9 @@ Assets enter the project through the Blender-to-glTF pipeline described in `docs
 
 This directory intentionally starts empty except for documentation. Do not add unclear-license marketplace assets here.
 
+
+
+
+
+
+

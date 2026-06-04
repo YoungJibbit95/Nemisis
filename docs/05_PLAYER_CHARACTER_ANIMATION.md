@@ -101,3 +101,9 @@ Animation foundation is acceptable when:
 - A socket transform can be queried.
 - Hitbox transforms can be generated from pose data.
 
+
+
+
+
+
+
