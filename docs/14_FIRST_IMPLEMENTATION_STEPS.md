@@ -99,6 +99,25 @@ cmake --build --preset windows-msvc-debug
 
 If CMake/MSVC/Ninja/Vulkan SDK are missing, verification is limited to file inspection.
 
+## Step 8 - Gameplay Tick Bridge
+
+Implement:
+
+- Convert NovaCore `InputActionMap` states into `PlayerInputCommand`.
+- Add MKB and controller default bindings for the first gameplay command path.
+- Feed fixed-tick movement from real command data.
+- Add weapon runtime state for the active local weapon.
+- Simulate fire, cooldown, reload, dry fire, and shot index deterministically.
+- Add focused input command and weapon simulation tests.
+
+Acceptance:
+
+- `nemisis_game` includes `InputCommandBuilder` and `WeaponSimulation`.
+- `GameApp::onFixedTick` advances movement and active weapon state from the same command.
+- Controller left-stick and trigger inputs reach `PlayerInputCommand`.
+- Weapon config includes `reload_time`.
+- CMake declares `nemisis_input_command_tests` and `nemisis_weapon_simulation_tests`.
+
 
 
 

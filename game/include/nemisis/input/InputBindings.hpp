@@ -47,6 +47,24 @@ inline constexpr std::uint16_t Right = 2;
 
 } // namespace mouse_codes
 
+namespace gamepad_buttons {
+
+inline constexpr std::uint16_t A = 0;
+inline constexpr std::uint16_t B = 1;
+inline constexpr std::uint16_t X = 2;
+inline constexpr std::uint16_t LeftStick = 8;
+
+} // namespace gamepad_buttons
+
+namespace gamepad_axes {
+
+inline constexpr std::uint16_t LeftX = 0;
+inline constexpr std::uint16_t LeftY = 1;
+inline constexpr std::uint16_t LeftTrigger = 4;
+inline constexpr std::uint16_t RightTrigger = 5;
+
+} // namespace gamepad_axes
+
 [[nodiscard]] novacore::platform::InputActionMap createDefaultActionMap();
 
 } // namespace nemisis::input

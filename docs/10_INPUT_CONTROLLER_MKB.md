@@ -12,7 +12,7 @@ MKB and controller are both first-class. The engine does not treat controller as
 4. Device-specific processing.
 5. Gameplay command generation.
 
-The current code foundation uses NovaCore `InputActionMap` and Nemisis-owned default action names/bindings in `nemisis::input`.
+The current code foundation uses NovaCore `InputActionMap`, Nemisis-owned default action names/bindings in `nemisis::input`, and `InputCommandBuilder` for gameplay command generation.
 
 ## MKB
 
@@ -31,8 +31,10 @@ Support:
 Support:
 
 - Gamepad detection.
-- Button mapping.
-- Left/right stick deadzones.
+- Button mapping through default A/B/X/LeftStick bindings.
+- Left-stick movement axes.
+- Trigger-based ADS/fire actions.
+- Left/right stick deadzones in config.
 - Axial and radial deadzone options.
 - Response curves.
 - Trigger thresholds.
@@ -88,6 +90,15 @@ Input is acceptable when:
 - Controller curves are tunable.
 - Settings persist.
 - Menus can be operated with controller.
+
+Current implemented slice:
+
+- MKB and controller bindings feed the same `InputActionMap`.
+- Left stick maps to movement actions.
+- Right trigger maps to fire.
+- Left trigger maps to ADS.
+- Gamepad button bindings cover jump, dash, slide, sprint, mantle, and reload.
+- Input command tests verify keyboard/mouse and controller command generation.
 
 
 

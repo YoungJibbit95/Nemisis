@@ -1,6 +1,5 @@
 #pragma once
 
-#include "nemisis/input/InputBindings.hpp"
 #include "nemisis/movement/MovementConfig.hpp"
 #include "nemisis/movement/MovementSystem.hpp"
 #include "nemisis/weapons/WeaponSystem.hpp"
@@ -28,6 +27,7 @@ public:
 private:
     void applyConfig(std::string_view name);
     void applyLoadedConfigs();
+    void ensureActiveWeapon();
 
     novacore::platform::InputSystem input_;
     novacore::platform::InputActionMap actions_;
@@ -38,6 +38,7 @@ private:
     movement::MovementSystem movement_;
     movement::PlayerMovementState localMovementState_;
     weapons::WeaponSystem weapons_;
+    weapons::WeaponRuntimeState activeWeapon_;
 };
 
 } // namespace nemisis::game

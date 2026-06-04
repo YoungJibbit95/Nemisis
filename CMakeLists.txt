@@ -31,9 +31,11 @@ endif()
 add_executable(nemisis_game
     game/src/GameApp.cpp
     game/src/input/InputBindings.cpp
+    game/src/input/InputCommandBuilder.cpp
     game/src/main.cpp
     game/src/movement/MovementConfig.cpp
     game/src/movement/MovementSystem.cpp
+    game/src/weapons/WeaponSimulation.cpp
     game/src/weapons/WeaponSystem.cpp
 )
 
@@ -59,6 +61,7 @@ endif()
 enable_testing()
 
 add_executable(nemisis_movement_replay_tests
+    game/src/input/InputCommandBuilder.cpp
     game/src/movement/MovementConfig.cpp
     game/src/movement/MovementSystem.cpp
     tests/movement_replay_tests.cpp
@@ -71,3 +74,30 @@ target_include_directories(nemisis_movement_replay_tests
 
 target_link_libraries(nemisis_movement_replay_tests PRIVATE Novacore::Engine)
 add_test(NAME nemisis_movement_replay_tests COMMAND nemisis_movement_replay_tests)
+
+add_executable(nemisis_input_command_tests
+    game/src/input/InputBindings.cpp
+    game/src/input/InputCommandBuilder.cpp
+    tests/input_command_tests.cpp
+)
+
+target_include_directories(nemisis_input_command_tests
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/game/include
+)
+
+target_link_libraries(nemisis_input_command_tests PRIVATE Novacore::Engine)
+add_test(NAME nemisis_input_command_tests COMMAND nemisis_input_command_tests)
+
+add_executable(nemisis_weapon_simulation_tests
+    game/src/weapons/WeaponSimulation.cpp
+    tests/weapon_simulation_tests.cpp
+)
+
+target_include_directories(nemisis_weapon_simulation_tests
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/game/include
+)
+
+target_link_libraries(nemisis_weapon_simulation_tests PRIVATE Novacore::Engine)
+add_test(NAME nemisis_weapon_simulation_tests COMMAND nemisis_weapon_simulation_tests)

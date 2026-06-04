@@ -22,6 +22,18 @@
     "left_stick_deadzone": 0.08,
     "right_stick_deadzone": 0.06,
     "response_curve": "dynamic",
+    "bindings": {
+      "move": "LeftStick",
+      "jump": "A",
+      "dash": "B",
+      "slide": "B",
+      "sprint": "LeftStickPress",
+      "tactical_sprint": "LeftStickPress",
+      "mantle": "A",
+      "fire": "RightTrigger",
+      "ads": "LeftTrigger",
+      "reload": "X"
+    },
     "aim_assist": {
       "enabled": true,
       "style": "competitive_subtle",

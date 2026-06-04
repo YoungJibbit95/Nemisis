@@ -47,6 +47,7 @@ void WeaponSystem::registerPrototypeLoadout() {
         30,
         720,
         0.18F,
+        1.9F,
         DamageProfile{28.0F, 24.0F, 19.0F, 1.35F},
     });
 
@@ -57,6 +58,7 @@ void WeaponSystem::registerPrototypeLoadout() {
         32,
         900,
         0.14F,
+        1.65F,
         DamageProfile{23.0F, 18.0F, 14.0F, 1.25F},
     });
 
@@ -67,6 +69,7 @@ void WeaponSystem::registerPrototypeLoadout() {
         6,
         80,
         0.2F,
+        2.4F,
         DamageProfile{90.0F, 45.0F, 20.0F, 1.1F},
     });
 
@@ -77,6 +80,7 @@ void WeaponSystem::registerPrototypeLoadout() {
         15,
         420,
         0.12F,
+        1.35F,
         DamageProfile{26.0F, 22.0F, 18.0F, 1.4F},
     });
 }
@@ -98,6 +102,7 @@ bool WeaponSystem::loadFromConfig(const novacore::core::ConfigDocument& document
         definition.magazineSize = intOrU16(document, prefix + ".magazine_size", 0);
         definition.fireRateRpm = intOrU16(document, prefix + ".fire_rate_rpm", 0);
         definition.adsTimeSeconds = numberOr(document, prefix + ".ads_time", 0.0F);
+        definition.reloadTimeSeconds = numberOr(document, prefix + ".reload_time", 1.8F);
 
         definition.damage.closeDamage = numberOr(document, prefix + ".damage.close", 0.0F);
         definition.damage.midDamage = numberOr(document, prefix + ".damage.mid", definition.damage.closeDamage);

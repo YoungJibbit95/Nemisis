@@ -26,8 +26,33 @@ struct WeaponDefinition final {
     std::uint16_t magazineSize = 0;
     std::uint16_t fireRateRpm = 0;
     float adsTimeSeconds = 0.0F;
+    float reloadTimeSeconds = 0.0F;
     DamageProfile damage{};
 };
 
-} // namespace nemisis::weapons
+struct WeaponRuntimeState final {
+    std::string weaponId;
+    std::uint16_t ammoInMagazine = 0;
+    std::uint32_t shotIndex = 0;
+    float fireCooldownRemaining = 0.0F;
+    float reloadTimeRemaining = 0.0F;
+    bool reloading = false;
+};
 
+struct FireRequest final {
+    bool triggerHeld = false;
+    bool reloadPressed = false;
+    float fixedDeltaSeconds = 1.0F / 60.0F;
+};
+
+struct FireResult final {
+    bool fired = false;
+    bool startedReload = false;
+    bool completedReload = false;
+    bool dryFire = false;
+    std::uint16_t ammoInMagazine = 0;
+    std::uint32_t shotIndex = 0;
+    float fireCooldownRemaining = 0.0F;
+};
+
+} // namespace nemisis::weapons

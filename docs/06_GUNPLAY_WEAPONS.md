@@ -23,7 +23,7 @@ TTK depends on armor/health model, headshot multiplier, fire rate, and damage fa
 
 ## Weapon State
 
-Core states:
+Core design states:
 
 - Idle.
 - Firing.
@@ -33,6 +33,17 @@ Core states:
 - Empty.
 
 State must be predictable locally but validated by server.
+
+Current implementation state:
+
+- `WeaponRuntimeState::weaponId`
+- `WeaponRuntimeState::ammoInMagazine`
+- `WeaponRuntimeState::shotIndex`
+- `WeaponRuntimeState::fireCooldownRemaining`
+- `WeaponRuntimeState::reloadTimeRemaining`
+- `WeaponRuntimeState::reloading`
+
+The first simulation slice is intentionally deterministic and render-free. It advances fire cooldowns, reload timers, ammo consumption, dry-fire throttling, and shot indices from fixed-tick requests.
 
 ## Recoil Model
 
@@ -96,8 +107,28 @@ Code foundation:
 
 - `nemisis::weapons::WeaponDefinition`
 - `nemisis::weapons::DamageProfile`
+- `nemisis::weapons::WeaponRuntimeState`
+- `nemisis::weapons::FireRequest`
+- `nemisis::weapons::FireResult`
 - `nemisis::weapons::WeaponSystem`
 - `WeaponSystem::loadFromConfig`
+- `nemisis::weapons::simulateWeaponTick`
+
+Config fields currently parsed:
+
+- `id`
+- `class`
+- `display_name`
+- `magazine_size`
+- `fire_rate_rpm`
+- `ads_time`
+- `reload_time`
+- `damage.close`
+- `damage.mid`
+- `damage.long`
+- `damage.head_multiplier`
+- `pellets`
+- `damage_per_pellet`
 
 ## Feedback
 
