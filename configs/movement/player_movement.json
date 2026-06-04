@@ -1,0 +1,24 @@
+{
+  "profile": "riftline_default_advanced",
+  "walk_speed": 5.2,
+  "sprint_speed": 7.4,
+  "crouch_speed": 3.1,
+  "jump_velocity": 5.8,
+  "air_acceleration": 18.0,
+  "slide": {
+    "initial_impulse": 8.5,
+    "max_duration": 0.9,
+    "friction": 7.0,
+    "cooldown": 0.25
+  },
+  "mantle": {
+    "max_range": 1.25,
+    "max_height": 1.4,
+    "duration": 0.22
+  },
+  "validation": {
+    "max_horizontal_speed": 11.5,
+    "max_position_error": 0.35
+  }
+}
+

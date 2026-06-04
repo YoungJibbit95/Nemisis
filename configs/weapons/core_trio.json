@@ -1,0 +1,61 @@
+{
+  "weapons": [
+    {
+      "id": "ar_01",
+      "class": "assault_rifle",
+      "display_name": "Prototype AR",
+      "magazine_size": 30,
+      "fire_rate_rpm": 720,
+      "damage": {
+        "close": 28,
+        "mid": 24,
+        "long": 19,
+        "head_multiplier": 1.35
+      },
+      "ads_time": 0.18,
+      "recoil_model": "pattern_noise"
+    },
+    {
+      "id": "smg_01",
+      "class": "smg",
+      "display_name": "Prototype SMG",
+      "magazine_size": 32,
+      "fire_rate_rpm": 900,
+      "damage": {
+        "close": 23,
+        "mid": 18,
+        "long": 14,
+        "head_multiplier": 1.25
+      },
+      "ads_time": 0.14,
+      "recoil_model": "pattern_noise"
+    },
+    {
+      "id": "shotgun_01",
+      "class": "shotgun",
+      "display_name": "Prototype Shotgun",
+      "magazine_size": 6,
+      "fire_rate_rpm": 80,
+      "pellets": 10,
+      "damage_per_pellet": 12,
+      "ads_time": 0.2,
+      "recoil_model": "pattern_noise"
+    },
+    {
+      "id": "sidearm_01",
+      "class": "sidearm",
+      "display_name": "Prototype Sidearm",
+      "magazine_size": 15,
+      "fire_rate_rpm": 420,
+      "damage": {
+        "close": 26,
+        "mid": 22,
+        "long": 18,
+        "head_multiplier": 1.4
+      },
+      "ads_time": 0.12,
+      "recoil_model": "pattern_noise"
+    }
+  ]
+}
+

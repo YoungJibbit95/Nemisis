@@ -1,0 +1,21 @@
+{
+  "mouse": {
+    "sensitivity_x": 1.0,
+    "sensitivity_y": 1.0,
+    "ads_multiplier": 0.85
+  },
+  "controller": {
+    "look_sensitivity_x": 1.0,
+    "look_sensitivity_y": 1.0,
+    "left_stick_deadzone": 0.08,
+    "right_stick_deadzone": 0.06,
+    "response_curve": "dynamic",
+    "aim_assist": {
+      "enabled": true,
+      "style": "competitive_subtle",
+      "slowdown_strength": 0.22,
+      "rotation_strength": 0.08
+    }
+  }
+}
+

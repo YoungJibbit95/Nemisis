@@ -1,0 +1,20 @@
+{
+  "modes": [
+    {
+      "id": "team_deathmatch",
+      "team_count": 2,
+      "players_per_team": 6,
+      "score_limit": 100,
+      "time_limit_seconds": 600
+    },
+    {
+      "id": "control",
+      "team_count": 2,
+      "players_per_team": 6,
+      "score_limit": 200,
+      "time_limit_seconds": 720,
+      "capture_tick_score": 1
+    }
+  ]
+}
+
