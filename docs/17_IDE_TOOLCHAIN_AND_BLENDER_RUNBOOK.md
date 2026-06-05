@@ -31,6 +31,7 @@ Supported IDE paths:
 - Generator: Visual Studio 17 2022.
 - Does not require Ninja.
 - Does not require `VCPKG_ROOT`.
+- Uses NovaCore's SDL3 FetchContent fallback when no installed SDL3 package is found.
 - Best default for VSCode/Visual Studio on Windows.
 
 `windows-ninja-vcpkg-debug`:
@@ -57,7 +58,16 @@ ctest --test-dir build/windows-msvc-debug -C Debug
 .\build\windows-msvc-debug\Debug\nemisis_game.exe
 ```
 
-Visible SDL debug renderer with vcpkg:
+CLion/default Ninja build directory:
+
+```powershell
+cmake -S . -B cmake-build-debug
+cmake --build cmake-build-debug
+ctest --test-dir cmake-build-debug --output-on-failure
+.\cmake-build-debug\nemisis_game.exe
+```
+
+Visible SDL debug renderer with explicit vcpkg:
 
 ```powershell
 cmake --preset windows-msvc-vcpkg-debug
@@ -77,8 +87,11 @@ ctest --test-dir build/local-debug-no-deps
 Runtime data:
 
 - CMake copies `configs/` and `assets/` beside `nemisis_game` after build when `NEMISIS_COPY_RUNTIME_DATA` is ON.
+- On MinGW builds, CMake copies required MinGW runtime DLLs beside all Nemisis executable targets so direct shell launch works without editing PATH.
 - Visual Studio debugger working directory is set to the repository root for `nemisis_game`.
 - Config loading still works best when launching from the repository root or the executable directory produced by CMake.
+
+If the game logs `SDL3 unavailable; using headless window fallback`, the build directory was configured before SDL3 was available or with `NOVACORE_ENABLE_SDL3=OFF`. Reconfigure the build directory, or delete it and configure again.
 
 Smoke run:
 

@@ -7,7 +7,9 @@
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/local-debug-no-deps",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_BUILD_TYPE": "Debug",
+        "NOVACORE_ENABLE_SDL3": "OFF",
+        "NOVACORE_ENABLE_VULKAN": "OFF"
       }
     },
     {

@@ -31,10 +31,18 @@ constexpr float kDebugTargetRespawnDelaySeconds = 1.5F;
 
 void GameApp::onStartup() {
     actions_ = input::createDefaultActionMap();
-    configRegistry_.watchJson("input", "configs/input/default_input.json");
-    configRegistry_.watchJson("movement", "configs/movement/player_movement.json");
-    configRegistry_.watchJson("weapons", "configs/weapons/core_trio.json");
-    configRegistry_.watchJson("modes", "configs/game_modes/tdm_control.json");
+
+    const auto watchConfig = [this](std::string name, std::string path) {
+        const auto event = configRegistry_.watchJson(name, path);
+        if (!event.loaded) {
+            novacore::core::logWarning("game", "Initial config load failed: " + name);
+        }
+    };
+    watchConfig("input", "configs/input/default_input.json");
+    watchConfig("movement", "configs/movement/player_movement.json");
+    watchConfig("weapons", "configs/weapons/core_trio.json");
+    watchConfig("modes", "configs/game_modes/tdm_control.json");
+
     applyLoadedConfigs();
     loadAssetCatalog();
 

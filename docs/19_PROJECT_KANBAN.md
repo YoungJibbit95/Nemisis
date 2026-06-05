@@ -26,6 +26,8 @@ This file mirrors the active work while GitHub Projects access is blocked by the
 - [x] Add relative mouse request flow for active dev-range gameplay.
 - [x] Add player health/damage helpers and measured TTK tests.
 - [x] Expand debug UI into Gameplay, Network, and Assets pages.
+- [x] Fix visible dev launches by auto-fetching SDL3 when vcpkg/package SDL3 is missing.
+- [x] Copy MinGW runtime DLLs beside executable targets for direct shell runs.
 
 ## Doing
 

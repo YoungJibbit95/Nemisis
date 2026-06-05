@@ -32,10 +32,10 @@ cmake --build --preset windows-msvc-debug
 
 Current environment note:
 
-- CMake is available.
-- `windows-msvc-debug` no longer requires Ninja or vcpkg.
-- A C++ compiler is not currently visible in PATH or to CMake.
-- Configure currently fails until Visual Studio Build Tools/MSVC are installed or exposed through a Developer shell.
+- `cmake-build-debug` has been verified with CLion's bundled MinGW/Ninja.
+- NovaCore fetches SDL3 automatically when no installed SDL3 package is found.
+- The smoke run now reports `SDL3 window created` and `SDL debug renderer created`.
+- Vulkan SDK is still optional for this slice; the SDL debug renderer is the current visual path.
 
 ## Controls
 

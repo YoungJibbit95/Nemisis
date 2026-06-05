@@ -14,6 +14,31 @@ option(NEMISIS_WARNINGS_AS_ERRORS "Treat warnings as errors" OFF)
 option(NEMISIS_COPY_RUNTIME_DATA "Copy configs and asset docs beside the game executable" ON)
 set(NOVACORE_ENGINE_ROOT "" CACHE PATH "Path to a NovaCore Engine checkout")
 
+function(nemisis_copy_mingw_runtime target_name)
+    if(NOT MINGW)
+        return()
+    endif()
+
+    get_filename_component(NEMISIS_MINGW_BIN_DIR "${CMAKE_CXX_COMPILER}" DIRECTORY)
+    foreach(runtime_dll IN ITEMS
+        libatomic-1.dll
+        libgcc_s_seh-1.dll
+        libgomp-1.dll
+        libssp-0.dll
+        libstdc++-6.dll
+        libwinpthread-1.dll
+    )
+        if(EXISTS "${NEMISIS_MINGW_BIN_DIR}/${runtime_dll}")
+            add_custom_command(TARGET ${target_name} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    "${NEMISIS_MINGW_BIN_DIR}/${runtime_dll}"
+                    "$<TARGET_FILE_DIR:${target_name}>/${runtime_dll}"
+                VERBATIM
+            )
+        endif()
+    endforeach()
+endfunction()
+
 if(NOT NOVACORE_ENGINE_ROOT)
     get_filename_component(NEMISIS_WORKSPACE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/.." ABSOLUTE)
     if(EXISTS "${NEMISIS_WORKSPACE_ROOT}/Novacore-Engine/CMakeLists.txt")
@@ -290,3 +315,24 @@ target_include_directories(nemisis_debug_target_tests
 
 target_link_libraries(nemisis_debug_target_tests PRIVATE Novacore::Engine)
 add_test(NAME nemisis_debug_target_tests COMMAND nemisis_debug_target_tests)
+
+foreach(nemisis_runtime_target IN ITEMS
+    nemisis_game
+    nemisis_movement_replay_tests
+    nemisis_input_command_tests
+    nemisis_game_menu_tests
+    nemisis_weapon_simulation_tests
+    nemisis_player_command_queue_tests
+    nemisis_player_health_tests
+    nemisis_asset_catalog_tests
+    nemisis_command_messages_tests
+    nemisis_loopback_command_bridge_tests
+    nemisis_player_spawn_tests
+    nemisis_dev_sandbox_tests
+    nemisis_weapon_shot_tests
+    nemisis_weapon_metrics_tests
+    nemisis_player_view_tests
+    nemisis_debug_target_tests
+)
+    nemisis_copy_mingw_runtime(${nemisis_runtime_target})
+endforeach()

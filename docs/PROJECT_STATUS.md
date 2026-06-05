@@ -28,6 +28,8 @@
 - Debug UI overlay is visible through NovaCore SDL debug render primitives when SDL3 is available.
 - Debug UI now has Gameplay, Network, and Assets pages, toggled with Tab or controller Start/Menu.
 - The dev range requests relative mouse mode through NovaCore while menus keep normal cursor behavior.
+- Normal dev builds now use NovaCore's SDL3 FetchContent fallback when no installed SDL3 package is present.
+- MinGW runtime DLLs are copied beside all Nemisis runtime/test executables for direct shell launches.
 - Local player spawning includes a health component for future authoritative damage and respawn flow.
 - Weapon metrics estimate damage band, shots-to-eliminate, and measured TTK for 150 HP balance targets.
 - `docs/19_PROJECT_KANBAN.md` tracks completed, doing, next, and blocked work until GitHub Projects access is available.
@@ -57,6 +59,9 @@
 - Added `WeaponMetrics` with range bands, damage lookup, shots-to-eliminate, and TTK estimates.
 - Added `nemisis_weapon_metrics_tests` for AR/SMG 150 HP TTK baselines.
 - Added debug page cycling and relative mouse mode activation for the playable dev range.
+- Fixed the direct `cmake-build-debug/nemisis_game.exe` no-window path by enabling automatic SDL3 fetch/build in NovaCore.
+- Fixed direct MinGW executable launch by copying runtime DLLs beside `nemisis_game.exe` and test executables.
+- Cleaned initial config watching so failed startup config loads are logged instead of ignored.
 
 ## Next Game Blocks
 
