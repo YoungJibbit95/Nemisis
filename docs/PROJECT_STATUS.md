@@ -24,6 +24,9 @@
 - Blender automation is prepared for first dev primitives through `tools/blender/make_dev_primitives.py`.
 - Runtime asset ids are declared in `configs/assets/nemisis_assets.json`.
 - `GameAssetCatalog` loads the game asset manifest through NovaCore's asset registry backbone and queues dev-sandbox preload requests.
+- Barebones runtime menu exists with Main Menu, Dev Shooting Range, TDM placeholder, and Control placeholder screens.
+- Debug UI overlay is visible through NovaCore SDL debug render primitives when SDL3 is available.
+- `docs/19_PROJECT_KANBAN.md` tracks completed, doing, next, and blocked work until GitHub Projects access is available.
 - Movement replay tests cover sprint distance, jump/double-jump, dash cooldown, and config-driven tuning.
 - Input command, weapon simulation, weapon shot, player view, debug target, dev sandbox, player spawn, command queue, command message, and loopback bridge tests cover the newest gameplay bridge.
 
@@ -41,11 +44,15 @@
 - Added `docs/17_IDE_TOOLCHAIN_AND_BLENDER_RUNBOOK.md` plus Visual Studio 2022 no-deps preset.
 - Added runtime data copy support and Visual Studio debugger working directory for `nemisis_game`.
 - Added `nemisis_game --smoke-test` and CTest registration for quick runtime launch checks.
+- Fixed `windows-msvc-debug` so VSCode/Visual Studio no longer need Ninja or an unset `VCPKG_ROOT`.
+- Added visible main menu and mode selection state through `GameMenu`.
+- Added menu/debug render commands for on-screen dev range target, target HP, renderer backend, tick, ack, asset queue, and ammo.
+- Added menu actions for keyboard/controller navigation and `nemisis_game_menu_tests`.
 
 ## Next Game Blocks
 
-- Add player health/damage components and measured TTK tests.
 - Add raw mouse capture/cursor lock and configurable sensitivity loading.
-- Add a tiny visible debug HUD once text rendering/UI exists.
+- Add first player health/damage components and measured TTK tests.
+- Expand debug UI into toggleable pages for input, movement, weapon, net, render, and assets.
 - Run the prepared Blender dev primitive generator once Blender is installed or exposed through tooling.
 - Add first glTF metadata/import handoff from NovaCore asset catalog into renderer mesh handles.

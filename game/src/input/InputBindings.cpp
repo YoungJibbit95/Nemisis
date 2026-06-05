@@ -84,6 +84,15 @@ novacore::platform::InputActionMap createDefaultActionMap() {
     bindButton(actionMap, actions::Fire, mouse(mouse_codes::Left));
     bindButton(actionMap, actions::Ads, mouse(mouse_codes::Right));
     bindButton(actionMap, actions::Reload, keyboard(key_codes::R));
+    bindButton(actionMap, actions::MenuUp, keyboard(key_codes::Up));
+    bindButton(actionMap, actions::MenuDown, keyboard(key_codes::Down));
+    bindButton(actionMap, actions::MenuConfirm, keyboard(key_codes::Enter));
+    bindButton(actionMap, actions::MenuBack, keyboard(key_codes::Escape));
+    bindButton(actionMap, actions::ToggleDebug, keyboard(key_codes::F1));
+    bindButton(actionMap, actions::SelectDevRange, keyboard(key_codes::Digit1));
+    bindButton(actionMap, actions::SelectTdm, keyboard(key_codes::Digit2));
+    bindButton(actionMap, actions::SelectControl, keyboard(key_codes::Digit3));
+    bindButton(actionMap, actions::SelectMainMenu, keyboard(key_codes::Escape));
     bindAxis(actionMap, actions::LookRight, mouseAxis(mouse_axes::X), 0.1F, 0.001F);
     bindAxis(actionMap, actions::LookUp, mouseAxis(mouse_axes::Y), -0.1F, 0.001F);
 
@@ -101,6 +110,11 @@ novacore::platform::InputActionMap createDefaultActionMap() {
     bindAxis(actionMap, actions::Fire, gamepadAxis(gamepad_axes::RightTrigger), 1.0F, 0.15F);
     bindAxis(actionMap, actions::Ads, gamepadAxis(gamepad_axes::LeftTrigger), 1.0F, 0.15F);
     bindButton(actionMap, actions::Reload, gamepadButton(gamepad_buttons::X));
+    bindButton(actionMap, actions::MenuUp, gamepadButton(gamepad_buttons::DPadUp));
+    bindButton(actionMap, actions::MenuDown, gamepadButton(gamepad_buttons::DPadDown));
+    bindButton(actionMap, actions::MenuConfirm, gamepadButton(gamepad_buttons::A));
+    bindButton(actionMap, actions::MenuBack, gamepadButton(gamepad_buttons::B));
+    bindButton(actionMap, actions::SelectMainMenu, gamepadButton(gamepad_buttons::B));
     bindAxis(actionMap, actions::LookRight, gamepadAxis(gamepad_axes::RightX), 2.4F, 0.06F);
     bindAxis(actionMap, actions::LookUp, gamepadAxis(gamepad_axes::RightY), -2.0F, 0.06F);
 

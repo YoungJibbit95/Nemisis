@@ -6,6 +6,7 @@ The playable dev sandbox is the first runtime loop for testing Nemisis features 
 
 It is not a vertical slice yet. It is a developer playground for validating:
 
+- Barebones main menu and mode selection.
 - Window event input.
 - MKB and controller action mapping.
 - Mouse and right-stick look.
@@ -22,17 +23,17 @@ It is not a vertical slice yet. It is a developer playground for validating:
 When the local C++ toolchain exists:
 
 ```powershell
-cmake --preset local-debug-no-deps
-cmake --build --preset local-debug-no-deps
-.\build\local-debug-no-deps\nemisis_game.exe
+cmake --preset windows-msvc-debug
+cmake --build --preset windows-msvc-debug
+.\build\windows-msvc-debug\Debug\nemisis_game.exe
 ```
 
 Current environment note:
 
 - CMake is available.
-- Ninja is not currently in PATH.
-- A C++ compiler is not currently in PATH.
-- Configure currently fails until Ninja and a compiler are installed or exposed.
+- `windows-msvc-debug` no longer requires Ninja or vcpkg.
+- A C++ compiler is not currently visible in PATH or to CMake.
+- Configure currently fails until Visual Studio Build Tools/MSVC are installed or exposed through a Developer shell.
 
 ## Controls
 
@@ -59,6 +60,19 @@ Controller:
 - `LeftTrigger`: ADS.
 - `X`: reload.
 
+Menu:
+
+- `1`: Dev Shooting Range.
+- `2`: Team Deathmatch placeholder.
+- `3`: Control placeholder.
+- `Up/Down`: move menu selection.
+- `Enter`: load selected menu item.
+- `Esc`: return to main menu.
+- `F1`: toggle debug overlay.
+- Controller `A`: confirm.
+- Controller `B`: back.
+- Controller D-pad up/down: move menu selection.
+
 ## Telemetry
 
 The sandbox logs every 0.5 seconds through NovaCore logging:
@@ -82,6 +96,9 @@ The sandbox logs every 0.5 seconds through NovaCore logging:
 - Debug target health.
 - Debug target hit count.
 - Hit/elimination result.
+- Renderer backend.
+- Current screen.
+- Asset preload queue size.
 
 The renderer clear color also changes by state for early visual feedback:
 
@@ -95,7 +112,7 @@ The renderer clear color also changes by state for early visual feedback:
 
 ## Current Limits
 
-- Renderer is still a Vulkan/null placeholder.
+- Renderer has SDL debug visuals when SDL3 is available, but the Vulkan renderer is still a placeholder.
 - There is no 3D world mesh or general collision yet.
 - Asset ids and preload requests exist, but glTF import/GPU mesh handles are not implemented yet.
 - Mouse look exists, but cursor capture/raw mouse mode is not implemented yet.

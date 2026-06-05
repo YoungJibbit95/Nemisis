@@ -7,6 +7,7 @@
 #include "nemisis/movement/MovementSystem.hpp"
 #include "nemisis/net/LoopbackCommandBridge.hpp"
 #include "nemisis/player/PlayerCommandQueue.hpp"
+#include "nemisis/ui/GameMenu.hpp"
 #include "nemisis/weapons/WeaponSystem.hpp"
 
 #include "novacore/core/Application.hpp"
@@ -49,6 +50,7 @@ private:
     novacore::ecs::EntityId cameraEntity_;
     dev::DebugTargetState debugTarget_;
     dev::DevSandbox devSandbox_;
+    ui::GameMenu menu_;
     movement::MovementSystem movement_;
     net::LoopbackCommandBridge loopbackBridge_;
     player::PlayerCommandQueue localCommandQueue_;

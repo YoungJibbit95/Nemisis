@@ -28,19 +28,26 @@ Supported IDE paths:
 
 `windows-msvc-debug`:
 
+- Generator: Visual Studio 17 2022.
+- Does not require Ninja.
+- Does not require `VCPKG_ROOT`.
+- Best default for VSCode/Visual Studio on Windows.
+
+`windows-ninja-vcpkg-debug`:
+
 - Generator: Ninja.
 - Uses vcpkg for full dependency work.
-- Intended for SDL3, Vulkan, and future renderer testing.
+- Intended for SDL3, Vulkan, and future renderer testing once vcpkg and Ninja exist.
 
 ## Minimal Build
 
 Visual Studio generator:
 
 ```powershell
-cmake --preset windows-vs2022-no-deps
-cmake --build --preset windows-vs2022-no-deps
-ctest --test-dir build/windows-vs2022-no-deps -C Debug
-.\build\windows-vs2022-no-deps\Debug\nemisis_game.exe
+cmake --preset windows-msvc-debug
+cmake --build --preset windows-msvc-debug
+ctest --test-dir build/windows-msvc-debug -C Debug
+.\build\windows-msvc-debug\Debug\nemisis_game.exe
 ```
 
 Ninja generator:
@@ -110,6 +117,7 @@ In the current Codex shell:
 - Ninja is not in PATH.
 - MSVC `cl` is not in PATH.
 - `g++` is not in PATH.
+- Visual Studio Build Tools are not visible to CMake in this shell.
 - Blender is not installed or not visible in PATH.
 
 So the repo is prepared for IDE/toolchain pickup, but this machine still needs a build tool/compiler and Blender CLI before local game/asset generation can actually run.

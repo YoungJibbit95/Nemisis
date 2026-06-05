@@ -44,6 +44,7 @@ add_executable(nemisis_game
     game/src/player/PlayerCommandQueue.cpp
     game/src/player/PlayerSpawn.cpp
     game/src/player/PlayerView.cpp
+    game/src/ui/GameMenu.cpp
     game/src/weapons/WeaponShot.cpp
     game/src/weapons/WeaponSimulation.cpp
     game/src/weapons/WeaponSystem.cpp
@@ -115,6 +116,20 @@ target_include_directories(nemisis_input_command_tests
 
 target_link_libraries(nemisis_input_command_tests PRIVATE Novacore::Engine)
 add_test(NAME nemisis_input_command_tests COMMAND nemisis_input_command_tests)
+
+add_executable(nemisis_game_menu_tests
+    game/src/input/InputBindings.cpp
+    game/src/ui/GameMenu.cpp
+    tests/game_menu_tests.cpp
+)
+
+target_include_directories(nemisis_game_menu_tests
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/game/include
+)
+
+target_link_libraries(nemisis_game_menu_tests PRIVATE Novacore::Engine)
+add_test(NAME nemisis_game_menu_tests COMMAND nemisis_game_menu_tests)
 
 add_executable(nemisis_weapon_simulation_tests
     game/src/weapons/WeaponSimulation.cpp

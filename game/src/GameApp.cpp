@@ -39,10 +39,10 @@ void GameApp::onStartup() {
     loadAssetCatalog();
 
     novacore::platform::WindowDesc windowDesc{};
-    windowDesc.title = "Nemisis - M1 Thin Spine";
+    windowDesc.title = menu_.title();
     windowDesc.width = 1280;
     windowDesc.height = 720;
-    windowDesc.preferVulkan = true;
+    windowDesc.preferVulkan = false;
 
     window_.create(windowDesc);
 
@@ -74,6 +74,10 @@ void GameApp::onShutdown() {
 }
 
 void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
+    if (!menu_.gameplayActive()) {
+        return;
+    }
+
     ensureLocalPlayer();
 
     const auto command = input::buildPlayerInputCommand(actions_, context.tickIndex);
@@ -206,6 +210,8 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
 void GameApp::onFrame(const novacore::core::FrameContext& context) {
     window_.pollEvents(input_);
     actions_.update(window_.inputSnapshot());
+    menu_.update(actions_);
+    window_.setTitle(menu_.title());
 
     for (const auto& event : configRegistry_.pollReloads()) {
         if (event.loaded) {
@@ -216,10 +222,17 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
         }
     }
 
-    devSandbox_.onFrame(context.deltaSeconds);
+    if (menu_.gameplayActive()) {
+        devSandbox_.onFrame(context.deltaSeconds);
+    }
 
     novacore::render::RenderFrameInfo frameInfo{};
-    frameInfo.clearColor = devSandbox_.clearColor();
+    frameInfo.clearColor = menu_.gameplayActive() ? devSandbox_.clearColor() : menu_.clearColor();
+    menu_.appendRenderCommands(
+        frameInfo,
+        devSandbox_.latestSample(),
+        renderer_.backendName(),
+        assetStreamer_.pendingCount());
     renderer_.beginFrame(frameInfo);
     renderer_.endFrame();
 }

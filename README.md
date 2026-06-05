@@ -42,6 +42,15 @@ cmake --preset windows-msvc-debug
 cmake --build --preset windows-msvc-debug
 ```
 
+`windows-msvc-debug` uses the Visual Studio generator and does not require Ninja or `VCPKG_ROOT`.
+
+### Full vcpkg/Ninja support:
+
+```powershell
+cmake --preset windows-ninja-vcpkg-debug
+cmake --build --preset windows-ninja-vcpkg-debug
+```
+
 ### Sibling checkout fallback:
 
 ```powershell
@@ -69,7 +78,7 @@ Start with:
 
 ## Current Dev Sandbox
 
-The first playable dev loop is wired through `nemisis_game`: NovaCore window input snapshots update Nemisis actions, fixed ticks simulate the local player entity, and dev telemetry logs movement, weapon, command queue, and shot trace data.
+The first playable dev loop is wired through `nemisis_game`: NovaCore window input snapshots update Nemisis actions, the main menu can load the dev shooting range, fixed ticks simulate the local player entity, and dev telemetry logs movement, weapon, command queue, and shot trace data.
 
 At the moment, local configure still requires either Ninja plus a visible C++ compiler in PATH, or Visual Studio 2022 Build Tools for the VS preset.
 

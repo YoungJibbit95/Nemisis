@@ -25,6 +25,15 @@ inline constexpr std::string_view Mantle = "mantle";
 inline constexpr std::string_view Fire = "fire";
 inline constexpr std::string_view Ads = "ads";
 inline constexpr std::string_view Reload = "reload";
+inline constexpr std::string_view MenuUp = "menu_up";
+inline constexpr std::string_view MenuDown = "menu_down";
+inline constexpr std::string_view MenuConfirm = "menu_confirm";
+inline constexpr std::string_view MenuBack = "menu_back";
+inline constexpr std::string_view ToggleDebug = "toggle_debug";
+inline constexpr std::string_view SelectDevRange = "select_dev_range";
+inline constexpr std::string_view SelectTdm = "select_tdm";
+inline constexpr std::string_view SelectControl = "select_control";
+inline constexpr std::string_view SelectMainMenu = "select_main_menu";
 
 } // namespace actions
 
@@ -39,6 +48,14 @@ inline constexpr std::uint16_t C = 67;
 inline constexpr std::uint16_t Space = 32;
 inline constexpr std::uint16_t LeftShift = 160;
 inline constexpr std::uint16_t LeftAlt = 164;
+inline constexpr std::uint16_t Enter = 13;
+inline constexpr std::uint16_t Escape = 27;
+inline constexpr std::uint16_t Digit1 = 49;
+inline constexpr std::uint16_t Digit2 = 50;
+inline constexpr std::uint16_t Digit3 = 51;
+inline constexpr std::uint16_t F1 = 112;
+inline constexpr std::uint16_t Up = 1000;
+inline constexpr std::uint16_t Down = 1001;
 
 } // namespace key_codes
 
@@ -62,6 +79,8 @@ inline constexpr std::uint16_t A = 0;
 inline constexpr std::uint16_t B = 1;
 inline constexpr std::uint16_t X = 2;
 inline constexpr std::uint16_t LeftStick = 8;
+inline constexpr std::uint16_t DPadUp = 11;
+inline constexpr std::uint16_t DPadDown = 12;
 
 } // namespace gamepad_buttons
 
