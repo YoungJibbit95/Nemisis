@@ -45,6 +45,18 @@ Current implementation state:
 
 The first simulation slice is intentionally deterministic and render-free. It advances fire cooldowns, reload timers, ammo consumption, dry-fire throttling, and shot indices from fixed-tick requests.
 
+Current shot trace data:
+
+- Origin.
+- Direction.
+- Range.
+- Damage.
+- Spread degrees.
+- Seed.
+- Shot index.
+
+`buildShotTrace` is the first hitscan-ready step. It does not resolve world collision yet; it produces deterministic trace data that client prediction and server validation can share.
+
 ## Recoil Model
 
 Use pattern + noise:
@@ -56,6 +68,14 @@ Use pattern + noise:
 - Movement modifies spread, not necessarily recoil.
 
 The server validates shot timing and spread seed. The client predicts visual recoil immediately.
+
+Current implementation:
+
+- Shot seed uses command tick.
+- Shot index comes from `WeaponRuntimeState`.
+- Spread combines hip/ADS weapon spread and movement speed.
+- Recoil offset scales by shot index.
+- Direction is normalized for future scene queries.
 
 ## Spread Model
 
@@ -102,6 +122,11 @@ Weapon data is hot-reloadable:
 - Spread values.
 - ADS time.
 - Movement multipliers.
+- Max range.
+- Hip spread.
+- ADS spread.
+- Recoil pitch per shot.
+- Recoil yaw per shot.
 
 Code foundation:
 
@@ -110,9 +135,12 @@ Code foundation:
 - `nemisis::weapons::WeaponRuntimeState`
 - `nemisis::weapons::FireRequest`
 - `nemisis::weapons::FireResult`
+- `nemisis::weapons::ShotTraceRequest`
+- `nemisis::weapons::ShotTraceResult`
 - `nemisis::weapons::WeaponSystem`
 - `WeaponSystem::loadFromConfig`
 - `nemisis::weapons::simulateWeaponTick`
+- `nemisis::weapons::buildShotTrace`
 
 Config fields currently parsed:
 
@@ -123,6 +151,11 @@ Config fields currently parsed:
 - `fire_rate_rpm`
 - `ads_time`
 - `reload_time`
+- `max_range`
+- `spread.hip_degrees`
+- `spread.ads_degrees`
+- `recoil.pitch_per_shot_degrees`
+- `recoil.yaw_per_shot_degrees`
 - `damage.close`
 - `damage.mid`
 - `damage.long`

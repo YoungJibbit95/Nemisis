@@ -27,6 +27,11 @@ struct WeaponDefinition final {
     std::uint16_t fireRateRpm = 0;
     float adsTimeSeconds = 0.0F;
     float reloadTimeSeconds = 0.0F;
+    float maxRangeMeters = 80.0F;
+    float hipSpreadDegrees = 1.25F;
+    float adsSpreadDegrees = 0.25F;
+    float recoilPitchPerShotDegrees = 0.08F;
+    float recoilYawPerShotDegrees = 0.03F;
     DamageProfile damage{};
 };
 

@@ -50,6 +50,17 @@ cmake --build --preset local-debug-no-deps
 
 See `docs/` for game design, mechanics, and implementation guides.
 
+Start with:
+
+- `docs/PROJECT_STATUS.md` for the current GitHub-visible progress log.
+- `docs/15_PLAYABLE_DEV_SANDBOX.md` for the first playable developer sandbox, controls, telemetry, and current runtime limits.
+
+## Current Dev Sandbox
+
+The first playable dev loop is wired through `nemisis_game`: NovaCore window input snapshots update Nemisis actions, fixed ticks simulate the local player entity, and dev telemetry logs movement, weapon, command queue, and shot trace data.
+
+At the moment, local configure still requires Ninja plus a visible C++ compiler in PATH.
+
 ## Related Projects
 
 - **NovaCore Engine**: https://github.com/YoungJibbit95/Novacore-Engine

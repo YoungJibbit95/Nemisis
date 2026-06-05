@@ -5,12 +5,15 @@
 #include "nemisis/player/PlayerComponents.hpp"
 #include "nemisis/player/PlayerSpawn.hpp"
 #include "nemisis/weapons/WeaponSimulation.hpp"
+#include "nemisis/weapons/WeaponShot.hpp"
 
 #include "novacore/core/Log.hpp"
 #include "novacore/ecs/Components.hpp"
+#include "novacore/math/Types.hpp"
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstdint>
 #include <string>
 #include <string_view>
@@ -85,6 +88,9 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
             loadout != nullptr ? std::string_view(loadout->activeWeaponId) : kDefaultWeaponId);
     }
 
+    weapons::FireResult fireResult{};
+    weapons::ShotTraceResult shotTrace{};
+    bool hasShotTrace = false;
     if (weaponState != nullptr) {
         const auto* weapon = weapons_.findWeapon(weaponState->weaponId);
         if (weapon != nullptr) {
@@ -92,21 +98,59 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
             fireRequest.triggerHeld = command.fireHeld;
             fireRequest.reloadPressed = command.reloadPressed;
             fireRequest.fixedDeltaSeconds = static_cast<float>(context.fixedDeltaSeconds);
-            (void)weapons::simulateWeaponTick(*weapon, *weaponState, fireRequest);
+            fireResult = weapons::simulateWeaponTick(*weapon, *weaponState, fireRequest);
+            if (fireResult.fired && movementState != nullptr) {
+                weapons::ShotTraceRequest shotRequest{};
+                shotRequest.origin = movementState->position + novacore::math::Vec3{0.0F, 1.65F, 0.0F};
+                shotRequest.forward = novacore::math::Vec3{0.0F, 0.0F, 1.0F};
+                shotRequest.seed = static_cast<std::uint32_t>(command.tick);
+                shotRequest.shotIndex = fireResult.shotIndex;
+                shotRequest.movementSpeed =
+                    std::sqrt((movementState->velocity.x * movementState->velocity.x) +
+                              (movementState->velocity.z * movementState->velocity.z));
+                shotRequest.ads = command.adsHeld;
+                shotTrace = weapons::buildShotTrace(*weapon, shotRequest);
+                hasShotTrace = true;
+            }
         }
     }
 
+    player::PlayerNetworkComponent networkSample{};
     if (auto* network = world_.getComponent<player::PlayerNetworkComponent>(localPlayerEntity_);
         network != nullptr) {
         network->lastProcessedCommandTick = command.tick;
         network->pendingCommandCount = static_cast<std::uint16_t>(
             std::min<std::size_t>(localCommandQueue_.size(), 65535));
+        networkSample = *network;
     }
+
+    movement::PlayerMovementState movementSample{};
+    if (movementState != nullptr) {
+        movementSample = *movementState;
+    }
+
+    weapons::WeaponRuntimeState weaponSample{};
+    if (weaponState != nullptr) {
+        weaponSample = *weaponState;
+    }
+
+    devSandbox_.recordTick(dev::DevSandboxSample{
+        command.tick,
+        command,
+        movementSample.position,
+        movementSample.velocity,
+        movementSample.mode,
+        weaponSample,
+        fireResult,
+        shotTrace,
+        hasShotTrace,
+        networkSample,
+    });
 }
 
 void GameApp::onFrame(const novacore::core::FrameContext& context) {
-    (void)context;
     window_.pollEvents(input_);
+    actions_.update(window_.inputSnapshot());
 
     for (const auto& event : configRegistry_.pollReloads()) {
         if (event.loaded) {
@@ -117,8 +161,10 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
         }
     }
 
+    devSandbox_.onFrame(context.deltaSeconds);
+
     novacore::render::RenderFrameInfo frameInfo{};
-    frameInfo.clearColor = std::array<float, 4>{0.025F, 0.035F, 0.055F, 1.0F};
+    frameInfo.clearColor = devSandbox_.clearColor();
     renderer_.beginFrame(frameInfo);
     renderer_.endFrame();
 }

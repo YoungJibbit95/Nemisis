@@ -137,6 +137,25 @@ Acceptance:
 - Movement updates the player transform from component-backed movement state.
 - CMake declares `nemisis_player_command_queue_tests` and `nemisis_player_spawn_tests`.
 
+## Step 10 - Playable Dev Sandbox And Shot Trace
+
+Implement:
+
+- Feed Nemisis `InputActionMap` from NovaCore `Window::inputSnapshot`.
+- Add `DevSandbox` telemetry for live gameplay state while the app runs.
+- Log controls and runtime state for movement, weapon, pending commands, and shot traces.
+- Add state-colored renderer clear feedback for early visual iteration.
+- Add deterministic shot trace generation with seed, shot index, spread, recoil, range, and damage.
+- Extend weapon config with range, spread, and recoil tuning.
+
+Acceptance:
+
+- `nemisis_game` reacts to MKB/controller input through the action map.
+- Running the game logs playable dev sandbox controls and telemetry.
+- Firing emits deterministic shot trace data.
+- CMake declares `nemisis_dev_sandbox_tests` and `nemisis_weapon_shot_tests`.
+- `docs/15_PLAYABLE_DEV_SANDBOX.md` documents controls, run flow, and current limits.
+
 
 
 

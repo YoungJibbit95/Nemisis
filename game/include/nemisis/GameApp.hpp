@@ -1,5 +1,6 @@
 #pragma once
 
+#include "nemisis/dev/DevSandbox.hpp"
 #include "nemisis/movement/MovementConfig.hpp"
 #include "nemisis/movement/MovementSystem.hpp"
 #include "nemisis/player/PlayerCommandQueue.hpp"
@@ -38,6 +39,7 @@ private:
     novacore::platform::Window window_;
     novacore::render::Renderer renderer_;
     novacore::ecs::World world_;
+    dev::DevSandbox devSandbox_;
     movement::MovementSystem movement_;
     player::PlayerCommandQueue localCommandQueue_;
     novacore::ecs::EntityId localPlayerEntity_;

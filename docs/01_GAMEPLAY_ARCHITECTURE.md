@@ -5,6 +5,7 @@ Nemisis game code is split by gameplay responsibility and consumes NovaCore thro
 ## Current Game Modules
 
 - `nemisis::game`: app bootstrap and high-level game lifetime.
+- `nemisis::dev`: playable developer sandbox telemetry and debug-state feedback.
 - `nemisis::player`: normalized input commands, command queues, player ECS components, and local player spawn helpers.
 - `nemisis::input`: default game action names and MKB bindings.
 - `nemisis::movement`: movement tuning, state, and deterministic simulation foundation.
@@ -14,10 +15,13 @@ Nemisis game code is split by gameplay responsibility and consumes NovaCore thro
 
 - MKB and controller devices produce `PlayerInputCommand`.
 - NovaCore input actions map raw controls, buttons, sticks, and triggers into game actions.
+- `GameApp::onFrame` updates actions from the NovaCore window input snapshot.
+- Dev sandbox telemetry exposes the first playable test loop while rendering and UI are still minimal.
 - `PlayerCommandQueue` keeps local commands pending until future server acknowledgement.
 - The local player is represented as a NovaCore entity with identity, ownership, network, loadout, movement, and weapon runtime components.
 - Movement consumes commands and fixed delta time.
 - Weapons consume commands through `FireRequest` and advance fixed-tick runtime state.
+- Weapon shots produce deterministic trace data from tick seed, shot index, spread, recoil, and movement speed.
 - `GameApp` advances player component state instead of loose gameplay member variables.
 - Movement and weapon systems now consume NovaCore parsed config documents.
 - Config reloads reapply tuning at runtime through `ConfigRegistry`.
@@ -31,6 +35,8 @@ Nemisis game code is split by gameplay responsibility and consumes NovaCore thro
 - Movement replay tests protect deterministic feel changes.
 - Input command tests protect raw action-to-command mapping.
 - Weapon simulation tests protect fire cadence, cooldown, dry fire, and reload behavior.
+- Weapon shot tests protect deterministic trace generation.
+- Dev sandbox tests protect telemetry summary and debug feedback.
 - Player spawn tests protect expected ECS component composition.
 - Command queue tests protect monotonic pending-command behavior for server handoff.
 - Config files match the planned movement and weapon vocabulary.

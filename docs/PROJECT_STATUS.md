@@ -12,20 +12,25 @@
 - Weapon runtime state supports ammo, shot index, fire cooldown, reload timer, and dry fire.
 - Local player spawning creates a NovaCore ECS entity with identity, local-input, network, loadout, movement, and weapon runtime components.
 - A tick-ordered `PlayerCommandQueue` keeps unacknowledged local commands for future server reconciliation.
+- The playable dev sandbox updates actions from NovaCore window input snapshots.
+- Dev telemetry logs movement, weapon, pending command, and shot trace data while the game runs.
+- Deterministic `ShotTraceResult` data now carries seed, direction, range, spread, and damage for future hitscan validation.
 - Movement replay tests cover sprint distance, jump/double-jump, dash cooldown, and config-driven tuning.
-- Input command, weapon simulation, player spawn, and command queue tests cover the newest gameplay bridge.
+- Input command, weapon simulation, weapon shot, dev sandbox, player spawn, and command queue tests cover the newest gameplay bridge.
 
 ## Added In Latest Block
 
-- Added player ECS components for identity, local ownership, network metadata, and loadout.
-- Added `spawnLocalPlayer` to create the first local player entity through NovaCore ECS.
-- Moved local movement and weapon runtime state onto the player entity.
-- Added `PlayerCommandQueue` for monotonic tick commands, duplicate replacement, capacity trimming, and server acknowledgements.
-- `GameApp::onFixedTick` now pushes commands, simulates component-backed movement/weapons, mirrors movement into transform, and updates pending-command network metadata.
-- Added `nemisis_player_command_queue_tests` and `nemisis_player_spawn_tests` CMake targets.
+- Added `DevSandbox` for playable runtime telemetry and state-colored renderer clear feedback.
+- `GameApp::onFrame` now updates game actions from `Window::inputSnapshot`.
+- `GameApp::onFixedTick` now emits dev samples after command, movement, weapon, and network metadata updates.
+- Added `WeaponShot` deterministic shot trace generation with seed, spread, recoil offsets, range, and damage.
+- Weapon config now includes range, spread, and recoil tuning values.
+- Added `nemisis_dev_sandbox_tests` and `nemisis_weapon_shot_tests` CMake targets.
+- Added `docs/15_PLAYABLE_DEV_SANDBOX.md`.
 
 ## Next Game Blocks
 
-- Add hit-scan request/result types and deterministic recoil seed plumbing.
 - Start client/server command packet serialization and server-authoritative acknowledgement handoff.
 - Add player health/damage components for measured TTK tests.
+- Add camera-relative movement and mouse-look snapshot support.
+- Add a debug target dummy and first hitscan damage application.

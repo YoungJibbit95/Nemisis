@@ -14,6 +14,15 @@
       },
       "ads_time": 0.18,
       "reload_time": 1.9,
+      "max_range": 90,
+      "spread": {
+        "hip_degrees": 1.1,
+        "ads_degrees": 0.2
+      },
+      "recoil": {
+        "pitch_per_shot_degrees": 0.075,
+        "yaw_per_shot_degrees": 0.025
+      },
       "recoil_model": "pattern_noise"
     },
     {
@@ -30,6 +39,15 @@
       },
       "ads_time": 0.14,
       "reload_time": 1.65,
+      "max_range": 55,
+      "spread": {
+        "hip_degrees": 1.45,
+        "ads_degrees": 0.3
+      },
+      "recoil": {
+        "pitch_per_shot_degrees": 0.06,
+        "yaw_per_shot_degrees": 0.035
+      },
       "recoil_model": "pattern_noise"
     },
     {
@@ -42,6 +60,15 @@
       "damage_per_pellet": 12,
       "ads_time": 0.2,
       "reload_time": 2.4,
+      "max_range": 35,
+      "spread": {
+        "hip_degrees": 4.5,
+        "ads_degrees": 2.4
+      },
+      "recoil": {
+        "pitch_per_shot_degrees": 0.2,
+        "yaw_per_shot_degrees": 0.08
+      },
       "recoil_model": "pattern_noise"
     },
     {
@@ -58,6 +85,15 @@
       },
       "ads_time": 0.12,
       "reload_time": 1.35,
+      "max_range": 65,
+      "spread": {
+        "hip_degrees": 1.0,
+        "ads_degrees": 0.18
+      },
+      "recoil": {
+        "pitch_per_shot_degrees": 0.04,
+        "yaw_per_shot_degrees": 0.02
+      },
       "recoil_model": "pattern_noise"
     }
   ]
