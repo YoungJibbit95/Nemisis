@@ -39,6 +39,13 @@ Supported IDE paths:
 - Uses vcpkg for full dependency work.
 - Intended for SDL3, Vulkan, and future renderer testing once vcpkg and Ninja exist.
 
+`windows-msvc-vcpkg-debug`:
+
+- Generator: Visual Studio 17 2022.
+- Uses vcpkg for SDL3/Vulkan dependency work.
+- Does not require Ninja.
+- Best path for visible SDL debug renderer testing in VSCode/Visual Studio.
+
 ## Minimal Build
 
 Visual Studio generator:
@@ -48,6 +55,14 @@ cmake --preset windows-msvc-debug
 cmake --build --preset windows-msvc-debug
 ctest --test-dir build/windows-msvc-debug -C Debug
 .\build\windows-msvc-debug\Debug\nemisis_game.exe
+```
+
+Visible SDL debug renderer with vcpkg:
+
+```powershell
+cmake --preset windows-msvc-vcpkg-debug
+cmake --build --preset windows-msvc-vcpkg-debug
+.\build\windows-msvc-vcpkg-debug\Debug\nemisis_game.exe
 ```
 
 Ninja generator:

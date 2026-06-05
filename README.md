@@ -51,6 +51,13 @@ cmake --preset windows-ninja-vcpkg-debug
 cmake --build --preset windows-ninja-vcpkg-debug
 ```
 
+### Full vcpkg support without Ninja:
+
+```powershell
+cmake --preset windows-msvc-vcpkg-debug
+cmake --build --preset windows-msvc-vcpkg-debug
+```
+
 ### Sibling checkout fallback:
 
 ```powershell

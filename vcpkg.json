@@ -1,0 +1,17 @@
+{
+  "name": "nemisis",
+  "version-string": "0.1.0",
+  "description": "Nemisis arena shooter built on NovaCore",
+  "dependencies": [
+    "sdl3",
+    "vulkan",
+    "vulkan-memory-allocator",
+    "glm",
+    "tinygltf",
+    "meshoptimizer",
+    "stb",
+    "miniaudio",
+    "freetype",
+    "nlohmann-json"
+  ]
+}
