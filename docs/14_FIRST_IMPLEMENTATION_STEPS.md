@@ -203,12 +203,14 @@ Implement:
 - Define coordinate, scale, naming, socket, collision, material, LOD, metadata, and export rules.
 - Add first Blender-agent briefs for target dummy, AR, movement arena kit, first-person arms, and third-person player proxy.
 - Add source/export asset directory documentation.
+- Add the first Blender-only generator script for dev primitive source/export files.
 
 Acceptance:
 
 - `docs/16_ASSET_PRODUCTION_PLAN.md` exists and can be handed to an asset agent.
 - `assets/briefs/BLENDER_AGENT_BRIEFS.md` contains concrete first asset tasks.
 - Asset README files point to the current production plan.
+- `tools/blender/make_dev_primitives.py` is ready to run when Blender is installed.
 - No unclear-license binary assets are added.
 
 

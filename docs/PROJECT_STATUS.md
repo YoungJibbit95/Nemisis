@@ -21,6 +21,7 @@
 - Client command packets and server acknowledgement packets have a first deterministic binary format.
 - The dev client now exercises a loopback command bridge that serializes pending commands, processes them through a server-side handoff, and acknowledges them back into the local command queue.
 - Asset production has an agent-ready Blender handoff plan and initial briefs for target, weapon, arena, arms, and player proxy assets.
+- Blender automation is prepared for first dev primitives through `tools/blender/make_dev_primitives.py`.
 - Movement replay tests cover sprint distance, jump/double-jump, dash cooldown, and config-driven tuning.
 - Input command, weapon simulation, weapon shot, player view, debug target, dev sandbox, player spawn, command queue, command message, and loopback bridge tests cover the newest gameplay bridge.
 
@@ -32,10 +33,11 @@
 - Dev sandbox telemetry now reports sent command packets, received acknowledgements, and last acknowledged tick.
 - Added `nemisis_command_messages_tests` and `nemisis_loopback_command_bridge_tests` CMake targets.
 - Added `docs/16_ASSET_PRODUCTION_PLAN.md` plus initial Blender-agent briefs under `assets/briefs`.
+- Added a Blender-only dev primitive generator script for future target dummy, AR blockout, and movement arena kit exports.
 
 ## Next Game Blocks
 
 - Add player health/damage components and measured TTK tests.
 - Add raw mouse capture/cursor lock and configurable sensitivity loading.
 - Add a tiny visible debug HUD once text rendering/UI exists.
-- Add the first generated Blender dev primitives once Blender is installed or exposed through tooling.
+- Run the prepared Blender dev primitive generator once Blender is installed or exposed through tooling.

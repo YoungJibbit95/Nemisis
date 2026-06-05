@@ -20,7 +20,7 @@ Current local environment:
 - No Blender executable was found under the usual `C:\Program Files` install path.
 - This block therefore implements the production plan and asset briefs, not generated `.blend` files.
 
-Once Blender is available, the first automation step is to create `tools/blender` scripts for scale validation, naming validation, glTF export, and preview renders.
+The first generator script is already prepared in `tools/blender/make_dev_primitives.py`. Once Blender is available, it can create source `.blend` files, glTF exports, and metadata for the target dummy, AR blockout, and movement test arena kit.
 
 ## Art Direction
 
@@ -244,9 +244,9 @@ Before an asset enters runtime tests:
 
 When Blender is installed:
 
-1. `tools/blender/validate_asset.py`: verify naming, scale, transforms, sockets, and collision proxy names.
-2. `tools/blender/export_gltf.py`: export selected source file to the expected glTF path.
-3. `tools/blender/render_preview.py`: render a stable turntable or front/side preview.
-4. `tools/blender/make_dev_primitives.py`: generate the first simple target dummy, floor grid, and blockout kit.
+1. `tools/blender/make_dev_primitives.py`: generate the first simple target dummy, AR blockout, floor grid, and movement blockout kit.
+2. `tools/blender/validate_asset.py`: verify naming, scale, transforms, sockets, and collision proxy names.
+3. `tools/blender/export_gltf.py`: export selected source file to the expected glTF path.
+4. `tools/blender/render_preview.py`: render a stable turntable or front/side preview.
 
 These scripts should run headless so Codex can call them from the terminal and commit generated source/export files only after validation.
