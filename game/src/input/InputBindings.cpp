@@ -21,6 +21,13 @@ novacore::platform::InputControl mouse(std::uint16_t code) {
     };
 }
 
+novacore::platform::InputControl mouseAxis(std::uint16_t code) {
+    return novacore::platform::InputControl{
+        novacore::platform::InputControlKind::MouseAxis,
+        code,
+    };
+}
+
 novacore::platform::InputControl gamepadButton(std::uint16_t code) {
     return novacore::platform::InputControl{
         novacore::platform::InputControlKind::GamepadButton,
@@ -77,6 +84,8 @@ novacore::platform::InputActionMap createDefaultActionMap() {
     bindButton(actionMap, actions::Fire, mouse(mouse_codes::Left));
     bindButton(actionMap, actions::Ads, mouse(mouse_codes::Right));
     bindButton(actionMap, actions::Reload, keyboard(key_codes::R));
+    bindAxis(actionMap, actions::LookRight, mouseAxis(mouse_axes::X), 0.1F, 0.001F);
+    bindAxis(actionMap, actions::LookUp, mouseAxis(mouse_axes::Y), -0.1F, 0.001F);
 
     bindAxis(actionMap, actions::MoveRight, gamepadAxis(gamepad_axes::LeftX), 1.0F, 0.08F);
     bindAxis(actionMap, actions::MoveLeft, gamepadAxis(gamepad_axes::LeftX), -1.0F, 0.08F);
@@ -92,6 +101,8 @@ novacore::platform::InputActionMap createDefaultActionMap() {
     bindAxis(actionMap, actions::Fire, gamepadAxis(gamepad_axes::RightTrigger), 1.0F, 0.15F);
     bindAxis(actionMap, actions::Ads, gamepadAxis(gamepad_axes::LeftTrigger), 1.0F, 0.15F);
     bindButton(actionMap, actions::Reload, gamepadButton(gamepad_buttons::X));
+    bindAxis(actionMap, actions::LookRight, gamepadAxis(gamepad_axes::RightX), 2.4F, 0.06F);
+    bindAxis(actionMap, actions::LookUp, gamepadAxis(gamepad_axes::RightY), -2.0F, 0.06F);
 
     return actionMap;
 }

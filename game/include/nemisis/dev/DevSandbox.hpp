@@ -1,6 +1,7 @@
 #pragma once
 
 #include "nemisis/movement/MovementSystem.hpp"
+#include "nemisis/dev/DebugTarget.hpp"
 #include "nemisis/player/PlayerComponents.hpp"
 #include "nemisis/player/PlayerInputCommand.hpp"
 #include "nemisis/weapons/WeaponSimulation.hpp"
@@ -26,6 +27,8 @@ struct DevSandboxSample final {
     weapons::FireResult fire{};
     weapons::ShotTraceResult shot{};
     bool hasShot = false;
+    DebugTargetState target{};
+    DebugTargetHitResult targetHit{};
     player::PlayerNetworkComponent network{};
 };
 

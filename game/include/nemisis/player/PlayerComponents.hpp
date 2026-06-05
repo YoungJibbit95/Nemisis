@@ -21,6 +21,11 @@ struct PlayerLoadoutComponent final {
     std::string activeWeaponId;
 };
 
+struct PlayerViewComponent final {
+    float yawDegrees = 0.0F;
+    float pitchDegrees = 0.0F;
+};
+
 struct PlayerNetworkComponent final {
     std::uint32_t connectionId = 0;
     std::uint64_t lastProcessedCommandTick = 0;

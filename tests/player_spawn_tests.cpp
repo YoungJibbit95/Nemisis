@@ -47,6 +47,7 @@ void testSpawnCreatesExpectedPlayerComponents() {
 
     expect(world.isAlive(entity), "spawned local player entity is alive");
     expect(world.getComponent<nemisis::player::LocalPlayerComponent>(entity) != nullptr, "local player component exists");
+    expect(world.getComponent<nemisis::player::PlayerViewComponent>(entity) != nullptr, "view component exists");
     expect(world.getComponent<nemisis::movement::PlayerMovementState>(entity) != nullptr, "movement state component exists");
 
     const auto* identity = world.getComponent<nemisis::player::PlayerIdentityComponent>(entity);

@@ -95,6 +95,8 @@ Current implemented slice:
 
 - MKB and controller bindings feed the same `InputActionMap`.
 - Left stick maps to movement actions.
+- Mouse delta maps to look actions.
+- Right stick maps to look actions.
 - Right trigger maps to fire.
 - Left trigger maps to ADS.
 - Gamepad button bindings cover jump, dash, slide, sprint, mantle, and reload.

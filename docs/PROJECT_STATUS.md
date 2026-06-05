@@ -13,24 +13,26 @@
 - Local player spawning creates a NovaCore ECS entity with identity, local-input, network, loadout, movement, and weapon runtime components.
 - A tick-ordered `PlayerCommandQueue` keeps unacknowledged local commands for future server reconciliation.
 - The playable dev sandbox updates actions from NovaCore window input snapshots.
-- Dev telemetry logs movement, weapon, pending command, and shot trace data while the game runs.
+- Dev telemetry logs movement, view, weapon, target, pending command, and shot trace data while the game runs.
+- Mouse and right-stick look update player yaw/pitch.
+- Movement is camera-relative through `PlayerViewComponent`.
+- A debug target dummy supports first hitscan damage, health, hit count, elimination, and auto-respawn.
 - Deterministic `ShotTraceResult` data now carries seed, direction, range, spread, and damage for future hitscan validation.
 - Movement replay tests cover sprint distance, jump/double-jump, dash cooldown, and config-driven tuning.
-- Input command, weapon simulation, weapon shot, dev sandbox, player spawn, and command queue tests cover the newest gameplay bridge.
+- Input command, weapon simulation, weapon shot, player view, debug target, dev sandbox, player spawn, and command queue tests cover the newest gameplay bridge.
 
 ## Added In Latest Block
 
-- Added `DevSandbox` for playable runtime telemetry and state-colored renderer clear feedback.
-- `GameApp::onFrame` now updates game actions from `Window::inputSnapshot`.
-- `GameApp::onFixedTick` now emits dev samples after command, movement, weapon, and network metadata updates.
-- Added `WeaponShot` deterministic shot trace generation with seed, spread, recoil offsets, range, and damage.
-- Weapon config now includes range, spread, and recoil tuning values.
-- Added `nemisis_dev_sandbox_tests` and `nemisis_weapon_shot_tests` CMake targets.
-- Added `docs/15_PLAYABLE_DEV_SANDBOX.md`.
+- Added look actions for mouse delta and controller right stick.
+- Added `PlayerViewComponent` and view helpers for yaw/pitch, forward vectors, and camera-relative movement.
+- `GameApp::onFixedTick` now applies look before movement and fires shot traces along view forward.
+- Added `DebugTarget` with sphere hit testing, damage, elimination, and reset behavior.
+- Dev sandbox telemetry now reports target health, hits, hit result, and elimination state.
+- Added `nemisis_player_view_tests` and `nemisis_debug_target_tests` CMake targets.
 
 ## Next Game Blocks
 
 - Start client/server command packet serialization and server-authoritative acknowledgement handoff.
-- Add player health/damage components for measured TTK tests.
-- Add camera-relative movement and mouse-look snapshot support.
-- Add a debug target dummy and first hitscan damage application.
+- Add player health/damage components and measured TTK tests.
+- Add raw mouse capture/cursor lock and configurable sensitivity loading.
+- Add server loopback acknowledgement for command queue trimming.

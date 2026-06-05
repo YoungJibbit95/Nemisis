@@ -35,11 +35,13 @@ namespace {
 
 [[nodiscard]] novacore::platform::InputDeviceKind dominantDevice(
     const novacore::platform::InputActionMap& actions) {
-    const std::array<std::string_view, 14> actionNames{
+    const std::array<std::string_view, 16> actionNames{
         actions::MoveForward,
         actions::MoveBackward,
         actions::MoveLeft,
         actions::MoveRight,
+        actions::LookRight,
+        actions::LookUp,
         actions::Jump,
         actions::Dash,
         actions::Slide,
@@ -77,6 +79,8 @@ player::PlayerInputCommand buildPlayerInputCommand(
 
     command.move.x = std::clamp(right - left, -1.0F, 1.0F);
     command.move.y = std::clamp(forward - backward, -1.0F, 1.0F);
+    command.look.x = state(actions, actions::LookRight).value;
+    command.look.y = state(actions, actions::LookUp).value;
 
     command.jumpPressed = pressed(actions, actions::Jump);
     command.doubleJumpPressed = pressed(actions, actions::DoubleJump);

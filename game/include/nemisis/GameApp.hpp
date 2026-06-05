@@ -1,5 +1,6 @@
 #pragma once
 
+#include "nemisis/dev/DebugTarget.hpp"
 #include "nemisis/dev/DevSandbox.hpp"
 #include "nemisis/movement/MovementConfig.hpp"
 #include "nemisis/movement/MovementSystem.hpp"
@@ -39,11 +40,14 @@ private:
     novacore::platform::Window window_;
     novacore::render::Renderer renderer_;
     novacore::ecs::World world_;
+    novacore::ecs::EntityId cameraEntity_;
+    dev::DebugTargetState debugTarget_;
     dev::DevSandbox devSandbox_;
     movement::MovementSystem movement_;
     player::PlayerCommandQueue localCommandQueue_;
     novacore::ecs::EntityId localPlayerEntity_;
     weapons::WeaponSystem weapons_;
+    float debugTargetRespawnSeconds_ = 0.0F;
 };
 
 } // namespace nemisis::game

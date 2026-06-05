@@ -13,6 +13,8 @@ inline constexpr std::string_view MoveForward = "move_forward";
 inline constexpr std::string_view MoveBackward = "move_backward";
 inline constexpr std::string_view MoveLeft = "move_left";
 inline constexpr std::string_view MoveRight = "move_right";
+inline constexpr std::string_view LookRight = "look_right";
+inline constexpr std::string_view LookUp = "look_up";
 inline constexpr std::string_view Jump = "jump";
 inline constexpr std::string_view DoubleJump = "double_jump";
 inline constexpr std::string_view Dash = "dash";
@@ -47,6 +49,13 @@ inline constexpr std::uint16_t Right = 2;
 
 } // namespace mouse_codes
 
+namespace mouse_axes {
+
+inline constexpr std::uint16_t X = 0;
+inline constexpr std::uint16_t Y = 1;
+
+} // namespace mouse_axes
+
 namespace gamepad_buttons {
 
 inline constexpr std::uint16_t A = 0;
@@ -60,6 +69,8 @@ namespace gamepad_axes {
 
 inline constexpr std::uint16_t LeftX = 0;
 inline constexpr std::uint16_t LeftY = 1;
+inline constexpr std::uint16_t RightX = 2;
+inline constexpr std::uint16_t RightY = 3;
 inline constexpr std::uint16_t LeftTrigger = 4;
 inline constexpr std::uint16_t RightTrigger = 5;
 

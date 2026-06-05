@@ -8,9 +8,12 @@ It is not a vertical slice yet. It is a developer playground for validating:
 
 - Window event input.
 - MKB and controller action mapping.
+- Mouse and right-stick look.
+- Camera-relative movement.
 - Fixed-tick player movement.
 - Weapon fire, cooldown, reload, ammo, and dry fire.
 - Deterministic shot traces with seed, range, direction, spread, and damage.
+- Debug target hits, damage, health, elimination, and respawn.
 - Pending command queue metadata for future server acknowledgement.
 
 ## Run
@@ -35,6 +38,7 @@ Current environment note:
 MKB:
 
 - `WASD`: move.
+- `Mouse`: look.
 - `Space`: jump, double jump, mantle request.
 - `LeftAlt`: dash.
 - `C`: slide.
@@ -46,6 +50,7 @@ MKB:
 Controller:
 
 - `LeftStick`: move.
+- `RightStick`: look.
 - `A`: jump, double jump, mantle request.
 - `B`: dash and slide placeholder.
 - `LeftStickPress`: sprint and tactical sprint placeholder.
@@ -62,6 +67,7 @@ The sandbox logs every 0.5 seconds through NovaCore logging:
 - Input device.
 - Move vector.
 - Position and velocity.
+- View-relative aiming state through shot trace direction.
 - Weapon id.
 - Ammo.
 - Shot index.
@@ -69,11 +75,15 @@ The sandbox logs every 0.5 seconds through NovaCore logging:
 - Fire/dry-fire result.
 - Pending command count.
 - Shot trace seed, range, and direction when a shot fires.
+- Debug target health.
+- Debug target hit count.
+- Hit/elimination result.
 
 The renderer clear color also changes by state for early visual feedback:
 
 - Dark idle/grounded.
 - Orange when firing.
+- Red when firing and hitting the debug target.
 - Blue while reloading.
 - Cyan when dashing.
 - Green while sliding.
@@ -82,15 +92,15 @@ The renderer clear color also changes by state for early visual feedback:
 ## Current Limits
 
 - Renderer is still a Vulkan/null placeholder.
-- There is no 3D world, collision, enemies, target dummies, or hit resolution yet.
-- Mouse look is not implemented yet.
-- Shot trace uses forward direction until camera aim exists.
+- There is no 3D world mesh or general collision yet.
+- Mouse look exists, but cursor capture/raw mouse mode is not implemented yet.
+- Debug target hit resolution is a focused sphere test, not full scene collision.
 - The command queue is local only; packet serialization and server acknowledgements are next.
 
 ## Next Dev Sandbox Upgrades
 
-- Mouse look and camera-relative movement.
-- Simple debug target dummy with health.
-- Hitscan overlap against debug target primitives.
+- Raw mouse/cursor capture.
+- Config-loaded sensitivity and response curves.
+- More debug targets and measured TTK tests.
 - On-screen debug HUD once UI text rendering exists.
 - Server loopback command acknowledgement.

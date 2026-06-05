@@ -1,9 +1,11 @@
 #include "nemisis/GameApp.hpp"
 
+#include "nemisis/dev/DebugTarget.hpp"
 #include "nemisis/input/InputBindings.hpp"
 #include "nemisis/input/InputCommandBuilder.hpp"
 #include "nemisis/player/PlayerComponents.hpp"
 #include "nemisis/player/PlayerSpawn.hpp"
+#include "nemisis/player/PlayerView.hpp"
 #include "nemisis/weapons/WeaponSimulation.hpp"
 #include "nemisis/weapons/WeaponShot.hpp"
 
@@ -23,6 +25,7 @@ namespace nemisis::game {
 namespace {
 
 constexpr std::string_view kDefaultWeaponId = "ar_01";
+constexpr float kDebugTargetRespawnDelaySeconds = 1.5F;
 
 } // namespace
 
@@ -45,10 +48,10 @@ void GameApp::onStartup() {
     novacore::render::RendererCreateInfo rendererInfo{};
     renderer_.create(window_, rendererInfo);
 
-    const auto camera = world_.createEntity();
-    world_.addComponent(camera, novacore::ecs::NameComponent{"main_camera"});
-    world_.addComponent(camera, novacore::ecs::TransformComponent{});
-    world_.addComponent(camera, novacore::ecs::CameraComponent{});
+    cameraEntity_ = world_.createEntity();
+    world_.addComponent(cameraEntity_, novacore::ecs::NameComponent{"main_camera"});
+    world_.addComponent(cameraEntity_, novacore::ecs::TransformComponent{});
+    world_.addComponent(cameraEntity_, novacore::ecs::CameraComponent{});
 
     if (weapons_.weaponCount() == 0) {
         weapons_.registerPrototypeLoadout();
@@ -71,12 +74,23 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
     const auto command = input::buildPlayerInputCommand(actions_, context.tickIndex);
     (void)localCommandQueue_.push(command);
 
+    auto movementCommand = command;
+    auto* view = world_.getComponent<player::PlayerViewComponent>(localPlayerEntity_);
+    if (view != nullptr) {
+        player::applyLook(*view, command.look);
+        movementCommand = player::commandRelativeToView(command, *view);
+    }
+
     auto* movementState = world_.getComponent<movement::PlayerMovementState>(localPlayerEntity_);
     if (movementState != nullptr) {
-        *movementState = movement_.simulate(*movementState, command, static_cast<float>(context.fixedDeltaSeconds));
+        *movementState = movement_.simulate(*movementState, movementCommand, static_cast<float>(context.fixedDeltaSeconds));
         if (auto* transform = world_.getComponent<novacore::ecs::TransformComponent>(localPlayerEntity_);
             transform != nullptr) {
             transform->position = movementState->position;
+        }
+        if (auto* cameraTransform = world_.getComponent<novacore::ecs::TransformComponent>(cameraEntity_);
+            cameraTransform != nullptr) {
+            cameraTransform->position = movementState->position + novacore::math::Vec3{0.0F, 1.65F, 0.0F};
         }
     }
 
@@ -102,7 +116,11 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
             if (fireResult.fired && movementState != nullptr) {
                 weapons::ShotTraceRequest shotRequest{};
                 shotRequest.origin = movementState->position + novacore::math::Vec3{0.0F, 1.65F, 0.0F};
-                shotRequest.forward = novacore::math::Vec3{0.0F, 0.0F, 1.0F};
+                if (view != nullptr) {
+                    shotRequest.forward = player::viewVectors(*view).forward;
+                } else {
+                    shotRequest.forward = novacore::math::Vec3{0.0F, 0.0F, 1.0F};
+                }
                 shotRequest.seed = static_cast<std::uint32_t>(command.tick);
                 shotRequest.shotIndex = fireResult.shotIndex;
                 shotRequest.movementSpeed =
@@ -112,6 +130,23 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
                 shotTrace = weapons::buildShotTrace(*weapon, shotRequest);
                 hasShotTrace = true;
             }
+        }
+    }
+
+    dev::DebugTargetHitResult targetHit{};
+    if (hasShotTrace) {
+        targetHit = dev::applyShotToDebugTarget(debugTarget_, shotTrace);
+        if (targetHit.eliminated) {
+            debugTargetRespawnSeconds_ = kDebugTargetRespawnDelaySeconds;
+        }
+    }
+
+    if (debugTarget_.eliminated && debugTargetRespawnSeconds_ > 0.0F) {
+        debugTargetRespawnSeconds_ = std::max(
+            0.0F,
+            debugTargetRespawnSeconds_ - static_cast<float>(context.fixedDeltaSeconds));
+        if (debugTargetRespawnSeconds_ <= 0.0F) {
+            dev::resetDebugTarget(debugTarget_);
         }
     }
 
@@ -144,6 +179,8 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
         fireResult,
         shotTrace,
         hasShotTrace,
+        debugTarget_,
+        targetHit,
         networkSample,
     });
 }

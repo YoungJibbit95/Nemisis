@@ -72,7 +72,7 @@ void DevSandbox::onFrame(double deltaSeconds) {
     if (!printedControls_) {
         novacore::core::logInfo(
             "dev",
-            "Playable dev sandbox controls: WASD/LeftStick move, Space/A jump, LeftAlt/B dash, C/B slide, Shift/LeftStick sprint, MouseLeft/RT fire, MouseRight/LT ADS, R/X reload");
+            "Playable dev sandbox controls: WASD/LeftStick move, Mouse/RightStick look, Space/A jump, LeftAlt/B dash, C/B slide, Shift/LeftStick sprint, MouseLeft/RT fire, MouseRight/LT ADS, R/X reload; target dummy is straight ahead");
         printedControls_ = true;
     }
 
@@ -113,6 +113,11 @@ std::string DevSandbox::latestSummary() const {
                << " traceDir=";
         appendVec3(stream, latest_.shot.direction);
     }
+    stream << " targetHp=" << std::fixed << std::setprecision(1)
+           << latest_.target.health
+           << " targetHits=" << latest_.target.hitsTaken
+           << " hit=" << (latest_.targetHit.hit ? "yes" : "no")
+           << " eliminated=" << (latest_.targetHit.eliminated ? "yes" : "no");
     return stream.str();
 }
 
@@ -121,6 +126,9 @@ std::array<float, 4> DevSandbox::clearColor() const {
         return {0.025F, 0.035F, 0.055F, 1.0F};
     }
     if (latest_.fire.fired) {
+        if (latest_.targetHit.hit) {
+            return {0.22F, 0.025F, 0.025F, 1.0F};
+        }
         return {0.18F, 0.085F, 0.025F, 1.0F};
     }
     if (latest_.weapon.reloading) {

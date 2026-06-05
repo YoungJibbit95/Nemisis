@@ -156,6 +156,26 @@ Acceptance:
 - CMake declares `nemisis_dev_sandbox_tests` and `nemisis_weapon_shot_tests`.
 - `docs/15_PLAYABLE_DEV_SANDBOX.md` documents controls, run flow, and current limits.
 
+## Step 11 - Shooter Test Field
+
+Implement:
+
+- Add mouse and right-stick look actions.
+- Add `PlayerViewComponent` for yaw/pitch.
+- Apply look before fixed-tick movement.
+- Transform movement commands relative to player view.
+- Aim shot traces along view forward.
+- Add a debug target dummy with sphere hits, damage, health, elimination, and reset.
+- Extend dev sandbox telemetry with target health, hits, hit result, and elimination state.
+
+Acceptance:
+
+- MKB and controller can steer look through `PlayerInputCommand::look`.
+- Forward movement follows current yaw.
+- Firing forward at the default target applies damage.
+- Dev telemetry reports target health and hit state.
+- CMake declares `nemisis_player_view_tests` and `nemisis_debug_target_tests`.
+
 
 
 

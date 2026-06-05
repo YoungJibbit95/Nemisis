@@ -35,6 +35,7 @@ Movement consumes a normalized `PlayerInputCommand`:
 - Device source metadata.
 
 MKB and controller produce the same command shape.
+Look input updates `PlayerViewComponent`. Movement input is transformed relative to player yaw before `MovementSystem` consumes the command.
 
 Code foundation:
 
@@ -42,6 +43,7 @@ Code foundation:
 - `nemisis::player::PlayerCommandQueue`
 - `nemisis::player::PlayerIdentityComponent`
 - `nemisis::player::PlayerNetworkComponent`
+- `nemisis::player::PlayerViewComponent`
 - `nemisis::movement::MovementTuning`
 - `nemisis::movement::PlayerMovementState`
 - `nemisis::movement::MovementSystem`
@@ -50,6 +52,7 @@ Runtime placement:
 
 - Local player movement state is stored as a NovaCore ECS component.
 - Fixed ticks push commands into `PlayerCommandQueue` before simulation.
+- Fixed ticks apply player look and transform movement relative to view yaw.
 - Simulated movement position is mirrored into the player's `TransformComponent`.
 - Pending command count and last processed tick are tracked for future server acknowledgement.
 
@@ -152,7 +155,6 @@ Movement is acceptable when:
 - Reconciliation is bounded.
 - MKB and controller both feel intentional.
 - Movement tech (Wall Runs, Dashes, Slides) is measurable and consistent.
-
 
 
 

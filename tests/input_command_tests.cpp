@@ -97,6 +97,45 @@ void testControllerDeadzoneDoesNotMove() {
     expect(command.move.x == 0.0F, "left stick deadzone suppresses movement x");
 }
 
+void testMouseLookBuildsCommand() {
+    auto actionMap = nemisis::input::createDefaultActionMap();
+    novacore::platform::InputSnapshot snapshot;
+    snapshot.addAxisDelta(
+        {novacore::platform::InputControlKind::MouseAxis, nemisis::input::mouse_axes::X},
+        10.0F,
+        novacore::platform::InputDeviceKind::KeyboardMouse);
+    snapshot.addAxisDelta(
+        {novacore::platform::InputControlKind::MouseAxis, nemisis::input::mouse_axes::Y},
+        -5.0F,
+        novacore::platform::InputDeviceKind::KeyboardMouse);
+
+    actionMap.update(snapshot);
+    const auto command = nemisis::input::buildPlayerInputCommand(actionMap, 15);
+
+    expect(command.look.x > 0.9F, "mouse x builds positive look x");
+    expect(command.look.y > 0.4F, "mouse y builds positive look y with inverted scale");
+}
+
+void testControllerLookBuildsCommand() {
+    auto actionMap = nemisis::input::createDefaultActionMap();
+    novacore::platform::InputSnapshot snapshot;
+    snapshot.setAxis(
+        {novacore::platform::InputControlKind::GamepadAxis, nemisis::input::gamepad_axes::RightX},
+        0.5F,
+        novacore::platform::InputDeviceKind::Controller);
+    snapshot.setAxis(
+        {novacore::platform::InputControlKind::GamepadAxis, nemisis::input::gamepad_axes::RightY},
+        -0.5F,
+        novacore::platform::InputDeviceKind::Controller);
+
+    actionMap.update(snapshot);
+    const auto command = nemisis::input::buildPlayerInputCommand(actionMap, 16);
+
+    expect(command.look.x > 1.1F, "right stick x builds look x");
+    expect(command.look.y > 0.9F, "right stick y builds look y");
+    expect(command.device == novacore::platform::InputDeviceKind::Controller, "controller look becomes command device");
+}
+
 } // namespace
 
 int main() {
@@ -104,6 +143,8 @@ int main() {
     testPressedActionsBuildCommand();
     testControllerActionsBuildCommand();
     testControllerDeadzoneDoesNotMove();
+    testMouseLookBuildsCommand();
+    testControllerLookBuildsCommand();
 
     if (failures > 0) {
         std::cerr << failures << " input command test(s) failed\n";

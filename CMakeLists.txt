@@ -30,6 +30,7 @@ endif()
 
 add_executable(nemisis_game
     game/src/GameApp.cpp
+    game/src/dev/DebugTarget.cpp
     game/src/dev/DevSandbox.cpp
     game/src/input/InputBindings.cpp
     game/src/input/InputCommandBuilder.cpp
@@ -38,6 +39,7 @@ add_executable(nemisis_game
     game/src/movement/MovementSystem.cpp
     game/src/player/PlayerCommandQueue.cpp
     game/src/player/PlayerSpawn.cpp
+    game/src/player/PlayerView.cpp
     game/src/weapons/WeaponShot.cpp
     game/src/weapons/WeaponSimulation.cpp
     game/src/weapons/WeaponSystem.cpp
@@ -157,3 +159,29 @@ target_include_directories(nemisis_weapon_shot_tests
 
 target_link_libraries(nemisis_weapon_shot_tests PRIVATE Novacore::Engine)
 add_test(NAME nemisis_weapon_shot_tests COMMAND nemisis_weapon_shot_tests)
+
+add_executable(nemisis_player_view_tests
+    game/src/player/PlayerView.cpp
+    tests/player_view_tests.cpp
+)
+
+target_include_directories(nemisis_player_view_tests
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/game/include
+)
+
+target_link_libraries(nemisis_player_view_tests PRIVATE Novacore::Engine)
+add_test(NAME nemisis_player_view_tests COMMAND nemisis_player_view_tests)
+
+add_executable(nemisis_debug_target_tests
+    game/src/dev/DebugTarget.cpp
+    tests/debug_target_tests.cpp
+)
+
+target_include_directories(nemisis_debug_target_tests
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/game/include
+)
+
+target_link_libraries(nemisis_debug_target_tests PRIVATE Novacore::Engine)
+add_test(NAME nemisis_debug_target_tests COMMAND nemisis_debug_target_tests)
