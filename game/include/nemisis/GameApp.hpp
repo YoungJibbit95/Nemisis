@@ -2,11 +2,13 @@
 
 #include "nemisis/movement/MovementConfig.hpp"
 #include "nemisis/movement/MovementSystem.hpp"
+#include "nemisis/player/PlayerCommandQueue.hpp"
 #include "nemisis/weapons/WeaponSystem.hpp"
 
 #include "novacore/core/Application.hpp"
 #include "novacore/core/ConfigRegistry.hpp"
 #include "novacore/ecs/World.hpp"
+#include "novacore/platform/InputAction.hpp"
 #include "novacore/platform/Input.hpp"
 #include "novacore/platform/Window.hpp"
 #include "novacore/render/Renderer.hpp"
@@ -27,7 +29,8 @@ public:
 private:
     void applyConfig(std::string_view name);
     void applyLoadedConfigs();
-    void ensureActiveWeapon();
+    void ensureActiveWeapon(weapons::WeaponRuntimeState& weaponState, std::string_view requestedWeaponId);
+    void ensureLocalPlayer();
 
     novacore::platform::InputSystem input_;
     novacore::platform::InputActionMap actions_;
@@ -36,9 +39,9 @@ private:
     novacore::render::Renderer renderer_;
     novacore::ecs::World world_;
     movement::MovementSystem movement_;
-    movement::PlayerMovementState localMovementState_;
+    player::PlayerCommandQueue localCommandQueue_;
+    novacore::ecs::EntityId localPlayerEntity_;
     weapons::WeaponSystem weapons_;
-    weapons::WeaponRuntimeState activeWeapon_;
 };
 
 } // namespace nemisis::game

@@ -2,12 +2,17 @@
 
 #include "nemisis/input/InputBindings.hpp"
 #include "nemisis/input/InputCommandBuilder.hpp"
+#include "nemisis/player/PlayerComponents.hpp"
+#include "nemisis/player/PlayerSpawn.hpp"
 #include "nemisis/weapons/WeaponSimulation.hpp"
 
 #include "novacore/core/Log.hpp"
+#include "novacore/ecs/Components.hpp"
 
 #include <algorithm>
 #include <array>
+#include <cstdint>
+#include <string>
 #include <string_view>
 
 namespace nemisis::game {
@@ -45,7 +50,7 @@ void GameApp::onStartup() {
     if (weapons_.weaponCount() == 0) {
         weapons_.registerPrototypeLoadout();
     }
-    ensureActiveWeapon();
+    ensureLocalPlayer();
 
     novacore::core::logInfo("game", "Nemisis sandbox camera entity created");
     novacore::core::logInfo("game", "Prototype weapon registry initialized");
@@ -58,16 +63,44 @@ void GameApp::onShutdown() {
 }
 
 void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
-    const auto command = input::buildPlayerInputCommand(actions_, context.tickIndex);
-    localMovementState_ = movement_.simulate(localMovementState_, command, static_cast<float>(context.fixedDeltaSeconds));
+    ensureLocalPlayer();
 
-    ensureActiveWeapon();
-    if (const auto* weapon = weapons_.findWeapon(activeWeapon_.weaponId); weapon != nullptr) {
-        weapons::FireRequest fireRequest{};
-        fireRequest.triggerHeld = command.fireHeld;
-        fireRequest.reloadPressed = command.reloadPressed;
-        fireRequest.fixedDeltaSeconds = static_cast<float>(context.fixedDeltaSeconds);
-        (void)weapons::simulateWeaponTick(*weapon, activeWeapon_, fireRequest);
+    const auto command = input::buildPlayerInputCommand(actions_, context.tickIndex);
+    (void)localCommandQueue_.push(command);
+
+    auto* movementState = world_.getComponent<movement::PlayerMovementState>(localPlayerEntity_);
+    if (movementState != nullptr) {
+        *movementState = movement_.simulate(*movementState, command, static_cast<float>(context.fixedDeltaSeconds));
+        if (auto* transform = world_.getComponent<novacore::ecs::TransformComponent>(localPlayerEntity_);
+            transform != nullptr) {
+            transform->position = movementState->position;
+        }
+    }
+
+    auto* weaponState = world_.getComponent<weapons::WeaponRuntimeState>(localPlayerEntity_);
+    const auto* loadout = world_.getComponent<player::PlayerLoadoutComponent>(localPlayerEntity_);
+    if (weaponState != nullptr) {
+        ensureActiveWeapon(
+            *weaponState,
+            loadout != nullptr ? std::string_view(loadout->activeWeaponId) : kDefaultWeaponId);
+    }
+
+    if (weaponState != nullptr) {
+        const auto* weapon = weapons_.findWeapon(weaponState->weaponId);
+        if (weapon != nullptr) {
+            weapons::FireRequest fireRequest{};
+            fireRequest.triggerHeld = command.fireHeld;
+            fireRequest.reloadPressed = command.reloadPressed;
+            fireRequest.fixedDeltaSeconds = static_cast<float>(context.fixedDeltaSeconds);
+            (void)weapons::simulateWeaponTick(*weapon, *weaponState, fireRequest);
+        }
+    }
+
+    if (auto* network = world_.getComponent<player::PlayerNetworkComponent>(localPlayerEntity_);
+        network != nullptr) {
+        network->lastProcessedCommandTick = command.tick;
+        network->pendingCommandCount = static_cast<std::uint16_t>(
+            std::min<std::size_t>(localCommandQueue_.size(), 65535));
     }
 }
 
@@ -112,7 +145,15 @@ void GameApp::applyConfig(std::string_view name) {
         if (document != nullptr && !weapons_.loadFromConfig(*document)) {
             weapons_.registerPrototypeLoadout();
         }
-        ensureActiveWeapon();
+        if (!localPlayerEntity_.isNull() && world_.isAlive(localPlayerEntity_)) {
+            auto* weaponState = world_.getComponent<weapons::WeaponRuntimeState>(localPlayerEntity_);
+            const auto* loadout = world_.getComponent<player::PlayerLoadoutComponent>(localPlayerEntity_);
+            if (weaponState != nullptr) {
+                ensureActiveWeapon(
+                    *weaponState,
+                    loadout != nullptr ? std::string_view(loadout->activeWeaponId) : kDefaultWeaponId);
+            }
+        }
     }
 }
 
@@ -121,11 +162,14 @@ void GameApp::applyLoadedConfigs() {
     applyConfig("weapons");
 }
 
-void GameApp::ensureActiveWeapon() {
-    const std::string_view requestedWeaponId =
-        activeWeapon_.weaponId.empty() ? kDefaultWeaponId : std::string_view(activeWeapon_.weaponId);
+void GameApp::ensureActiveWeapon(weapons::WeaponRuntimeState& weaponState, std::string_view fallbackWeaponId) {
+    const std::string_view requestedWeaponId = fallbackWeaponId.empty() ? kDefaultWeaponId : fallbackWeaponId;
+    const bool shouldUseRequestedWeapon =
+        weaponState.weaponId.empty() || weaponState.weaponId != requestedWeaponId;
+    const std::string_view desiredWeaponId =
+        shouldUseRequestedWeapon ? requestedWeaponId : std::string_view(weaponState.weaponId);
 
-    const auto* weapon = weapons_.findWeapon(requestedWeaponId);
+    const auto* weapon = weapons_.findWeapon(desiredWeaponId);
     if (weapon == nullptr) {
         weapon = weapons_.findWeapon(kDefaultWeaponId);
     }
@@ -133,15 +177,27 @@ void GameApp::ensureActiveWeapon() {
         return;
     }
 
-    if (activeWeapon_.weaponId != weapon->id) {
-        activeWeapon_ = weapons::WeaponRuntimeState{};
-        activeWeapon_.weaponId = weapon->id;
-        activeWeapon_.ammoInMagazine = weapon->magazineSize;
+    if (weaponState.weaponId != weapon->id) {
+        weaponState = weapons::WeaponRuntimeState{};
+        weaponState.weaponId = weapon->id;
+        weaponState.ammoInMagazine = weapon->magazineSize;
         return;
     }
 
-    activeWeapon_.ammoInMagazine = std::min(activeWeapon_.ammoInMagazine, weapon->magazineSize);
-    activeWeapon_.reloadTimeRemaining = std::min(activeWeapon_.reloadTimeRemaining, weapon->reloadTimeSeconds);
+    weaponState.ammoInMagazine = std::min(weaponState.ammoInMagazine, weapon->magazineSize);
+    weaponState.reloadTimeRemaining = std::min(weaponState.reloadTimeRemaining, weapon->reloadTimeSeconds);
+}
+
+void GameApp::ensureLocalPlayer() {
+    if (!localPlayerEntity_.isNull() && world_.isAlive(localPlayerEntity_)) {
+        return;
+    }
+
+    player::LocalPlayerSpawnDesc spawnDesc{};
+    spawnDesc.activeWeaponId = std::string(kDefaultWeaponId);
+    localPlayerEntity_ = player::spawnLocalPlayer(world_, spawnDesc, weapons_.findWeapon(spawnDesc.activeWeaponId));
+    localCommandQueue_.clear();
+    novacore::core::logInfo("game", "Local player entity spawned");
 }
 
 } // namespace nemisis::game

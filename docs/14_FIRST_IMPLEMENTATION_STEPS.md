@@ -118,6 +118,25 @@ Acceptance:
 - Weapon config includes `reload_time`.
 - CMake declares `nemisis_input_command_tests` and `nemisis_weapon_simulation_tests`.
 
+## Step 9 - Player Entity And Command Queue
+
+Implement:
+
+- Add player ECS components for identity, local ownership, network metadata, and active loadout.
+- Add local player spawn helper that creates a NovaCore entity with transform, movement state, and weapon runtime state.
+- Move local `GameApp` movement and weapon runtime simulation onto the player entity.
+- Add a tick-ordered `PlayerCommandQueue` for unacknowledged local commands.
+- Update network metadata with last processed command tick and pending command count.
+- Add player spawn and command queue tests.
+
+Acceptance:
+
+- `nemisis_game` includes player spawn and command queue sources.
+- Local player state lives on a NovaCore entity.
+- `GameApp::onFixedTick` pushes commands before simulation.
+- Movement updates the player transform from component-backed movement state.
+- CMake declares `nemisis_player_command_queue_tests` and `nemisis_player_spawn_tests`.
+
 
 
 

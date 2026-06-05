@@ -10,21 +10,22 @@
 - Input actions are translated into `PlayerInputCommand` for fixed-tick gameplay.
 - Default input bindings cover MKB plus controller stick/buttons/triggers.
 - Weapon runtime state supports ammo, shot index, fire cooldown, reload timer, and dry fire.
+- Local player spawning creates a NovaCore ECS entity with identity, local-input, network, loadout, movement, and weapon runtime components.
+- A tick-ordered `PlayerCommandQueue` keeps unacknowledged local commands for future server reconciliation.
 - Movement replay tests cover sprint distance, jump/double-jump, dash cooldown, and config-driven tuning.
-- Input command and weapon simulation tests cover the newest gameplay bridge.
+- Input command, weapon simulation, player spawn, and command queue tests cover the newest gameplay bridge.
 
 ## Added In Latest Block
 
-- Added `InputCommandBuilder` to convert NovaCore `InputActionMap` states into `PlayerInputCommand`.
-- Added default controller bindings for left-stick movement, trigger fire/ADS, jump, dash, slide, sprint, mantle, and reload.
-- `GameApp::onFixedTick` now advances local movement from real input command data.
-- Added `WeaponSimulation` with deterministic fire, cooldown, reload, dry-fire, and shot-index behavior.
-- Weapon config now includes `reload_time` for the core prototype roster.
-- `GameApp::onFixedTick` now advances the active weapon from command fire/reload input.
-- Added `nemisis_input_command_tests` and `nemisis_weapon_simulation_tests` CMake targets.
+- Added player ECS components for identity, local ownership, network metadata, and loadout.
+- Added `spawnLocalPlayer` to create the first local player entity through NovaCore ECS.
+- Moved local movement and weapon runtime state onto the player entity.
+- Added `PlayerCommandQueue` for monotonic tick commands, duplicate replacement, capacity trimming, and server acknowledgements.
+- `GameApp::onFixedTick` now pushes commands, simulates component-backed movement/weapons, mirrors movement into transform, and updates pending-command network metadata.
+- Added `nemisis_player_command_queue_tests` and `nemisis_player_spawn_tests` CMake targets.
 
 ## Next Game Blocks
 
-- Add player entity/component setup around movement and weapons.
 - Add hit-scan request/result types and deterministic recoil seed plumbing.
-- Start server-authoritative command queue handoff.
+- Start client/server command packet serialization and server-authoritative acknowledgement handoff.
+- Add player health/damage components for measured TTK tests.

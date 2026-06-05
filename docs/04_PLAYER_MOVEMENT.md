@@ -39,9 +39,19 @@ MKB and controller produce the same command shape.
 Code foundation:
 
 - `nemisis::player::PlayerInputCommand`
+- `nemisis::player::PlayerCommandQueue`
+- `nemisis::player::PlayerIdentityComponent`
+- `nemisis::player::PlayerNetworkComponent`
 - `nemisis::movement::MovementTuning`
 - `nemisis::movement::PlayerMovementState`
 - `nemisis::movement::MovementSystem`
+
+Runtime placement:
+
+- Local player movement state is stored as a NovaCore ECS component.
+- Fixed ticks push commands into `PlayerCommandQueue` before simulation.
+- Simulated movement position is mirrored into the player's `TransformComponent`.
+- Pending command count and last processed tick are tracked for future server acknowledgement.
 
 Replay foundation:
 
@@ -49,6 +59,8 @@ Replay foundation:
 - Sprint distance replay.
 - Jump -> double-jump replay.
 - Dash cooldown replay.
+- `nemisis_player_command_queue_tests`
+- `nemisis_player_spawn_tests`
 
 ## Core States
 
@@ -140,7 +152,6 @@ Movement is acceptable when:
 - Reconciliation is bounded.
 - MKB and controller both feel intentional.
 - Movement tech (Wall Runs, Dashes, Slides) is measurable and consistent.
-
 
 
 

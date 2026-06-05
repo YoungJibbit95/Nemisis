@@ -35,6 +35,8 @@ add_executable(nemisis_game
     game/src/main.cpp
     game/src/movement/MovementConfig.cpp
     game/src/movement/MovementSystem.cpp
+    game/src/player/PlayerCommandQueue.cpp
+    game/src/player/PlayerSpawn.cpp
     game/src/weapons/WeaponSimulation.cpp
     game/src/weapons/WeaponSystem.cpp
 )
@@ -101,3 +103,29 @@ target_include_directories(nemisis_weapon_simulation_tests
 
 target_link_libraries(nemisis_weapon_simulation_tests PRIVATE Novacore::Engine)
 add_test(NAME nemisis_weapon_simulation_tests COMMAND nemisis_weapon_simulation_tests)
+
+add_executable(nemisis_player_command_queue_tests
+    game/src/player/PlayerCommandQueue.cpp
+    tests/player_command_queue_tests.cpp
+)
+
+target_include_directories(nemisis_player_command_queue_tests
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/game/include
+)
+
+target_link_libraries(nemisis_player_command_queue_tests PRIVATE Novacore::Engine)
+add_test(NAME nemisis_player_command_queue_tests COMMAND nemisis_player_command_queue_tests)
+
+add_executable(nemisis_player_spawn_tests
+    game/src/player/PlayerSpawn.cpp
+    tests/player_spawn_tests.cpp
+)
+
+target_include_directories(nemisis_player_spawn_tests
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/game/include
+)
+
+target_link_libraries(nemisis_player_spawn_tests PRIVATE Novacore::Engine)
+add_test(NAME nemisis_player_spawn_tests COMMAND nemisis_player_spawn_tests)
