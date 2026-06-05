@@ -2,7 +2,9 @@
 
 #include "novacore/core/Application.hpp"
 
-int main() {
+#include <string_view>
+
+int main(int argc, char** argv) {
     nemisis::game::GameApp game;
 
     novacore::core::ApplicationDesc desc{};
@@ -10,12 +12,18 @@ int main() {
     desc.fixedTickHz = 60.0;
     desc.maxFrames = 0;
 
-#if !NOVACORE_HAS_SDL3
-    desc.maxFrames = 5;
-#endif
+    bool smokeTest = false;
+    for (int i = 1; i < argc; ++i) {
+        if (std::string_view(argv[i]) == "--smoke-test") {
+            smokeTest = true;
+        }
+    }
+
+    if (smokeTest) {
+        desc.maxFrames = 5;
+    }
 
     novacore::core::Application app(desc);
     app.run(game);
     return 0;
 }
-

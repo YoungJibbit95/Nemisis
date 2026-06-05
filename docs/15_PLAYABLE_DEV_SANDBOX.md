@@ -15,6 +15,7 @@ It is not a vertical slice yet. It is a developer playground for validating:
 - Deterministic shot traces with seed, range, direction, spread, and damage.
 - Debug target hits, damage, health, elimination, and respawn.
 - Pending command queue metadata plus loopback server acknowledgement.
+- Game asset catalog load and dev-sandbox preload request setup.
 
 ## Run
 
@@ -96,6 +97,7 @@ The renderer clear color also changes by state for early visual feedback:
 
 - Renderer is still a Vulkan/null placeholder.
 - There is no 3D world mesh or general collision yet.
+- Asset ids and preload requests exist, but glTF import/GPU mesh handles are not implemented yet.
 - Mouse look exists, but cursor capture/raw mouse mode is not implemented yet.
 - Debug target hit resolution is a focused sphere test, not full scene collision.
 - The command bridge is loopback only; real UDP transport, prediction/reconciliation, and remote snapshots are not implemented yet.

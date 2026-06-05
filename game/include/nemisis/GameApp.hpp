@@ -1,5 +1,6 @@
 #pragma once
 
+#include "nemisis/assets/GameAssetCatalog.hpp"
 #include "nemisis/dev/DebugTarget.hpp"
 #include "nemisis/dev/DevSandbox.hpp"
 #include "nemisis/movement/MovementConfig.hpp"
@@ -11,6 +12,7 @@
 #include "novacore/core/Application.hpp"
 #include "novacore/core/ConfigRegistry.hpp"
 #include "novacore/ecs/World.hpp"
+#include "novacore/assets/AssetStreamer.hpp"
 #include "novacore/platform/InputAction.hpp"
 #include "novacore/platform/Input.hpp"
 #include "novacore/platform/Window.hpp"
@@ -27,9 +29,10 @@ public:
     void onFixedTick(const novacore::core::FrameContext& context) override;
     void onFrame(const novacore::core::FrameContext& context) override;
     [[nodiscard]] bool shouldQuit() const override;
-    [[nodiscard]] bool isHeadless() const;
+    [[nodiscard]] bool isHeadless() const override;
 
 private:
+    void loadAssetCatalog();
     void applyConfig(std::string_view name);
     void applyLoadedConfigs();
     void ensureActiveWeapon(weapons::WeaponRuntimeState& weaponState, std::string_view requestedWeaponId);
@@ -41,6 +44,8 @@ private:
     novacore::platform::Window window_;
     novacore::render::Renderer renderer_;
     novacore::ecs::World world_;
+    nemisis::assets::GameAssetCatalog assetCatalog_;
+    novacore::assets::AssetStreamer assetStreamer_;
     novacore::ecs::EntityId cameraEntity_;
     dev::DebugTargetState debugTarget_;
     dev::DevSandbox devSandbox_;

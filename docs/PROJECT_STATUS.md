@@ -22,6 +22,8 @@
 - The dev client now exercises a loopback command bridge that serializes pending commands, processes them through a server-side handoff, and acknowledges them back into the local command queue.
 - Asset production has an agent-ready Blender handoff plan and initial briefs for target, weapon, arena, arms, and player proxy assets.
 - Blender automation is prepared for first dev primitives through `tools/blender/make_dev_primitives.py`.
+- Runtime asset ids are declared in `configs/assets/nemisis_assets.json`.
+- `GameAssetCatalog` loads the game asset manifest through NovaCore's asset registry backbone and queues dev-sandbox preload requests.
 - Movement replay tests cover sprint distance, jump/double-jump, dash cooldown, and config-driven tuning.
 - Input command, weapon simulation, weapon shot, player view, debug target, dev sandbox, player spawn, command queue, command message, and loopback bridge tests cover the newest gameplay bridge.
 
@@ -34,6 +36,11 @@
 - Added `nemisis_command_messages_tests` and `nemisis_loopback_command_bridge_tests` CMake targets.
 - Added `docs/16_ASSET_PRODUCTION_PLAN.md` plus initial Blender-agent briefs under `assets/briefs`.
 - Added a Blender-only dev primitive generator script for future target dummy, AR blockout, and movement arena kit exports.
+- Added game-side asset catalog loading, dev-sandbox streaming-zone construction, and `nemisis_asset_catalog_tests`.
+- Added Blender agent instructions, job template, and PowerShell helper script.
+- Added `docs/17_IDE_TOOLCHAIN_AND_BLENDER_RUNBOOK.md` plus Visual Studio 2022 no-deps preset.
+- Added runtime data copy support and Visual Studio debugger working directory for `nemisis_game`.
+- Added `nemisis_game --smoke-test` and CTest registration for quick runtime launch checks.
 
 ## Next Game Blocks
 
@@ -41,3 +48,4 @@
 - Add raw mouse capture/cursor lock and configurable sensitivity loading.
 - Add a tiny visible debug HUD once text rendering/UI exists.
 - Run the prepared Blender dev primitive generator once Blender is installed or exposed through tooling.
+- Add first glTF metadata/import handoff from NovaCore asset catalog into renderer mesh handles.

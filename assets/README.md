@@ -15,6 +15,12 @@ Blender is not currently installed in the local environment, so this repo contai
 Prepared automation:
 
 - `tools/blender/make_dev_primitives.py`: Blender-only script for generating the first target dummy, AR blockout, and movement arena kit source/export files.
+- `tools/blender/run_make_dev_primitives.ps1`: helper that finds Blender and runs the generator.
+- `tools/blender/CODEX_ASSET_AGENT.md`: handoff process for a Blender-capable Codex/agent.
+
+Runtime catalog:
+
+- `configs/assets/nemisis_assets.json` declares the asset ids Nemisis expects at runtime.
 
 
 

@@ -11,6 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(NEMISIS_WARNINGS_AS_ERRORS "Treat warnings as errors" OFF)
+option(NEMISIS_COPY_RUNTIME_DATA "Copy configs and asset docs beside the game executable" ON)
 set(NOVACORE_ENGINE_ROOT "" CACHE PATH "Path to a NovaCore Engine checkout")
 
 if(NOT NOVACORE_ENGINE_ROOT)
@@ -30,6 +31,7 @@ endif()
 
 add_executable(nemisis_game
     game/src/GameApp.cpp
+    game/src/assets/GameAssetCatalog.cpp
     game/src/dev/DebugTarget.cpp
     game/src/dev/DevSandbox.cpp
     game/src/input/InputBindings.cpp
@@ -53,6 +55,21 @@ target_include_directories(nemisis_game
 )
 
 target_link_libraries(nemisis_game PRIVATE Novacore::Engine)
+set_target_properties(nemisis_game PROPERTIES
+    VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+
+if(NEMISIS_COPY_RUNTIME_DATA)
+    add_custom_command(TARGET nemisis_game POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CMAKE_CURRENT_SOURCE_DIR}/configs"
+            "$<TARGET_FILE_DIR:nemisis_game>/configs"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CMAKE_CURRENT_SOURCE_DIR}/assets"
+            "$<TARGET_FILE_DIR:nemisis_game>/assets"
+        VERBATIM
+    )
+endif()
 
 if(MSVC)
     target_compile_options(nemisis_game PRIVATE /W4 /permissive-)
@@ -67,6 +84,8 @@ else()
 endif()
 
 enable_testing()
+
+add_test(NAME nemisis_game_smoke COMMAND nemisis_game --smoke-test)
 
 add_executable(nemisis_movement_replay_tests
     game/src/input/InputCommandBuilder.cpp
@@ -122,6 +141,19 @@ target_include_directories(nemisis_player_command_queue_tests
 
 target_link_libraries(nemisis_player_command_queue_tests PRIVATE Novacore::Engine)
 add_test(NAME nemisis_player_command_queue_tests COMMAND nemisis_player_command_queue_tests)
+
+add_executable(nemisis_asset_catalog_tests
+    game/src/assets/GameAssetCatalog.cpp
+    tests/asset_catalog_tests.cpp
+)
+
+target_include_directories(nemisis_asset_catalog_tests
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/game/include
+)
+
+target_link_libraries(nemisis_asset_catalog_tests PRIVATE Novacore::Engine)
+add_test(NAME nemisis_asset_catalog_tests COMMAND nemisis_asset_catalog_tests)
 
 add_executable(nemisis_command_messages_tests
     game/src/net/CommandMessages.cpp

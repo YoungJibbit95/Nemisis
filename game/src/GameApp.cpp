@@ -36,6 +36,7 @@ void GameApp::onStartup() {
     configRegistry_.watchJson("weapons", "configs/weapons/core_trio.json");
     configRegistry_.watchJson("modes", "configs/game_modes/tdm_control.json");
     applyLoadedConfigs();
+    loadAssetCatalog();
 
     novacore::platform::WindowDesc windowDesc{};
     windowDesc.title = "Nemisis - M1 Thin Spine";
@@ -61,6 +62,10 @@ void GameApp::onStartup() {
     novacore::core::logInfo("game", "Nemisis sandbox camera entity created");
     novacore::core::logInfo("game", "Prototype weapon registry initialized");
     novacore::core::logInfo("game", "Default input action map and config registry initialized");
+
+    if (window_.isHeadless()) {
+        novacore::core::logInfo("game", "Running in HEADLESS mode (no SDL3/Vulkan). Press Ctrl+C in your terminal/console to exit.");
+    }
 }
 
 void GameApp::onShutdown() {
@@ -225,6 +230,25 @@ bool GameApp::shouldQuit() const {
 
 bool GameApp::isHeadless() const {
     return window_.isHeadless();
+}
+
+void GameApp::loadAssetCatalog() {
+    const auto result = assetCatalog_.loadFromJson("configs/assets/nemisis_assets.json");
+    if (!result.ok()) {
+        for (const auto& error : result.errors) {
+            novacore::core::logWarning("game", "Asset catalog load failed: " + error);
+        }
+        return;
+    }
+
+    const auto devZone = assetCatalog_.devSandboxStreamingZone();
+    assetStreamer_.requestZone(devZone, 0);
+    novacore::core::logInfo(
+        "game",
+        "Asset catalog loaded: " + std::to_string(assetCatalog_.assetCount()) + " assets");
+    novacore::core::logInfo(
+        "game",
+        "Dev sandbox asset preload requests queued: " + std::to_string(assetStreamer_.pendingCount()));
 }
 
 void GameApp::applyConfig(std::string_view name) {

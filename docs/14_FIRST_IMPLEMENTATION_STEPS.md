@@ -213,6 +213,30 @@ Acceptance:
 - `tools/blender/make_dev_primitives.py` is ready to run when Blender is installed.
 - No unclear-license binary assets are added.
 
+## Step 14 - Runtime Asset Catalog And IDE Runability
+
+Implement:
+
+- Add `configs/assets/nemisis_assets.json` as the game-owned runtime asset catalog.
+- Add `GameAssetCatalog` to load the catalog through NovaCore's asset manifest/registry backbone.
+- Queue dev-sandbox preload ids through a NovaCore streaming zone.
+- Add `nemisis_asset_catalog_tests`.
+- Add a Visual Studio 2022 no-deps CMake preset for IDE bootstrapping.
+- Copy runtime config/asset folders beside `nemisis_game` after build.
+- Add `nemisis_game --smoke-test` as a short runtime launch mode.
+- Add Blender/Codex agent instructions, job template, and helper runner script.
+- Add an IDE/toolchain/Blender CLI runbook.
+
+Acceptance:
+
+- `GameApp::onStartup` loads the asset catalog and queues dev preload requests.
+- Asset ids for weapon, target dummy, arena kit, first-person arms, and player proxy are declared.
+- `configs/assets/nemisis_assets.json` parses as JSON.
+- Build output receives `configs/` and `assets/` when `NEMISIS_COPY_RUNTIME_DATA` is enabled.
+- CTest includes `nemisis_game_smoke`.
+- `tools/blender/run_make_dev_primitives.ps1` can run the generator once Blender is available.
+- `docs/17_IDE_TOOLCHAIN_AND_BLENDER_RUNBOOK.md` documents IDE and Blender CLI setup.
+
 
 
 

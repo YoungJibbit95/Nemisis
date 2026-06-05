@@ -1,0 +1,73 @@
+{
+  "manifest": {
+    "name": "nemisis_core_assets",
+    "root": "assets"
+  },
+  "assets": [
+    {
+      "id": "mat_wpn_ar_polymer_dark",
+      "kind": "material",
+      "source": "assets/materials/weapons/mat_wpn_ar_polymer_dark.json",
+      "tags": ["material", "weapon", "dev_sandbox"]
+    },
+    {
+      "id": "mat_env_movement_accent",
+      "kind": "material",
+      "source": "assets/materials/environments/mat_env_movement_accent.json",
+      "tags": ["material", "environment", "dev_sandbox"]
+    },
+    {
+      "id": "prop_target_dummy_01",
+      "kind": "mesh",
+      "source": "assets/source/blender/props/prop_target_dummy_01.blend",
+      "cooked": "assets/export/gltf/props/prop_target_dummy_01.glb",
+      "streamable": true,
+      "priority": 90,
+      "estimated_bytes": 131072,
+      "tags": ["prop", "target", "combat_test", "dev_sandbox"],
+      "dependencies": ["mat_env_movement_accent"]
+    },
+    {
+      "id": "wpn_ar_01",
+      "kind": "mesh",
+      "source": "assets/source/blender/weapons/wpn_ar_01.blend",
+      "cooked": "assets/export/gltf/weapons/wpn_ar_01.glb",
+      "streamable": true,
+      "priority": 95,
+      "estimated_bytes": 262144,
+      "tags": ["weapon", "ar", "first_person", "world_model", "dev_sandbox"],
+      "dependencies": ["mat_wpn_ar_polymer_dark"]
+    },
+    {
+      "id": "env_test_arena_kit_01",
+      "kind": "scene",
+      "source": "assets/source/blender/environments/env_test_arena_kit_01.blend",
+      "cooked": "assets/export/gltf/environments/env_test_arena_kit_01.glb",
+      "streamable": true,
+      "priority": 80,
+      "estimated_bytes": 524288,
+      "tags": ["environment", "arena_kit", "movement_test", "dev_sandbox"],
+      "dependencies": ["mat_env_movement_accent"]
+    },
+    {
+      "id": "chr_dev_arms_a",
+      "kind": "mesh",
+      "source": "assets/source/blender/characters/chr_dev_arms_a.blend",
+      "cooked": "assets/export/gltf/characters/chr_dev_arms_a.glb",
+      "streamable": true,
+      "priority": 70,
+      "estimated_bytes": 393216,
+      "tags": ["character", "first_person_arms", "animation_test", "dev_sandbox"]
+    },
+    {
+      "id": "chr_dev_soldier_a",
+      "kind": "mesh",
+      "source": "assets/source/blender/characters/chr_dev_soldier_a.blend",
+      "cooked": "assets/export/gltf/characters/chr_dev_soldier_a.glb",
+      "streamable": true,
+      "priority": 65,
+      "estimated_bytes": 786432,
+      "tags": ["character", "third_person", "hitbox_test", "dev_sandbox"]
+    }
+  ]
+}

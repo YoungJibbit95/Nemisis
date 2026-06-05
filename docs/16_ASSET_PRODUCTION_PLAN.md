@@ -22,6 +22,8 @@ Current local environment:
 
 The first generator script is already prepared in `tools/blender/make_dev_primitives.py`. Once Blender is available, it can create source `.blend` files, glTF exports, and metadata for the target dummy, AR blockout, and movement test arena kit.
 
+Nemisis runtime asset ids are declared in `configs/assets/nemisis_assets.json`. This catalog is loaded by `GameAssetCatalog` and mounted through NovaCore's asset manifest/registry backbone.
+
 ## Art Direction
 
 Nemisis should read as a competitive sci-fi arena shooter:
@@ -224,6 +226,12 @@ Each Blender agent task should include:
 
 The reusable briefs live in `assets/briefs/BLENDER_AGENT_BRIEFS.md`.
 
+Codex/agent handoff files:
+
+- `tools/blender/CODEX_ASSET_AGENT.md`
+- `tools/blender/asset_job_template.json`
+- `tools/blender/run_make_dev_primitives.ps1`
+
 ## Validation Checklist
 
 Before an asset enters runtime tests:
@@ -245,8 +253,9 @@ Before an asset enters runtime tests:
 When Blender is installed:
 
 1. `tools/blender/make_dev_primitives.py`: generate the first simple target dummy, AR blockout, floor grid, and movement blockout kit.
-2. `tools/blender/validate_asset.py`: verify naming, scale, transforms, sockets, and collision proxy names.
-3. `tools/blender/export_gltf.py`: export selected source file to the expected glTF path.
-4. `tools/blender/render_preview.py`: render a stable turntable or front/side preview.
+2. `tools/blender/run_make_dev_primitives.ps1`: find Blender and run the generator from PowerShell.
+3. `tools/blender/validate_asset.py`: verify naming, scale, transforms, sockets, and collision proxy names.
+4. `tools/blender/export_gltf.py`: export selected source file to the expected glTF path.
+5. `tools/blender/render_preview.py`: render a stable turntable or front/side preview.
 
 These scripts should run headless so Codex can call them from the terminal and commit generated source/export files only after validation.

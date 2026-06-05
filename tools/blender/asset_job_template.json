@@ -1,0 +1,23 @@
+{
+  "job_name": "nemisis_asset_job_template",
+  "brief": "assets/briefs/BLENDER_AGENT_BRIEFS.md",
+  "asset_id": "prop_target_dummy_01",
+  "category": "props",
+  "source_path": "assets/source/blender/props/prop_target_dummy_01.blend",
+  "export_path": "assets/export/gltf/props/prop_target_dummy_01.glb",
+  "metadata_path": "assets/export/gltf/props/prop_target_dummy_01.metadata.json",
+  "required_sockets": ["socket_hit_center", "socket_head_center", "socket_vfx"],
+  "collision_prefix": "col_",
+  "scale_meters": true,
+  "license": "original_project_asset",
+  "runtime_catalog": "configs/assets/nemisis_assets.json",
+  "acceptance": [
+    "source_blend_exists",
+    "glb_export_exists",
+    "metadata_exists",
+    "runtime_catalog_id_exists",
+    "required_sockets_exist",
+    "scale_is_meters",
+    "no_unclear_license_assets"
+  ]
+}

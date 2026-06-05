@@ -15,6 +15,12 @@ From the Nemisis repository root:
 blender --background --python tools/blender/make_dev_primitives.py
 ```
 
+Using the helper script:
+
+```powershell
+.\tools\blender\run_make_dev_primitives.ps1 -Only all
+```
+
 Generate one asset group:
 
 ```powershell
@@ -30,3 +36,9 @@ The script writes:
 - Metadata JSON next to each export.
 
 The generated assets are dev primitives only. They are meant to unblock gameplay testing, scale checks, sockets, and importer work before final art.
+
+## Codex Agent Handoff
+
+- `CODEX_ASSET_AGENT.md` describes the expected agent workflow.
+- `asset_job_template.json` is a reusable job shape for single-asset tasks.
+- `configs/assets/nemisis_assets.json` is the runtime contract for asset ids that Nemisis expects.
