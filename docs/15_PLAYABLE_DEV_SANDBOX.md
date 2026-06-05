@@ -14,7 +14,7 @@ It is not a vertical slice yet. It is a developer playground for validating:
 - Weapon fire, cooldown, reload, ammo, and dry fire.
 - Deterministic shot traces with seed, range, direction, spread, and damage.
 - Debug target hits, damage, health, elimination, and respawn.
-- Pending command queue metadata for future server acknowledgement.
+- Pending command queue metadata plus loopback server acknowledgement.
 
 ## Run
 
@@ -74,6 +74,9 @@ The sandbox logs every 0.5 seconds through NovaCore logging:
 - Reload state.
 - Fire/dry-fire result.
 - Pending command count.
+- Sent command packet count.
+- Received acknowledgement count.
+- Last server-acknowledged tick.
 - Shot trace seed, range, and direction when a shot fires.
 - Debug target health.
 - Debug target hit count.
@@ -95,7 +98,7 @@ The renderer clear color also changes by state for early visual feedback:
 - There is no 3D world mesh or general collision yet.
 - Mouse look exists, but cursor capture/raw mouse mode is not implemented yet.
 - Debug target hit resolution is a focused sphere test, not full scene collision.
-- The command queue is local only; packet serialization and server acknowledgements are next.
+- The command bridge is loopback only; real UDP transport, prediction/reconciliation, and remote snapshots are not implemented yet.
 
 ## Next Dev Sandbox Upgrades
 
@@ -103,4 +106,4 @@ The renderer clear color also changes by state for early visual feedback:
 - Config-loaded sensitivity and response curves.
 - More debug targets and measured TTK tests.
 - On-screen debug HUD once UI text rendering exists.
-- Server loopback command acknowledgement.
+- Real client/server packet transport after the loopback bridge is stable.

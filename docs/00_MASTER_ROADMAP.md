@@ -35,6 +35,7 @@ The game target is 6v6 casual-competitive arena FPS:
 - Full third-person characters are planned, but animation is phased.
 - Readable realism visual direction.
 - Marketplace assets are allowed only through a Blender-to-glTF cleanup path.
+- Original Blender asset briefs are prepared before final content production so dev art, collision, sockets, and scale stay usable from day one.
 
 ## Milestones
 
@@ -101,6 +102,7 @@ Goal: load and render real content.
 Deliverables:
 
 - Blender-to-glTF import path.
+- Game-side Blender asset production plan and handoff briefs.
 - Mesh/material/texture asset handles.
 - Cooked asset cache.
 - Hot reload for data configs.
@@ -109,6 +111,7 @@ Deliverables:
 Definition of done:
 
 - A glTF scene loads.
+- First dev primitives have source/export/metadata and pass naming/scale validation.
 - Missing materials get deterministic fallbacks.
 - Asset reload does not crash the running sandbox.
 

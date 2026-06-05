@@ -176,6 +176,41 @@ Acceptance:
 - Dev telemetry reports target health and hit state.
 - CMake declares `nemisis_player_view_tests` and `nemisis_debug_target_tests`.
 
+## Step 12 - Command Loopback Bridge
+
+Implement:
+
+- Add `CommandPacket` and `CommandAck` payloads for local client command traffic.
+- Serialize and deserialize `PlayerInputCommand` data into deterministic little-endian byte payloads.
+- Add a loopback bridge that sends pending local commands through a NovaCore loopback channel.
+- Process the packet through a server-side acknowledgement handoff.
+- Trim acknowledged commands from `PlayerCommandQueue`.
+- Expose sent packet, received packet, acknowledgement, and ack tick telemetry in the dev sandbox.
+
+Acceptance:
+
+- `nemisis_game` includes command message and loopback bridge sources.
+- `GameApp::onFixedTick` runs send, server process, and client ack handling every fixed tick.
+- `PlayerNetworkComponent::lastServerAcknowledgedTick` advances when commands are acknowledged.
+- Dev telemetry includes command packet and ack counters.
+- CMake declares `nemisis_command_messages_tests` and `nemisis_loopback_command_bridge_tests`.
+
+## Step 13 - Asset Production Handoff
+
+Implement:
+
+- Add a game-side asset production plan for original Blender-to-glTF content.
+- Define coordinate, scale, naming, socket, collision, material, LOD, metadata, and export rules.
+- Add first Blender-agent briefs for target dummy, AR, movement arena kit, first-person arms, and third-person player proxy.
+- Add source/export asset directory documentation.
+
+Acceptance:
+
+- `docs/16_ASSET_PRODUCTION_PLAN.md` exists and can be handed to an asset agent.
+- `assets/briefs/BLENDER_AGENT_BRIEFS.md` contains concrete first asset tasks.
+- Asset README files point to the current production plan.
+- No unclear-license binary assets are added.
+
 
 
 

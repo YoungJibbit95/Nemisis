@@ -117,7 +117,10 @@ std::string DevSandbox::latestSummary() const {
            << latest_.target.health
            << " targetHits=" << latest_.target.hitsTaken
            << " hit=" << (latest_.targetHit.hit ? "yes" : "no")
-           << " eliminated=" << (latest_.targetHit.eliminated ? "yes" : "no");
+           << " eliminated=" << (latest_.targetHit.eliminated ? "yes" : "no")
+           << " cmdPackets=" << latest_.netBridge.sentCommandPackets
+           << " acks=" << latest_.netBridge.receivedAckPackets
+           << " ackTick=" << latest_.netBridge.lastAcknowledgedTick;
     return stream.str();
 }
 

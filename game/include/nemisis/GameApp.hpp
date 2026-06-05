@@ -4,6 +4,7 @@
 #include "nemisis/dev/DevSandbox.hpp"
 #include "nemisis/movement/MovementConfig.hpp"
 #include "nemisis/movement/MovementSystem.hpp"
+#include "nemisis/net/LoopbackCommandBridge.hpp"
 #include "nemisis/player/PlayerCommandQueue.hpp"
 #include "nemisis/weapons/WeaponSystem.hpp"
 
@@ -44,6 +45,7 @@ private:
     dev::DebugTargetState debugTarget_;
     dev::DevSandbox devSandbox_;
     movement::MovementSystem movement_;
+    net::LoopbackCommandBridge loopbackBridge_;
     player::PlayerCommandQueue localCommandQueue_;
     novacore::ecs::EntityId localPlayerEntity_;
     weapons::WeaponSystem weapons_;

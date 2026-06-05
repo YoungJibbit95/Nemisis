@@ -37,6 +37,8 @@ add_executable(nemisis_game
     game/src/main.cpp
     game/src/movement/MovementConfig.cpp
     game/src/movement/MovementSystem.cpp
+    game/src/net/CommandMessages.cpp
+    game/src/net/LoopbackCommandBridge.cpp
     game/src/player/PlayerCommandQueue.cpp
     game/src/player/PlayerSpawn.cpp
     game/src/player/PlayerView.cpp
@@ -120,6 +122,34 @@ target_include_directories(nemisis_player_command_queue_tests
 
 target_link_libraries(nemisis_player_command_queue_tests PRIVATE Novacore::Engine)
 add_test(NAME nemisis_player_command_queue_tests COMMAND nemisis_player_command_queue_tests)
+
+add_executable(nemisis_command_messages_tests
+    game/src/net/CommandMessages.cpp
+    tests/command_messages_tests.cpp
+)
+
+target_include_directories(nemisis_command_messages_tests
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/game/include
+)
+
+target_link_libraries(nemisis_command_messages_tests PRIVATE Novacore::Engine)
+add_test(NAME nemisis_command_messages_tests COMMAND nemisis_command_messages_tests)
+
+add_executable(nemisis_loopback_command_bridge_tests
+    game/src/net/CommandMessages.cpp
+    game/src/net/LoopbackCommandBridge.cpp
+    game/src/player/PlayerCommandQueue.cpp
+    tests/loopback_command_bridge_tests.cpp
+)
+
+target_include_directories(nemisis_loopback_command_bridge_tests
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/game/include
+)
+
+target_link_libraries(nemisis_loopback_command_bridge_tests PRIVATE Novacore::Engine)
+add_test(NAME nemisis_loopback_command_bridge_tests COMMAND nemisis_loopback_command_bridge_tests)
 
 add_executable(nemisis_player_spawn_tests
     game/src/player/PlayerSpawn.cpp

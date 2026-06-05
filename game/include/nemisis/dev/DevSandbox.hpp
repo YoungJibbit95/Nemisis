@@ -2,6 +2,7 @@
 
 #include "nemisis/movement/MovementSystem.hpp"
 #include "nemisis/dev/DebugTarget.hpp"
+#include "nemisis/net/LoopbackCommandBridge.hpp"
 #include "nemisis/player/PlayerComponents.hpp"
 #include "nemisis/player/PlayerInputCommand.hpp"
 #include "nemisis/weapons/WeaponSimulation.hpp"
@@ -30,6 +31,7 @@ struct DevSandboxSample final {
     DebugTargetState target{};
     DebugTargetHitResult targetHit{};
     player::PlayerNetworkComponent network{};
+    net::LoopbackBridgeStats netBridge{};
 };
 
 class DevSandbox final {

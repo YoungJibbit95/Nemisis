@@ -25,6 +25,8 @@ Nemisis game code is split by gameplay responsibility and consumes NovaCore thro
 - Weapons consume commands through `FireRequest` and advance fixed-tick runtime state.
 - Weapon shots produce deterministic trace data from tick seed, shot index, spread, recoil, and movement speed.
 - Debug target hits apply first hitscan damage against a target sphere.
+- Client command packets serialize local input commands for the first server handoff path.
+- Loopback command acknowledgement trims local pending commands and mirrors the future dedicated-server path.
 - `GameApp` advances player component state instead of loose gameplay member variables.
 - Movement and weapon systems now consume NovaCore parsed config documents.
 - Config reloads reapply tuning at runtime through `ConfigRegistry`.
@@ -44,4 +46,6 @@ Nemisis game code is split by gameplay responsibility and consumes NovaCore thro
 - Dev sandbox tests protect telemetry summary and debug feedback.
 - Player spawn tests protect expected ECS component composition.
 - Command queue tests protect monotonic pending-command behavior for server handoff.
+- Command message tests protect deterministic command/ack packet payloads.
+- Loopback bridge tests protect pending-command acknowledgement flow.
 - Config files match the planned movement and weapon vocabulary.

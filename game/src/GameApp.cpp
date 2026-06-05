@@ -74,6 +74,15 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
     const auto command = input::buildPlayerInputCommand(actions_, context.tickIndex);
     (void)localCommandQueue_.push(command);
 
+    player::PlayerId playerId = 1;
+    if (const auto* identity = world_.getComponent<player::PlayerIdentityComponent>(localPlayerEntity_);
+        identity != nullptr) {
+        playerId = identity->playerId;
+    }
+    loopbackBridge_.sendPendingCommands(playerId, localCommandQueue_);
+    loopbackBridge_.processServer(context.tickIndex);
+    const auto acknowledgedCommands = loopbackBridge_.processClientAcks(localCommandQueue_);
+
     auto movementCommand = command;
     auto* view = world_.getComponent<player::PlayerViewComponent>(localPlayerEntity_);
     if (view != nullptr) {
@@ -154,6 +163,9 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
     if (auto* network = world_.getComponent<player::PlayerNetworkComponent>(localPlayerEntity_);
         network != nullptr) {
         network->lastProcessedCommandTick = command.tick;
+        if (acknowledgedCommands > 0) {
+            network->lastServerAcknowledgedTick = loopbackBridge_.stats().lastAcknowledgedTick;
+        }
         network->pendingCommandCount = static_cast<std::uint16_t>(
             std::min<std::size_t>(localCommandQueue_.size(), 65535));
         networkSample = *network;
@@ -182,6 +194,7 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
         debugTarget_,
         targetHit,
         networkSample,
+        loopbackBridge_.stats(),
     });
 }
 

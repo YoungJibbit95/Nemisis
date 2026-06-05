@@ -18,21 +18,24 @@
 - Movement is camera-relative through `PlayerViewComponent`.
 - A debug target dummy supports first hitscan damage, health, hit count, elimination, and auto-respawn.
 - Deterministic `ShotTraceResult` data now carries seed, direction, range, spread, and damage for future hitscan validation.
+- Client command packets and server acknowledgement packets have a first deterministic binary format.
+- The dev client now exercises a loopback command bridge that serializes pending commands, processes them through a server-side handoff, and acknowledges them back into the local command queue.
+- Asset production has an agent-ready Blender handoff plan and initial briefs for target, weapon, arena, arms, and player proxy assets.
 - Movement replay tests cover sprint distance, jump/double-jump, dash cooldown, and config-driven tuning.
-- Input command, weapon simulation, weapon shot, player view, debug target, dev sandbox, player spawn, and command queue tests cover the newest gameplay bridge.
+- Input command, weapon simulation, weapon shot, player view, debug target, dev sandbox, player spawn, command queue, command message, and loopback bridge tests cover the newest gameplay bridge.
 
 ## Added In Latest Block
 
-- Added look actions for mouse delta and controller right stick.
-- Added `PlayerViewComponent` and view helpers for yaw/pitch, forward vectors, and camera-relative movement.
-- `GameApp::onFixedTick` now applies look before movement and fires shot traces along view forward.
-- Added `DebugTarget` with sphere hit testing, damage, elimination, and reset behavior.
-- Dev sandbox telemetry now reports target health, hits, hit result, and elimination state.
-- Added `nemisis_player_view_tests` and `nemisis_debug_target_tests` CMake targets.
+- Added `CommandPacket` and `CommandAck` serialization for the first client/server command protocol.
+- Added `LoopbackCommandBridge` to send pending local commands through a NovaCore loopback channel and trim acknowledged commands.
+- `GameApp::onFixedTick` now exercises the command send/server-process/client-ack path every fixed tick.
+- Dev sandbox telemetry now reports sent command packets, received acknowledgements, and last acknowledged tick.
+- Added `nemisis_command_messages_tests` and `nemisis_loopback_command_bridge_tests` CMake targets.
+- Added `docs/16_ASSET_PRODUCTION_PLAN.md` plus initial Blender-agent briefs under `assets/briefs`.
 
 ## Next Game Blocks
 
-- Start client/server command packet serialization and server-authoritative acknowledgement handoff.
 - Add player health/damage components and measured TTK tests.
 - Add raw mouse capture/cursor lock and configurable sensitivity loading.
-- Add server loopback acknowledgement for command queue trimming.
+- Add a tiny visible debug HUD once text rendering/UI exists.
+- Add the first generated Blender dev primitives once Blender is installed or exposed through tooling.
