@@ -1,5 +1,6 @@
 #pragma once
 
+#include "nemisis/assets/DevAssetBindings.hpp"
 #include "nemisis/dev/DevSandbox.hpp"
 #include "nemisis/dev/GreyboxWorld.hpp"
 
@@ -34,7 +35,8 @@ public:
         const nemisis::dev::DevSandboxSample& sample,
         const nemisis::dev::GreyboxWorld& greyboxWorld,
         std::string_view rendererBackend,
-        std::size_t queuedAssets) const;
+        std::size_t queuedAssets,
+        const nemisis::assets::DevAssetBindingSummary& assetSummary) const;
 
     [[nodiscard]] GameScreen screen() const;
     [[nodiscard]] bool gameplayActive() const;

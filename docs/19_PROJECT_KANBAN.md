@@ -33,6 +33,10 @@ This file mirrors the active work while GitHub Projects access is blocked by the
 - [x] Draw a visible top-down greybox range with player, view direction, target, cover, ramps, and range markers.
 - [x] Spawn the local player from the greybox world definition.
 - [x] Generate A0 Blender source/export assets for target, player proxy, first-person arms, soldier proxy, AR, SMG, sidearm, and arena kit.
+- [x] Add NovaCore glTF metadata validation and mesh-handle placeholders.
+- [x] Bind generated A0 Nemisis assets into NovaCore `MeshCatalog` handles.
+- [x] Add first greybox collision queries for bounds, cover/walls, and floor grounding.
+- [x] Surface mesh/metadata readiness and collision state in debug telemetry/UI.
 
 ## Doing
 
@@ -43,10 +47,10 @@ This file mirrors the active work while GitHub Projects access is blocked by the
 
 - [ ] Config-loaded sensitivity, cursor policy, and controller response curves.
 - [ ] Packet simulation for latency, jitter, loss, duplication, and reorder.
-- [ ] glTF metadata/import shim and mesh handle placeholders.
+- [ ] Real glTF CPU parse/import from registered mesh handles.
 - [ ] Renderer mesh/shader pipeline foundation.
-- [ ] KCC collision foundation for ramps, ledges, and slide/mantle tests.
-- [ ] Greybox primitive collision queries shared by movement and server validation.
+- [ ] Full KCC collision foundation for ramps, ledges, slope normals, slide/mantle tests.
+- [ ] Shared server validation for greybox collision and movement corrections.
 
 ## Next Gameplay
 

@@ -2,6 +2,7 @@
 
 #include "nemisis/movement/MovementSystem.hpp"
 #include "nemisis/dev/DebugTarget.hpp"
+#include "nemisis/dev/GreyboxCollision.hpp"
 #include "nemisis/net/LoopbackCommandBridge.hpp"
 #include "nemisis/player/PlayerComponents.hpp"
 #include "nemisis/player/PlayerInputCommand.hpp"
@@ -33,6 +34,7 @@ struct DevSandboxSample final {
     player::PlayerNetworkComponent network{};
     net::LoopbackBridgeStats netBridge{};
     player::PlayerViewComponent view{};
+    GreyboxCollisionResult collision{};
 };
 
 class DevSandbox final {

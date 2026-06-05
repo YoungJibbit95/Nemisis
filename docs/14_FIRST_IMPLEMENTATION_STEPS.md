@@ -280,6 +280,27 @@ Acceptance:
 - CTest includes `nemisis_greybox_world_tests`.
 - Docs and kanban define Greybox Phase 0 as active and identify the next mesh/KCC steps.
 
+## Step 17 - Metadata Mesh Handles And First Greybox Collision
+
+Implement:
+
+- Add NovaCore glTF metadata loading and validation.
+- Add NovaCore renderable asset validation and placeholder `MeshHandle`/`MeshCatalog` registration.
+- Add Nemisis `DevAssetBindings` for required A0 dev assets.
+- Bind generated A0 asset metadata into mesh handles at startup.
+- Report mesh/metadata readiness in logs and the Assets debug page.
+- Add first greybox player collision resolution for world bounds, floor grounding, walls, and cover.
+- Feed collision hit/block telemetry into the Dev Sandbox.
+- Add asset-binding and greybox-collision tests.
+
+Acceptance:
+
+- `nemisis_game --smoke-test` logs `Dev mesh assets ready: 8/8 metadata=8`.
+- `nemisis_dev_asset_bindings_tests` validates required A0 asset bindings.
+- `nemisis_greybox_collision_tests` validates bounds, cover pushout, and free spawn lane.
+- NovaCore smoke tests validate glTF metadata and mesh handles.
+- Docs and kanban move metadata/mesh-handle shim and first collision from Next to Done.
+
 
 
 

@@ -83,12 +83,6 @@ void addMetric(
     return stream.str();
 }
 
-[[nodiscard]] std::string fixedTwo(float value) {
-    std::ostringstream stream;
-    stream << std::fixed << std::setprecision(2) << value;
-    return stream.str();
-}
-
 [[nodiscard]] std::string vec3Summary(novacore::math::Vec3 value) {
     std::ostringstream stream;
     stream << std::fixed << std::setprecision(1)
@@ -278,7 +272,8 @@ void GameMenu::appendRenderCommands(
     const nemisis::dev::DevSandboxSample& sample,
     const nemisis::dev::GreyboxWorld& greyboxWorld,
     std::string_view rendererBackend,
-    std::size_t queuedAssets) const {
+    std::size_t queuedAssets,
+    const nemisis::assets::DevAssetBindingSummary& assetSummary) const {
     addRect(frame, 0.0F, 0.0F, 1280.0F, 720.0F, {0.0F, 0.0F, 0.0F, 0.05F});
     addRect(frame, 38.0F, 30.0F, 510.0F, 146.0F, {0.025F, 0.045F, 0.055F, 0.92F});
 
@@ -348,7 +343,7 @@ void GameMenu::appendRenderCommands(
             addMetric(frame, 386.0F, 624.0F, "TICK", std::to_string(sample.tick));
             addMetric(frame, 386.0F, 650.0F, "INPUT", std::string(deviceName(sample.command.device)));
             addMetric(frame, 674.0F, 624.0F, "POS", vec3Summary(sample.position));
-            addMetric(frame, 674.0F, 650.0F, "VEL", vec3Summary(sample.velocity));
+            addMetric(frame, 674.0F, 650.0F, "COLLIDE", std::to_string(sample.collision.hitCount) + " / " + std::string(yesNo(sample.collision.blocked)));
             break;
         case DebugPage::Network:
             addMetric(frame, 48.0F, 624.0F, "CMD TX", std::to_string(sample.netBridge.sentCommandPackets));
@@ -360,11 +355,11 @@ void GameMenu::appendRenderCommands(
             break;
         case DebugPage::Assets:
             addMetric(frame, 48.0F, 624.0F, "RENDERER", std::string(rendererBackend));
-            addMetric(frame, 48.0F, 650.0F, "ASSETS", std::to_string(queuedAssets));
-            addMetric(frame, 386.0F, 624.0F, "AMMO", std::to_string(sample.weapon.ammoInMagazine));
-            addMetric(frame, 386.0F, 650.0F, "RELOAD", std::string(yesNo(sample.weapon.reloading)));
-            addMetric(frame, 674.0F, 624.0F, "SHOT", std::string(yesNo(sample.hasShot)));
-            addMetric(frame, 674.0F, 650.0F, "DMG/RANGE", fixedOne(sample.shot.damage) + " / " + fixedTwo(sample.shot.rangeMeters));
+            addMetric(frame, 48.0F, 650.0F, "QUEUE", std::to_string(queuedAssets));
+            addMetric(frame, 386.0F, 624.0F, "MESHES", std::to_string(assetSummary.renderableAssetCount) + "/" + std::to_string(assetSummary.requiredAssetCount));
+            addMetric(frame, 386.0F, 650.0F, "METADATA", std::to_string(assetSummary.metadataAssetCount));
+            addMetric(frame, 674.0F, 624.0F, "MISSING", std::to_string(assetSummary.missingAssetCount));
+            addMetric(frame, 674.0F, 650.0F, "READY", std::string(yesNo(assetSummary.ready())));
             break;
         }
     }

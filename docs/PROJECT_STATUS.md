@@ -24,11 +24,13 @@
 - Blender automation is prepared for first dev primitives through `tools/blender/make_dev_primitives.py`.
 - Runtime asset ids are declared in `configs/assets/nemisis_assets.json`.
 - `GameAssetCatalog` loads the game asset manifest through NovaCore's asset registry backbone and queues dev-sandbox preload requests.
+- `DevAssetBindings` validates required A0 asset ids, loads glTF metadata, and registers mesh handles through NovaCore.
 - Barebones runtime menu exists with Main Menu, Dev Shooting Range, TDM placeholder, and Control placeholder screens.
 - Debug UI overlay is visible through NovaCore SDL debug render primitives when SDL3 is available.
 - Debug UI now has Gameplay, Network, and Assets pages, toggled with Tab or controller Start/Menu.
 - The dev range requests relative mouse mode through NovaCore while menus keep normal cursor behavior.
 - The Dev Shooting Range now owns a deterministic `GreyboxWorld` with floor, walls, cover, ramps, spawns, range markers, and a target lane.
+- The Dev Shooting Range now applies first greybox collision resolution for bounds, blocking cover/walls, and grounded floor correction.
 - The SDL debug UI draws the greybox as a top-down range map with player position, view direction, target marker, and range helpers.
 - Normal dev builds now use NovaCore's SDL3 FetchContent fallback when no installed SDL3 package is present.
 - MinGW runtime DLLs are copied beside all Nemisis runtime/test executables for direct shell launches.
@@ -36,7 +38,7 @@
 - Weapon metrics estimate damage band, shots-to-eliminate, and measured TTK for 150 HP balance targets.
 - `docs/19_PROJECT_KANBAN.md` tracks completed, doing, next, and blocked work until GitHub Projects access is available.
 - Movement replay tests cover sprint distance, jump/double-jump, dash cooldown, and config-driven tuning.
-- Input command, weapon simulation, weapon shot, player view, debug target, dev sandbox, player spawn, command queue, command message, greybox world, and loopback bridge tests cover the newest gameplay bridge.
+- Input command, weapon simulation, weapon shot, player view, debug target, dev sandbox, player spawn, command queue, command message, asset binding, greybox world/collision, and loopback bridge tests cover the newest gameplay bridge.
 
 ## Added In Latest Block
 
@@ -70,12 +72,17 @@
 - Added `nemisis_greybox_world_tests` and raised the local test suite to 17 passing tests in the current debug build.
 - Expanded Blender automation to generate target dummy, player capsule proxy, first-person arms, soldier proxy, AR, SMG, sidearm, and arena-kit A0 assets.
 - Generated the first `.blend`, `.glb`, and metadata files under `assets/source/blender` and `assets/export/gltf` with Blender 5.1.
+- Added `DevAssetBindings` to bind the generated A0 glTF metadata into NovaCore mesh handles at startup.
+- Dev sandbox startup now reports `Dev mesh assets ready: 8/8 metadata=8`.
+- Added greybox collision queries and applied them after player movement simulation.
+- Debug telemetry now reports collision hit/block state, and the Assets debug page reports mesh/metadata readiness.
+- Added `nemisis_dev_asset_bindings_tests` and `nemisis_greybox_collision_tests`, raising the local test suite to 19 passing tests.
 
 ## Next Game Blocks
 
 - Add configurable MKB/controller sensitivity loading and response curves.
 - Wire player health into hit resolution, HUD health, respawn, and server validation.
 - Expand debug UI pages with frame timings, entity counts, packet loss simulation, and reconciliation error.
-- Add first glTF metadata/import handoff from NovaCore asset catalog into renderer mesh handles.
-- Bind generated A0 weapon/character/environment assets into the future mesh-import path.
-- Start KCC collision against greybox primitives before final mesh collision import.
+- Expand greybox collision into a fuller KCC with step height, slope/ramp normals, mantle probes, and slide validation.
+- Add real glTF parse/import from the registered A0 mesh handles.
+- Render generated A0 weapon/character/environment meshes in-world.

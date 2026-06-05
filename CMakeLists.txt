@@ -56,9 +56,11 @@ endif()
 
 add_executable(nemisis_game
     game/src/GameApp.cpp
+    game/src/assets/DevAssetBindings.cpp
     game/src/assets/GameAssetCatalog.cpp
     game/src/dev/DebugTarget.cpp
     game/src/dev/DevSandbox.cpp
+    game/src/dev/GreyboxCollision.cpp
     game/src/dev/GreyboxWorld.cpp
     game/src/input/InputBindings.cpp
     game/src/input/InputCommandBuilder.cpp
@@ -211,6 +213,20 @@ target_include_directories(nemisis_asset_catalog_tests
 target_link_libraries(nemisis_asset_catalog_tests PRIVATE Novacore::Engine)
 add_test(NAME nemisis_asset_catalog_tests COMMAND nemisis_asset_catalog_tests)
 
+add_executable(nemisis_dev_asset_bindings_tests
+    game/src/assets/DevAssetBindings.cpp
+    game/src/assets/GameAssetCatalog.cpp
+    tests/dev_asset_bindings_tests.cpp
+)
+
+target_include_directories(nemisis_dev_asset_bindings_tests
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/game/include
+)
+
+target_link_libraries(nemisis_dev_asset_bindings_tests PRIVATE Novacore::Engine)
+add_test(NAME nemisis_dev_asset_bindings_tests COMMAND nemisis_dev_asset_bindings_tests)
+
 add_executable(nemisis_command_messages_tests
     game/src/net/CommandMessages.cpp
     tests/command_messages_tests.cpp
@@ -278,6 +294,20 @@ target_include_directories(nemisis_greybox_world_tests
 target_link_libraries(nemisis_greybox_world_tests PRIVATE Novacore::Engine)
 add_test(NAME nemisis_greybox_world_tests COMMAND nemisis_greybox_world_tests)
 
+add_executable(nemisis_greybox_collision_tests
+    game/src/dev/GreyboxCollision.cpp
+    game/src/dev/GreyboxWorld.cpp
+    tests/greybox_collision_tests.cpp
+)
+
+target_include_directories(nemisis_greybox_collision_tests
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/game/include
+)
+
+target_link_libraries(nemisis_greybox_collision_tests PRIVATE Novacore::Engine)
+add_test(NAME nemisis_greybox_collision_tests COMMAND nemisis_greybox_collision_tests)
+
 add_executable(nemisis_weapon_shot_tests
     game/src/weapons/WeaponShot.cpp
     tests/weapon_shot_tests.cpp
@@ -339,11 +369,13 @@ foreach(nemisis_runtime_target IN ITEMS
     nemisis_player_command_queue_tests
     nemisis_player_health_tests
     nemisis_asset_catalog_tests
+    nemisis_dev_asset_bindings_tests
     nemisis_command_messages_tests
     nemisis_loopback_command_bridge_tests
     nemisis_player_spawn_tests
     nemisis_dev_sandbox_tests
     nemisis_greybox_world_tests
+    nemisis_greybox_collision_tests
     nemisis_weapon_shot_tests
     nemisis_weapon_metrics_tests
     nemisis_player_view_tests

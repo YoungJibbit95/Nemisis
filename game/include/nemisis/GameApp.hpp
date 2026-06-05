@@ -1,5 +1,6 @@
 #pragma once
 
+#include "nemisis/assets/DevAssetBindings.hpp"
 #include "nemisis/assets/GameAssetCatalog.hpp"
 #include "nemisis/dev/DebugTarget.hpp"
 #include "nemisis/dev/DevSandbox.hpp"
@@ -49,6 +50,8 @@ private:
     novacore::ecs::World world_;
     nemisis::assets::GameAssetCatalog assetCatalog_;
     novacore::assets::AssetStreamer assetStreamer_;
+    nemisis::assets::DevAssetBindings devAssetBindings_;
+    nemisis::assets::DevAssetBindingSummary devAssetSummary_;
     novacore::ecs::EntityId cameraEntity_;
     dev::DebugTargetState debugTarget_;
     dev::DevSandbox devSandbox_;

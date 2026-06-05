@@ -1,6 +1,7 @@
 #include "nemisis/GameApp.hpp"
 
 #include "nemisis/dev/DebugTarget.hpp"
+#include "nemisis/dev/GreyboxCollision.hpp"
 #include "nemisis/input/InputBindings.hpp"
 #include "nemisis/input/InputCommandBuilder.hpp"
 #include "nemisis/player/PlayerComponents.hpp"
@@ -108,8 +109,24 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
     }
 
     auto* movementState = world_.getComponent<movement::PlayerMovementState>(localPlayerEntity_);
+    dev::GreyboxCollisionResult collisionSample{};
     if (movementState != nullptr) {
         *movementState = movement_.simulate(*movementState, movementCommand, static_cast<float>(context.fixedDeltaSeconds));
+        collisionSample = dev::resolveGreyboxPlayerCollision(
+            greyboxWorld_,
+            dev::GreyboxCollisionQuery{movementState->position, 0.42F, 1.80F});
+        if (collisionSample.blocked) {
+            if (std::abs(collisionSample.correction.x) > 0.0001F) {
+                movementState->velocity.x = 0.0F;
+            }
+            if (std::abs(collisionSample.correction.z) > 0.0001F) {
+                movementState->velocity.z = 0.0F;
+            }
+        }
+        if (collisionSample.grounded && movementState->velocity.y < 0.0F) {
+            movementState->velocity.y = 0.0F;
+        }
+        movementState->position = collisionSample.position;
         if (auto* transform = world_.getComponent<novacore::ecs::TransformComponent>(localPlayerEntity_);
             transform != nullptr) {
             transform->position = movementState->position;
@@ -213,6 +230,7 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
         networkSample,
         loopbackBridge_.stats(),
         view != nullptr ? *view : player::PlayerViewComponent{},
+        collisionSample,
     });
 }
 
@@ -243,7 +261,8 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
         devSandbox_.latestSample(),
         greyboxWorld_,
         renderer_.backendName(),
-        assetStreamer_.pendingCount());
+        assetStreamer_.pendingCount(),
+        devAssetSummary_);
     renderer_.beginFrame(frameInfo);
     renderer_.endFrame();
 }
@@ -267,12 +286,21 @@ void GameApp::loadAssetCatalog() {
 
     const auto devZone = assetCatalog_.devSandboxStreamingZone();
     assetStreamer_.requestZone(devZone, 0);
+    devAssetSummary_ = devAssetBindings_.bindRequiredAssets(assetCatalog_, ".");
     novacore::core::logInfo(
         "game",
         "Asset catalog loaded: " + std::to_string(assetCatalog_.assetCount()) + " assets");
     novacore::core::logInfo(
         "game",
         "Dev sandbox asset preload requests queued: " + std::to_string(assetStreamer_.pendingCount()));
+    novacore::core::logInfo(
+        "game",
+        "Dev mesh assets ready: " + std::to_string(devAssetSummary_.renderableAssetCount) + "/" +
+            std::to_string(devAssetSummary_.requiredAssetCount) +
+            " metadata=" + std::to_string(devAssetSummary_.metadataAssetCount));
+    for (const auto& error : devAssetSummary_.errors) {
+        novacore::core::logWarning("game", "Dev asset binding failed: " + error);
+    }
 }
 
 void GameApp::applyConfig(std::string_view name) {

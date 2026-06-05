@@ -18,6 +18,8 @@ Implemented:
 - Dev sandbox sample now carries view data.
 - SDL debug renderer draws a top-down map, player marker, yaw direction, target marker, and player-to-target line.
 - A0 Blender assets generated for props, characters, weapons, and environment kit.
+- A0 glTF metadata binds into NovaCore mesh handles.
+- First greybox collision resolver blocks player bounds and primitive overlap.
 
 Acceptance:
 
@@ -30,13 +32,17 @@ Acceptance:
 
 Goal: turn the debug-map greybox into an in-world playable greybox.
 
-Planned:
+Implemented foundation:
 
 - Add glTF metadata/import shim in NovaCore.
 - Add renderer mesh-handle placeholders and missing-asset diagnostics.
 - Bind generated A0 `.glb` files to asset ids from `configs/assets/nemisis_assets.json`.
-- Render simple floor, wall, cover, ramp, target, and weapon proxy meshes.
 - Add KCC collision queries against greybox primitives.
+
+Still planned:
+
+- Render simple floor, wall, cover, ramp, target, and weapon proxy meshes.
+- Replace first primitive pushout with full KCC slope/step/mantle behavior.
 - Add debug overlays for entity count, primitive count, collision contact, ground normal, and movement mode.
 
 Acceptance:
@@ -88,4 +94,4 @@ Acceptance:
 
 We are in Greybox Phase 0 now.
 
-Phase 1 is the next serious target. It should arrive after the next few core pushes: glTF import shim, mesh handles, primitive collision/KCC, and renderer mesh drawing. That is the point where the game stops being only a debug-map prototype and becomes a walkable in-world greybox.
+Phase 1 has started. The metadata, mesh-handle, A0 binding, and first collision pieces are in. The remaining Phase 1 threshold is CPU glTF parse/import, renderer mesh drawing, and a fuller KCC with ramp/ledge behavior. That is the point where the game stops being only a debug-map prototype and becomes a walkable in-world greybox.
