@@ -237,6 +237,27 @@ Acceptance:
 - `tools/blender/run_make_dev_primitives.ps1` can run the generator once Blender is available.
 - `docs/17_IDE_TOOLCHAIN_AND_BLENDER_RUNBOOK.md` documents IDE and Blender CLI setup.
 
+## Step 15 - Debug Range Health, TTK, And Runtime Pages
+
+Implement:
+
+- Move command packet byte IO onto NovaCore's shared `PacketWriter` and `PacketReader`.
+- Add `PlayerHealthComponent` plus reset, alive, and damage application helpers.
+- Add deterministic damage result output for future authoritative server damage events.
+- Add weapon metrics for range band, damage at distance, shots-to-eliminate, and TTK estimate.
+- Add AR/SMG 150 HP TTK tests against the current BO-like baseline.
+- Add relative mouse mode request flow while Dev Shooting Range gameplay is active.
+- Expand debug overlay into Gameplay, Network, and Assets/Render pages.
+
+Acceptance:
+
+- `nemisis_game` includes player health and weapon metrics sources.
+- Local player spawning attaches a health component.
+- `nemisis_player_health_tests` and `nemisis_weapon_metrics_tests` are declared in CMake.
+- `GameMenu` can toggle debug visibility and cycle debug pages.
+- `GameApp` asks NovaCore for relative mouse mode only when gameplay is active.
+- Docs and kanban mark the new runtime/debug/TTK slice as complete.
+
 
 
 

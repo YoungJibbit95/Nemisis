@@ -26,6 +26,12 @@ struct PlayerViewComponent final {
     float pitchDegrees = 0.0F;
 };
 
+struct PlayerHealthComponent final {
+    float maxHealth = 150.0F;
+    float health = 150.0F;
+    bool eliminated = false;
+};
+
 struct PlayerNetworkComponent final {
     std::uint32_t connectionId = 0;
     std::uint64_t lastProcessedCommandTick = 0;

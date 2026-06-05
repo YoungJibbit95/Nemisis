@@ -21,6 +21,19 @@ Initial target ranges:
 
 TTK depends on armor/health model, headshot multiplier, fire rate, and damage falloff. The first combat slice should log measured TTK values against test targets.
 
+Current measured baseline helpers:
+
+- `WeaponMetrics::damageBandForDistance`
+- `WeaponMetrics::damageAtDistance`
+- `WeaponMetrics::shotsToEliminate`
+- `WeaponMetrics::estimateTimeToKill`
+
+The current 150 HP test baselines are:
+
+- Prototype AR close body: 6 shots, about 417 ms at 720 RPM.
+- Prototype AR close headshot-only estimate: 4 shots, about 250 ms at 720 RPM.
+- Prototype SMG close body: 7 shots, about 400 ms at 900 RPM.
+
 ## Weapon State
 
 Core design states:
@@ -137,10 +150,12 @@ Code foundation:
 - `nemisis::weapons::FireResult`
 - `nemisis::weapons::ShotTraceRequest`
 - `nemisis::weapons::ShotTraceResult`
+- `nemisis::weapons::TtkEstimate`
 - `nemisis::weapons::WeaponSystem`
 - `WeaponSystem::loadFromConfig`
 - `nemisis::weapons::simulateWeaponTick`
 - `nemisis::weapons::buildShotTrace`
+- `nemisis::weapons::estimateTimeToKill`
 
 Config fields currently parsed:
 

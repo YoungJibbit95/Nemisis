@@ -100,6 +100,10 @@ Current implemented slice:
 - Right trigger maps to fire.
 - Left trigger maps to ADS.
 - Gamepad button bindings cover jump, dash, slide, sprint, mantle, and reload.
+- `F1` toggles the debug overlay.
+- `Tab` cycles debug overlay pages.
+- Controller Start/Menu cycles debug overlay pages.
+- Dev Shooting Range requests relative mouse mode while gameplay is active.
 - Input command tests verify keyboard/mouse and controller command generation.
 
 

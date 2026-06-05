@@ -73,12 +73,29 @@ void testDebugToggle() {
     expect(!menu.debugOverlayEnabled(), "F1 toggles debug overlay");
 }
 
+void testDebugPageCycle() {
+    auto actions = nemisis::input::createDefaultActionMap();
+    nemisis::ui::GameMenu menu;
+
+    expect(menu.debugPage() == nemisis::ui::DebugPage::Gameplay, "debug page starts at gameplay");
+    press(actions, nemisis::input::key_codes::Tab);
+    menu.update(actions);
+    expect(menu.debugPage() == nemisis::ui::DebugPage::Network, "tab cycles to network page");
+
+    release(actions);
+    menu.update(actions);
+    press(actions, nemisis::input::key_codes::Tab);
+    menu.update(actions);
+    expect(menu.debugPage() == nemisis::ui::DebugPage::Assets, "tab cycles to assets page");
+}
+
 } // namespace
 
 int main() {
     testDirectDevRangeSelection();
     testMenuConfirmAndBack();
     testDebugToggle();
+    testDebugPageCycle();
 
     if (failures > 0) {
         std::cerr << failures << " game menu test(s) failed\n";

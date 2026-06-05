@@ -23,6 +23,7 @@ novacore::ecs::EntityId spawnLocalPlayer(
     world.addComponent(entity, PlayerIdentityComponent{desc.playerId, desc.teamIndex, desc.displayName});
     world.addComponent(entity, LocalPlayerComponent{true});
     world.addComponent(entity, PlayerLoadoutComponent{activeWeaponId});
+    world.addComponent(entity, PlayerHealthComponent{});
     world.addComponent(entity, PlayerViewComponent{});
     world.addComponent(entity, PlayerNetworkComponent{});
     world.addComponent(entity, movement::PlayerMovementState{});

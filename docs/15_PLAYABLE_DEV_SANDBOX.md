@@ -17,6 +17,8 @@ It is not a vertical slice yet. It is a developer playground for validating:
 - Debug target hits, damage, health, elimination, and respawn.
 - Pending command queue metadata plus loopback server acknowledgement.
 - Game asset catalog load and dev-sandbox preload request setup.
+- Relative mouse mode activation while the Dev Shooting Range is active.
+- Multi-page on-screen debug telemetry for gameplay, network, and asset/render state.
 
 ## Run
 
@@ -69,9 +71,11 @@ Menu:
 - `Enter`: load selected menu item.
 - `Esc`: return to main menu.
 - `F1`: toggle debug overlay.
+- `Tab`: cycle debug overlay pages.
 - Controller `A`: confirm.
 - Controller `B`: back.
 - Controller D-pad up/down: move menu selection.
+- Controller Start/Menu: cycle debug overlay page when the overlay is visible.
 
 ## Telemetry
 
@@ -99,6 +103,13 @@ The sandbox logs every 0.5 seconds through NovaCore logging:
 - Renderer backend.
 - Current screen.
 - Asset preload queue size.
+- Active debug page.
+
+The on-screen debug overlay currently has these pages:
+
+- Gameplay: screen, movement mode, tick, input device, position, and velocity.
+- Network: command packet counters, acknowledgement counters, pending command count, and last acknowledged tick.
+- Assets: renderer backend, queued asset count, ammo, reload, shot flag, and shot damage/range.
 
 The renderer clear color also changes by state for early visual feedback:
 
@@ -115,14 +126,14 @@ The renderer clear color also changes by state for early visual feedback:
 - Renderer has SDL debug visuals when SDL3 is available, but the Vulkan renderer is still a placeholder.
 - There is no 3D world mesh or general collision yet.
 - Asset ids and preload requests exist, but glTF import/GPU mesh handles are not implemented yet.
-- Mouse look exists, but cursor capture/raw mouse mode is not implemented yet.
+- Relative mouse mode is requested for the dev range, but sensitivity, cursor policy settings, and raw input config are not data-driven yet.
 - Debug target hit resolution is a focused sphere test, not full scene collision.
 - The command bridge is loopback only; real UDP transport, prediction/reconciliation, and remote snapshots are not implemented yet.
 
 ## Next Dev Sandbox Upgrades
 
-- Raw mouse/cursor capture.
 - Config-loaded sensitivity and response curves.
+- HUD health/ammo panels backed by player health and weapon state.
 - More debug targets and measured TTK tests.
-- On-screen debug HUD once UI text rendering exists.
+- Real UI text rendering after the SDL debug text path is replaced by the custom UI renderer.
 - Real client/server packet transport after the loopback bridge is stable.

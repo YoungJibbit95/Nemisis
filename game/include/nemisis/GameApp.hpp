@@ -38,6 +38,7 @@ private:
     void applyLoadedConfigs();
     void ensureActiveWeapon(weapons::WeaponRuntimeState& weaponState, std::string_view requestedWeaponId);
     void ensureLocalPlayer();
+    void syncRelativeMouseMode();
 
     novacore::platform::InputSystem input_;
     novacore::platform::InputActionMap actions_;
@@ -57,6 +58,7 @@ private:
     novacore::ecs::EntityId localPlayerEntity_;
     weapons::WeaponSystem weapons_;
     float debugTargetRespawnSeconds_ = 0.0F;
+    bool relativeMouseDesired_ = false;
 };
 
 } // namespace nemisis::game

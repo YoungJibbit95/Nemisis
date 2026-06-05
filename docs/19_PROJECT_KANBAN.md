@@ -22,18 +22,20 @@ This file mirrors the active work while GitHub Projects access is blocked by the
 - [x] Fix `windows-msvc-debug` so it no longer depends on Ninja or an unset `VCPKG_ROOT`.
 - [x] Add SDL debug renderer primitives and bitmap debug text.
 - [x] Add barebones main menu, mode selection, dev shooting range entry, and debug overlay.
+- [x] Add NovaCore packet bitstream usage for Nemisis command/ack payloads.
+- [x] Add relative mouse request flow for active dev-range gameplay.
+- [x] Add player health/damage helpers and measured TTK tests.
+- [x] Expand debug UI into Gameplay, Network, and Assets pages.
 
 ## Doing
 
 - [ ] Make the first visible test loop feel like an actual dev shooting range.
-- [ ] Expand debug UI pages for input, movement, weapon, net, render, and assets.
 - [ ] Keep renderer work moving toward real Vulkan swapchain/shaders.
 
 ## Next Core
 
-- [ ] Raw mouse capture and cursor lock.
-- [ ] Player health/damage components and measured TTK tests.
-- [ ] Net bitstream writer/reader and packet simulation.
+- [ ] Config-loaded sensitivity, cursor policy, and controller response curves.
+- [ ] Packet simulation for latency, jitter, loss, duplication, and reorder.
 - [ ] glTF metadata/import shim and mesh handle placeholders.
 - [ ] Renderer mesh/shader pipeline foundation.
 - [ ] KCC collision foundation for ramps, ledges, and slide/mantle tests.
@@ -45,6 +47,7 @@ This file mirrors the active work while GitHub Projects access is blocked by the
 - [ ] Control placeholder objective lifecycle.
 - [ ] More target dummies and range markers.
 - [ ] First HUD widgets for ammo, health, target damage, and net status.
+- [ ] Wire player health into real hit events, respawn, and server validation.
 
 ## Blocked
 

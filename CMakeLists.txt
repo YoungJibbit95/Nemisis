@@ -42,9 +42,11 @@ add_executable(nemisis_game
     game/src/net/CommandMessages.cpp
     game/src/net/LoopbackCommandBridge.cpp
     game/src/player/PlayerCommandQueue.cpp
+    game/src/player/PlayerHealth.cpp
     game/src/player/PlayerSpawn.cpp
     game/src/player/PlayerView.cpp
     game/src/ui/GameMenu.cpp
+    game/src/weapons/WeaponMetrics.cpp
     game/src/weapons/WeaponShot.cpp
     game/src/weapons/WeaponSimulation.cpp
     game/src/weapons/WeaponSystem.cpp
@@ -157,6 +159,19 @@ target_include_directories(nemisis_player_command_queue_tests
 target_link_libraries(nemisis_player_command_queue_tests PRIVATE Novacore::Engine)
 add_test(NAME nemisis_player_command_queue_tests COMMAND nemisis_player_command_queue_tests)
 
+add_executable(nemisis_player_health_tests
+    game/src/player/PlayerHealth.cpp
+    tests/player_health_tests.cpp
+)
+
+target_include_directories(nemisis_player_health_tests
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/game/include
+)
+
+target_link_libraries(nemisis_player_health_tests PRIVATE Novacore::Engine)
+add_test(NAME nemisis_player_health_tests COMMAND nemisis_player_health_tests)
+
 add_executable(nemisis_asset_catalog_tests
     game/src/assets/GameAssetCatalog.cpp
     tests/asset_catalog_tests.cpp
@@ -236,6 +251,19 @@ target_include_directories(nemisis_weapon_shot_tests
 
 target_link_libraries(nemisis_weapon_shot_tests PRIVATE Novacore::Engine)
 add_test(NAME nemisis_weapon_shot_tests COMMAND nemisis_weapon_shot_tests)
+
+add_executable(nemisis_weapon_metrics_tests
+    game/src/weapons/WeaponMetrics.cpp
+    tests/weapon_metrics_tests.cpp
+)
+
+target_include_directories(nemisis_weapon_metrics_tests
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/game/include
+)
+
+target_link_libraries(nemisis_weapon_metrics_tests PRIVATE Novacore::Engine)
+add_test(NAME nemisis_weapon_metrics_tests COMMAND nemisis_weapon_metrics_tests)
 
 add_executable(nemisis_player_view_tests
     game/src/player/PlayerView.cpp

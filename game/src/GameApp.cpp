@@ -211,6 +211,7 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
     window_.pollEvents(input_);
     actions_.update(window_.inputSnapshot());
     menu_.update(actions_);
+    syncRelativeMouseMode();
     window_.setTitle(menu_.title());
 
     for (const auto& event : configRegistry_.pollReloads()) {
@@ -331,6 +332,18 @@ void GameApp::ensureLocalPlayer() {
     localPlayerEntity_ = player::spawnLocalPlayer(world_, spawnDesc, weapons_.findWeapon(spawnDesc.activeWeaponId));
     localCommandQueue_.clear();
     novacore::core::logInfo("game", "Local player entity spawned");
+}
+
+void GameApp::syncRelativeMouseMode() {
+    const bool wantsRelativeMouse = menu_.gameplayActive() && !window_.isHeadless();
+    if (relativeMouseDesired_ == wantsRelativeMouse) {
+        return;
+    }
+
+    relativeMouseDesired_ = wantsRelativeMouse;
+    if (!window_.setRelativeMouseMode(wantsRelativeMouse) && wantsRelativeMouse) {
+        novacore::core::logWarning("game", "Relative mouse mode requested but unavailable on this platform backend");
+    }
 }
 
 } // namespace nemisis::game

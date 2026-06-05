@@ -19,6 +19,12 @@ enum class GameScreen {
     Control,
 };
 
+enum class DebugPage {
+    Gameplay,
+    Network,
+    Assets
+};
+
 class GameMenu final {
 public:
     void update(const novacore::platform::InputActionMap& actions);
@@ -31,15 +37,19 @@ public:
     [[nodiscard]] GameScreen screen() const;
     [[nodiscard]] bool gameplayActive() const;
     [[nodiscard]] bool debugOverlayEnabled() const;
+    [[nodiscard]] DebugPage debugPage() const;
     [[nodiscard]] std::string title() const;
     [[nodiscard]] std::string_view screenName() const;
+    [[nodiscard]] std::string_view debugPageName() const;
     [[nodiscard]] std::array<float, 4> clearColor() const;
 
 private:
     void activateSelection();
     void setScreen(GameScreen screen);
+    void cycleDebugPage();
 
     GameScreen screen_ = GameScreen::MainMenu;
+    DebugPage debugPage_ = DebugPage::Gameplay;
     std::size_t selectedIndex_ = 0;
     bool debugOverlayEnabled_ = true;
 };

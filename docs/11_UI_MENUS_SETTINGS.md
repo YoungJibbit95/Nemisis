@@ -77,6 +77,15 @@ HUD elements:
 - Killfeed.
 - Network stats debug toggle.
 
+Current debug/UI implementation:
+
+- SDL debug render primitives draw the temporary main menu and dev-range panels.
+- `GameMenu` owns Main Menu, Dev Shooting Range, Team Deathmatch placeholder, and Control placeholder screens.
+- `F1` toggles the debug overlay.
+- `Tab` and controller Start/Menu cycle debug overlay pages.
+- Debug pages currently cover Gameplay, Network, and Assets/Render telemetry.
+- This is a temporary development UI path until the custom NanoVG-style renderer replaces SDL debug text.
+
 ## Settings
 
 Settings categories:

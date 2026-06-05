@@ -26,6 +26,10 @@
 - `GameAssetCatalog` loads the game asset manifest through NovaCore's asset registry backbone and queues dev-sandbox preload requests.
 - Barebones runtime menu exists with Main Menu, Dev Shooting Range, TDM placeholder, and Control placeholder screens.
 - Debug UI overlay is visible through NovaCore SDL debug render primitives when SDL3 is available.
+- Debug UI now has Gameplay, Network, and Assets pages, toggled with Tab or controller Start/Menu.
+- The dev range requests relative mouse mode through NovaCore while menus keep normal cursor behavior.
+- Local player spawning includes a health component for future authoritative damage and respawn flow.
+- Weapon metrics estimate damage band, shots-to-eliminate, and measured TTK for 150 HP balance targets.
 - `docs/19_PROJECT_KANBAN.md` tracks completed, doing, next, and blocked work until GitHub Projects access is available.
 - Movement replay tests cover sprint distance, jump/double-jump, dash cooldown, and config-driven tuning.
 - Input command, weapon simulation, weapon shot, player view, debug target, dev sandbox, player spawn, command queue, command message, and loopback bridge tests cover the newest gameplay bridge.
@@ -48,11 +52,16 @@
 - Added visible main menu and mode selection state through `GameMenu`.
 - Added menu/debug render commands for on-screen dev range target, target HP, renderer backend, tick, ack, asset queue, and ammo.
 - Added menu actions for keyboard/controller navigation and `nemisis_game_menu_tests`.
+- Moved command packet byte IO onto NovaCore `PacketWriter`/`PacketReader`.
+- Added `PlayerHealthComponent`, `applyDamage`, reset/alive helpers, and `nemisis_player_health_tests`.
+- Added `WeaponMetrics` with range bands, damage lookup, shots-to-eliminate, and TTK estimates.
+- Added `nemisis_weapon_metrics_tests` for AR/SMG 150 HP TTK baselines.
+- Added debug page cycling and relative mouse mode activation for the playable dev range.
 
 ## Next Game Blocks
 
-- Add raw mouse capture/cursor lock and configurable sensitivity loading.
-- Add first player health/damage components and measured TTK tests.
-- Expand debug UI into toggleable pages for input, movement, weapon, net, render, and assets.
+- Add configurable MKB/controller sensitivity loading and response curves.
+- Wire player health into hit resolution, HUD health, respawn, and server validation.
+- Expand debug UI pages with frame timings, entity counts, packet loss simulation, and reconciliation error.
 - Run the prepared Blender dev primitive generator once Blender is installed or exposed through tooling.
 - Add first glTF metadata/import handoff from NovaCore asset catalog into renderer mesh handles.
