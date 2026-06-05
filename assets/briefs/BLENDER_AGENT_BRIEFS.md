@@ -2,6 +2,29 @@
 
 These briefs are designed for a Blender-capable agent or a local Blender automation script. All output must be original project work and must follow `docs/16_ASSET_PRODUCTION_PLAN.md`.
 
+## Brief 00 - Dev Player Capsule Proxy
+
+Asset id: `chr_player_capsule_proxy_01`
+
+Purpose: a capsule-ish local/remote player proxy for early movement, collision, hitbox, and replication tests.
+
+Requirements:
+
+- Scale: 1.8 m tall, roughly 0.75 m movement capsule diameter.
+- Origin: feet/root at world base.
+- Meshes: simple capsule body, forward-facing stripe, foot/base orientation marker.
+- Hitbox guides: head, torso, pelvis.
+- Collision: `col_chr_player_capsule_proxy_01` capsule proxy.
+- Sockets: `socket_root`, `socket_camera`, `socket_weapon_root`, `socket_hit_head`, `socket_hit_torso`.
+- Export: `assets/export/gltf/characters/chr_player_capsule_proxy_01.glb`.
+- Preview: `assets/previews/chr_player_capsule_proxy_01.png`.
+
+Acceptance:
+
+- Fits current capsule movement assumptions.
+- Forward direction and camera height are readable.
+- Hitbox guide volumes are visible without final character art.
+
 ## Brief 01 - Dev Target Dummy
 
 Asset id: `prop_target_dummy_01`
@@ -57,7 +80,7 @@ Purpose: modular pieces for a small arena where movement, gunfeel, and server pr
 Requirements:
 
 - Scale: snap to 1 m grid.
-- Pieces: floor grid, wall segment, low cover, high cover, slide ramp, mantle ledges, doorway frame, distance markers.
+- Pieces: floor grid, wall segment, low cover, high cover, slide ramp, launch ramp, stairs, mantle ledges, wall-run panels, doorway frame, spawn markers, control marker, distance markers.
 - Origins: centered or grid-friendly pivots.
 - Materials: neutral concrete/metal, movement surfaces with clear accent strips.
 - Collision: simple `col_` mesh per piece.
@@ -115,3 +138,49 @@ Acceptance:
 - Clear head/torso/limb readability.
 - Fits current capsule movement assumptions.
 - Rig and hitbox guides are ready for later animation work.
+
+## Brief 06 - Prototype SMG
+
+Asset id: `wpn_smg_01`
+
+Purpose: compact weapon blockout for high-RPM close/mid-range gunfeel tests.
+
+Requirements:
+
+- Scale: shorter than `wpn_ar_01`, around 0.5 m long.
+- Origin: grip/root area suitable for weapon socket attachment.
+- Meshes: compact receiver, short barrel, box magazine, grip, stock stub, front stop/top rail.
+- Materials: dark polymer, brushed metal, neutral teal accent.
+- Sockets: `socket_muzzle`, `socket_grip_r`, `socket_grip_l`, `socket_eject`, `socket_vfx`.
+- LODs: `wpn_smg_01_lod0`, `wpn_smg_01_lod1`.
+- Export: `assets/export/gltf/weapons/wpn_smg_01.glb`.
+- Preview: `assets/previews/wpn_smg_01.png`.
+
+Acceptance:
+
+- Silhouette reads compact and distinct from the AR.
+- Muzzle and grip sockets are easy to inspect.
+- Magazine and front support are large enough for animation reference.
+
+## Brief 07 - Prototype Sidearm
+
+Asset id: `wpn_sidearm_01`
+
+Purpose: fallback pistol blockout for first-person and world-model attachment tests.
+
+Requirements:
+
+- Scale: compact pistol silhouette, around 0.35 m long.
+- Origin: grip/root area suitable for weapon socket attachment.
+- Meshes: slide, frame, grip, barrel, trigger guard, front/rear sights.
+- Materials: dark polymer, metal slide, small orange accent.
+- Sockets: `socket_muzzle`, `socket_grip_r`, `socket_grip_l`, `socket_eject`, `socket_vfx`.
+- LODs: `wpn_sidearm_01_lod0`, `wpn_sidearm_01_lod1`.
+- Export: `assets/export/gltf/weapons/wpn_sidearm_01.glb`.
+- Preview: `assets/previews/wpn_sidearm_01.png`.
+
+Acceptance:
+
+- Sidearm reads clearly at first-person and pickup scale.
+- Slide, grip, and muzzle are visually distinct.
+- Uses original primitive geometry only.

@@ -1,5 +1,5 @@
 param(
-    [ValidateSet("all", "target", "weapon", "arena")]
+    [ValidateSet("all", "target", "prop", "props", "player", "arms", "soldier", "character", "characters", "ar", "smg", "sidearm", "weapon", "weapons", "arena", "environment", "environments")]
     [string]$Only = "all",
 
     [string]$BlenderPath = ""
@@ -22,10 +22,13 @@ function Find-Blender {
         return $fromPath.Source
     }
 
+    $scriptDrive = Split-Path -Qualifier $PSScriptRoot
     $programFiles = @(
         "$env:ProgramFiles\Blender Foundation",
-        "${env:ProgramFiles(x86)}\Blender Foundation"
-    ) | Where-Object { $_ -and (Test-Path -LiteralPath $_) }
+        "${env:ProgramFiles(x86)}\Blender Foundation",
+        "$scriptDrive\Program Files\Blender Foundation",
+        "$scriptDrive\Program Files (x86)\Blender Foundation"
+    ) | Select-Object -Unique | Where-Object { $_ -and (Test-Path -LiteralPath $_) }
 
     foreach ($root in $programFiles) {
         $candidate = Get-ChildItem -LiteralPath $root -Recurse -Filter blender.exe -ErrorAction SilentlyContinue |

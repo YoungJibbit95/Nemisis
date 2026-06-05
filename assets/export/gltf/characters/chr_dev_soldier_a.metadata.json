@@ -1,0 +1,24 @@
+{
+  "id": "chr_dev_soldier_a",
+  "source": "assets/source/blender/characters/chr_dev_soldier_a.blend",
+  "export": "assets/export/gltf/characters/chr_dev_soldier_a.glb",
+  "category": "character",
+  "scale_meters": true,
+  "runtime_up_axis": "Y",
+  "gameplay_forward_axis": "+Z",
+  "sockets": [
+    "socket_root",
+    "socket_camera",
+    "socket_weapon_root",
+    "socket_hand_r",
+    "socket_hand_l",
+    "socket_head",
+    "socket_vfx"
+  ],
+  "collision": "col_chr_dev_soldier_a_capsule",
+  "lods": [
+    "chr_dev_soldier_a_lod0"
+  ],
+  "license": "original_project_asset",
+  "generated_by": "tools/blender/make_dev_primitives.py"
+}

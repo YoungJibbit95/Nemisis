@@ -129,6 +129,12 @@ Or with an explicit path:
 .\tools\blender\run_make_dev_primitives.ps1 -Only target -BlenderPath "C:\Program Files\Blender Foundation\Blender 4.5\blender.exe"
 ```
 
+Current local Blender path used by Codex:
+
+```powershell
+.\tools\blender\run_make_dev_primitives.ps1 -Only all -BlenderPath "F:\Program Files\Blender Foundation\Blender 5.1\blender.exe"
+```
+
 Direct background mode:
 
 ```powershell
@@ -137,15 +143,15 @@ blender --background --python tools/blender/make_dev_primitives.py -- --only all
 
 Blender's official command-line manual documents `--background`, `--python`, and the `--` separator for script arguments.
 
-## Current Environment Blocker
+## Current Environment Notes
 
 In the current Codex shell:
 
 - CMake is available.
-- Ninja is not in PATH.
+- Ninja is not in PATH by default, but CLion's bundled Ninja can be used by prepending its directory to PATH.
 - MSVC `cl` is not in PATH.
 - `g++` is not in PATH.
 - Visual Studio Build Tools are not visible to CMake in this shell.
-- Blender is not installed or not visible in PATH.
+- Blender is installed at `F:\Program Files\Blender Foundation\Blender 5.1\blender.exe`, but not visible in PATH.
 
-So the repo is prepared for IDE/toolchain pickup, but this machine still needs a build tool/compiler and Blender CLI before local game/asset generation can actually run.
+So the repo is prepared for IDE/toolchain pickup. Local builds have been verified through CLion's bundled MinGW/Ninja path, and Blender asset generation works when the explicit Blender path is passed to the helper.

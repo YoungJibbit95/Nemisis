@@ -39,15 +39,45 @@
       "dependencies": ["mat_wpn_ar_polymer_dark"]
     },
     {
+      "id": "wpn_smg_01",
+      "kind": "mesh",
+      "source": "assets/source/blender/weapons/wpn_smg_01.blend",
+      "cooked": "assets/export/gltf/weapons/wpn_smg_01.glb",
+      "streamable": true,
+      "priority": 92,
+      "estimated_bytes": 196608,
+      "tags": ["weapon", "smg", "first_person", "world_model", "dev_sandbox"]
+    },
+    {
+      "id": "wpn_sidearm_01",
+      "kind": "mesh",
+      "source": "assets/source/blender/weapons/wpn_sidearm_01.blend",
+      "cooked": "assets/export/gltf/weapons/wpn_sidearm_01.glb",
+      "streamable": true,
+      "priority": 88,
+      "estimated_bytes": 131072,
+      "tags": ["weapon", "sidearm", "first_person", "world_model", "dev_sandbox"]
+    },
+    {
       "id": "env_test_arena_kit_01",
       "kind": "scene",
       "source": "assets/source/blender/environments/env_test_arena_kit_01.blend",
       "cooked": "assets/export/gltf/environments/env_test_arena_kit_01.glb",
       "streamable": true,
       "priority": 80,
-      "estimated_bytes": 524288,
-      "tags": ["environment", "arena_kit", "movement_test", "dev_sandbox"],
+      "estimated_bytes": 786432,
+      "tags": ["environment", "arena_kit", "movement_test", "greybox", "spawn_markers", "cover", "dev_sandbox"],
       "dependencies": ["mat_env_movement_accent"]
+    },
+    {
+      "id": "chr_player_capsule_proxy_01",
+      "kind": "mesh",
+      "source": "assets/source/blender/characters/chr_player_capsule_proxy_01.blend",
+      "cooked": "assets/export/gltf/characters/chr_player_capsule_proxy_01.glb",
+      "streamable": true,
+      "priority": 78,
+      "estimated_bytes": 196608,
+      "tags": ["character", "player_proxy", "capsule", "hitbox_test", "dev_sandbox"]
     },
     {
       "id": "chr_dev_arms_a",

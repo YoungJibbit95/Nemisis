@@ -28,10 +28,15 @@ This file mirrors the active work while GitHub Projects access is blocked by the
 - [x] Expand debug UI into Gameplay, Network, and Assets pages.
 - [x] Fix visible dev launches by auto-fetching SDL3 when vcpkg/package SDL3 is missing.
 - [x] Copy MinGW runtime DLLs beside executable targets for direct shell runs.
+- [x] Add NovaCore SDL debug line primitives for world/map overlays.
+- [x] Add Nemisis `GreyboxWorld` data for the first Dev Shooting Range.
+- [x] Draw a visible top-down greybox range with player, view direction, target, cover, ramps, and range markers.
+- [x] Spawn the local player from the greybox world definition.
+- [x] Generate A0 Blender source/export assets for target, player proxy, first-person arms, soldier proxy, AR, SMG, sidearm, and arena kit.
 
 ## Doing
 
-- [ ] Make the first visible test loop feel like an actual dev shooting range.
+- [ ] Move from debug-map greybox to in-world mesh greybox rendering.
 - [ ] Keep renderer work moving toward real Vulkan swapchain/shaders.
 
 ## Next Core
@@ -41,6 +46,7 @@ This file mirrors the active work while GitHub Projects access is blocked by the
 - [ ] glTF metadata/import shim and mesh handle placeholders.
 - [ ] Renderer mesh/shader pipeline foundation.
 - [ ] KCC collision foundation for ramps, ledges, and slide/mantle tests.
+- [ ] Greybox primitive collision queries shared by movement and server validation.
 
 ## Next Gameplay
 
@@ -54,5 +60,3 @@ This file mirrors the active work while GitHub Projects access is blocked by the
 ## Blocked
 
 - [ ] GitHub Projects/Kanban sync: blocked until GitHub CLI auth includes `read:project`.
-- [ ] Local compile/run verification: blocked until MSVC Build Tools or another C++ compiler is visible to CMake.
-- [ ] Blender asset generation: blocked until Blender CLI is installed or provided through a tool/plugin.

@@ -31,3 +31,8 @@ vcpkg_installed/
 
 # Temporary files
 *.tmp
+*.blend1
+
+# Python tooling
+__pycache__/
+*.pyc

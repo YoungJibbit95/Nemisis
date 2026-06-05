@@ -59,6 +59,7 @@ add_executable(nemisis_game
     game/src/assets/GameAssetCatalog.cpp
     game/src/dev/DebugTarget.cpp
     game/src/dev/DevSandbox.cpp
+    game/src/dev/GreyboxWorld.cpp
     game/src/input/InputBindings.cpp
     game/src/input/InputCommandBuilder.cpp
     game/src/main.cpp
@@ -264,6 +265,19 @@ target_include_directories(nemisis_dev_sandbox_tests
 target_link_libraries(nemisis_dev_sandbox_tests PRIVATE Novacore::Engine)
 add_test(NAME nemisis_dev_sandbox_tests COMMAND nemisis_dev_sandbox_tests)
 
+add_executable(nemisis_greybox_world_tests
+    game/src/dev/GreyboxWorld.cpp
+    tests/greybox_world_tests.cpp
+)
+
+target_include_directories(nemisis_greybox_world_tests
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/game/include
+)
+
+target_link_libraries(nemisis_greybox_world_tests PRIVATE Novacore::Engine)
+add_test(NAME nemisis_greybox_world_tests COMMAND nemisis_greybox_world_tests)
+
 add_executable(nemisis_weapon_shot_tests
     game/src/weapons/WeaponShot.cpp
     tests/weapon_shot_tests.cpp
@@ -329,6 +343,7 @@ foreach(nemisis_runtime_target IN ITEMS
     nemisis_loopback_command_bridge_tests
     nemisis_player_spawn_tests
     nemisis_dev_sandbox_tests
+    nemisis_greybox_world_tests
     nemisis_weapon_shot_tests
     nemisis_weapon_metrics_tests
     nemisis_player_view_tests

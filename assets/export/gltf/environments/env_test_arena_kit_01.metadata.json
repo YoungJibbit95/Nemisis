@@ -1,0 +1,18 @@
+{
+  "id": "env_test_arena_kit_01",
+  "source": "assets/source/blender/environments/env_test_arena_kit_01.blend",
+  "export": "assets/export/gltf/environments/env_test_arena_kit_01.glb",
+  "category": "environment",
+  "scale_meters": true,
+  "runtime_up_axis": "Y",
+  "gameplay_forward_axis": "+Z",
+  "sockets": [
+    "socket_spawn_alpha",
+    "socket_spawn_bravo",
+    "socket_control_point"
+  ],
+  "collision": "per_piece_col_prefix",
+  "lods": [],
+  "license": "original_project_asset",
+  "generated_by": "tools/blender/make_dev_primitives.py"
+}

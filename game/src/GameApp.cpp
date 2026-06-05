@@ -212,6 +212,7 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
         targetHit,
         networkSample,
         loopbackBridge_.stats(),
+        view != nullptr ? *view : player::PlayerViewComponent{},
     });
 }
 
@@ -240,6 +241,7 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
     menu_.appendRenderCommands(
         frameInfo,
         devSandbox_.latestSample(),
+        greyboxWorld_,
         renderer_.backendName(),
         assetStreamer_.pendingCount());
     renderer_.beginFrame(frameInfo);
@@ -337,6 +339,7 @@ void GameApp::ensureLocalPlayer() {
 
     player::LocalPlayerSpawnDesc spawnDesc{};
     spawnDesc.activeWeaponId = std::string(kDefaultWeaponId);
+    spawnDesc.position = greyboxWorld_.playerSpawn;
     localPlayerEntity_ = player::spawnLocalPlayer(world_, spawnDesc, weapons_.findWeapon(spawnDesc.activeWeaponId));
     localCommandQueue_.clear();
     novacore::core::logInfo("game", "Local player entity spawned");

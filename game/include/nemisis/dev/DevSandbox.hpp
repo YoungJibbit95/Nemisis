@@ -32,6 +32,7 @@ struct DevSandboxSample final {
     DebugTargetHitResult targetHit{};
     player::PlayerNetworkComponent network{};
     net::LoopbackBridgeStats netBridge{};
+    player::PlayerViewComponent view{};
 };
 
 class DevSandbox final {

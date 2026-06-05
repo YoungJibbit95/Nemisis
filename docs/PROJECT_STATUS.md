@@ -28,13 +28,15 @@
 - Debug UI overlay is visible through NovaCore SDL debug render primitives when SDL3 is available.
 - Debug UI now has Gameplay, Network, and Assets pages, toggled with Tab or controller Start/Menu.
 - The dev range requests relative mouse mode through NovaCore while menus keep normal cursor behavior.
+- The Dev Shooting Range now owns a deterministic `GreyboxWorld` with floor, walls, cover, ramps, spawns, range markers, and a target lane.
+- The SDL debug UI draws the greybox as a top-down range map with player position, view direction, target marker, and range helpers.
 - Normal dev builds now use NovaCore's SDL3 FetchContent fallback when no installed SDL3 package is present.
 - MinGW runtime DLLs are copied beside all Nemisis runtime/test executables for direct shell launches.
 - Local player spawning includes a health component for future authoritative damage and respawn flow.
 - Weapon metrics estimate damage band, shots-to-eliminate, and measured TTK for 150 HP balance targets.
 - `docs/19_PROJECT_KANBAN.md` tracks completed, doing, next, and blocked work until GitHub Projects access is available.
 - Movement replay tests cover sprint distance, jump/double-jump, dash cooldown, and config-driven tuning.
-- Input command, weapon simulation, weapon shot, player view, debug target, dev sandbox, player spawn, command queue, command message, and loopback bridge tests cover the newest gameplay bridge.
+- Input command, weapon simulation, weapon shot, player view, debug target, dev sandbox, player spawn, command queue, command message, greybox world, and loopback bridge tests cover the newest gameplay bridge.
 
 ## Added In Latest Block
 
@@ -62,11 +64,18 @@
 - Fixed the direct `cmake-build-debug/nemisis_game.exe` no-window path by enabling automatic SDL3 fetch/build in NovaCore.
 - Fixed direct MinGW executable launch by copying runtime DLLs beside `nemisis_game.exe` and test executables.
 - Cleaned initial config watching so failed startup config loads are logged instead of ignored.
+- Added `GreyboxWorld` as the first data-owned dev range map with stable primitive ids and world-space spawn data.
+- Added a visible top-down debug range inside the Dev Shooting Range so player/world/target layout can be inspected before full 3D mesh rendering.
+- Local player spawn now comes from the greybox world definition.
+- Added `nemisis_greybox_world_tests` and raised the local test suite to 17 passing tests in the current debug build.
+- Expanded Blender automation to generate target dummy, player capsule proxy, first-person arms, soldier proxy, AR, SMG, sidearm, and arena-kit A0 assets.
+- Generated the first `.blend`, `.glb`, and metadata files under `assets/source/blender` and `assets/export/gltf` with Blender 5.1.
 
 ## Next Game Blocks
 
 - Add configurable MKB/controller sensitivity loading and response curves.
 - Wire player health into hit resolution, HUD health, respawn, and server validation.
 - Expand debug UI pages with frame timings, entity counts, packet loss simulation, and reconciliation error.
-- Run the prepared Blender dev primitive generator once Blender is installed or exposed through tooling.
 - Add first glTF metadata/import handoff from NovaCore asset catalog into renderer mesh handles.
+- Bind generated A0 weapon/character/environment assets into the future mesh-import path.
+- Start KCC collision against greybox primitives before final mesh collision import.

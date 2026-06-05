@@ -1,0 +1,21 @@
+{
+  "id": "chr_dev_arms_a",
+  "source": "assets/source/blender/characters/chr_dev_arms_a.blend",
+  "export": "assets/export/gltf/characters/chr_dev_arms_a.glb",
+  "category": "character",
+  "scale_meters": true,
+  "runtime_up_axis": "Y",
+  "gameplay_forward_axis": "+Z",
+  "sockets": [
+    "socket_camera",
+    "socket_weapon_root",
+    "socket_hand_r",
+    "socket_hand_l"
+  ],
+  "collision": "none",
+  "lods": [
+    "chr_dev_arms_a_lod0"
+  ],
+  "license": "original_project_asset",
+  "generated_by": "tools/blender/make_dev_primitives.py"
+}

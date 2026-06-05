@@ -1,0 +1,23 @@
+{
+  "id": "wpn_sidearm_01",
+  "source": "assets/source/blender/weapons/wpn_sidearm_01.blend",
+  "export": "assets/export/gltf/weapons/wpn_sidearm_01.glb",
+  "category": "weapon",
+  "scale_meters": true,
+  "runtime_up_axis": "Y",
+  "gameplay_forward_axis": "+Z",
+  "sockets": [
+    "socket_muzzle",
+    "socket_grip_r",
+    "socket_grip_l",
+    "socket_eject",
+    "socket_vfx"
+  ],
+  "collision": "none",
+  "lods": [
+    "wpn_sidearm_01_lod0",
+    "wpn_sidearm_01_lod1"
+  ],
+  "license": "original_project_asset",
+  "generated_by": "tools/blender/make_dev_primitives.py"
+}

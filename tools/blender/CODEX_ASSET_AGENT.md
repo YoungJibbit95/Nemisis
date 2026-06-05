@@ -43,12 +43,30 @@ Direct Blender call:
 blender --background --python tools/blender/make_dev_primitives.py -- --only all
 ```
 
-Valid `--only` values:
+Useful `--only` values:
 
 - `all`
 - `target`
-- `weapon`
+- `characters`
+- `player`
+- `arms`
+- `soldier`
+- `weapons`
+- `ar`
+- `smg`
+- `sidearm`
 - `arena`
+
+The generator currently emits dev geometry for:
+
+- `prop_target_dummy_01`
+- `chr_player_capsule_proxy_01`
+- `chr_dev_arms_a`
+- `chr_dev_soldier_a`
+- `wpn_ar_01`
+- `wpn_smg_01`
+- `wpn_sidearm_01`
+- `env_test_arena_kit_01`
 
 ## Acceptance Before Commit
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "nemisis/dev/DevSandbox.hpp"
+#include "nemisis/dev/GreyboxWorld.hpp"
 
 #include "novacore/platform/InputAction.hpp"
 #include "novacore/render/Renderer.hpp"
@@ -31,6 +32,7 @@ public:
     void appendRenderCommands(
         novacore::render::RenderFrameInfo& frame,
         const nemisis::dev::DevSandboxSample& sample,
+        const nemisis::dev::GreyboxWorld& greyboxWorld,
         std::string_view rendererBackend,
         std::size_t queuedAssets) const;
 

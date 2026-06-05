@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <cmath>
 #include <iomanip>
 #include <sstream>
 #include <string>
@@ -38,6 +39,16 @@ void addRect(
     float height,
     std::array<float, 4> color) {
     frame.debugRects.push_back(novacore::render::DebugRect{x, y, width, height, color});
+}
+
+void addLine(
+    novacore::render::RenderFrameInfo& frame,
+    float x0,
+    float y0,
+    float x1,
+    float y1,
+    std::array<float, 4> color) {
+    frame.debugLines.push_back(novacore::render::DebugLine{x0, y0, x1, y1, color});
 }
 
 void addText(
@@ -117,6 +128,110 @@ void addMetric(
     return value ? "Yes" : "No";
 }
 
+struct MapPoint final {
+    float x = 0.0F;
+    float y = 0.0F;
+};
+
+[[nodiscard]] MapPoint projectTopDown(
+    const dev::GreyboxWorld& world,
+    novacore::math::Vec3 position,
+    float x,
+    float y,
+    float width,
+    float height) {
+    const float halfWidth = std::max(1.0F, world.boundsHalfExtents.x);
+    const float halfDepth = std::max(1.0F, world.boundsHalfExtents.z);
+    return MapPoint{
+        x + (width * 0.5F) + ((position.x / halfWidth) * (width * 0.5F)),
+        y + (height * 0.5F) - ((position.z / halfDepth) * (height * 0.5F)),
+    };
+}
+
+void addMapBox(
+    novacore::render::RenderFrameInfo& frame,
+    const dev::GreyboxWorld& world,
+    const dev::GreyboxPrimitive& primitive,
+    float x,
+    float y,
+    float width,
+    float height) {
+    const auto min = projectTopDown(
+        world,
+        primitive.center - novacore::math::Vec3{primitive.halfExtents.x, 0.0F, primitive.halfExtents.z},
+        x,
+        y,
+        width,
+        height);
+    const auto max = projectTopDown(
+        world,
+        primitive.center + novacore::math::Vec3{primitive.halfExtents.x, 0.0F, primitive.halfExtents.z},
+        x,
+        y,
+        width,
+        height);
+
+    const float rectX = std::min(min.x, max.x);
+    const float rectY = std::min(min.y, max.y);
+    const float rectWidth = std::max(2.0F, std::abs(max.x - min.x));
+    const float rectHeight = std::max(2.0F, std::abs(max.y - min.y));
+    addRect(frame, rectX, rectY, rectWidth, rectHeight, primitive.color);
+}
+
+void addDevRangeMap(
+    novacore::render::RenderFrameInfo& frame,
+    const dev::GreyboxWorld& world,
+    const dev::DevSandboxSample& sample) {
+    constexpr float mapX = 58.0F;
+    constexpr float mapY = 190.0F;
+    constexpr float mapWidth = 520.0F;
+    constexpr float mapHeight = 338.0F;
+    constexpr float kPi = 3.14159265358979323846F;
+
+    addRect(frame, mapX, mapY, mapWidth, mapHeight, {0.020F, 0.030F, 0.034F, 0.96F});
+    addText(frame, mapX + 16.0F, mapY + 16.0F, 2.0F, {0.68F, 0.82F, 0.86F, 1.0F}, "GREYBOX DEV RANGE");
+
+    for (int column = -4; column <= 4; ++column) {
+        const float worldX = static_cast<float>(column) * (world.boundsHalfExtents.x / 4.0F);
+        const auto a = projectTopDown(world, {worldX, 0.0F, -world.boundsHalfExtents.z}, mapX, mapY, mapWidth, mapHeight);
+        const auto b = projectTopDown(world, {worldX, 0.0F, world.boundsHalfExtents.z}, mapX, mapY, mapWidth, mapHeight);
+        addLine(frame, a.x, a.y, b.x, b.y, {0.10F, 0.14F, 0.15F, 1.0F});
+    }
+    for (int row = -4; row <= 4; ++row) {
+        const float worldZ = static_cast<float>(row) * (world.boundsHalfExtents.z / 4.0F);
+        const auto a = projectTopDown(world, {-world.boundsHalfExtents.x, 0.0F, worldZ}, mapX, mapY, mapWidth, mapHeight);
+        const auto b = projectTopDown(world, {world.boundsHalfExtents.x, 0.0F, worldZ}, mapX, mapY, mapWidth, mapHeight);
+        addLine(frame, a.x, a.y, b.x, b.y, {0.10F, 0.14F, 0.15F, 1.0F});
+    }
+
+    for (const auto& primitive : world.primitives) {
+        if (primitive.kind == dev::GreyboxPrimitiveKind::Floor) {
+            continue;
+        }
+        addMapBox(frame, world, primitive, mapX, mapY, mapWidth, mapHeight);
+    }
+
+    const auto player = projectTopDown(world, sample.position, mapX, mapY, mapWidth, mapHeight);
+    addRect(frame, player.x - 5.0F, player.y - 5.0F, 10.0F, 10.0F, {0.05F, 0.82F, 0.95F, 1.0F});
+
+    const float yaw = sample.view.yawDegrees * (kPi / 180.0F);
+    const auto lookEnd = projectTopDown(
+        world,
+        sample.position + novacore::math::Vec3{std::sin(yaw), 0.0F, std::cos(yaw)} * 5.5F,
+        mapX,
+        mapY,
+        mapWidth,
+        mapHeight);
+    addLine(frame, player.x, player.y, lookEnd.x, lookEnd.y, {0.72F, 0.95F, 1.0F, 1.0F});
+
+    const auto target = projectTopDown(world, sample.target.position, mapX, mapY, mapWidth, mapHeight);
+    const auto targetColor = sample.target.eliminated
+        ? std::array<float, 4>{0.18F, 0.18F, 0.18F, 1.0F}
+        : std::array<float, 4>{0.95F, 0.16F, 0.10F, 1.0F};
+    addRect(frame, target.x - 8.0F, target.y - 8.0F, 16.0F, 16.0F, targetColor);
+    addLine(frame, player.x, player.y, target.x, target.y, {0.42F, 0.19F, 0.16F, 0.75F});
+}
+
 } // namespace
 
 void GameMenu::update(const novacore::platform::InputActionMap& actions) {
@@ -161,6 +276,7 @@ void GameMenu::update(const novacore::platform::InputActionMap& actions) {
 void GameMenu::appendRenderCommands(
     novacore::render::RenderFrameInfo& frame,
     const nemisis::dev::DevSandboxSample& sample,
+    const nemisis::dev::GreyboxWorld& greyboxWorld,
     std::string_view rendererBackend,
     std::size_t queuedAssets) const {
     addRect(frame, 0.0F, 0.0F, 1280.0F, 720.0F, {0.0F, 0.0F, 0.0F, 0.05F});
@@ -191,14 +307,22 @@ void GameMenu::appendRenderCommands(
         addText(frame, 72.0F, 570.0F, 2.0F, {0.55F, 0.62F, 0.66F, 1.0F}, "WINDOW IS LIVE - SDL DEBUG RENDER PATH");
     } else if (screen_ == GameScreen::DevRange) {
         addHeader(frame, "DEV SHOOTING RANGE", "ESC BACK  F1 DEBUG  TAB PAGE  MOUSE/RIGHT STICK LOOK");
+        addDevRangeMap(frame, greyboxWorld, sample);
         addRect(frame, 633.0F, 340.0F, 14.0F, 2.0F, {0.95F, 0.98F, 1.0F, 1.0F});
         addRect(frame, 640.0F, 333.0F, 2.0F, 14.0F, {0.95F, 0.98F, 1.0F, 1.0F});
-        addRect(frame, 920.0F, 235.0F, 80.0F, 140.0F, {0.40F, 0.08F, 0.06F, 0.9F});
-        addRect(frame, 937.0F, 204.0F, 46.0F, 46.0F, {0.82F, 0.18F, 0.14F, 0.95F});
+        addRect(frame, 838.0F, 212.0F, 250.0F, 318.0F, {0.018F, 0.026F, 0.030F, 0.92F});
+        addText(frame, 858.0F, 234.0F, 2.0F, {0.65F, 0.80F, 0.84F, 1.0F}, "TARGET LANE");
+        addLine(frame, 864.0F, 498.0F, 1020.0F, 302.0F, {0.16F, 0.24F, 0.25F, 1.0F});
+        addLine(frame, 1052.0F, 498.0F, 1020.0F, 302.0F, {0.16F, 0.24F, 0.25F, 1.0F});
+        addLine(frame, 864.0F, 498.0F, 1052.0F, 498.0F, {0.16F, 0.24F, 0.25F, 1.0F});
+        addRect(frame, 934.0F, 304.0F, 82.0F, 138.0F, {0.40F, 0.08F, 0.06F, 0.9F});
+        addRect(frame, 952.0F, 270.0F, 46.0F, 46.0F, {0.82F, 0.18F, 0.14F, 0.95F});
+        addRect(frame, 820.0F, 506.0F, 118.0F, 44.0F, {0.10F, 0.13F, 0.13F, 0.95F});
+        addRect(frame, 940.0F, 518.0F, 150.0F, 28.0F, {0.19F, 0.22F, 0.22F, 0.95F});
         const float hpRatio = std::clamp(sample.target.health / sample.target.maxHealth, 0.0F, 1.0F);
-        addRect(frame, 820.0F, 442.0F, 260.0F, 18.0F, {0.16F, 0.06F, 0.05F, 1.0F});
-        addRect(frame, 820.0F, 442.0F, 260.0F * hpRatio, 18.0F, {0.85F, 0.14F, 0.10F, 1.0F});
-        addText(frame, 820.0F, 472.0F, 2.0F, {0.92F, 0.94F, 0.95F, 1.0F}, "TARGET HP " + fixedOne(sample.target.health));
+        addRect(frame, 820.0F, 552.0F, 260.0F, 18.0F, {0.16F, 0.06F, 0.05F, 1.0F});
+        addRect(frame, 820.0F, 552.0F, 260.0F * hpRatio, 18.0F, {0.85F, 0.14F, 0.10F, 1.0F});
+        addText(frame, 820.0F, 530.0F, 2.0F, {0.92F, 0.94F, 0.95F, 1.0F}, "TARGET HP " + fixedOne(sample.target.health));
     } else {
         const bool tdm = screen_ == GameScreen::TeamDeathmatch;
         addHeader(frame, tdm ? "TEAM DEATHMATCH" : "CONTROL", "PLACEHOLDER MODE  -  ESC BACK");

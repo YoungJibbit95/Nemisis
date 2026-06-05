@@ -16,11 +16,11 @@ Codex/GPT can help with Blender work when one of these exists in the workspace:
 
 Current local environment:
 
-- Blender is not installed or not visible in PATH.
-- No Blender executable was found under the usual `C:\Program Files` install path.
-- This block therefore implements the production plan and asset briefs, not generated `.blend` files.
+- Blender is available on this machine through an explicit path: `F:\Program Files\Blender Foundation\Blender 5.1\blender.exe`.
+- Blender is not currently in PATH, so call the helper with `-BlenderPath` or add the Blender folder to PATH.
+- A0 dev primitives have been generated as `.blend`, `.glb`, and metadata files under `assets/source/blender` and `assets/export/gltf`.
 
-The first generator script is already prepared in `tools/blender/make_dev_primitives.py`. Once Blender is available, it can create source `.blend` files, glTF exports, and metadata for the target dummy, AR blockout, and movement test arena kit.
+The first generator script is `tools/blender/make_dev_primitives.py`. It creates source `.blend` files, glTF exports, and metadata for the target dummy, player capsule proxy, first-person arms proxy, third-person soldier proxy, AR/SMG/sidearm blockouts, and movement test arena kit.
 
 Nemisis runtime asset ids are declared in `configs/assets/nemisis_assets.json`. This catalog is loaded by `GameAssetCatalog` and mounted through NovaCore's asset manifest/registry backbone.
 
@@ -125,9 +125,10 @@ Assets:
 
 - `prop_target_dummy_01`: sphere/capsule target with visible hit zones.
 - `chr_player_capsule_proxy_01`: simple player proxy matching movement collision.
-- `wpn_ar_blockout_01`: first readable weapon blockout with muzzle socket.
-- `env_test_floor_grid_01`: metric floor grid with 1 m and 5 m markings.
-- `env_test_wall_mantle_01`: ledge pieces for mantle and jump tests.
+- `wpn_ar_01`: first readable weapon blockout with muzzle socket.
+- `wpn_smg_01`: compact weapon blockout with grip and muzzle sockets.
+- `wpn_sidearm_01`: fallback sidearm blockout with grip and muzzle sockets.
+- `env_test_arena_kit_01`: metric floor grid, walls, cover, ramps, spawn markers, distance markers, and movement-test pieces.
 
 Acceptance:
 
@@ -135,6 +136,18 @@ Acceptance:
 - Silhouettes are readable in a greybox scene.
 - Weapon has muzzle and grip sockets.
 - Target dummy origin and collision proxy are usable for hit tests.
+
+Current generated outputs:
+
+- `assets/source/blender/props/prop_target_dummy_01.blend`
+- `assets/source/blender/characters/chr_player_capsule_proxy_01.blend`
+- `assets/source/blender/characters/chr_dev_arms_a.blend`
+- `assets/source/blender/characters/chr_dev_soldier_a.blend`
+- `assets/source/blender/weapons/wpn_ar_01.blend`
+- `assets/source/blender/weapons/wpn_smg_01.blend`
+- `assets/source/blender/weapons/wpn_sidearm_01.blend`
+- `assets/source/blender/environments/env_test_arena_kit_01.blend`
+- Matching `.glb` exports and `.metadata.json` files under `assets/export/gltf`.
 
 ### A1 - Shooter Test Field Kit
 
@@ -250,10 +263,10 @@ Before an asset enters runtime tests:
 
 ## First Automation Targets
 
-When Blender is installed:
+After Blender or a Blender path is available:
 
-1. `tools/blender/make_dev_primitives.py`: generate the first simple target dummy, AR blockout, floor grid, and movement blockout kit.
-2. `tools/blender/run_make_dev_primitives.ps1`: find Blender and run the generator from PowerShell.
+1. `tools/blender/make_dev_primitives.py`: generate the first simple target dummy, player/arms/soldier proxies, AR/SMG/sidearm blockouts, floor grid, and movement blockout kit.
+2. `tools/blender/run_make_dev_primitives.ps1`: find Blender or accept `-BlenderPath` and run the generator from PowerShell.
 3. `tools/blender/validate_asset.py`: verify naming, scale, transforms, sockets, and collision proxy names.
 4. `tools/blender/export_gltf.py`: export selected source file to the expected glTF path.
 5. `tools/blender/render_preview.py`: render a stable turntable or front/side preview.

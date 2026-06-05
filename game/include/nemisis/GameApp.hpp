@@ -3,6 +3,7 @@
 #include "nemisis/assets/GameAssetCatalog.hpp"
 #include "nemisis/dev/DebugTarget.hpp"
 #include "nemisis/dev/DevSandbox.hpp"
+#include "nemisis/dev/GreyboxWorld.hpp"
 #include "nemisis/movement/MovementConfig.hpp"
 #include "nemisis/movement/MovementSystem.hpp"
 #include "nemisis/net/LoopbackCommandBridge.hpp"
@@ -51,6 +52,7 @@ private:
     novacore::ecs::EntityId cameraEntity_;
     dev::DebugTargetState debugTarget_;
     dev::DevSandbox devSandbox_;
+    dev::GreyboxWorld greyboxWorld_ = dev::createDevRangeGreyboxWorld();
     ui::GameMenu menu_;
     movement::MovementSystem movement_;
     net::LoopbackCommandBridge loopbackBridge_;

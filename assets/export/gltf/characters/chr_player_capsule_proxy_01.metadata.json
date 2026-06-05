@@ -1,0 +1,22 @@
+{
+  "id": "chr_player_capsule_proxy_01",
+  "source": "assets/source/blender/characters/chr_player_capsule_proxy_01.blend",
+  "export": "assets/export/gltf/characters/chr_player_capsule_proxy_01.glb",
+  "category": "character",
+  "scale_meters": true,
+  "runtime_up_axis": "Y",
+  "gameplay_forward_axis": "+Z",
+  "sockets": [
+    "socket_root",
+    "socket_camera",
+    "socket_weapon_root",
+    "socket_hit_head",
+    "socket_hit_torso"
+  ],
+  "collision": "col_chr_player_capsule_proxy_01",
+  "lods": [
+    "chr_player_capsule_proxy_01_lod0"
+  ],
+  "license": "original_project_asset",
+  "generated_by": "tools/blender/make_dev_primitives.py"
+}

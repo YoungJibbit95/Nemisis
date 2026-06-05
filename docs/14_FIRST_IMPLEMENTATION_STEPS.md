@@ -258,6 +258,28 @@ Acceptance:
 - `GameApp` asks NovaCore for relative mouse mode only when gameplay is active.
 - Docs and kanban mark the new runtime/debug/TTK slice as complete.
 
+## Step 16 - Greybox Runtime And A0 Asset Generation
+
+Implement:
+
+- Add a game-owned `GreyboxWorld` data model for the Dev Shooting Range.
+- Define floor, walls, cover, ramps, spawns, range markers, and target lane as stable primitive ids.
+- Spawn the local player from the greybox world spawn.
+- Feed current view data into dev sandbox telemetry so UI/debug drawing can visualize player direction.
+- Draw the first visible top-down greybox range through NovaCore SDL debug rectangles and lines.
+- Expand Blender automation to generate A0 target, character proxy, arms, soldier, weapon, and arena-kit assets.
+- Generate `.blend`, `.glb`, and metadata files through Blender CLI with an explicit `-BlenderPath`.
+- Add greybox world tests.
+
+Acceptance:
+
+- Dev Shooting Range visually represents player, target, walls, cover, ramps, range markers, and aim direction.
+- Local player starts at the greybox spawn.
+- A0 Blender source/export files exist under `assets/source/blender` and `assets/export/gltf`.
+- `configs/assets/nemisis_assets.json` references the generated A0 runtime ids.
+- CTest includes `nemisis_greybox_world_tests`.
+- Docs and kanban define Greybox Phase 0 as active and identify the next mesh/KCC steps.
+
 
 
 
