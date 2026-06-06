@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cstdlib>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -94,6 +95,55 @@ void writeMetadata(const std::filesystem::path& root, const AssetSpec& spec) {
     })";
 }
 
+void appendU32(std::string& bytes, std::uint32_t value) {
+    bytes.push_back(static_cast<char>(value & 0xFFU));
+    bytes.push_back(static_cast<char>((value >> 8U) & 0xFFU));
+    bytes.push_back(static_cast<char>((value >> 16U) & 0xFFU));
+    bytes.push_back(static_cast<char>((value >> 24U) & 0xFFU));
+}
+
+void appendPaddedChunk(std::string& bytes, std::string chunk, std::uint32_t chunkType, char padding) {
+    while ((chunk.size() % 4U) != 0U) {
+        chunk.push_back(padding);
+    }
+    appendU32(bytes, static_cast<std::uint32_t>(chunk.size()));
+    appendU32(bytes, chunkType);
+    bytes += chunk;
+}
+
+void writeTinyGlb(const std::filesystem::path& path, std::string_view assetId) {
+    constexpr std::uint32_t kGlbMagic = 0x46546C67U;
+    constexpr std::uint32_t kGlbJsonChunk = 0x4E4F534AU;
+    constexpr std::uint32_t kGlbBinaryChunk = 0x004E4942U;
+
+    std::filesystem::create_directories(path.parent_path());
+    const std::string json = std::string(R"({
+        "asset": { "version": "2.0", "generator": "dev_asset_bindings_tests" },
+        "scene": 0,
+        "scenes": [{ "nodes": [0] }],
+        "nodes": [{ "name": ")") + std::string(assetId) + R"(_node", "mesh": 0 }],
+        "meshes": [{ "name": ")" + std::string(assetId) + R"(_mesh", "primitives": [{ "attributes": { "POSITION": 0 }, "indices": 1, "material": 0 }] }],
+        "materials": [{ "name": ")" + std::string(assetId) + R"(_mat" }],
+        "buffers": [{ "byteLength": 16 }],
+        "bufferViews": [{ "buffer": 0, "byteOffset": 0, "byteLength": 16 }],
+        "accessors": [{ "bufferView": 0, "componentType": 5126, "count": 1, "type": "VEC3" }]
+    })";
+    std::string bin(16, '\0');
+
+    std::string chunks;
+    appendPaddedChunk(chunks, json, kGlbJsonChunk, ' ');
+    appendPaddedChunk(chunks, bin, kGlbBinaryChunk, '\0');
+
+    std::string glb;
+    appendU32(glb, kGlbMagic);
+    appendU32(glb, 2);
+    appendU32(glb, static_cast<std::uint32_t>(12U + chunks.size()));
+    glb += chunks;
+
+    std::ofstream file(path, std::ios::binary);
+    file.write(glb.data(), static_cast<std::streamsize>(glb.size()));
+}
+
 void testRequiredDevAssetsBindToMeshCatalog() {
     const auto root = std::filesystem::temp_directory_path() / "nemisis_dev_asset_bindings_ready";
     std::filesystem::remove_all(root);
@@ -104,6 +154,7 @@ void testRequiredDevAssetsBindToMeshCatalog() {
     writeManifest(manifestPath, specs);
     for (const auto& spec : specs) {
         writeMetadata(root, spec);
+        writeTinyGlb(root / spec.cooked, spec.id);
     }
 
     nemisis::assets::GameAssetCatalog catalog;
@@ -116,8 +167,15 @@ void testRequiredDevAssetsBindToMeshCatalog() {
     expect(summary.requiredAssetCount == nemisis::assets::requiredDevSandboxRenderableAssetIds().size(), "summary counts required assets");
     expect(summary.renderableAssetCount == summary.requiredAssetCount, "all required assets become mesh handles");
     expect(summary.metadataAssetCount == summary.requiredAssetCount, "all required assets load metadata");
+    expect(summary.importedAssetCount == summary.requiredAssetCount, "all required assets load glb scene info");
+    expect(summary.totalMeshCount == summary.requiredAssetCount, "summary counts imported glb meshes");
+    expect(summary.totalNodeCount == summary.requiredAssetCount, "summary counts imported glb nodes");
+    expect(summary.totalMaterialCount == summary.requiredAssetCount, "summary counts imported glb materials");
+    expect(summary.totalBinaryBytes == summary.requiredAssetCount * 16U, "summary totals glb binary payload bytes");
     expect(bindings.meshCatalog().contains("wpn_ar_01"), "mesh catalog contains AR handle");
     expect(bindings.meshCatalog().contains("env_test_arena_kit_01"), "mesh catalog contains arena scene handle");
+    const auto* ar = bindings.meshCatalog().findByAssetId("wpn_ar_01");
+    expect(ar != nullptr && ar->sceneInfo.has_value(), "mesh catalog keeps imported glb scene info");
 
     std::filesystem::remove_all(root);
 }

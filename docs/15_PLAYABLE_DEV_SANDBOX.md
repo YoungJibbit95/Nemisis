@@ -38,8 +38,8 @@ Current environment note:
 - NovaCore fetches SDL3 automatically when no installed SDL3 package is found.
 - The smoke run now reports `SDL3 window created` and `SDL debug renderer created`.
 - Vulkan SDK is still optional for this slice; the SDL debug renderer is the current visual path.
-- Generated A0 proxy assets now exist under `assets/source/blender` and `assets/export/gltf`, but they are not rendered in-world until the glTF import and mesh-handle path lands.
-- The generated A0 proxy metadata is now loaded at startup and registered into NovaCore mesh handles.
+- Generated A0 proxy assets now exist under `assets/source/blender` and `assets/export/gltf`, but they are not rendered in-world until CPU vertex extraction and renderer mesh draw commands land.
+- The generated A0 proxy metadata and GLB scene info are now loaded at startup and registered into NovaCore mesh handles.
 
 ## Controls
 
@@ -115,7 +115,7 @@ The on-screen debug overlay currently has these pages:
 
 - Gameplay: screen, movement mode, tick, input device, position, and collision state.
 - Network: command packet counters, acknowledgement counters, pending command count, and last acknowledged tick.
-- Assets: renderer backend, queued asset count, required mesh handles, metadata count, missing count, and ready state.
+- Assets: renderer backend, queued asset count, required mesh handles, imported asset count, imported mesh/node scene totals, and ready state.
 
 The Dev Shooting Range screen also draws a greybox range map:
 
@@ -138,7 +138,7 @@ The renderer clear color also changes by state for early visual feedback:
 - Renderer has SDL debug visuals when SDL3 is available, but the Vulkan renderer is still a placeholder.
 - The world is currently represented by deterministic greybox data and SDL debug drawing, not by a full 3D mesh renderer.
 - Current collision is a first capsule/AABB-style greybox resolver, not the final KCC with slope normals, step height, mantle probes, or ramp behavior.
-- Asset ids, preload requests, generated `.glb` exports, metadata, and mesh handles exist, but CPU glTF parsing and GPU upload are not implemented yet.
+- Asset ids, preload requests, generated `.glb` exports, metadata, GLB scene-info imports, and mesh handles exist, but CPU vertex/index extraction and GPU upload are not implemented yet.
 - Relative mouse mode is requested for the dev range, but sensitivity, cursor policy settings, and raw input config are not data-driven yet.
 - Debug target hit resolution is a focused sphere test, not full scene collision.
 - The command bridge is loopback only; real UDP transport, prediction/reconciliation, and remote snapshots are not implemented yet.
@@ -149,6 +149,6 @@ The renderer clear color also changes by state for early visual feedback:
 - HUD health/ammo panels backed by player health and weapon state.
 - More debug targets and measured TTK tests.
 - Full KCC collision against greybox floors, walls, cover, ramps, and ledges.
-- CPU glTF parsing and renderer mesh draw commands for the generated A0 assets.
+- CPU vertex/index extraction and renderer mesh draw commands for the generated A0 assets.
 - Real UI text rendering after the SDL debug text path is replaced by the custom UI renderer.
 - Real client/server packet transport after the loopback bridge is stable.

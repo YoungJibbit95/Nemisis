@@ -24,7 +24,7 @@
 - Blender automation is prepared for first dev primitives through `tools/blender/make_dev_primitives.py`.
 - Runtime asset ids are declared in `configs/assets/nemisis_assets.json`.
 - `GameAssetCatalog` loads the game asset manifest through NovaCore's asset registry backbone and queues dev-sandbox preload requests.
-- `DevAssetBindings` validates required A0 asset ids, loads glTF metadata, and registers mesh handles through NovaCore.
+- `DevAssetBindings` validates required A0 asset ids, loads glTF metadata, imports GLB scene info, and registers mesh handles through NovaCore.
 - Barebones runtime menu exists with Main Menu, Dev Shooting Range, TDM placeholder, and Control placeholder screens.
 - Debug UI overlay is visible through NovaCore SDL debug render primitives when SDL3 is available.
 - Debug UI now has Gameplay, Network, and Assets pages, toggled with Tab or controller Start/Menu.
@@ -73,10 +73,14 @@
 - Expanded Blender automation to generate target dummy, player capsule proxy, first-person arms, soldier proxy, AR, SMG, sidearm, and arena-kit A0 assets.
 - Generated the first `.blend`, `.glb`, and metadata files under `assets/source/blender` and `assets/export/gltf` with Blender 5.1.
 - Added `DevAssetBindings` to bind the generated A0 glTF metadata into NovaCore mesh handles at startup.
-- Dev sandbox startup now reports `Dev mesh assets ready: 8/8 metadata=8`.
+- Dev sandbox startup reports required A0 mesh readiness before entering the playable sandbox.
 - Added greybox collision queries and applied them after player movement simulation.
 - Debug telemetry now reports collision hit/block state, and the Assets debug page reports mesh/metadata readiness.
 - Added `nemisis_dev_asset_bindings_tests` and `nemisis_greybox_collision_tests`, raising the local test suite to 19 passing tests.
+- Added NovaCore-backed GLB scene-info imports for the generated A0 assets.
+- Dev sandbox startup now reports imported scene totals, currently `Dev mesh assets ready: 8/8 metadata=8 imported=8 meshes=152 nodes=215 materials=34`.
+- Assets debug page now reports imported asset count plus total imported mesh/node counts.
+- `nemisis_dev_asset_bindings_tests` now writes tiny GLB fixtures and verifies imported scene info is stored on `MeshCatalog` entries.
 
 ## Next Game Blocks
 
@@ -84,5 +88,5 @@
 - Wire player health into hit resolution, HUD health, respawn, and server validation.
 - Expand debug UI pages with frame timings, entity counts, packet loss simulation, and reconciliation error.
 - Expand greybox collision into a fuller KCC with step height, slope/ramp normals, mantle probes, and slide validation.
-- Add real glTF parse/import from the registered A0 mesh handles.
+- Add CPU vertex/index extraction from the imported GLB scene info and buffer views.
 - Render generated A0 weapon/character/environment meshes in-world.

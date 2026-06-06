@@ -6,6 +6,7 @@
 
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <filesystem>
 #include <span>
 #include <string>
@@ -20,11 +21,20 @@ struct DevAssetBindingSummary final {
     std::size_t requiredAssetCount = 0;
     std::size_t renderableAssetCount = 0;
     std::size_t metadataAssetCount = 0;
+    std::size_t importedAssetCount = 0;
+    std::size_t totalMeshCount = 0;
+    std::size_t totalNodeCount = 0;
+    std::size_t totalMaterialCount = 0;
+    std::uint64_t totalBinaryBytes = 0;
     std::size_t missingAssetCount = 0;
     std::vector<std::string> errors;
 
     [[nodiscard]] bool ready() const {
-        return missingAssetCount == 0 && errors.empty() && renderableAssetCount == requiredAssetCount;
+        return missingAssetCount == 0 &&
+            errors.empty() &&
+            renderableAssetCount == requiredAssetCount &&
+            metadataAssetCount == requiredAssetCount &&
+            importedAssetCount == requiredAssetCount;
     }
 };
 

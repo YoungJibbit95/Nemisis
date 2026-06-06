@@ -37,9 +37,12 @@ This file mirrors the active work while GitHub Projects access is blocked by the
 - [x] Bind generated A0 Nemisis assets into NovaCore `MeshCatalog` handles.
 - [x] Add first greybox collision queries for bounds, cover/walls, and floor grounding.
 - [x] Surface mesh/metadata readiness and collision state in debug telemetry/UI.
+- [x] Add NovaCore GLB scene-info import and attach imported A0 scene totals to Nemisis mesh handles.
+- [x] Surface imported asset and mesh/node totals in startup logs and the Assets debug page.
 
 ## Doing
 
+- [ ] Extract CPU vertex/index buffers from imported GLB scene info.
 - [ ] Move from debug-map greybox to in-world mesh greybox rendering.
 - [ ] Keep renderer work moving toward real Vulkan swapchain/shaders.
 
@@ -47,7 +50,7 @@ This file mirrors the active work while GitHub Projects access is blocked by the
 
 - [ ] Config-loaded sensitivity, cursor policy, and controller response curves.
 - [ ] Packet simulation for latency, jitter, loss, duplication, and reorder.
-- [ ] Real glTF CPU parse/import from registered mesh handles.
+- [ ] Renderer-side mesh upload and draw submission from extracted glTF buffers.
 - [ ] Renderer mesh/shader pipeline foundation.
 - [ ] Full KCC collision foundation for ramps, ledges, slope normals, slide/mantle tests.
 - [ ] Shared server validation for greybox collision and movement corrections.

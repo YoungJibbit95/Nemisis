@@ -301,6 +301,24 @@ Acceptance:
 - NovaCore smoke tests validate glTF metadata and mesh handles.
 - Docs and kanban move metadata/mesh-handle shim and first collision from Next to Done.
 
+## Step 18 - GLB Scene Info Import For A0 Assets
+
+Implement:
+
+- Add NovaCore GLB/text glTF scene-info loading for container type, JSON/BIN byte sizes, and scene object counts.
+- Attach imported scene info to `MeshCatalog` entries alongside generated metadata.
+- Load generated A0 `.glb` scene info inside Nemisis `DevAssetBindings`.
+- Track imported asset count plus total imported mesh, node, material, and binary byte counts.
+- Surface imported A0 scene totals in startup logs and the Assets debug page.
+- Extend asset-binding tests with deterministic tiny GLB fixtures.
+
+Acceptance:
+
+- NovaCore smoke tests validate GLB scene-info loading and imported mesh-catalog storage.
+- `nemisis_game --smoke-test` logs `Dev mesh assets ready: 8/8 metadata=8 imported=8`.
+- `nemisis_dev_asset_bindings_tests` verifies imported scene info is stored on required A0 mesh handles.
+- The Assets debug page reports imported asset count and total mesh/node scene counts.
+
 
 
 

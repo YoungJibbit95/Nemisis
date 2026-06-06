@@ -1,5 +1,6 @@
 #include "nemisis/assets/DevAssetBindings.hpp"
 
+#include "novacore/assets/GltfDocument.hpp"
 #include "novacore/assets/GltfMetadata.hpp"
 
 #include <string>
@@ -81,14 +82,32 @@ DevAssetBindingSummary DevAssetBindings::bindAssets(
             appendErrors(summary, assetId, validationErrors);
             continue;
         }
+        ++summary.metadataAssetCount;
 
-        const auto handle = meshes_.registerGltfAsset(*record, std::move(metadata));
+        novacore::assets::GltfSceneInfo sceneInfo{};
+        const auto sceneInfoPath = runtimeRoot / record->cookedPath;
+        const auto sceneInfoResult = novacore::assets::loadGltfSceneInfo(sceneInfoPath, sceneInfo);
+        if (!sceneInfoResult.ok()) {
+            appendErrors(summary, assetId, sceneInfoResult.errors);
+            continue;
+        }
+
+        const auto meshCount = sceneInfo.meshCount;
+        const auto nodeCount = sceneInfo.nodeCount;
+        const auto materialCount = sceneInfo.materialCount;
+        const auto binaryBytes = sceneInfo.binaryBytes;
+
+        const auto handle = meshes_.registerImportedGltfAsset(*record, std::move(metadata), std::move(sceneInfo));
         if (!handle.isValid()) {
             summary.errors.push_back("Failed to register dev mesh asset: " + std::string(assetId));
             continue;
         }
 
-        ++summary.metadataAssetCount;
+        ++summary.importedAssetCount;
+        summary.totalMeshCount += meshCount;
+        summary.totalNodeCount += nodeCount;
+        summary.totalMaterialCount += materialCount;
+        summary.totalBinaryBytes += binaryBytes;
     }
 
     summary.renderableAssetCount = meshes_.meshCount();
