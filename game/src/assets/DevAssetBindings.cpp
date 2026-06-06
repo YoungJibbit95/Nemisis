@@ -84,30 +84,37 @@ DevAssetBindingSummary DevAssetBindings::bindAssets(
         }
         ++summary.metadataAssetCount;
 
-        novacore::assets::GltfSceneInfo sceneInfo{};
-        const auto sceneInfoPath = runtimeRoot / record->cookedPath;
-        const auto sceneInfoResult = novacore::assets::loadGltfSceneInfo(sceneInfoPath, sceneInfo);
-        if (!sceneInfoResult.ok()) {
-            appendErrors(summary, assetId, sceneInfoResult.errors);
+        novacore::assets::GltfMeshData meshData{};
+        const auto meshDataPath = runtimeRoot / record->cookedPath;
+        const auto meshDataResult = novacore::assets::loadGltfMeshData(meshDataPath, meshData);
+        if (!meshDataResult.ok()) {
+            appendErrors(summary, assetId, meshDataResult.errors);
             continue;
         }
 
-        const auto meshCount = sceneInfo.meshCount;
-        const auto nodeCount = sceneInfo.nodeCount;
-        const auto materialCount = sceneInfo.materialCount;
-        const auto binaryBytes = sceneInfo.binaryBytes;
+        const auto meshCount = meshData.sceneInfo.meshCount;
+        const auto nodeCount = meshData.sceneInfo.nodeCount;
+        const auto materialCount = meshData.sceneInfo.materialCount;
+        const auto binaryBytes = meshData.sceneInfo.binaryBytes;
+        const auto primitiveCount = meshData.primitiveCount();
+        const auto vertexCount = meshData.vertexCount();
+        const auto indexCount = meshData.indexCount();
 
-        const auto handle = meshes_.registerImportedGltfAsset(*record, std::move(metadata), std::move(sceneInfo));
+        const auto handle = meshes_.registerImportedGltfAsset(*record, std::move(metadata), std::move(meshData));
         if (!handle.isValid()) {
             summary.errors.push_back("Failed to register dev mesh asset: " + std::string(assetId));
             continue;
         }
 
         ++summary.importedAssetCount;
+        ++summary.extractedAssetCount;
         summary.totalMeshCount += meshCount;
         summary.totalNodeCount += nodeCount;
         summary.totalMaterialCount += materialCount;
         summary.totalBinaryBytes += binaryBytes;
+        summary.totalPrimitiveCount += primitiveCount;
+        summary.totalVertexCount += vertexCount;
+        summary.totalIndexCount += indexCount;
     }
 
     summary.renderableAssetCount = meshes_.meshCount();

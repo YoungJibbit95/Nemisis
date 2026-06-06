@@ -25,6 +25,10 @@ struct DevAssetBindingSummary final {
     std::size_t totalMeshCount = 0;
     std::size_t totalNodeCount = 0;
     std::size_t totalMaterialCount = 0;
+    std::size_t extractedAssetCount = 0;
+    std::size_t totalPrimitiveCount = 0;
+    std::size_t totalVertexCount = 0;
+    std::size_t totalIndexCount = 0;
     std::uint64_t totalBinaryBytes = 0;
     std::size_t missingAssetCount = 0;
     std::vector<std::string> errors;
@@ -34,7 +38,8 @@ struct DevAssetBindingSummary final {
             errors.empty() &&
             renderableAssetCount == requiredAssetCount &&
             metadataAssetCount == requiredAssetCount &&
-            importedAssetCount == requiredAssetCount;
+            importedAssetCount == requiredAssetCount &&
+            extractedAssetCount == requiredAssetCount;
     }
 };
 

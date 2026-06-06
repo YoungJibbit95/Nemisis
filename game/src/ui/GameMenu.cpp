@@ -357,9 +357,9 @@ void GameMenu::appendRenderCommands(
             addMetric(frame, 48.0F, 624.0F, "RENDERER", std::string(rendererBackend));
             addMetric(frame, 48.0F, 650.0F, "QUEUE", std::to_string(queuedAssets));
             addMetric(frame, 386.0F, 624.0F, "ASSETS", std::to_string(assetSummary.renderableAssetCount) + "/" + std::to_string(assetSummary.requiredAssetCount));
-            addMetric(frame, 386.0F, 650.0F, "IMPORTED", std::to_string(assetSummary.importedAssetCount) + "/" + std::to_string(assetSummary.requiredAssetCount));
-            addMetric(frame, 674.0F, 624.0F, "SCENE", std::to_string(assetSummary.totalMeshCount) + "M / " + std::to_string(assetSummary.totalNodeCount) + "N");
-            addMetric(frame, 674.0F, 650.0F, "READY", std::string(yesNo(assetSummary.ready())));
+            addMetric(frame, 386.0F, 650.0F, "EXTRACT", std::to_string(assetSummary.extractedAssetCount) + "/" + std::to_string(assetSummary.requiredAssetCount));
+            addMetric(frame, 674.0F, 624.0F, "P / V", std::to_string(assetSummary.totalPrimitiveCount) + " / " + std::to_string(assetSummary.totalVertexCount));
+            addMetric(frame, 674.0F, 650.0F, "INDICES", std::to_string(assetSummary.totalIndexCount));
             break;
         }
     }

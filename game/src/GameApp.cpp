@@ -301,7 +301,10 @@ void GameApp::loadAssetCatalog() {
             " imported=" + std::to_string(devAssetSummary_.importedAssetCount) +
             " meshes=" + std::to_string(devAssetSummary_.totalMeshCount) +
             " nodes=" + std::to_string(devAssetSummary_.totalNodeCount) +
-            " materials=" + std::to_string(devAssetSummary_.totalMaterialCount));
+            " materials=" + std::to_string(devAssetSummary_.totalMaterialCount) +
+            " primitives=" + std::to_string(devAssetSummary_.totalPrimitiveCount) +
+            " vertices=" + std::to_string(devAssetSummary_.totalVertexCount) +
+            " indices=" + std::to_string(devAssetSummary_.totalIndexCount));
     for (const auto& error : devAssetSummary_.errors) {
         novacore::core::logWarning("game", "Dev asset binding failed: " + error);
     }

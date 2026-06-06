@@ -24,7 +24,7 @@
 - Blender automation is prepared for first dev primitives through `tools/blender/make_dev_primitives.py`.
 - Runtime asset ids are declared in `configs/assets/nemisis_assets.json`.
 - `GameAssetCatalog` loads the game asset manifest through NovaCore's asset registry backbone and queues dev-sandbox preload requests.
-- `DevAssetBindings` validates required A0 asset ids, loads glTF metadata, imports GLB scene info, and registers mesh handles through NovaCore.
+- `DevAssetBindings` validates required A0 asset ids, loads glTF metadata, imports GLB scene info, extracts CPU mesh data, and registers mesh handles through NovaCore.
 - Barebones runtime menu exists with Main Menu, Dev Shooting Range, TDM placeholder, and Control placeholder screens.
 - Debug UI overlay is visible through NovaCore SDL debug render primitives when SDL3 is available.
 - Debug UI now has Gameplay, Network, and Assets pages, toggled with Tab or controller Start/Menu.
@@ -81,6 +81,10 @@
 - Dev sandbox startup now reports imported scene totals, currently `Dev mesh assets ready: 8/8 metadata=8 imported=8 meshes=152 nodes=215 materials=34`.
 - Assets debug page now reports imported asset count plus total imported mesh/node counts.
 - `nemisis_dev_asset_bindings_tests` now writes tiny GLB fixtures and verifies imported scene info is stored on `MeshCatalog` entries.
+- Added NovaCore-backed CPU mesh extraction for generated A0 GLBs.
+- Dev sandbox startup now reports extracted totals, currently `primitives=152 vertices=21368 indices=32304`.
+- Assets debug page now reports extracted asset count, primitive count, vertex count, and index count.
+- `nemisis_dev_asset_bindings_tests` now verifies extracted GLB mesh data is stored on `MeshCatalog` entries.
 
 ## Next Game Blocks
 
@@ -88,5 +92,5 @@
 - Wire player health into hit resolution, HUD health, respawn, and server validation.
 - Expand debug UI pages with frame timings, entity counts, packet loss simulation, and reconciliation error.
 - Expand greybox collision into a fuller KCC with step height, slope/ramp normals, mantle probes, and slide validation.
-- Add CPU vertex/index extraction from the imported GLB scene info and buffer views.
 - Render generated A0 weapon/character/environment meshes in-world.
+- Add renderer upload/draw submission for extracted A0 weapon/character/environment meshes.

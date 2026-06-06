@@ -3,6 +3,7 @@
 #include <array>
 #include <cstdlib>
 #include <cstdint>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -102,6 +103,17 @@ void appendU32(std::string& bytes, std::uint32_t value) {
     bytes.push_back(static_cast<char>((value >> 24U) & 0xFFU));
 }
 
+void appendU16(std::string& bytes, std::uint16_t value) {
+    bytes.push_back(static_cast<char>(value & 0xFFU));
+    bytes.push_back(static_cast<char>((value >> 8U) & 0xFFU));
+}
+
+void appendF32(std::string& bytes, float value) {
+    char raw[sizeof(float)]{};
+    std::memcpy(raw, &value, sizeof(float));
+    bytes.append(raw, sizeof(float));
+}
+
 void appendPaddedChunk(std::string& bytes, std::string chunk, std::uint32_t chunkType, char padding) {
     while ((chunk.size() % 4U) != 0U) {
         chunk.push_back(padding);
@@ -124,11 +136,29 @@ void writeTinyGlb(const std::filesystem::path& path, std::string_view assetId) {
         "nodes": [{ "name": ")") + std::string(assetId) + R"(_node", "mesh": 0 }],
         "meshes": [{ "name": ")" + std::string(assetId) + R"(_mesh", "primitives": [{ "attributes": { "POSITION": 0 }, "indices": 1, "material": 0 }] }],
         "materials": [{ "name": ")" + std::string(assetId) + R"(_mat" }],
-        "buffers": [{ "byteLength": 16 }],
-        "bufferViews": [{ "buffer": 0, "byteOffset": 0, "byteLength": 16 }],
-        "accessors": [{ "bufferView": 0, "componentType": 5126, "count": 1, "type": "VEC3" }]
+        "buffers": [{ "byteLength": 42 }],
+        "bufferViews": [
+            { "buffer": 0, "byteOffset": 0, "byteLength": 36 },
+            { "buffer": 0, "byteOffset": 36, "byteLength": 6 }
+        ],
+        "accessors": [
+            { "bufferView": 0, "componentType": 5126, "count": 3, "type": "VEC3" },
+            { "bufferView": 1, "componentType": 5123, "count": 3, "type": "SCALAR" }
+        ]
     })";
-    std::string bin(16, '\0');
+    std::string bin;
+    appendF32(bin, 0.0F);
+    appendF32(bin, 0.0F);
+    appendF32(bin, 0.0F);
+    appendF32(bin, 1.0F);
+    appendF32(bin, 0.0F);
+    appendF32(bin, 0.0F);
+    appendF32(bin, 0.0F);
+    appendF32(bin, 1.0F);
+    appendF32(bin, 0.0F);
+    appendU16(bin, 0);
+    appendU16(bin, 1);
+    appendU16(bin, 2);
 
     std::string chunks;
     appendPaddedChunk(chunks, json, kGlbJsonChunk, ' ');
@@ -168,14 +198,19 @@ void testRequiredDevAssetsBindToMeshCatalog() {
     expect(summary.renderableAssetCount == summary.requiredAssetCount, "all required assets become mesh handles");
     expect(summary.metadataAssetCount == summary.requiredAssetCount, "all required assets load metadata");
     expect(summary.importedAssetCount == summary.requiredAssetCount, "all required assets load glb scene info");
+    expect(summary.extractedAssetCount == summary.requiredAssetCount, "all required assets extract glb mesh data");
     expect(summary.totalMeshCount == summary.requiredAssetCount, "summary counts imported glb meshes");
     expect(summary.totalNodeCount == summary.requiredAssetCount, "summary counts imported glb nodes");
     expect(summary.totalMaterialCount == summary.requiredAssetCount, "summary counts imported glb materials");
-    expect(summary.totalBinaryBytes == summary.requiredAssetCount * 16U, "summary totals glb binary payload bytes");
+    expect(summary.totalPrimitiveCount == summary.requiredAssetCount, "summary counts imported glb primitives");
+    expect(summary.totalVertexCount == summary.requiredAssetCount * 3U, "summary counts imported glb vertices");
+    expect(summary.totalIndexCount == summary.requiredAssetCount * 3U, "summary counts imported glb indices");
+    expect(summary.totalBinaryBytes == summary.requiredAssetCount * 44U, "summary totals glb binary payload bytes");
     expect(bindings.meshCatalog().contains("wpn_ar_01"), "mesh catalog contains AR handle");
     expect(bindings.meshCatalog().contains("env_test_arena_kit_01"), "mesh catalog contains arena scene handle");
     const auto* ar = bindings.meshCatalog().findByAssetId("wpn_ar_01");
     expect(ar != nullptr && ar->sceneInfo.has_value(), "mesh catalog keeps imported glb scene info");
+    expect(ar != nullptr && ar->meshData.has_value(), "mesh catalog keeps imported glb mesh data");
 
     std::filesystem::remove_all(root);
 }

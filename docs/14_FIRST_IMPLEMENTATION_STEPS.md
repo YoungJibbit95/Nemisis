@@ -319,6 +319,25 @@ Acceptance:
 - `nemisis_dev_asset_bindings_tests` verifies imported scene info is stored on required A0 mesh handles.
 - The Assets debug page reports imported asset count and total mesh/node scene counts.
 
+## Step 19 - CPU GLB Mesh Extraction For A0 Assets
+
+Implement:
+
+- Add NovaCore `GltfMeshData` for CPU-side primitive, position, normal, texcoord, and index storage.
+- Read GLB accessors and buffer views with byte offsets, byte strides, FLOAT vector attributes, and unsigned index formats.
+- Store imported CPU mesh data on `MeshCatalog` entries beside sidecar metadata and scene info.
+- Update Nemisis `DevAssetBindings` to extract CPU mesh data for all required A0 assets.
+- Track extracted asset count plus total primitive, vertex, index, and binary byte counts.
+- Surface extracted mesh totals in startup logs and the Assets debug page.
+- Extend engine and game tests with real tiny triangle GLB fixtures.
+
+Acceptance:
+
+- NovaCore smoke tests validate a triangle GLB imports with 1 primitive, 3 vertices, and 3 indices.
+- `nemisis_game --smoke-test` logs `primitives=152 vertices=21368 indices=32304` for the current generated A0 set.
+- `nemisis_dev_asset_bindings_tests` verifies extracted mesh data is stored on required A0 mesh handles.
+- Docs and kanban move CPU GLB extraction from Doing to Done; renderer upload/draw remains next.
+
 
 
 
