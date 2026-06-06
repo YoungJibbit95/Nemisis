@@ -43,18 +43,22 @@ This file mirrors the active work while GitHub Projects write access is blocked 
 - [x] Attach extracted A0 mesh data to Nemisis mesh handles and surface primitive/vertex/index totals.
 - [x] Add NovaCore Vulkan runtime/device probe and surface detected GPU/runtime in logs/debug UI.
 - [x] Add A0 environment GLB wireframe preview from extracted CPU mesh data.
+- [x] Expose Vulkan SDK `F:\VulkanSDK\1.4.350.0` to the CMake build.
+- [x] Add NovaCore compiled Vulkan backend with swapchain, render pass, framebuffers, sync, clear/present, and debug triangle pipeline.
+- [x] Add Vulkan shader compilation through `glslc`.
+- [x] Add Nemisis `--vulkan`/`--vulkan-smoke-test` and CTest coverage.
 
 ## Doing
 
 - [ ] Move from debug-map greybox to in-world mesh greybox rendering.
-- [ ] Keep renderer work moving toward real Vulkan swapchain/shaders once Vulkan SDK is visible.
+- [ ] Add renderer-side mesh upload and draw submission from extracted glTF buffers.
 
 ## Next Core
 
 - [ ] Config-loaded sensitivity, cursor policy, and controller response curves.
 - [ ] Packet simulation for latency, jitter, loss, duplication, and reorder.
-- [ ] Renderer-side mesh upload and draw submission from extracted glTF buffers.
-- [ ] Renderer mesh/shader pipeline foundation.
+- [ ] Vulkan swapchain resize/recreate and validation debug labels.
+- [ ] Vulkan depth buffer and camera matrix path.
 - [ ] Full KCC collision foundation for ramps, ledges, slope normals, slide/mantle tests.
 - [ ] Shared server validation for greybox collision and movement corrections.
 
@@ -69,5 +73,4 @@ This file mirrors the active work while GitHub Projects write access is blocked 
 
 ## Blocked
 
-- [ ] GitHub Projects/Kanban sync: blocked until GitHub CLI auth includes `project`.
-- [ ] Real compiled Vulkan backend: blocked until Vulkan SDK headers/libs are installed or exposed to CMake.
+- [ ] No current engine-core blocker. GitHub Projects sync still depends on repository/project permissions for each board mutation.

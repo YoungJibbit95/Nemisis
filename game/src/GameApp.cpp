@@ -81,6 +81,9 @@ void addPreviewLine(
 
 } // namespace
 
+GameApp::GameApp(GameAppOptions options)
+    : options_(options) {}
+
 void GameApp::onStartup() {
     actions_ = input::createDefaultActionMap();
 
@@ -102,11 +105,12 @@ void GameApp::onStartup() {
     windowDesc.title = menu_.title();
     windowDesc.width = 1280;
     windowDesc.height = 720;
-    windowDesc.preferVulkan = false;
+    windowDesc.preferVulkan = options_.preferVulkanRenderer;
 
     window_.create(windowDesc);
 
     novacore::render::RendererCreateInfo rendererInfo{};
+    rendererInfo.preferVulkan = options_.preferVulkanRenderer;
     renderer_.create(window_, rendererInfo);
 
     cameraEntity_ = world_.createEntity();

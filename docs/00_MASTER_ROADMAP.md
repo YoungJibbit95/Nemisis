@@ -63,7 +63,7 @@ Goal: sandbox client, game app layer, ECS usage, input, and renderer calls all e
 Deliverables:
 
 - NovaCore window/input backend with fallback.
-- NovaCore renderer placeholder with clear-frame intent and null fallback.
+- NovaCore renderer foundation with SDL debug path, opt-in Vulkan smoke backend, clear-frame intent, and null fallback.
 - Game creates a sandbox camera entity through NovaCore ECS.
 - Sandbox scene creates a camera entity.
 - Game configs stay game-owned.

@@ -23,6 +23,7 @@ Implemented:
 - A0 GLB scene info imports into NovaCore mesh handles with mesh/node/material totals.
 - A0 GLB CPU mesh data extracts into NovaCore mesh handles with primitive/vertex/index totals.
 - NovaCore runtime probe detects local Vulkan runtime/device even before the compiled Vulkan backend is active.
+- NovaCore compiled Vulkan backend creates a swapchain and debug triangle pipeline through `--vulkan-smoke-test`.
 - First greybox collision resolver blocks player bounds and primitive overlap.
 
 Acceptance:
@@ -48,7 +49,8 @@ Implemented foundation:
 
 Still planned:
 
-- Install/expose Vulkan SDK and upload extracted mesh data to the renderer.
+- Upload extracted mesh data to the renderer.
+- Add Vulkan depth/camera support for in-world greybox drawing.
 - Submit first proper mesh draw commands.
 - Render simple floor, wall, cover, ramp, target, and weapon proxy meshes.
 - Replace first primitive pushout with full KCC slope/step/mantle behavior.
@@ -103,4 +105,4 @@ Acceptance:
 
 We are in Greybox Phase 0 now.
 
-Phase 1 has started. The metadata, mesh-handle, A0 scene-info import, A0 CPU mesh extraction, Vulkan runtime probe, debug wireframe preview, and first collision pieces are in. The remaining Phase 1 threshold is renderer mesh drawing and a fuller KCC with ramp/ledge behavior. That is the point where the game stops being only a debug-map prototype and becomes a walkable in-world greybox.
+Phase 1 has started. The metadata, mesh-handle, A0 scene-info import, A0 CPU mesh extraction, Vulkan runtime probe, compiled Vulkan smoke backend, debug wireframe preview, and first collision pieces are in. The remaining Phase 1 threshold is renderer mesh upload/draw, depth/camera support, and a fuller KCC with ramp/ledge behavior. That is the point where the game stops being only a debug-map prototype and becomes a walkable in-world greybox.

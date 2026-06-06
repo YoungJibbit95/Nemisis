@@ -25,8 +25,14 @@
 
 namespace nemisis::game {
 
+struct GameAppOptions final {
+    bool preferVulkanRenderer = false;
+};
+
 class GameApp final : public novacore::core::IApplicationDelegate {
 public:
+    explicit GameApp(GameAppOptions options = {});
+
     void onStartup() override;
     void onShutdown() override;
     void onFixedTick(const novacore::core::FrameContext& context) override;
@@ -43,6 +49,7 @@ private:
     void syncRelativeMouseMode();
     void appendA0MeshWireframePreview(novacore::render::RenderFrameInfo& frame) const;
 
+    GameAppOptions options_;
     novacore::platform::InputSystem input_;
     novacore::platform::InputActionMap actions_;
     novacore::core::ConfigRegistry configRegistry_;
