@@ -41,6 +41,7 @@ private:
     void ensureActiveWeapon(weapons::WeaponRuntimeState& weaponState, std::string_view requestedWeaponId);
     void ensureLocalPlayer();
     void syncRelativeMouseMode();
+    void appendA0MeshWireframePreview(novacore::render::RenderFrameInfo& frame) const;
 
     novacore::platform::InputSystem input_;
     novacore::platform::InputActionMap actions_;

@@ -90,6 +90,7 @@ Runtime data:
 - On MinGW builds, CMake copies required MinGW runtime DLLs beside all Nemisis executable targets so direct shell launch works without editing PATH.
 - Visual Studio debugger working directory is set to the repository root for `nemisis_game`.
 - Config loading still works best when launching from the repository root or the executable directory produced by CMake.
+- NovaCore probes the Vulkan runtime dynamically, so the game can report Vulkan loader/device availability even before the compiled Vulkan backend is active.
 
 If the game logs `SDL3 unavailable; using headless window fallback`, the build directory was configured before SDL3 was available or with `NOVACORE_ENABLE_SDL3=OFF`. Reconfigure the build directory, or delete it and configure again.
 
@@ -152,6 +153,8 @@ In the current Codex shell:
 - MSVC `cl` is not in PATH.
 - `g++` is not in PATH.
 - Visual Studio Build Tools are not visible to CMake in this shell.
+- Vulkan runtime is installed; smoke runs detect Vulkan 1.4.341 on `NVIDIA GeForce RTX 3070 Ti`.
+- Vulkan SDK is not visible to CMake yet, so the current visible renderer remains SDL debug.
 - Blender is installed at `F:\Program Files\Blender Foundation\Blender 5.1\blender.exe`, but not visible in PATH.
 
 So the repo is prepared for IDE/toolchain pickup. Local builds have been verified through CLion's bundled MinGW/Ninja path, and Blender asset generation works when the explicit Blender path is passed to the helper.

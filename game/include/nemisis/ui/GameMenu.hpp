@@ -35,6 +35,7 @@ public:
         const nemisis::dev::DevSandboxSample& sample,
         const nemisis::dev::GreyboxWorld& greyboxWorld,
         std::string_view rendererBackend,
+        std::string_view vulkanSummary,
         std::size_t queuedAssets,
         const nemisis::assets::DevAssetBindingSummary& assetSummary) const;
 

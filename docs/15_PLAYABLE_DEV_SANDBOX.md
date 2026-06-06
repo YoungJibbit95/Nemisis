@@ -21,6 +21,7 @@ It is not a vertical slice yet. It is a developer playground for validating:
 - Multi-page on-screen debug telemetry for gameplay, network, and asset/render state.
 - Deterministic greybox world data for the first shooting range.
 - Visible top-down debug range map with player spawn, target lane, cover, ramps, walls, and range markers.
+- Budgeted A0 environment GLB wireframe preview drawn from extracted CPU mesh data.
 
 ## Run
 
@@ -37,7 +38,7 @@ Current environment note:
 - `cmake-build-debug` has been verified with CLion's bundled MinGW/Ninja.
 - NovaCore fetches SDL3 automatically when no installed SDL3 package is found.
 - The smoke run now reports `SDL3 window created` and `SDL debug renderer created`.
-- Vulkan SDK is still optional for this slice; the SDL debug renderer is the current visual path.
+- Vulkan runtime is detected locally as Vulkan 1.4.341 on `NVIDIA GeForce RTX 3070 Ti`, but Vulkan SDK is still not visible to CMake; the SDL debug renderer is the current visual path.
 - Generated A0 proxy assets now exist under `assets/source/blender` and `assets/export/gltf`, but they are not rendered in-world until renderer upload/draw commands land.
 - The generated A0 proxy metadata, GLB scene info, and CPU mesh data are now loaded at startup and registered into NovaCore mesh handles.
 
@@ -105,6 +106,7 @@ The sandbox logs every 0.5 seconds through NovaCore logging:
 - Debug target hit count.
 - Hit/elimination result.
 - Renderer backend.
+- Vulkan runtime/device summary.
 - Current screen.
 - Asset preload queue size.
 - Active debug page.
@@ -115,11 +117,12 @@ The on-screen debug overlay currently has these pages:
 
 - Gameplay: screen, movement mode, tick, input device, position, and collision state.
 - Network: command packet counters, acknowledgement counters, pending command count, and last acknowledged tick.
-- Assets: renderer backend, queued asset count, required mesh handles, extracted asset count, primitive count, vertex count, and index count.
+- Assets: renderer backend, Vulkan runtime summary, queued asset count, required mesh handles, extracted asset count, primitive count, vertex count, and index count.
 
 The Dev Shooting Range screen also draws a greybox range map:
 
 - Floor bounds, walls, cover, ramps, spawn points, range markers, and target marker.
+- A budgeted wireframe overlay from the imported A0 environment GLB.
 - Local player square and current yaw direction.
 - Line from player to the current target lane.
 

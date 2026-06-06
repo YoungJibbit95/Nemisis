@@ -28,6 +28,7 @@
 - Barebones runtime menu exists with Main Menu, Dev Shooting Range, TDM placeholder, and Control placeholder screens.
 - Debug UI overlay is visible through NovaCore SDL debug render primitives when SDL3 is available.
 - Debug UI now has Gameplay, Network, and Assets pages, toggled with Tab or controller Start/Menu.
+- Assets debug UI reports renderer backend plus NovaCore's Vulkan runtime/device summary.
 - The dev range requests relative mouse mode through NovaCore while menus keep normal cursor behavior.
 - The Dev Shooting Range now owns a deterministic `GreyboxWorld` with floor, walls, cover, ramps, spawns, range markers, and a target lane.
 - The Dev Shooting Range now applies first greybox collision resolution for bounds, blocking cover/walls, and grounded floor correction.
@@ -85,6 +86,8 @@
 - Dev sandbox startup now reports extracted totals, currently `primitives=152 vertices=21368 indices=32304`.
 - Assets debug page now reports extracted asset count, primitive count, vertex count, and index count.
 - `nemisis_dev_asset_bindings_tests` now verifies extracted GLB mesh data is stored on `MeshCatalog` entries.
+- NovaCore Vulkan runtime probing is surfaced in Nemisis startup logs and the Assets debug page; local smoke runs detect Vulkan 1.4.341 on `NVIDIA GeForce RTX 3070 Ti (discrete)`.
+- Dev Shooting Range now overlays a budgeted A0 environment GLB wireframe from extracted CPU mesh positions/indices on the debug range map.
 
 ## Next Game Blocks
 
@@ -92,5 +95,4 @@
 - Wire player health into hit resolution, HUD health, respawn, and server validation.
 - Expand debug UI pages with frame timings, entity counts, packet loss simulation, and reconciliation error.
 - Expand greybox collision into a fuller KCC with step height, slope/ramp normals, mantle probes, and slide validation.
-- Render generated A0 weapon/character/environment meshes in-world.
-- Add renderer upload/draw submission for extracted A0 weapon/character/environment meshes.
+- Replace the A0 wireframe preview with proper renderer mesh upload/draw submission for generated weapon/character/environment meshes.

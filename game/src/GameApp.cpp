@@ -18,6 +18,7 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
+#include <limits>
 #include <string>
 #include <string_view>
 
@@ -27,6 +28,56 @@ namespace {
 
 constexpr std::string_view kDefaultWeaponId = "ar_01";
 constexpr float kDebugTargetRespawnDelaySeconds = 1.5F;
+
+struct MeshPreviewBounds final {
+    float minX = std::numeric_limits<float>::max();
+    float maxX = std::numeric_limits<float>::lowest();
+    float minZ = std::numeric_limits<float>::max();
+    float maxZ = std::numeric_limits<float>::lowest();
+
+    void include(novacore::math::Vec3 value) {
+        minX = std::min(minX, value.x);
+        maxX = std::max(maxX, value.x);
+        minZ = std::min(minZ, value.z);
+        maxZ = std::max(maxZ, value.z);
+    }
+
+    [[nodiscard]] bool valid() const {
+        return minX <= maxX && minZ <= maxZ;
+    }
+};
+
+[[nodiscard]] std::array<float, 2> projectMeshPreview(
+    const MeshPreviewBounds& bounds,
+    novacore::math::Vec3 position) {
+    constexpr float mapX = 58.0F;
+    constexpr float mapY = 190.0F;
+    constexpr float mapWidth = 520.0F;
+    constexpr float mapHeight = 338.0F;
+
+    const float spanX = std::max(0.001F, bounds.maxX - bounds.minX);
+    const float spanZ = std::max(0.001F, bounds.maxZ - bounds.minZ);
+    return {
+        mapX + ((position.x - bounds.minX) / spanX) * mapWidth,
+        mapY + mapHeight - (((position.z - bounds.minZ) / spanZ) * mapHeight),
+    };
+}
+
+void addPreviewLine(
+    novacore::render::RenderFrameInfo& frame,
+    const MeshPreviewBounds& bounds,
+    novacore::math::Vec3 a,
+    novacore::math::Vec3 b) {
+    const auto pa = projectMeshPreview(bounds, a);
+    const auto pb = projectMeshPreview(bounds, b);
+    frame.debugLines.push_back(novacore::render::DebugLine{
+        pa[0],
+        pa[1],
+        pb[0],
+        pb[1],
+        {0.20F, 0.80F, 0.92F, 0.62F},
+    });
+}
 
 } // namespace
 
@@ -261,8 +312,10 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
         devSandbox_.latestSample(),
         greyboxWorld_,
         renderer_.backendName(),
+        renderer_.vulkanSummary(),
         assetStreamer_.pendingCount(),
         devAssetSummary_);
+    appendA0MeshWireframePreview(frameInfo);
     renderer_.beginFrame(frameInfo);
     renderer_.endFrame();
 }
@@ -389,6 +442,58 @@ void GameApp::syncRelativeMouseMode() {
     relativeMouseDesired_ = wantsRelativeMouse;
     if (!window_.setRelativeMouseMode(wantsRelativeMouse) && wantsRelativeMouse) {
         novacore::core::logWarning("game", "Relative mouse mode requested but unavailable on this platform backend");
+    }
+}
+
+void GameApp::appendA0MeshWireframePreview(novacore::render::RenderFrameInfo& frame) const {
+    if (!menu_.gameplayActive()) {
+        return;
+    }
+
+    const auto* arena = devAssetBindings_.meshCatalog().findByAssetId("env_test_arena_kit_01");
+    if (arena == nullptr || !arena->meshData.has_value()) {
+        return;
+    }
+
+    MeshPreviewBounds bounds{};
+    for (const auto& primitive : arena->meshData->primitives) {
+        for (const auto& position : primitive.positions) {
+            bounds.include(position);
+        }
+    }
+    if (!bounds.valid()) {
+        return;
+    }
+
+    frame.debugTexts.push_back(novacore::render::DebugText{
+        370.0F,
+        206.0F,
+        1.0F,
+        {0.45F, 0.92F, 0.98F, 1.0F},
+        "A0 GLB WIREFRAME",
+    });
+
+    constexpr std::size_t kLineBudget = 2400;
+    std::size_t emittedLines = 0;
+    for (const auto& primitive : arena->meshData->primitives) {
+        for (std::size_t index = 0; index + 2 < primitive.indices.size(); index += 3) {
+            const auto ia = static_cast<std::size_t>(primitive.indices[index]);
+            const auto ib = static_cast<std::size_t>(primitive.indices[index + 1]);
+            const auto ic = static_cast<std::size_t>(primitive.indices[index + 2]);
+            if (ia >= primitive.positions.size() ||
+                ib >= primitive.positions.size() ||
+                ic >= primitive.positions.size()) {
+                continue;
+            }
+
+            addPreviewLine(frame, bounds, primitive.positions[ia], primitive.positions[ib]);
+            addPreviewLine(frame, bounds, primitive.positions[ib], primitive.positions[ic]);
+            addPreviewLine(frame, bounds, primitive.positions[ic], primitive.positions[ia]);
+            emittedLines += 3;
+            if (emittedLines >= kLineBudget) {
+                return;
+            }
+        }
     }
 }
 

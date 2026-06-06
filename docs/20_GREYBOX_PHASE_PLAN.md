@@ -17,10 +17,12 @@ Implemented:
 - Local player spawn pulled from world data.
 - Dev sandbox sample now carries view data.
 - SDL debug renderer draws a top-down map, player marker, yaw direction, target marker, and player-to-target line.
+- SDL debug renderer overlays a budgeted A0 environment GLB wireframe from extracted CPU mesh positions/indices.
 - A0 Blender assets generated for props, characters, weapons, and environment kit.
 - A0 glTF metadata binds into NovaCore mesh handles.
 - A0 GLB scene info imports into NovaCore mesh handles with mesh/node/material totals.
 - A0 GLB CPU mesh data extracts into NovaCore mesh handles with primitive/vertex/index totals.
+- NovaCore runtime probe detects local Vulkan runtime/device even before the compiled Vulkan backend is active.
 - First greybox collision resolver blocks player bounds and primitive overlap.
 
 Acceptance:
@@ -41,11 +43,13 @@ Implemented foundation:
 - Bind generated A0 `.glb` files to asset ids from `configs/assets/nemisis_assets.json`.
 - Import generated A0 `.glb` scene info and surface scene totals in the Assets debug page.
 - Extract generated A0 `.glb` CPU mesh data and surface primitive/vertex/index totals in the Assets debug page.
+- Draw a first debug wireframe preview from extracted A0 environment GLB mesh data.
 - Add KCC collision queries against greybox primitives.
 
 Still planned:
 
-- Upload extracted mesh data to the renderer and submit first mesh draw commands.
+- Install/expose Vulkan SDK and upload extracted mesh data to the renderer.
+- Submit first proper mesh draw commands.
 - Render simple floor, wall, cover, ramp, target, and weapon proxy meshes.
 - Replace first primitive pushout with full KCC slope/step/mantle behavior.
 - Add debug overlays for entity count, primitive count, collision contact, ground normal, and movement mode.
@@ -99,4 +103,4 @@ Acceptance:
 
 We are in Greybox Phase 0 now.
 
-Phase 1 has started. The metadata, mesh-handle, A0 scene-info import, A0 CPU mesh extraction, and first collision pieces are in. The remaining Phase 1 threshold is renderer mesh drawing and a fuller KCC with ramp/ledge behavior. That is the point where the game stops being only a debug-map prototype and becomes a walkable in-world greybox.
+Phase 1 has started. The metadata, mesh-handle, A0 scene-info import, A0 CPU mesh extraction, Vulkan runtime probe, debug wireframe preview, and first collision pieces are in. The remaining Phase 1 threshold is renderer mesh drawing and a fuller KCC with ramp/ledge behavior. That is the point where the game stops being only a debug-map prototype and becomes a walkable in-world greybox.

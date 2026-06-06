@@ -270,10 +270,11 @@ void GameMenu::update(const novacore::platform::InputActionMap& actions) {
 void GameMenu::appendRenderCommands(
     novacore::render::RenderFrameInfo& frame,
     const nemisis::dev::DevSandboxSample& sample,
-    const nemisis::dev::GreyboxWorld& greyboxWorld,
-    std::string_view rendererBackend,
-    std::size_t queuedAssets,
-    const nemisis::assets::DevAssetBindingSummary& assetSummary) const {
+        const nemisis::dev::GreyboxWorld& greyboxWorld,
+        std::string_view rendererBackend,
+        std::string_view vulkanSummary,
+        std::size_t queuedAssets,
+        const nemisis::assets::DevAssetBindingSummary& assetSummary) const {
     addRect(frame, 0.0F, 0.0F, 1280.0F, 720.0F, {0.0F, 0.0F, 0.0F, 0.05F});
     addRect(frame, 38.0F, 30.0F, 510.0F, 146.0F, {0.025F, 0.045F, 0.055F, 0.92F});
 
@@ -355,11 +356,11 @@ void GameMenu::appendRenderCommands(
             break;
         case DebugPage::Assets:
             addMetric(frame, 48.0F, 624.0F, "RENDERER", std::string(rendererBackend));
-            addMetric(frame, 48.0F, 650.0F, "QUEUE", std::to_string(queuedAssets));
+            addMetric(frame, 48.0F, 650.0F, "VULKAN", std::string(vulkanSummary).substr(0, 34));
             addMetric(frame, 386.0F, 624.0F, "ASSETS", std::to_string(assetSummary.renderableAssetCount) + "/" + std::to_string(assetSummary.requiredAssetCount));
             addMetric(frame, 386.0F, 650.0F, "EXTRACT", std::to_string(assetSummary.extractedAssetCount) + "/" + std::to_string(assetSummary.requiredAssetCount));
             addMetric(frame, 674.0F, 624.0F, "P / V", std::to_string(assetSummary.totalPrimitiveCount) + " / " + std::to_string(assetSummary.totalVertexCount));
-            addMetric(frame, 674.0F, 650.0F, "INDICES", std::to_string(assetSummary.totalIndexCount));
+            addMetric(frame, 674.0F, 650.0F, "I / Q", std::to_string(assetSummary.totalIndexCount) + " / " + std::to_string(queuedAssets));
             break;
         }
     }

@@ -338,6 +338,24 @@ Acceptance:
 - `nemisis_dev_asset_bindings_tests` verifies extracted mesh data is stored on required A0 mesh handles.
 - Docs and kanban move CPU GLB extraction from Doing to Done; renderer upload/draw remains next.
 
+## Step 20 - Vulkan Runtime Probe And A0 Mesh Preview
+
+Implement:
+
+- Add a NovaCore SDK-free Vulkan runtime/device probe using dynamic loader entry points.
+- Report Vulkan loader version, physical device name, and device type at renderer startup.
+- Surface the Vulkan runtime summary in the Nemisis Assets debug page.
+- Keep SDL debug renderer as the active visible path until Vulkan SDK headers/libs are visible to CMake.
+- Draw a budgeted wireframe preview from extracted A0 environment GLB positions/indices on the Dev Shooting Range map.
+- Update docs and kanban so Vulkan runtime detection is Done and compiled Vulkan backend remains blocked on SDK visibility.
+
+Acceptance:
+
+- `nemisis_game --smoke-test` logs `Vulkan runtime detected: 1.4.341 / NVIDIA GeForce RTX 3070 Ti (discrete)`.
+- The Assets debug page shows renderer backend plus Vulkan runtime summary.
+- Dev Shooting Range overlays an A0 GLB wireframe preview from CPU mesh data.
+- NovaCore smoke tests cover Vulkan probe stability.
+
 
 
 

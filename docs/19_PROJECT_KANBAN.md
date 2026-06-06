@@ -1,6 +1,6 @@
 # 19 Project Kanban
 
-This file mirrors the active work while GitHub Projects access is blocked by the missing `read:project` token scope.
+This file mirrors the active work while GitHub Projects write access is blocked by the missing `project` token scope.
 
 ## Done
 
@@ -41,11 +41,13 @@ This file mirrors the active work while GitHub Projects access is blocked by the
 - [x] Surface imported asset and mesh/node totals in startup logs and the Assets debug page.
 - [x] Add NovaCore CPU GLB mesh extraction for positions, optional normals/UVs, and indices.
 - [x] Attach extracted A0 mesh data to Nemisis mesh handles and surface primitive/vertex/index totals.
+- [x] Add NovaCore Vulkan runtime/device probe and surface detected GPU/runtime in logs/debug UI.
+- [x] Add A0 environment GLB wireframe preview from extracted CPU mesh data.
 
 ## Doing
 
 - [ ] Move from debug-map greybox to in-world mesh greybox rendering.
-- [ ] Keep renderer work moving toward real Vulkan swapchain/shaders.
+- [ ] Keep renderer work moving toward real Vulkan swapchain/shaders once Vulkan SDK is visible.
 
 ## Next Core
 
@@ -67,4 +69,5 @@ This file mirrors the active work while GitHub Projects access is blocked by the
 
 ## Blocked
 
-- [ ] GitHub Projects/Kanban sync: blocked until GitHub CLI auth includes `read:project`.
+- [ ] GitHub Projects/Kanban sync: blocked until GitHub CLI auth includes `project`.
+- [ ] Real compiled Vulkan backend: blocked until Vulkan SDK headers/libs are installed or exposed to CMake.
