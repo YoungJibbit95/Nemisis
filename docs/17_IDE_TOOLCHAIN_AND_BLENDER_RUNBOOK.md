@@ -90,8 +90,9 @@ Runtime data:
 - On MinGW builds, CMake copies required MinGW runtime DLLs beside all Nemisis executable targets so direct shell launch works without editing PATH.
 - Visual Studio debugger working directory is set to the repository root for `nemisis_game`.
 - Config loading still works best when launching from the repository root or the executable directory produced by CMake.
-- NovaCore probes the Vulkan runtime dynamically, so the game can report Vulkan loader/device availability even before the compiled Vulkan backend is active.
-- When the Vulkan SDK is visible, `--vulkan` and `--vulkan-smoke-test` opt into NovaCore's compiled Vulkan backend.
+- NovaCore probes the Vulkan runtime dynamically, so the game can report Vulkan loader/device availability before selecting a backend.
+- When the Vulkan SDK is visible, plain `nemisis_game.exe` starts the Vulkan 3D Dev Range by default.
+- Use `--sdl-debug` only for the legacy SDL debug menu path.
 
 If the game logs `SDL3 unavailable; using headless window fallback`, the build directory was configured before SDL3 was available or with `NOVACORE_ENABLE_SDL3=OFF`. Reconfigure the build directory, or delete it and configure again.
 
@@ -103,7 +104,7 @@ Smoke run:
 
 `--smoke-test` exits after a few frames and is registered as `nemisis_game_smoke` in CTest.
 
-Vulkan smoke run with the current local SDK:
+Default Vulkan 3D smoke run with the current local SDK:
 
 ```powershell
 $env:VULKAN_SDK = "F:\VulkanSDK\1.4.350.0"
@@ -111,7 +112,7 @@ $env:PATH = "$env:VULKAN_SDK\Bin;F:\Program Files\JetBrains\CLion 2026.1.2\bin\m
 cmake -S . -B cmake-build-codex-vulkan -G Ninja -DCMAKE_MAKE_PROGRAM="F:\Program Files\JetBrains\CLion 2026.1.2\bin\ninja\win\x64\ninja.exe" -DCMAKE_C_COMPILER="F:\Program Files\JetBrains\CLion 2026.1.2\bin\mingw\bin\gcc.exe" -DCMAKE_CXX_COMPILER="F:\Program Files\JetBrains\CLion 2026.1.2\bin\mingw\bin\g++.exe"
 cmake --build cmake-build-codex-vulkan
 ctest --test-dir cmake-build-codex-vulkan --output-on-failure
-.\cmake-build-codex-vulkan\nemisis_game.exe --vulkan-dev-range-smoke-test
+.\cmake-build-codex-vulkan\nemisis_game.exe --smoke-test
 ```
 
 The verified Vulkan smoke log includes:
@@ -121,10 +122,12 @@ The verified Vulkan smoke log includes:
 - `Vulkan world box graphics pipeline created`.
 - `Vulkan world mesh graphics pipeline created`.
 - `Dev mesh assets ready: 15/15 metadata=15 imported=15`.
+- `Launch profile: renderer=vulkan require_vulkan=true start_screen=dev_range lock_dev_range=true`.
 - `Vulkan mesh uploaded: env_test_arena_kit_01`.
 - `Vulkan mesh uploaded: wpn_proto_smg_01`.
-- `Vulkan world box draw submission active: boxes=16`.
-- `Vulkan world mesh draw submission active: meshes=12`.
+- `Vulkan mesh uploaded: chr_dev_arms_a`.
+- `Vulkan world box draw submission active: boxes=21`.
+- `Vulkan world mesh draw submission active: meshes=13`.
 
 ## Blender CLI
 
@@ -179,7 +182,7 @@ In the current Codex shell:
 - Visual Studio Build Tools are not visible to CMake in this shell.
 - Vulkan runtime is installed; smoke runs detect Vulkan 1.4.350 on `NVIDIA GeForce RTX 3070 Ti`.
 - Vulkan SDK is installed at `F:\VulkanSDK\1.4.350.0` and works when exported to the shell.
-- The current normal visible renderer remains SDL debug; Vulkan is opt-in for backend smoke testing until it renders the full debug/game scene.
+- The current normal visible renderer is the Vulkan 3D Dev Range; SDL debug is an explicit legacy flag.
 - Blender is installed at `F:\Program Files\Blender Foundation\Blender 5.1\blender.exe`, but not visible in PATH.
 
 So the repo is prepared for IDE/toolchain pickup. Local builds have been verified through CLion's bundled MinGW/Ninja path, and Blender asset generation works when the explicit Blender path is passed to the helper.

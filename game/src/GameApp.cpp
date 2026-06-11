@@ -114,6 +114,7 @@ void GameApp::onStartup() {
 
     novacore::render::RendererCreateInfo rendererInfo{};
     rendererInfo.preferVulkan = options_.preferVulkanRenderer;
+    rendererInfo.requireVulkan = options_.requireVulkanRenderer;
     renderer_.create(window_, rendererInfo);
 
     cameraEntity_ = world_.createEntity();
@@ -129,6 +130,13 @@ void GameApp::onStartup() {
     novacore::core::logInfo("game", "Nemisis sandbox camera entity created");
     novacore::core::logInfo("game", "Prototype weapon registry initialized");
     novacore::core::logInfo("game", "Default input action map and config registry initialized");
+    novacore::core::logInfo(
+        "game",
+        "Launch profile: renderer=" +
+            std::string(options_.preferVulkanRenderer ? "vulkan" : "sdl-debug") +
+            " require_vulkan=" + std::string(options_.requireVulkanRenderer ? "true" : "false") +
+            " start_screen=" + std::string(options_.autoEnterDevRange ? "dev_range" : "menu") +
+            " lock_dev_range=" + std::string(options_.lockDevRange ? "true" : "false"));
 
     if (window_.isHeadless()) {
         novacore::core::logInfo("game", "Running in HEADLESS mode (no SDL3/Vulkan). Press Ctrl+C in your terminal/console to exit.");
@@ -296,6 +304,9 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
     window_.pollEvents(input_);
     actions_.update(window_.inputSnapshot());
     menu_.update(actions_);
+    if (options_.lockDevRange && !menu_.gameplayActive()) {
+        menu_.showDevRange();
+    }
     syncRelativeMouseMode();
     window_.setTitle(menu_.title());
 
@@ -563,7 +574,7 @@ void GameApp::appendGreyboxWorld3D(novacore::render::RenderFrameInfo& frame) con
     frame.camera3D.nearPlane = 0.03F;
     frame.camera3D.farPlane = 120.0F;
 
-    frame.worldBoxes.reserve(frame.worldBoxes.size() + greyboxWorld_.primitives.size() + 3U);
+    frame.worldBoxes.reserve(frame.worldBoxes.size() + greyboxWorld_.primitives.size() + 8U);
     for (const auto& primitive : greyboxWorld_.primitives) {
         auto color = primitive.color;
         if (primitive.kind == dev::GreyboxPrimitiveKind::Target && debugTarget_.eliminated) {
@@ -577,7 +588,7 @@ void GameApp::appendGreyboxWorld3D(novacore::render::RenderFrameInfo& frame) con
     }
 
     const auto vectors = player::viewVectors(view);
-    frame.worldMeshes.reserve(frame.worldMeshes.size() + 12U);
+    frame.worldMeshes.reserve(frame.worldMeshes.size() + 13U);
     appendDevMeshInstance(
         frame,
         "env_test_arena_kit_01",
@@ -678,6 +689,43 @@ void GameApp::appendGreyboxWorld3D(novacore::render::RenderFrameInfo& frame) con
         novacore::math::Vec3{0.42F, 0.42F, 0.42F},
         view.yawDegrees + 90.0F,
         {0.10F, 0.16F, 0.18F, 1.0F});
+    appendDevMeshInstance(
+        frame,
+        "chr_dev_arms_a",
+        frame.camera3D.position +
+            (vectors.forward * 0.76F) +
+            (vectors.horizontalRight * 0.06F) +
+            novacore::math::Vec3{0.0F, -0.48F, 0.0F},
+        novacore::math::Vec3{0.32F, 0.32F, 0.32F},
+        view.yawDegrees,
+        {0.38F, 0.42F, 0.40F, 1.0F});
+
+    const auto aimCenter = frame.camera3D.position + (vectors.forward * 18.0F);
+    frame.worldBoxes.push_back(novacore::render::RenderBox3D{
+        aimCenter,
+        novacore::math::Vec3{0.055F, 0.055F, 0.055F},
+        {0.88F, 0.98F, 1.0F, 1.0F},
+    });
+    frame.worldBoxes.push_back(novacore::render::RenderBox3D{
+        aimCenter + novacore::math::Vec3{0.18F, 0.0F, 0.0F},
+        novacore::math::Vec3{0.11F, 0.018F, 0.018F},
+        {0.58F, 0.92F, 1.0F, 1.0F},
+    });
+    frame.worldBoxes.push_back(novacore::render::RenderBox3D{
+        aimCenter + novacore::math::Vec3{-0.18F, 0.0F, 0.0F},
+        novacore::math::Vec3{0.11F, 0.018F, 0.018F},
+        {0.58F, 0.92F, 1.0F, 1.0F},
+    });
+    frame.worldBoxes.push_back(novacore::render::RenderBox3D{
+        aimCenter + novacore::math::Vec3{0.0F, 0.18F, 0.0F},
+        novacore::math::Vec3{0.018F, 0.11F, 0.018F},
+        {0.58F, 0.92F, 1.0F, 1.0F},
+    });
+    frame.worldBoxes.push_back(novacore::render::RenderBox3D{
+        aimCenter + novacore::math::Vec3{0.0F, -0.18F, 0.0F},
+        novacore::math::Vec3{0.018F, 0.11F, 0.018F},
+        {0.58F, 0.92F, 1.0F, 1.0F},
+    });
 }
 
 } // namespace nemisis::game

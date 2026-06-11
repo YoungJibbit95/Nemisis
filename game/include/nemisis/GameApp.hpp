@@ -27,8 +27,10 @@
 namespace nemisis::game {
 
 struct GameAppOptions final {
-    bool preferVulkanRenderer = false;
-    bool autoEnterDevRange = false;
+    bool preferVulkanRenderer = true;
+    bool requireVulkanRenderer = true;
+    bool autoEnterDevRange = true;
+    bool lockDevRange = true;
 };
 
 class GameApp final : public novacore::core::IApplicationDelegate {

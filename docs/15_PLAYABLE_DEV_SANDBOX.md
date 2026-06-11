@@ -6,7 +6,8 @@ The playable dev sandbox is the first runtime loop for testing Nemisis features 
 
 It is not a vertical slice yet. It is a developer playground for validating:
 
-- Barebones main menu and mode selection.
+- Vulkan-first Dev Shooting Range boot.
+- Barebones main menu and mode selection through the explicit legacy/debug path.
 - Window event input.
 - MKB and controller action mapping.
 - Mouse and right-stick look.
@@ -20,7 +21,7 @@ It is not a vertical slice yet. It is a developer playground for validating:
 - Relative mouse mode activation while the Dev Shooting Range is active.
 - Multi-page on-screen debug telemetry for gameplay, network, and asset/render state.
 - Deterministic greybox world data for the first shooting range.
-- Visible top-down debug range map with player spawn, target lane, cover, ramps, walls, and range markers.
+- Visible in-world Vulkan 3D range with player spawn, target lane, cover, ramps, walls, GLB props, and weapon proxies.
 - Budgeted A0 environment GLB wireframe preview drawn from extracted CPU mesh data.
 
 ## Run
@@ -37,12 +38,14 @@ Current environment note:
 
 - `cmake-build-debug` has been verified with CLion's bundled MinGW/Ninja.
 - NovaCore fetches SDL3 automatically when no installed SDL3 package is found.
-- The smoke run now reports `SDL3 window created` and `SDL debug renderer created`.
+- Plain `nemisis_game.exe` now starts the Vulkan Dev Range directly.
+- The smoke run now reports `Launch profile: renderer=vulkan require_vulkan=true start_screen=dev_range lock_dev_range=true`.
 - Vulkan SDK is now visible at `F:\VulkanSDK\1.4.350.0`.
-- `nemisis_game --vulkan-smoke-test` opts into NovaCore's compiled Vulkan backend.
-- `nemisis_game --vulkan-dev-range-smoke-test` starts directly in the Dev Shooting Range and submits the greybox world as Vulkan 3D boxes.
-- The SDL debug renderer remains the normal menu/debug UI path until Vulkan also owns UI text and uploaded GLB mesh scene rendering.
-- Generated A0 proxy assets now exist under `assets/source/blender` and `assets/export/gltf`, but they are not rendered in-world until renderer upload/draw commands land.
+- `nemisis_game --sdl-debug` starts the old SDL debug menu path explicitly.
+- `nemisis_game --menu --sdl-debug` is the current way to inspect the old menu/debug UI.
+- `nemisis_game --vulkan-smoke-test` still validates Vulkan without auto-entering the Dev Range.
+- `nemisis_game --vulkan-dev-range-smoke-test` remains a named explicit version of the default 3D smoke.
+- Generated A0 and prototype-pack assets are rendered in-world through NovaCore's Vulkan GLB mesh path.
 - The generated A0 proxy metadata, GLB scene info, and CPU mesh data are now loaded at startup and registered into NovaCore mesh handles.
 
 ## Controls
@@ -141,9 +144,10 @@ The renderer clear color also changes by state for early visual feedback:
 
 ## Current Limits
 
-- Renderer has SDL debug visuals when SDL3 is available.
-- The compiled Vulkan backend can create a window swapchain, depth buffer, and world box pipeline through `--vulkan`/`--vulkan-dev-range-smoke-test`.
-- The world is now represented by deterministic greybox data, SDL debug drawing, and a first Vulkan 3D primitive path; uploaded GLB mesh rendering is still next.
+- Renderer defaults to Vulkan 3D in normal game launches.
+- SDL debug visuals are a legacy fallback/debug path behind `--sdl-debug`.
+- The compiled Vulkan backend can create a window swapchain, depth buffer, world box pipeline, world mesh pipeline, and indexed GLB mesh draws through the default launch profile.
+- The world is represented by deterministic greybox data, Vulkan world boxes, uploaded GLB meshes, first-person proxy meshes, and a 3D aim marker.
 - Current collision is a first capsule/AABB-style greybox resolver, not the final KCC with slope normals, step height, mantle probes, or ramp behavior.
 - Asset ids, preload requests, generated `.glb` exports, metadata, GLB scene-info imports, CPU mesh extraction, and mesh handles exist, but GPU upload/draw submission is not implemented yet.
 - Relative mouse mode is requested for the dev range, but sensitivity, cursor policy settings, and raw input config are not data-driven yet.
@@ -156,6 +160,6 @@ The renderer clear color also changes by state for early visual feedback:
 - HUD health/ammo panels backed by player health and weapon state.
 - More debug targets and measured TTK tests.
 - Full KCC collision against greybox floors, walls, cover, ramps, and ledges.
-- Renderer mesh upload/draw commands for the generated A0 assets.
+- Renderer-owned resource handles, upload queues, and deferred destruction for current GLB meshes.
 - Real UI text rendering after the SDL debug text path is replaced by the custom UI renderer.
 - Real client/server packet transport after the loopback bridge is stable.

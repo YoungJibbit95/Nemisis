@@ -418,6 +418,27 @@ Acceptance:
 - CTest passes with 21 Nemisis tests.
 - NovaCore standalone smoke tests still pass.
 
+## Step 24 - Vulkan 3D Default Launch Profile
+
+Implement:
+
+- Make `GameAppOptions` default to Vulkan, `require_vulkan=true`, auto-enter Dev Range, and lock the Dev Range during normal Vulkan play.
+- Make plain `nemisis_game.exe` start the real 3D Vulkan Dev Range instead of the SDL debug menu.
+- Make `nemisis_game --smoke-test` validate the same default Vulkan 3D profile.
+- Add explicit legacy flags: `--sdl-debug`, `--no-vulkan`, and `--sdl-debug-smoke-test`.
+- Keep `--menu` available for deliberate menu testing instead of accidental blank Vulkan UI states.
+- Add a first-person arms proxy and 3D aim marker to the Vulkan Dev Range frame.
+- Add NovaCore `RendererCreateInfo::requireVulkan` so SDL debug fallback can be disabled for the default profile.
+
+Acceptance:
+
+- `nemisis_game --smoke-test` logs `Launch profile: renderer=vulkan require_vulkan=true start_screen=dev_range lock_dev_range=true`.
+- The same smoke logs `Vulkan world mesh draw submission active: meshes=13`.
+- The same smoke logs `Vulkan world box draw submission active: boxes=21`.
+- `nemisis_game --sdl-debug-smoke-test` still reaches the explicit legacy SDL path for UI/debug testing.
+- CTest passes with 21 Nemisis tests.
+- NovaCore standalone smoke tests still pass.
+
 
 
 

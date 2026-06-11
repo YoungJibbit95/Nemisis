@@ -4,7 +4,7 @@
 
 Camera, player, and world work should start now. It is not too early.
 
-Nemisis needs a visible, testable FPS loop while NovaCore's Vulkan renderer, glTF importer, KCC, and netcode continue maturing. The right balance is to build a data-owned greybox range first, draw it with SDL debug primitives now, then swap the view layer to real mesh rendering once the renderer/importer is ready.
+Nemisis needs a visible, testable FPS loop while NovaCore's Vulkan renderer, glTF importer, KCC, and netcode continue maturing. The current default is now the Vulkan 3D Dev Range; SDL debug drawing is only a legacy/debug path.
 
 ## Phase 0 - Active Now
 
@@ -28,6 +28,9 @@ Implemented:
 - NovaCore Vulkan uploads extracted GLB mesh data into device-local vertex/index buffers through staging buffers.
 - Dev Range submits A0 arena/weapon/character assets plus generated prototype-pack assets as first in-world mesh instances.
 - Prototype-pack GLBs now cover SMG, humanoid, wall, floor, crate, ramp, and target stand placeholders.
+- Plain `nemisis_game` boots into the Vulkan 3D Dev Range with `require_vulkan=true`.
+- The Dev Range is locked during normal Vulkan play so returning to an unrendered 2D debug menu cannot blank the screen.
+- First-person arms and a small 3D aim marker are submitted into the Vulkan frame.
 - First greybox collision resolver blocks player bounds and primitive overlap.
 
 Acceptance:

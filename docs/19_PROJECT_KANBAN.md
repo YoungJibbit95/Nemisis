@@ -54,6 +54,10 @@ This file mirrors the active work while GitHub Projects write access is blocked 
 - [x] Submit A0 and prototype-pack GLB meshes from Nemisis Dev Range into the Vulkan 3D renderer.
 - [x] Generate Blender prototype-pack GLBs for SMG, humanoid, wall, floor, crate, ramp, and target stand.
 - [x] Catalog and validate prototype-pack assets as required Dev Sandbox renderables.
+- [x] Make plain `nemisis_game` boot directly into the Vulkan 3D Dev Range.
+- [x] Disable silent SDL debug fallback for the default Vulkan launch profile.
+- [x] Add explicit legacy `--sdl-debug` launch flags.
+- [x] Add first-person arms proxy and 3D aim marker to the Vulkan Dev Range.
 
 ## Doing
 

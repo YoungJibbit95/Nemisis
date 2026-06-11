@@ -16,17 +16,38 @@ int main(int argc, char** argv) {
         const std::string_view argument(argv[i]);
         if (argument == "--smoke-test") {
             smokeTest = true;
+        } else if (argument == "--menu") {
+            gameOptions.autoEnterDevRange = false;
+            gameOptions.lockDevRange = false;
+        } else if (argument == "--sdl-debug" || argument == "--no-vulkan") {
+            gameOptions.preferVulkanRenderer = false;
+            gameOptions.requireVulkanRenderer = false;
+            gameOptions.autoEnterDevRange = false;
+            gameOptions.lockDevRange = false;
         } else if (argument == "--vulkan") {
             gameOptions.preferVulkanRenderer = true;
+            gameOptions.requireVulkanRenderer = true;
         } else if (argument == "--dev-range") {
             gameOptions.autoEnterDevRange = true;
+            gameOptions.lockDevRange = true;
         } else if (argument == "--vulkan-smoke-test") {
             smokeTest = true;
             gameOptions.preferVulkanRenderer = true;
+            gameOptions.requireVulkanRenderer = true;
+            gameOptions.autoEnterDevRange = false;
+            gameOptions.lockDevRange = false;
         } else if (argument == "--vulkan-dev-range-smoke-test") {
             smokeTest = true;
             gameOptions.preferVulkanRenderer = true;
+            gameOptions.requireVulkanRenderer = true;
             gameOptions.autoEnterDevRange = true;
+            gameOptions.lockDevRange = true;
+        } else if (argument == "--sdl-debug-smoke-test") {
+            smokeTest = true;
+            gameOptions.preferVulkanRenderer = false;
+            gameOptions.requireVulkanRenderer = false;
+            gameOptions.autoEnterDevRange = false;
+            gameOptions.lockDevRange = false;
         }
     }
 
