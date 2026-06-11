@@ -400,7 +400,7 @@ Acceptance:
 
 Implement:
 
-- Add NovaCore `RenderMesh3D` frame submissions carrying asset id, imported CPU GLB mesh data, transform, and color.
+- Add NovaCore `RenderMesh3D` frame submissions for asset id, transform, and color; Step 25 promotes the mesh payload from imported CPU data to stable renderer-owned handles.
 - Add Vulkan `world_mesh` shaders with position/normal vertex input and simple normal-based shading.
 - Add device-local vertex and index buffers with host-visible staging uploads through one-time command buffers.
 - Cache uploaded GPU mesh assets by render asset id inside the Vulkan backend.
@@ -433,6 +433,29 @@ Implement:
 Acceptance:
 
 - `nemisis_game --smoke-test` logs `Launch profile: renderer=vulkan require_vulkan=true start_screen=dev_range lock_dev_range=true`.
+- The same smoke logs `Vulkan world mesh draw submission active: meshes=13`.
+- The same smoke logs `Vulkan world box draw submission active: boxes=21`.
+
+## Step 25 - Renderer Mesh Resource Lifecycle And Dev Range Scene Builder
+
+Implementation:
+
+- Promote NovaCore mesh rendering from transient frame-owned CPU mesh pointers to renderer-owned `MeshResourceHandle` registrations.
+- Add mesh resource registration, lookup, release, stats, Vulkan upload queue, resident/failed/pending tracking, and deferred GPU destruction.
+- Keep `RenderMesh3D` frame submissions small: stable handle, asset id, transform, yaw, and debug tint.
+- Register all required Dev Sandbox GLB assets once from Nemisis after renderer creation.
+- Release registered Dev Sandbox resources on game shutdown.
+- Move Dev Range 3D composition into `DevRangeRenderSceneBuilder` so `GameApp` only gathers player state and orchestrates frame flow.
+- Add scene-builder stats for world boxes, mesh instances, skipped mesh handles, first-person meshes, and aim marker boxes.
+- Update the Assets debug page with CPU/GPU mesh residency, upload queue, failed uploads, deferred destroys, and indexed primitive/vertex/index totals.
+- Add `nemisis_dev_range_render_scene_tests`.
+
+Acceptance:
+
+- `novacore_smoke_tests` covers mesh resource rejection, duplicate registration, stats, release, slot reuse, and generation bumping.
+- `ctest --test-dir cmake-build-codex-vulkan --output-on-failure` reports 22/22 Nemisis tests passing.
+- `nemisis_game --vulkan-dev-range-smoke-test` logs `Renderer dev mesh resources registered: 15/15`.
+- The same smoke logs `Vulkan mesh resident: chr_dev_arms_a`.
 - The same smoke logs `Vulkan world mesh draw submission active: meshes=13`.
 - The same smoke logs `Vulkan world box draw submission active: boxes=21`.
 - `nemisis_game --sdl-debug-smoke-test` still reaches the explicit legacy SDL path for UI/debug testing.

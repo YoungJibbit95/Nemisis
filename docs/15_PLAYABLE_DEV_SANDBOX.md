@@ -45,7 +45,7 @@ Current environment note:
 - `nemisis_game --menu --sdl-debug` is the current way to inspect the old menu/debug UI.
 - `nemisis_game --vulkan-smoke-test` still validates Vulkan without auto-entering the Dev Range.
 - `nemisis_game --vulkan-dev-range-smoke-test` remains a named explicit version of the default 3D smoke.
-- Generated A0 and prototype-pack assets are rendered in-world through NovaCore's Vulkan GLB mesh path.
+- Generated A0 and prototype-pack assets are registered as NovaCore renderer mesh resources and rendered in-world through the Vulkan GLB mesh path.
 - The generated A0 proxy metadata, GLB scene info, and CPU mesh data are now loaded at startup and registered into NovaCore mesh handles.
 
 ## Controls
@@ -123,7 +123,7 @@ The on-screen debug overlay currently has these pages:
 
 - Gameplay: screen, movement mode, tick, input device, position, and collision state.
 - Network: command packet counters, acknowledgement counters, pending command count, and last acknowledged tick.
-- Assets: renderer backend, Vulkan runtime summary, queued asset count, required mesh handles, extracted asset count, primitive count, vertex count, and index count.
+- Assets: renderer backend, Vulkan runtime summary, queued asset count, CPU/GPU mesh-resource residency, upload queue length, failed/deferred counts, primitive count, vertex count, and index count.
 
 The Dev Shooting Range screen also draws a greybox range map:
 
@@ -146,8 +146,9 @@ The renderer clear color also changes by state for early visual feedback:
 
 - Renderer defaults to Vulkan 3D in normal game launches.
 - SDL debug visuals are a legacy fallback/debug path behind `--sdl-debug`.
-- The compiled Vulkan backend can create a window swapchain, depth buffer, world box pipeline, world mesh pipeline, and indexed GLB mesh draws through the default launch profile.
+- The compiled Vulkan backend can create a window swapchain, depth buffer, world box pipeline, world mesh pipeline, renderer-owned mesh resources, upload queued indexed GLB draws, and deferred GPU mesh destruction through the default launch profile.
 - The world is represented by deterministic greybox data, Vulkan world boxes, uploaded GLB meshes, first-person proxy meshes, and a 3D aim marker.
+- Dev Range render composition is isolated in `DevRangeRenderSceneBuilder`, with `GameApp` only collecting player state and orchestrating frame flow.
 - Current collision is a first capsule/AABB-style greybox resolver, not the final KCC with slope normals, step height, mantle probes, or ramp behavior.
 - Asset ids, preload requests, generated `.glb` exports, metadata, GLB scene-info imports, CPU mesh extraction, and mesh handles exist, but GPU upload/draw submission is not implemented yet.
 - Relative mouse mode is requested for the dev range, but sensitivity, cursor policy settings, and raw input config are not data-driven yet.

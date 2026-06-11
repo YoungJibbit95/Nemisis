@@ -274,11 +274,12 @@ void GameMenu::showDevRange() {
 void GameMenu::appendRenderCommands(
     novacore::render::RenderFrameInfo& frame,
     const nemisis::dev::DevSandboxSample& sample,
-        const nemisis::dev::GreyboxWorld& greyboxWorld,
-        std::string_view rendererBackend,
-        std::string_view vulkanSummary,
-        std::size_t queuedAssets,
-        const nemisis::assets::DevAssetBindingSummary& assetSummary) const {
+    const nemisis::dev::GreyboxWorld& greyboxWorld,
+    std::string_view rendererBackend,
+    std::string_view vulkanSummary,
+    std::size_t queuedAssets,
+    const nemisis::assets::DevAssetBindingSummary& assetSummary,
+    const novacore::render::MeshResourceStats& meshStats) const {
     addRect(frame, 0.0F, 0.0F, 1280.0F, 720.0F, {0.0F, 0.0F, 0.0F, 0.05F});
     addRect(frame, 38.0F, 30.0F, 510.0F, 146.0F, {0.025F, 0.045F, 0.055F, 0.92F});
 
@@ -304,7 +305,7 @@ void GameMenu::appendRenderCommands(
                          : std::array<float, 4>{0.64F, 0.74F, 0.78F, 1.0F},
                 std::string(selected ? "> " : "  ") + std::string(kMainMenuItems[index]));
         }
-        addText(frame, 72.0F, 570.0F, 2.0F, {0.55F, 0.62F, 0.66F, 1.0F}, "WINDOW IS LIVE - SDL DEBUG RENDER PATH");
+        addText(frame, 72.0F, 570.0F, 2.0F, {0.55F, 0.62F, 0.66F, 1.0F}, "WINDOW IS LIVE - VULKAN DEV RENDER PATH");
     } else if (screen_ == GameScreen::DevRange) {
         addHeader(frame, "DEV SHOOTING RANGE", "ESC BACK  F1 DEBUG  TAB PAGE  MOUSE/RIGHT STICK LOOK");
         addDevRangeMap(frame, greyboxWorld, sample);
@@ -361,10 +362,12 @@ void GameMenu::appendRenderCommands(
         case DebugPage::Assets:
             addMetric(frame, 48.0F, 624.0F, "RENDERER", std::string(rendererBackend));
             addMetric(frame, 48.0F, 650.0F, "VULKAN", std::string(vulkanSummary).substr(0, 34));
-            addMetric(frame, 386.0F, 624.0F, "ASSETS", std::to_string(assetSummary.renderableAssetCount) + "/" + std::to_string(assetSummary.requiredAssetCount));
-            addMetric(frame, 386.0F, 650.0F, "EXTRACT", std::to_string(assetSummary.extractedAssetCount) + "/" + std::to_string(assetSummary.requiredAssetCount));
-            addMetric(frame, 674.0F, 624.0F, "P / V", std::to_string(assetSummary.totalPrimitiveCount) + " / " + std::to_string(assetSummary.totalVertexCount));
-            addMetric(frame, 674.0F, 650.0F, "I / Q", std::to_string(assetSummary.totalIndexCount) + " / " + std::to_string(queuedAssets));
+            addMetric(frame, 386.0F, 624.0F, "MESH CPU", std::to_string(meshStats.registeredResources) + "/" + std::to_string(assetSummary.requiredAssetCount));
+            addMetric(frame, 386.0F, 650.0F, "GPU", std::to_string(meshStats.residentResources) + " RES / " + std::to_string(meshStats.pendingUploadResources) + " PEND");
+            addMetric(frame, 674.0F, 624.0F, "P / V", std::to_string(meshStats.totalPrimitives) + " / " + std::to_string(meshStats.totalVertices));
+            addMetric(frame, 674.0F, 650.0F, "I / Q", std::to_string(meshStats.totalIndices) + " / " + std::to_string(meshStats.uploadQueueLength + queuedAssets));
+            addMetric(frame, 928.0F, 624.0F, "FAILED", std::to_string(meshStats.failedResources));
+            addMetric(frame, 928.0F, 650.0F, "DEFER", std::to_string(meshStats.deferredDestroyCount));
             break;
         }
     }

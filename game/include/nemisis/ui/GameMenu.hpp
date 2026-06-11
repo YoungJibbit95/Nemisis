@@ -38,7 +38,8 @@ public:
         std::string_view rendererBackend,
         std::string_view vulkanSummary,
         std::size_t queuedAssets,
-        const nemisis::assets::DevAssetBindingSummary& assetSummary) const;
+        const nemisis::assets::DevAssetBindingSummary& assetSummary,
+        const novacore::render::MeshResourceStats& meshStats) const;
 
     [[nodiscard]] GameScreen screen() const;
     [[nodiscard]] bool gameplayActive() const;

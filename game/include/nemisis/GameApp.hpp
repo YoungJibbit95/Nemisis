@@ -3,6 +3,7 @@
 #include "nemisis/assets/DevAssetBindings.hpp"
 #include "nemisis/assets/GameAssetCatalog.hpp"
 #include "nemisis/dev/DebugTarget.hpp"
+#include "nemisis/dev/DevRangeRenderScene.hpp"
 #include "nemisis/dev/DevSandbox.hpp"
 #include "nemisis/dev/GreyboxWorld.hpp"
 #include "nemisis/movement/MovementConfig.hpp"
@@ -22,7 +23,9 @@
 #include "novacore/render/Renderer.hpp"
 
 #include <array>
+#include <string>
 #include <string_view>
+#include <unordered_map>
 
 namespace nemisis::game {
 
@@ -51,16 +54,10 @@ private:
     void ensureActiveWeapon(weapons::WeaponRuntimeState& weaponState, std::string_view requestedWeaponId);
     void ensureLocalPlayer();
     void syncRelativeMouseMode();
+    void registerDevMeshResources();
+    void releaseDevMeshResources();
     void appendA0MeshWireframePreview(novacore::render::RenderFrameInfo& frame) const;
-    void appendGreyboxWorld3D(novacore::render::RenderFrameInfo& frame) const;
-    [[nodiscard]] const novacore::assets::GltfMeshData* findDevMeshData(std::string_view assetId) const;
-    void appendDevMeshInstance(
-        novacore::render::RenderFrameInfo& frame,
-        std::string_view assetId,
-        novacore::math::Vec3 position,
-        novacore::math::Vec3 scale,
-        float yawDegrees,
-        std::array<float, 4> color) const;
+    [[nodiscard]] dev::DevRangePlayerRenderState currentPlayerRenderState() const;
 
     GameAppOptions options_;
     novacore::platform::InputSystem input_;
@@ -73,10 +70,12 @@ private:
     novacore::assets::AssetStreamer assetStreamer_;
     nemisis::assets::DevAssetBindings devAssetBindings_;
     nemisis::assets::DevAssetBindingSummary devAssetSummary_;
+    std::unordered_map<std::string, novacore::render::MeshResourceHandle> devMeshResources_;
     novacore::ecs::EntityId cameraEntity_;
     dev::DebugTargetState debugTarget_;
     dev::DevSandbox devSandbox_;
     dev::GreyboxWorld greyboxWorld_ = dev::createDevRangeGreyboxWorld();
+    dev::DevRangeRenderSceneBuilder devRangeRenderer_;
     ui::GameMenu menu_;
     movement::MovementSystem movement_;
     net::LoopbackCommandBridge loopbackBridge_;

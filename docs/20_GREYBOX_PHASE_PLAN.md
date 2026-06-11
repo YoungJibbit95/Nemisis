@@ -25,7 +25,7 @@ Implemented:
 - NovaCore runtime probe detects local Vulkan runtime/device even before the compiled Vulkan backend is active.
 - NovaCore compiled Vulkan backend creates a swapchain, depth buffer, and world box pipeline through `--vulkan-dev-range-smoke-test`.
 - Dev Range greybox primitives are submitted as first Vulkan 3D world boxes.
-- NovaCore Vulkan uploads extracted GLB mesh data into device-local vertex/index buffers through staging buffers.
+- NovaCore registers extracted GLB mesh data as renderer-owned resources, queues Vulkan upload into device-local vertex/index buffers, and tracks residency/deferred destruction.
 - Dev Range submits A0 arena/weapon/character assets plus generated prototype-pack assets as first in-world mesh instances.
 - Prototype-pack GLBs now cover SMG, humanoid, wall, floor, crate, ramp, and target stand placeholders.
 - Plain `nemisis_game` boots into the Vulkan 3D Dev Range with `require_vulkan=true`.
@@ -113,5 +113,5 @@ Acceptance:
 
 We are in Greybox Phase 0 now.
 
-Phase 1 has started. The metadata, mesh-handle, A0 scene-info import, A0 CPU mesh extraction, Vulkan runtime probe, compiled Vulkan 3D primitive path, debug wireframe preview, and first collision pieces are in. The remaining Phase 1 threshold is renderer GLB mesh upload/draw and a fuller KCC with ramp/ledge behavior. That is the point where the game stops being primitive-geometry greybox and becomes a walkable in-world asset greybox.
+Phase 1 has crossed the first in-world asset threshold. Metadata, mesh handles, A0 scene-info import, CPU mesh extraction, Vulkan runtime probe, compiled Vulkan 3D primitive path, debug wireframe preview, renderer-owned GLB resource upload/draw, first-person mesh proxies, and first collision pieces are in. The remaining Phase 1 threshold is a fuller KCC with ramp/ledge behavior plus renderer polish for lighting/material fallback and swapchain resilience.
 The first renderer GLB upload/draw threshold is now crossed; the remaining Phase 1 pressure is turning that synchronous path into durable renderer resources and advancing the KCC so the visible assets become the playable collision truth.

@@ -1,6 +1,6 @@
 # 19 Project Kanban
 
-This file mirrors the active work while GitHub Projects write access is blocked by the missing `project` token scope.
+This file mirrors the active work locally while GitHub Projects also track the larger repo-level milestones.
 
 ## Done
 
@@ -58,10 +58,11 @@ This file mirrors the active work while GitHub Projects write access is blocked 
 - [x] Disable silent SDL debug fallback for the default Vulkan launch profile.
 - [x] Add explicit legacy `--sdl-debug` launch flags.
 - [x] Add first-person arms proxy and 3D aim marker to the Vulkan Dev Range.
+- [x] Promote mesh rendering into renderer-owned resource handles, Vulkan upload queue, residency stats, and deferred destruction.
+- [x] Add `DevRangeRenderSceneBuilder` and `nemisis_dev_range_render_scene_tests`.
 
 ## Doing
 
-- [ ] Promote synchronous mesh uploads into renderer-owned resource handles and upload queues.
 - [ ] Expand in-world greybox rendering with lighting/material fallback and better transforms.
 
 ## Next Core
@@ -69,7 +70,7 @@ This file mirrors the active work while GitHub Projects write access is blocked 
 - [ ] Config-loaded sensitivity, cursor policy, and controller response curves.
 - [ ] Packet simulation for latency, jitter, loss, duplication, and reorder.
 - [ ] Vulkan swapchain resize/recreate and validation debug labels.
-- [ ] Renderer resource residency, reference counting, and deferred destruction.
+- [ ] Renderer texture/material residency and cross-zone reference counting.
 - [ ] Full KCC collision foundation for ramps, ledges, slope normals, slide/mantle tests.
 - [ ] Shared server validation for greybox collision and movement corrections.
 

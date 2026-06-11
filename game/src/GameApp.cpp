@@ -116,6 +116,7 @@ void GameApp::onStartup() {
     rendererInfo.preferVulkan = options_.preferVulkanRenderer;
     rendererInfo.requireVulkan = options_.requireVulkanRenderer;
     renderer_.create(window_, rendererInfo);
+    registerDevMeshResources();
 
     cameraEntity_ = world_.createEntity();
     world_.addComponent(cameraEntity_, novacore::ecs::NameComponent{"main_camera"});
@@ -144,6 +145,7 @@ void GameApp::onStartup() {
 }
 
 void GameApp::onShutdown() {
+    releaseDevMeshResources();
     renderer_.shutdown();
     window_.shutdown();
 }
@@ -323,6 +325,7 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
         devSandbox_.onFrame(context.deltaSeconds);
     }
 
+    const auto meshStats = renderer_.meshResourceStats();
     novacore::render::RenderFrameInfo frameInfo{};
     frameInfo.clearColor = menu_.gameplayActive() ? devSandbox_.clearColor() : menu_.clearColor();
     menu_.appendRenderCommands(
@@ -332,9 +335,19 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
         renderer_.backendName(),
         renderer_.vulkanSummary(),
         assetStreamer_.pendingCount(),
-        devAssetSummary_);
+        devAssetSummary_,
+        meshStats);
     appendA0MeshWireframePreview(frameInfo);
-    appendGreyboxWorld3D(frameInfo);
+    if (menu_.gameplayActive()) {
+        (void)devRangeRenderer_.append(
+            frameInfo,
+            dev::DevRangeRenderSceneDesc{
+                &greyboxWorld_,
+                &debugTarget_,
+                &devMeshResources_,
+                currentPlayerRenderState(),
+            });
+    }
     renderer_.beginFrame(frameInfo);
     renderer_.endFrame();
 }
@@ -464,6 +477,48 @@ void GameApp::syncRelativeMouseMode() {
     }
 }
 
+void GameApp::registerDevMeshResources() {
+    devMeshResources_.clear();
+
+    std::size_t missing = 0;
+    std::size_t rejected = 0;
+    for (const auto assetId : assets::requiredDevSandboxRenderableAssetIds()) {
+        const auto* source = devAssetBindings_.meshCatalog().findByAssetId(assetId);
+        if (source == nullptr || !source->meshData.has_value()) {
+            ++missing;
+            novacore::core::logWarning("game", "Dev mesh resource missing CPU mesh data: " + std::string(assetId));
+            continue;
+        }
+
+        const auto handle = renderer_.registerMeshResource(std::string(assetId), *source->meshData);
+        if (!handle.isValid()) {
+            ++rejected;
+            novacore::core::logWarning("game", "Dev mesh resource registration failed: " + std::string(assetId));
+            continue;
+        }
+        devMeshResources_[std::string(assetId)] = handle;
+    }
+
+    const auto stats = renderer_.meshResourceStats();
+    novacore::core::logInfo(
+        "game",
+        "Renderer dev mesh resources registered: " + std::to_string(devMeshResources_.size()) + "/" +
+            std::to_string(assets::requiredDevSandboxRenderableAssetIds().size()) +
+            " cpu_registered=" + std::to_string(stats.registeredResources) +
+            " primitives=" + std::to_string(stats.totalPrimitives) +
+            " vertices=" + std::to_string(stats.totalVertices) +
+            " indices=" + std::to_string(stats.totalIndices) +
+            " missing=" + std::to_string(missing) +
+            " rejected=" + std::to_string(rejected));
+}
+
+void GameApp::releaseDevMeshResources() {
+    for (const auto& [_, handle] : devMeshResources_) {
+        renderer_.releaseMeshResource(handle);
+    }
+    devMeshResources_.clear();
+}
+
 void GameApp::appendA0MeshWireframePreview(novacore::render::RenderFrameInfo& frame) const {
     if (!menu_.gameplayActive()) {
         return;
@@ -516,216 +571,24 @@ void GameApp::appendA0MeshWireframePreview(novacore::render::RenderFrameInfo& fr
     }
 }
 
-const novacore::assets::GltfMeshData* GameApp::findDevMeshData(std::string_view assetId) const {
-    const auto* source = devAssetBindings_.meshCatalog().findByAssetId(assetId);
-    if (source == nullptr || !source->meshData.has_value()) {
-        return nullptr;
-    }
-    return &(*source->meshData);
-}
-
-void GameApp::appendDevMeshInstance(
-    novacore::render::RenderFrameInfo& frame,
-    std::string_view assetId,
-    novacore::math::Vec3 position,
-    novacore::math::Vec3 scale,
-    float yawDegrees,
-    std::array<float, 4> color) const {
-    const auto* meshData = findDevMeshData(assetId);
-    if (meshData == nullptr) {
-        return;
-    }
-
-    frame.worldMeshes.push_back(novacore::render::RenderMesh3D{
-        std::string(assetId),
-        meshData,
-        position,
-        scale,
-        yawDegrees,
-        color,
-    });
-}
-
-void GameApp::appendGreyboxWorld3D(novacore::render::RenderFrameInfo& frame) const {
-    if (!menu_.gameplayActive()) {
-        return;
-    }
-
-    novacore::math::Vec3 playerPosition = greyboxWorld_.playerSpawn;
+dev::DevRangePlayerRenderState GameApp::currentPlayerRenderState() const {
+    dev::DevRangePlayerRenderState state{};
+    state.position = greyboxWorld_.playerSpawn;
     if (const auto* movementState = world_.getComponent<movement::PlayerMovementState>(localPlayerEntity_);
         movementState != nullptr) {
-        playerPosition = movementState->position;
+        state.position = movementState->position;
+        state.hasMovementState = true;
     } else if (const auto* transform = world_.getComponent<novacore::ecs::TransformComponent>(localPlayerEntity_);
         transform != nullptr) {
-        playerPosition = transform->position;
+        state.position = transform->position;
     }
 
-    player::PlayerViewComponent view{};
     if (const auto* playerView = world_.getComponent<player::PlayerViewComponent>(localPlayerEntity_);
         playerView != nullptr) {
-        view = *playerView;
+        state.view = *playerView;
     }
 
-    frame.camera3D.enabled = true;
-    frame.camera3D.position = playerPosition + novacore::math::Vec3{0.0F, 1.65F, 0.0F};
-    frame.camera3D.yawDegrees = view.yawDegrees;
-    frame.camera3D.pitchDegrees = view.pitchDegrees;
-    frame.camera3D.verticalFovDegrees = 74.0F;
-    frame.camera3D.nearPlane = 0.03F;
-    frame.camera3D.farPlane = 120.0F;
-
-    frame.worldBoxes.reserve(frame.worldBoxes.size() + greyboxWorld_.primitives.size() + 8U);
-    for (const auto& primitive : greyboxWorld_.primitives) {
-        auto color = primitive.color;
-        if (primitive.kind == dev::GreyboxPrimitiveKind::Target && debugTarget_.eliminated) {
-            color = {0.10F, 0.10F, 0.10F, 1.0F};
-        }
-        frame.worldBoxes.push_back(novacore::render::RenderBox3D{
-            primitive.center,
-            primitive.halfExtents,
-            color,
-        });
-    }
-
-    const auto vectors = player::viewVectors(view);
-    frame.worldMeshes.reserve(frame.worldMeshes.size() + 13U);
-    appendDevMeshInstance(
-        frame,
-        "env_test_arena_kit_01",
-        novacore::math::Vec3{0.0F, 0.0F, 0.0F},
-        novacore::math::Vec3{1.0F, 1.0F, 1.0F},
-        0.0F,
-        {0.46F, 0.54F, 0.55F, 1.0F});
-    appendDevMeshInstance(
-        frame,
-        debugTarget_.eliminated ? "prop_target_dummy_01" : "chr_dev_soldier_a",
-        novacore::math::Vec3{0.0F, 0.0F, 15.0F},
-        novacore::math::Vec3{1.0F, 1.0F, 1.0F},
-        180.0F,
-        debugTarget_.eliminated
-            ? std::array<float, 4>{0.20F, 0.20F, 0.20F, 1.0F}
-            : std::array<float, 4>{0.78F, 0.26F, 0.20F, 1.0F});
-    appendDevMeshInstance(
-        frame,
-        "prop_target_dummy_01",
-        novacore::math::Vec3{-5.5F, 0.0F, 18.0F},
-        novacore::math::Vec3{0.85F, 0.85F, 0.85F},
-        180.0F,
-        {0.90F, 0.42F, 0.18F, 1.0F});
-    appendDevMeshInstance(
-        frame,
-        "prop_target_dummy_01",
-        novacore::math::Vec3{5.5F, 0.0F, 18.0F},
-        novacore::math::Vec3{0.85F, 0.85F, 0.85F},
-        180.0F,
-        {0.90F, 0.42F, 0.18F, 1.0F});
-    appendDevMeshInstance(
-        frame,
-        "chr_proto_humanoid_01",
-        novacore::math::Vec3{-3.2F, 0.0F, 14.0F},
-        novacore::math::Vec3{1.0F, 1.0F, 1.0F},
-        180.0F,
-        {0.28F, 0.74F, 0.90F, 1.0F});
-    appendDevMeshInstance(
-        frame,
-        "map_floor_tile_01",
-        novacore::math::Vec3{-7.0F, 0.0F, -4.0F},
-        novacore::math::Vec3{1.0F, 1.0F, 1.0F},
-        0.0F,
-        {0.32F, 0.38F, 0.40F, 1.0F});
-    appendDevMeshInstance(
-        frame,
-        "map_wall_panel_01",
-        novacore::math::Vec3{-10.5F, 0.0F, 10.0F},
-        novacore::math::Vec3{1.0F, 1.0F, 1.0F},
-        90.0F,
-        {0.36F, 0.44F, 0.47F, 1.0F});
-    appendDevMeshInstance(
-        frame,
-        "map_cover_crate_01",
-        novacore::math::Vec3{-4.2F, 0.0F, 2.0F},
-        novacore::math::Vec3{1.0F, 1.0F, 1.0F},
-        0.0F,
-        {0.42F, 0.48F, 0.45F, 1.0F});
-    appendDevMeshInstance(
-        frame,
-        "map_ramp_01",
-        novacore::math::Vec3{4.0F, 0.0F, -2.5F},
-        novacore::math::Vec3{1.0F, 1.0F, 1.0F},
-        0.0F,
-        {0.30F, 0.47F, 0.43F, 1.0F});
-    appendDevMeshInstance(
-        frame,
-        "map_target_stand_01",
-        novacore::math::Vec3{3.2F, 0.0F, 14.0F},
-        novacore::math::Vec3{1.0F, 1.0F, 1.0F},
-        180.0F,
-        {0.88F, 0.38F, 0.16F, 1.0F});
-
-    const auto weaponCenter =
-        frame.camera3D.position +
-        (vectors.forward * 0.92F) +
-        (vectors.horizontalRight * 0.28F) +
-        novacore::math::Vec3{0.0F, -0.24F, 0.0F};
-    frame.worldBoxes.push_back(novacore::render::RenderBox3D{
-        weaponCenter,
-        novacore::math::Vec3{0.18F, 0.08F, 0.42F},
-        {0.08F, 0.11F, 0.12F, 1.0F},
-    });
-    appendDevMeshInstance(
-        frame,
-        "wpn_ar_01",
-        weaponCenter,
-        novacore::math::Vec3{0.35F, 0.35F, 0.35F},
-        view.yawDegrees,
-        {0.16F, 0.18F, 0.19F, 1.0F});
-    appendDevMeshInstance(
-        frame,
-        "wpn_proto_smg_01",
-        frame.camera3D.position +
-            (vectors.forward * 1.10F) +
-            (vectors.horizontalRight * -0.18F) +
-            novacore::math::Vec3{0.0F, -0.30F, 0.0F},
-        novacore::math::Vec3{0.42F, 0.42F, 0.42F},
-        view.yawDegrees + 90.0F,
-        {0.10F, 0.16F, 0.18F, 1.0F});
-    appendDevMeshInstance(
-        frame,
-        "chr_dev_arms_a",
-        frame.camera3D.position +
-            (vectors.forward * 0.76F) +
-            (vectors.horizontalRight * 0.06F) +
-            novacore::math::Vec3{0.0F, -0.48F, 0.0F},
-        novacore::math::Vec3{0.32F, 0.32F, 0.32F},
-        view.yawDegrees,
-        {0.38F, 0.42F, 0.40F, 1.0F});
-
-    const auto aimCenter = frame.camera3D.position + (vectors.forward * 18.0F);
-    frame.worldBoxes.push_back(novacore::render::RenderBox3D{
-        aimCenter,
-        novacore::math::Vec3{0.055F, 0.055F, 0.055F},
-        {0.88F, 0.98F, 1.0F, 1.0F},
-    });
-    frame.worldBoxes.push_back(novacore::render::RenderBox3D{
-        aimCenter + novacore::math::Vec3{0.18F, 0.0F, 0.0F},
-        novacore::math::Vec3{0.11F, 0.018F, 0.018F},
-        {0.58F, 0.92F, 1.0F, 1.0F},
-    });
-    frame.worldBoxes.push_back(novacore::render::RenderBox3D{
-        aimCenter + novacore::math::Vec3{-0.18F, 0.0F, 0.0F},
-        novacore::math::Vec3{0.11F, 0.018F, 0.018F},
-        {0.58F, 0.92F, 1.0F, 1.0F},
-    });
-    frame.worldBoxes.push_back(novacore::render::RenderBox3D{
-        aimCenter + novacore::math::Vec3{0.0F, 0.18F, 0.0F},
-        novacore::math::Vec3{0.018F, 0.11F, 0.018F},
-        {0.58F, 0.92F, 1.0F, 1.0F},
-    });
-    frame.worldBoxes.push_back(novacore::render::RenderBox3D{
-        aimCenter + novacore::math::Vec3{0.0F, -0.18F, 0.0F},
-        novacore::math::Vec3{0.018F, 0.11F, 0.018F},
-        {0.58F, 0.92F, 1.0F, 1.0F},
-    });
+    return state;
 }
 
 } // namespace nemisis::game

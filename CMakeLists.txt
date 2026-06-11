@@ -59,6 +59,7 @@ add_executable(nemisis_game
     game/src/assets/DevAssetBindings.cpp
     game/src/assets/GameAssetCatalog.cpp
     game/src/dev/DebugTarget.cpp
+    game/src/dev/DevRangeRenderScene.cpp
     game/src/dev/DevSandbox.cpp
     game/src/dev/GreyboxCollision.cpp
     game/src/dev/GreyboxWorld.cpp
@@ -162,6 +163,21 @@ target_include_directories(nemisis_game_menu_tests
 
 target_link_libraries(nemisis_game_menu_tests PRIVATE Novacore::Engine)
 add_test(NAME nemisis_game_menu_tests COMMAND nemisis_game_menu_tests)
+
+add_executable(nemisis_dev_range_render_scene_tests
+    game/src/dev/DevRangeRenderScene.cpp
+    game/src/dev/GreyboxWorld.cpp
+    game/src/player/PlayerView.cpp
+    tests/dev_range_render_scene_tests.cpp
+)
+
+target_include_directories(nemisis_dev_range_render_scene_tests
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/game/include
+)
+
+target_link_libraries(nemisis_dev_range_render_scene_tests PRIVATE Novacore::Engine)
+add_test(NAME nemisis_dev_range_render_scene_tests COMMAND nemisis_dev_range_render_scene_tests)
 
 add_executable(nemisis_weapon_simulation_tests
     game/src/weapons/WeaponSimulation.cpp

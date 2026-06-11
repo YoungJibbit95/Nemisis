@@ -123,9 +123,10 @@ The verified Vulkan smoke log includes:
 - `Vulkan world mesh graphics pipeline created`.
 - `Dev mesh assets ready: 15/15 metadata=15 imported=15`.
 - `Launch profile: renderer=vulkan require_vulkan=true start_screen=dev_range lock_dev_range=true`.
-- `Vulkan mesh uploaded: env_test_arena_kit_01`.
-- `Vulkan mesh uploaded: wpn_proto_smg_01`.
-- `Vulkan mesh uploaded: chr_dev_arms_a`.
+- `Renderer dev mesh resources registered: 15/15`.
+- `Vulkan mesh resident: env_test_arena_kit_01`.
+- `Vulkan mesh resident: wpn_proto_smg_01`.
+- `Vulkan mesh resident: chr_dev_arms_a`.
 - `Vulkan world box draw submission active: boxes=21`.
 - `Vulkan world mesh draw submission active: meshes=13`.
 
