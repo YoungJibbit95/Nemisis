@@ -373,8 +373,28 @@ Acceptance:
 - NovaCore standalone config/build/test passes with Vulkan SDK visible.
 - Nemisis config/build/test passes with 20 tests.
 - `nemisis_game --smoke-test` still logs `SDL debug renderer created`.
-- `nemisis_game --vulkan-smoke-test` logs Vulkan 1.4.350, swapchain creation, `Vulkan debug triangle graphics pipeline created`, and active device `NVIDIA GeForce RTX 3070 Ti`.
+- `nemisis_game --vulkan-smoke-test` logs Vulkan 1.4.350, swapchain creation, first graphics pipeline creation, and active device `NVIDIA GeForce RTX 3070 Ti`.
 - Generated SPIR-V files exist under the NovaCore build subdirectory, e.g. `cmake-build-codex-vulkan/Novacore-Engine/generated/novacore/shaders`.
+
+## Step 22 - Vulkan 3D Greybox Primitive Path
+
+Implement:
+
+- Keep NovaCore's Vulkan backend private to engine implementation and expose only `Renderer` plus presentation data types.
+- Add `RenderCamera3D` and `RenderBox3D` to the frame description.
+- Add Vulkan world-box shaders compiled through `glslc`.
+- Add a depth image/view, depth attachment, and depth-tested graphics pipeline.
+- Draw greybox primitives through push constants as first 3D world geometry.
+- Add Nemisis `--dev-range` and `--vulkan-dev-range-smoke-test`.
+- Feed the Dev Shooting Range camera and greybox primitives into NovaCore's Vulkan world renderer.
+- Register `nemisis_game_vulkan_dev_range_smoke` in CTest.
+
+Acceptance:
+
+- `nemisis_game --vulkan-dev-range-smoke-test` logs `Vulkan world box graphics pipeline created`.
+- The same smoke logs `Vulkan world box draw submission active: boxes=16`.
+- CTest passes with 21 Nemisis tests.
+- NovaCore standalone smoke tests still pass.
 
 
 

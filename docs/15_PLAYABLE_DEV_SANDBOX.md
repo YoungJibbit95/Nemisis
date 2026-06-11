@@ -39,8 +39,9 @@ Current environment note:
 - NovaCore fetches SDL3 automatically when no installed SDL3 package is found.
 - The smoke run now reports `SDL3 window created` and `SDL debug renderer created`.
 - Vulkan SDK is now visible at `F:\VulkanSDK\1.4.350.0`.
-- `nemisis_game --vulkan-smoke-test` opts into NovaCore's compiled Vulkan backend and logs swapchain plus debug triangle pipeline creation.
-- The SDL debug renderer remains the normal visible gameplay/menu path until Vulkan also owns UI text and mesh scene rendering.
+- `nemisis_game --vulkan-smoke-test` opts into NovaCore's compiled Vulkan backend.
+- `nemisis_game --vulkan-dev-range-smoke-test` starts directly in the Dev Shooting Range and submits the greybox world as Vulkan 3D boxes.
+- The SDL debug renderer remains the normal menu/debug UI path until Vulkan also owns UI text and uploaded GLB mesh scene rendering.
 - Generated A0 proxy assets now exist under `assets/source/blender` and `assets/export/gltf`, but they are not rendered in-world until renderer upload/draw commands land.
 - The generated A0 proxy metadata, GLB scene info, and CPU mesh data are now loaded at startup and registered into NovaCore mesh handles.
 
@@ -141,8 +142,8 @@ The renderer clear color also changes by state for early visual feedback:
 ## Current Limits
 
 - Renderer has SDL debug visuals when SDL3 is available.
-- The compiled Vulkan backend can create a window swapchain and debug triangle pipeline through `--vulkan`/`--vulkan-smoke-test`, but it does not yet render the full game debug UI or world meshes.
-- The world is currently represented by deterministic greybox data and SDL debug drawing, not by a full 3D mesh renderer.
+- The compiled Vulkan backend can create a window swapchain, depth buffer, and world box pipeline through `--vulkan`/`--vulkan-dev-range-smoke-test`.
+- The world is now represented by deterministic greybox data, SDL debug drawing, and a first Vulkan 3D primitive path; uploaded GLB mesh rendering is still next.
 - Current collision is a first capsule/AABB-style greybox resolver, not the final KCC with slope normals, step height, mantle probes, or ramp behavior.
 - Asset ids, preload requests, generated `.glb` exports, metadata, GLB scene-info imports, CPU mesh extraction, and mesh handles exist, but GPU upload/draw submission is not implemented yet.
 - Relative mouse mode is requested for the dev range, but sensitivity, cursor policy settings, and raw input config are not data-driven yet.

@@ -86,6 +86,9 @@ GameApp::GameApp(GameAppOptions options)
 
 void GameApp::onStartup() {
     actions_ = input::createDefaultActionMap();
+    if (options_.autoEnterDevRange) {
+        menu_.showDevRange();
+    }
 
     const auto watchConfig = [this](std::string name, std::string path) {
         const auto event = configRegistry_.watchJson(name, path);
@@ -320,6 +323,7 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
         assetStreamer_.pendingCount(),
         devAssetSummary_);
     appendA0MeshWireframePreview(frameInfo);
+    appendGreyboxWorld3D(frameInfo);
     renderer_.beginFrame(frameInfo);
     renderer_.endFrame();
 }
@@ -499,6 +503,60 @@ void GameApp::appendA0MeshWireframePreview(novacore::render::RenderFrameInfo& fr
             }
         }
     }
+}
+
+void GameApp::appendGreyboxWorld3D(novacore::render::RenderFrameInfo& frame) const {
+    if (!menu_.gameplayActive()) {
+        return;
+    }
+
+    novacore::math::Vec3 playerPosition = greyboxWorld_.playerSpawn;
+    if (const auto* movementState = world_.getComponent<movement::PlayerMovementState>(localPlayerEntity_);
+        movementState != nullptr) {
+        playerPosition = movementState->position;
+    } else if (const auto* transform = world_.getComponent<novacore::ecs::TransformComponent>(localPlayerEntity_);
+        transform != nullptr) {
+        playerPosition = transform->position;
+    }
+
+    player::PlayerViewComponent view{};
+    if (const auto* playerView = world_.getComponent<player::PlayerViewComponent>(localPlayerEntity_);
+        playerView != nullptr) {
+        view = *playerView;
+    }
+
+    frame.camera3D.enabled = true;
+    frame.camera3D.position = playerPosition + novacore::math::Vec3{0.0F, 1.65F, 0.0F};
+    frame.camera3D.yawDegrees = view.yawDegrees;
+    frame.camera3D.pitchDegrees = view.pitchDegrees;
+    frame.camera3D.verticalFovDegrees = 74.0F;
+    frame.camera3D.nearPlane = 0.03F;
+    frame.camera3D.farPlane = 120.0F;
+
+    frame.worldBoxes.reserve(frame.worldBoxes.size() + greyboxWorld_.primitives.size() + 3U);
+    for (const auto& primitive : greyboxWorld_.primitives) {
+        auto color = primitive.color;
+        if (primitive.kind == dev::GreyboxPrimitiveKind::Target && debugTarget_.eliminated) {
+            color = {0.10F, 0.10F, 0.10F, 1.0F};
+        }
+        frame.worldBoxes.push_back(novacore::render::RenderBox3D{
+            primitive.center,
+            primitive.halfExtents,
+            color,
+        });
+    }
+
+    const auto vectors = player::viewVectors(view);
+    const auto weaponCenter =
+        frame.camera3D.position +
+        (vectors.forward * 0.92F) +
+        (vectors.horizontalRight * 0.28F) +
+        novacore::math::Vec3{0.0F, -0.24F, 0.0F};
+    frame.worldBoxes.push_back(novacore::render::RenderBox3D{
+        weaponCenter,
+        novacore::math::Vec3{0.18F, 0.08F, 0.42F},
+        {0.08F, 0.11F, 0.12F, 1.0F},
+    });
 }
 
 } // namespace nemisis::game

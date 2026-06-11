@@ -44,9 +44,12 @@ This file mirrors the active work while GitHub Projects write access is blocked 
 - [x] Add NovaCore Vulkan runtime/device probe and surface detected GPU/runtime in logs/debug UI.
 - [x] Add A0 environment GLB wireframe preview from extracted CPU mesh data.
 - [x] Expose Vulkan SDK `F:\VulkanSDK\1.4.350.0` to the CMake build.
-- [x] Add NovaCore compiled Vulkan backend with swapchain, render pass, framebuffers, sync, clear/present, and debug triangle pipeline.
+- [x] Add NovaCore compiled Vulkan backend with swapchain, render pass, framebuffers, sync, clear/present, and first graphics pipeline.
 - [x] Add Vulkan shader compilation through `glslc`.
 - [x] Add Nemisis `--vulkan`/`--vulkan-smoke-test` and CTest coverage.
+- [x] Add NovaCore depth-tested Vulkan world box primitive path.
+- [x] Feed Nemisis Dev Range greybox primitives into the Vulkan 3D renderer.
+- [x] Add `--vulkan-dev-range-smoke-test` and CTest coverage.
 
 ## Doing
 
@@ -58,7 +61,7 @@ This file mirrors the active work while GitHub Projects write access is blocked 
 - [ ] Config-loaded sensitivity, cursor policy, and controller response curves.
 - [ ] Packet simulation for latency, jitter, loss, duplication, and reorder.
 - [ ] Vulkan swapchain resize/recreate and validation debug labels.
-- [ ] Vulkan depth buffer and camera matrix path.
+- [ ] Uploaded GLB mesh draw path with vertex/index buffers.
 - [ ] Full KCC collision foundation for ramps, ledges, slope normals, slide/mantle tests.
 - [ ] Shared server validation for greybox collision and movement corrections.
 

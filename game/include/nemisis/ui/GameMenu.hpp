@@ -30,6 +30,7 @@ enum class DebugPage {
 class GameMenu final {
 public:
     void update(const novacore::platform::InputActionMap& actions);
+    void showDevRange();
     void appendRenderCommands(
         novacore::render::RenderFrameInfo& frame,
         const nemisis::dev::DevSandboxSample& sample,

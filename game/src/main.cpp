@@ -18,9 +18,15 @@ int main(int argc, char** argv) {
             smokeTest = true;
         } else if (argument == "--vulkan") {
             gameOptions.preferVulkanRenderer = true;
+        } else if (argument == "--dev-range") {
+            gameOptions.autoEnterDevRange = true;
         } else if (argument == "--vulkan-smoke-test") {
             smokeTest = true;
             gameOptions.preferVulkanRenderer = true;
+        } else if (argument == "--vulkan-dev-range-smoke-test") {
+            smokeTest = true;
+            gameOptions.preferVulkanRenderer = true;
+            gameOptions.autoEnterDevRange = true;
         }
     }
 

@@ -111,14 +111,15 @@ $env:PATH = "$env:VULKAN_SDK\Bin;F:\Program Files\JetBrains\CLion 2026.1.2\bin\m
 cmake -S . -B cmake-build-codex-vulkan -G Ninja -DCMAKE_MAKE_PROGRAM="F:\Program Files\JetBrains\CLion 2026.1.2\bin\ninja\win\x64\ninja.exe" -DCMAKE_C_COMPILER="F:\Program Files\JetBrains\CLion 2026.1.2\bin\mingw\bin\gcc.exe" -DCMAKE_CXX_COMPILER="F:\Program Files\JetBrains\CLion 2026.1.2\bin\mingw\bin\g++.exe"
 cmake --build cmake-build-codex-vulkan
 ctest --test-dir cmake-build-codex-vulkan --output-on-failure
-.\cmake-build-codex-vulkan\nemisis_game.exe --vulkan-smoke-test
+.\cmake-build-codex-vulkan\nemisis_game.exe --vulkan-dev-range-smoke-test
 ```
 
 The verified Vulkan smoke log includes:
 
 - `Vulkan runtime detected: 1.4.350 / NVIDIA GeForce RTX 3070 Ti (discrete)`.
 - `Vulkan swapchain created: 1280x720 images=3`.
-- `Vulkan debug triangle graphics pipeline created`.
+- `Vulkan world box graphics pipeline created`.
+- `Vulkan world box draw submission active: boxes=16`.
 
 ## Blender CLI
 

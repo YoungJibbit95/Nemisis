@@ -30,6 +30,7 @@
 - Debug UI now has Gameplay, Network, and Assets pages, toggled with Tab or controller Start/Menu.
 - Assets debug UI reports renderer backend plus NovaCore's Vulkan runtime/device summary.
 - `nemisis_game --vulkan-smoke-test` opts into NovaCore's compiled Vulkan backend for swapchain/pipeline validation.
+- `nemisis_game --vulkan-dev-range-smoke-test` starts directly in the Dev Range and submits the greybox world as Vulkan 3D boxes.
 - The dev range requests relative mouse mode through NovaCore while menus keep normal cursor behavior.
 - The Dev Shooting Range now owns a deterministic `GreyboxWorld` with floor, walls, cover, ramps, spawns, range markers, and a target lane.
 - The Dev Shooting Range now applies first greybox collision resolution for bounds, blocking cover/walls, and grounded floor correction.
@@ -91,7 +92,10 @@
 - Dev Shooting Range now overlays a budgeted A0 environment GLB wireframe from extracted CPU mesh positions/indices on the debug range map.
 - Added game launch options for `--vulkan` and `--vulkan-smoke-test`.
 - Added `nemisis_game_vulkan_smoke`, raising the local test suite to 20 passing tests.
-- Verified the compiled NovaCore Vulkan backend with SDK `F:\VulkanSDK\1.4.350.0`: startup logs now show Vulkan 1.4.350, swapchain creation, debug triangle graphics pipeline creation, and active device `NVIDIA GeForce RTX 3070 Ti`.
+- Verified the compiled NovaCore Vulkan backend with SDK `F:\VulkanSDK\1.4.350.0`: startup logs now show Vulkan 1.4.350, swapchain creation, world box graphics pipeline creation, and active device `NVIDIA GeForce RTX 3070 Ti`.
+- Added Dev Range autostart with `--dev-range` and `--vulkan-dev-range-smoke-test`.
+- The Dev Range now feeds a 3D camera plus greybox primitive boxes into NovaCore's Vulkan world renderer.
+- Added `nemisis_game_vulkan_dev_range_smoke`, raising the local test suite to 21 passing tests.
 
 ## Next Game Blocks
 
@@ -100,4 +104,4 @@
 - Expand debug UI pages with frame timings, entity counts, packet loss simulation, and reconciliation error.
 - Expand greybox collision into a fuller KCC with step height, slope/ramp normals, mantle probes, and slide validation.
 - Replace the A0 wireframe preview with proper renderer mesh upload/draw submission for generated weapon/character/environment meshes.
-- Use the new Vulkan backend path for first in-world greybox mesh rendering after NovaCore adds GPU mesh upload and depth/camera support.
+- Replace world primitive boxes with uploaded GLB meshes after NovaCore adds GPU mesh upload/resource ownership.

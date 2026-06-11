@@ -27,6 +27,7 @@ namespace nemisis::game {
 
 struct GameAppOptions final {
     bool preferVulkanRenderer = false;
+    bool autoEnterDevRange = false;
 };
 
 class GameApp final : public novacore::core::IApplicationDelegate {
@@ -48,6 +49,7 @@ private:
     void ensureLocalPlayer();
     void syncRelativeMouseMode();
     void appendA0MeshWireframePreview(novacore::render::RenderFrameInfo& frame) const;
+    void appendGreyboxWorld3D(novacore::render::RenderFrameInfo& frame) const;
 
     GameAppOptions options_;
     novacore::platform::InputSystem input_;

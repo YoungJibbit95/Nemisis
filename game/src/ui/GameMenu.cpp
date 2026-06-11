@@ -267,6 +267,10 @@ void GameMenu::update(const novacore::platform::InputActionMap& actions) {
     }
 }
 
+void GameMenu::showDevRange() {
+    setScreen(GameScreen::DevRange);
+}
+
 void GameMenu::appendRenderCommands(
     novacore::render::RenderFrameInfo& frame,
     const nemisis::dev::DevSandboxSample& sample,
