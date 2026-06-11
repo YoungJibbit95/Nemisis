@@ -1,0 +1,19 @@
+{
+  "id": "map_target_stand_01",
+  "source": "tools/blender/make_prototype_pack.py",
+  "export": "assets/generated/prototype_pack/map_target_stand_01.glb",
+  "category": "prop",
+  "scale_meters": true,
+  "runtime_up_axis": "Y",
+  "gameplay_forward_axis": "+Y",
+  "sockets": [
+    "socket_root",
+    "socket_target_center"
+  ],
+  "collision": "box",
+  "lods": [
+    "map_target_stand_01_lod0"
+  ],
+  "license": "original_project_asset",
+  "generated_by": "tools/blender/make_prototype_pack.py"
+}

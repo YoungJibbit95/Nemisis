@@ -44,6 +44,13 @@ std::vector<AssetSpec> requiredSpecs() {
         {"chr_player_capsule_proxy_01", "mesh", "character", "assets/source/blender/characters/chr_player_capsule_proxy_01.blend", "assets/export/gltf/characters/chr_player_capsule_proxy_01.glb", "col_chr_player_capsule_proxy_01"},
         {"chr_dev_arms_a", "mesh", "character", "assets/source/blender/characters/chr_dev_arms_a.blend", "assets/export/gltf/characters/chr_dev_arms_a.glb"},
         {"chr_dev_soldier_a", "mesh", "character", "assets/source/blender/characters/chr_dev_soldier_a.blend", "assets/export/gltf/characters/chr_dev_soldier_a.glb", "col_chr_dev_soldier_a_capsule"},
+        {"wpn_proto_smg_01", "mesh", "weapon", "tools/blender/make_prototype_pack.py", "assets/generated/prototype_pack/wpn_proto_smg_01.glb"},
+        {"chr_proto_humanoid_01", "mesh", "character", "tools/blender/make_prototype_pack.py", "assets/generated/prototype_pack/chr_proto_humanoid_01.glb", "col_chr_proto_humanoid_01_capsule"},
+        {"map_wall_panel_01", "mesh", "environment", "tools/blender/make_prototype_pack.py", "assets/generated/prototype_pack/map_wall_panel_01.glb", "box"},
+        {"map_floor_tile_01", "mesh", "environment", "tools/blender/make_prototype_pack.py", "assets/generated/prototype_pack/map_floor_tile_01.glb", "walkable_box"},
+        {"map_cover_crate_01", "mesh", "environment", "tools/blender/make_prototype_pack.py", "assets/generated/prototype_pack/map_cover_crate_01.glb", "box"},
+        {"map_ramp_01", "mesh", "environment", "tools/blender/make_prototype_pack.py", "assets/generated/prototype_pack/map_ramp_01.glb", "ramp_wedge"},
+        {"map_target_stand_01", "mesh", "prop", "tools/blender/make_prototype_pack.py", "assets/generated/prototype_pack/map_target_stand_01.glb", "box"},
     };
 }
 

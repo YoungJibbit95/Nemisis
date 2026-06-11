@@ -19,6 +19,13 @@ constexpr RequiredDevAssetIds kRequiredDevAssets{
     "chr_player_capsule_proxy_01",
     "chr_dev_arms_a",
     "chr_dev_soldier_a",
+    "wpn_proto_smg_01",
+    "chr_proto_humanoid_01",
+    "map_wall_panel_01",
+    "map_floor_tile_01",
+    "map_cover_crate_01",
+    "map_ramp_01",
+    "map_target_stand_01",
 };
 
 void appendErrors(

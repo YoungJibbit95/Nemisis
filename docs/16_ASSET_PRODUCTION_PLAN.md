@@ -19,8 +19,11 @@ Current local environment:
 - Blender is available on this machine through an explicit path: `F:\Program Files\Blender Foundation\Blender 5.1\blender.exe`.
 - Blender is not currently in PATH, so call the helper with `-BlenderPath` or add the Blender folder to PATH.
 - A0 dev primitives have been generated as `.blend`, `.glb`, and metadata files under `assets/source/blender` and `assets/export/gltf`.
+- A prototype-pack generator has also produced lightweight GLBs under `assets/generated/prototype_pack` for fast render/greybox iteration.
 
 The first generator script is `tools/blender/make_dev_primitives.py`. It creates source `.blend` files, glTF exports, and metadata for the target dummy, player capsule proxy, first-person arms proxy, third-person soldier proxy, AR/SMG/sidearm blockouts, and movement test arena kit.
+
+The second generator script is `tools/blender/make_prototype_pack.py`. It creates a small procedural pack for an SMG, humanoid, wall panel, floor tile, cover crate, ramp, and target stand. These assets are cataloged as required Dev Sandbox renderables so NovaCore's GLB import and Vulkan mesh upload path can be tested quickly.
 
 Nemisis runtime asset ids are declared in `configs/assets/nemisis_assets.json`. This catalog is loaded by `GameAssetCatalog` and mounted through NovaCore's asset manifest/registry backbone.
 
@@ -69,6 +72,8 @@ assets/
       environments/
       props/
       weapons/
+  generated/
+    prototype_pack/
   textures/
   materials/
   collision/
@@ -79,6 +84,7 @@ Rules:
 
 - `.blend` source files live under `assets/source/blender`.
 - Runtime glTF exports live under `assets/export/gltf`.
+- Fast procedural prototype-pack exports live under `assets/generated/prototype_pack`.
 - Preview renders live under `assets/previews`.
 - Do not commit generated junk caches.
 - Do not add unclear-license marketplace content.
@@ -148,6 +154,8 @@ Current generated outputs:
 - `assets/source/blender/weapons/wpn_sidearm_01.blend`
 - `assets/source/blender/environments/env_test_arena_kit_01.blend`
 - Matching `.glb` exports and `.metadata.json` files under `assets/export/gltf`.
+- Prototype-pack GLBs plus metadata under `assets/generated/prototype_pack`.
+- Prototype-pack assets are now included in `configs/assets/nemisis_assets.json` and validated by `DevAssetBindings`.
 
 ### A1 - Shooter Test Field Kit
 

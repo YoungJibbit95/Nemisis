@@ -396,6 +396,28 @@ Acceptance:
 - CTest passes with 21 Nemisis tests.
 - NovaCore standalone smoke tests still pass.
 
+## Step 23 - Vulkan GLB Mesh Upload And Prototype Asset Render
+
+Implement:
+
+- Add NovaCore `RenderMesh3D` frame submissions carrying asset id, imported CPU GLB mesh data, transform, and color.
+- Add Vulkan `world_mesh` shaders with position/normal vertex input and simple normal-based shading.
+- Add device-local vertex and index buffers with host-visible staging uploads through one-time command buffers.
+- Cache uploaded GPU mesh assets by render asset id inside the Vulkan backend.
+- Draw uploaded GLB primitives through indexed Vulkan draw calls in the same depth-tested world pass as greybox boxes.
+- Generate a Blender prototype pack for SMG, humanoid, wall, floor, cover crate, ramp, and target stand.
+- Add prototype-pack metadata and asset-catalog entries so `DevAssetBindings` imports them as required Dev Sandbox renderables.
+- Submit A0 arena/weapon/character assets plus prototype-pack map/character/weapon assets from the Dev Range.
+
+Acceptance:
+
+- `nemisis_game --vulkan-dev-range-smoke-test` logs `Vulkan world mesh graphics pipeline created`.
+- The same smoke logs `Dev mesh assets ready: 15/15 metadata=15 imported=15`.
+- The same smoke uploads `env_test_arena_kit_01`, `wpn_ar_01`, `wpn_proto_smg_01`, and prototype map pieces.
+- The same smoke logs `Vulkan world mesh draw submission active: meshes=12`.
+- CTest passes with 21 Nemisis tests.
+- NovaCore standalone smoke tests still pass.
+
 
 
 

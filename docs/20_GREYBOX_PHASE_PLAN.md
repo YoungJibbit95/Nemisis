@@ -25,6 +25,9 @@ Implemented:
 - NovaCore runtime probe detects local Vulkan runtime/device even before the compiled Vulkan backend is active.
 - NovaCore compiled Vulkan backend creates a swapchain, depth buffer, and world box pipeline through `--vulkan-dev-range-smoke-test`.
 - Dev Range greybox primitives are submitted as first Vulkan 3D world boxes.
+- NovaCore Vulkan uploads extracted GLB mesh data into device-local vertex/index buffers through staging buffers.
+- Dev Range submits A0 arena/weapon/character assets plus generated prototype-pack assets as first in-world mesh instances.
+- Prototype-pack GLBs now cover SMG, humanoid, wall, floor, crate, ramp, and target stand placeholders.
 - First greybox collision resolver blocks player bounds and primitive overlap.
 
 Acceptance:
@@ -47,12 +50,14 @@ Implemented foundation:
 - Extract generated A0 `.glb` CPU mesh data and surface primitive/vertex/index totals in the Assets debug page.
 - Draw a first debug wireframe preview from extracted A0 environment GLB mesh data.
 - Add KCC collision queries against greybox primitives.
+- Upload extracted mesh data to the renderer.
+- Submit first uploaded GLB mesh draw commands.
+- Render simple floor, wall, cover, ramp, target, character, and weapon proxy meshes.
 
 Still planned:
 
-- Upload extracted mesh data to the renderer.
-- Submit first uploaded GLB mesh draw commands.
-- Render simple floor, wall, cover, ramp, target, and weapon proxy meshes.
+- Promote synchronous mesh upload into renderer-owned resource handles and upload queues.
+- Add basic material fallback selection and light/debug controls.
 - Replace first primitive pushout with full KCC slope/step/mantle behavior.
 - Add debug overlays for entity count, primitive count, collision contact, ground normal, and movement mode.
 
@@ -106,3 +111,4 @@ Acceptance:
 We are in Greybox Phase 0 now.
 
 Phase 1 has started. The metadata, mesh-handle, A0 scene-info import, A0 CPU mesh extraction, Vulkan runtime probe, compiled Vulkan 3D primitive path, debug wireframe preview, and first collision pieces are in. The remaining Phase 1 threshold is renderer GLB mesh upload/draw and a fuller KCC with ramp/ledge behavior. That is the point where the game stops being primitive-geometry greybox and becomes a walkable in-world asset greybox.
+The first renderer GLB upload/draw threshold is now crossed; the remaining Phase 1 pressure is turning that synchronous path into durable renderer resources and advancing the KCC so the visible assets become the playable collision truth.

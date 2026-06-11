@@ -505,6 +505,36 @@ void GameApp::appendA0MeshWireframePreview(novacore::render::RenderFrameInfo& fr
     }
 }
 
+const novacore::assets::GltfMeshData* GameApp::findDevMeshData(std::string_view assetId) const {
+    const auto* source = devAssetBindings_.meshCatalog().findByAssetId(assetId);
+    if (source == nullptr || !source->meshData.has_value()) {
+        return nullptr;
+    }
+    return &(*source->meshData);
+}
+
+void GameApp::appendDevMeshInstance(
+    novacore::render::RenderFrameInfo& frame,
+    std::string_view assetId,
+    novacore::math::Vec3 position,
+    novacore::math::Vec3 scale,
+    float yawDegrees,
+    std::array<float, 4> color) const {
+    const auto* meshData = findDevMeshData(assetId);
+    if (meshData == nullptr) {
+        return;
+    }
+
+    frame.worldMeshes.push_back(novacore::render::RenderMesh3D{
+        std::string(assetId),
+        meshData,
+        position,
+        scale,
+        yawDegrees,
+        color,
+    });
+}
+
 void GameApp::appendGreyboxWorld3D(novacore::render::RenderFrameInfo& frame) const {
     if (!menu_.gameplayActive()) {
         return;
@@ -547,6 +577,80 @@ void GameApp::appendGreyboxWorld3D(novacore::render::RenderFrameInfo& frame) con
     }
 
     const auto vectors = player::viewVectors(view);
+    frame.worldMeshes.reserve(frame.worldMeshes.size() + 12U);
+    appendDevMeshInstance(
+        frame,
+        "env_test_arena_kit_01",
+        novacore::math::Vec3{0.0F, 0.0F, 0.0F},
+        novacore::math::Vec3{1.0F, 1.0F, 1.0F},
+        0.0F,
+        {0.46F, 0.54F, 0.55F, 1.0F});
+    appendDevMeshInstance(
+        frame,
+        debugTarget_.eliminated ? "prop_target_dummy_01" : "chr_dev_soldier_a",
+        novacore::math::Vec3{0.0F, 0.0F, 15.0F},
+        novacore::math::Vec3{1.0F, 1.0F, 1.0F},
+        180.0F,
+        debugTarget_.eliminated
+            ? std::array<float, 4>{0.20F, 0.20F, 0.20F, 1.0F}
+            : std::array<float, 4>{0.78F, 0.26F, 0.20F, 1.0F});
+    appendDevMeshInstance(
+        frame,
+        "prop_target_dummy_01",
+        novacore::math::Vec3{-5.5F, 0.0F, 18.0F},
+        novacore::math::Vec3{0.85F, 0.85F, 0.85F},
+        180.0F,
+        {0.90F, 0.42F, 0.18F, 1.0F});
+    appendDevMeshInstance(
+        frame,
+        "prop_target_dummy_01",
+        novacore::math::Vec3{5.5F, 0.0F, 18.0F},
+        novacore::math::Vec3{0.85F, 0.85F, 0.85F},
+        180.0F,
+        {0.90F, 0.42F, 0.18F, 1.0F});
+    appendDevMeshInstance(
+        frame,
+        "chr_proto_humanoid_01",
+        novacore::math::Vec3{-3.2F, 0.0F, 14.0F},
+        novacore::math::Vec3{1.0F, 1.0F, 1.0F},
+        180.0F,
+        {0.28F, 0.74F, 0.90F, 1.0F});
+    appendDevMeshInstance(
+        frame,
+        "map_floor_tile_01",
+        novacore::math::Vec3{-7.0F, 0.0F, -4.0F},
+        novacore::math::Vec3{1.0F, 1.0F, 1.0F},
+        0.0F,
+        {0.32F, 0.38F, 0.40F, 1.0F});
+    appendDevMeshInstance(
+        frame,
+        "map_wall_panel_01",
+        novacore::math::Vec3{-10.5F, 0.0F, 10.0F},
+        novacore::math::Vec3{1.0F, 1.0F, 1.0F},
+        90.0F,
+        {0.36F, 0.44F, 0.47F, 1.0F});
+    appendDevMeshInstance(
+        frame,
+        "map_cover_crate_01",
+        novacore::math::Vec3{-4.2F, 0.0F, 2.0F},
+        novacore::math::Vec3{1.0F, 1.0F, 1.0F},
+        0.0F,
+        {0.42F, 0.48F, 0.45F, 1.0F});
+    appendDevMeshInstance(
+        frame,
+        "map_ramp_01",
+        novacore::math::Vec3{4.0F, 0.0F, -2.5F},
+        novacore::math::Vec3{1.0F, 1.0F, 1.0F},
+        0.0F,
+        {0.30F, 0.47F, 0.43F, 1.0F});
+    appendDevMeshInstance(
+        frame,
+        "map_target_stand_01",
+        novacore::math::Vec3{3.2F, 0.0F, 14.0F},
+        novacore::math::Vec3{1.0F, 1.0F, 1.0F},
+        180.0F,
+        {0.88F, 0.38F, 0.16F, 1.0F});
+
     const auto weaponCenter =
         frame.camera3D.position +
         (vectors.forward * 0.92F) +
@@ -557,6 +661,23 @@ void GameApp::appendGreyboxWorld3D(novacore::render::RenderFrameInfo& frame) con
         novacore::math::Vec3{0.18F, 0.08F, 0.42F},
         {0.08F, 0.11F, 0.12F, 1.0F},
     });
+    appendDevMeshInstance(
+        frame,
+        "wpn_ar_01",
+        weaponCenter,
+        novacore::math::Vec3{0.35F, 0.35F, 0.35F},
+        view.yawDegrees,
+        {0.16F, 0.18F, 0.19F, 1.0F});
+    appendDevMeshInstance(
+        frame,
+        "wpn_proto_smg_01",
+        frame.camera3D.position +
+            (vectors.forward * 1.10F) +
+            (vectors.horizontalRight * -0.18F) +
+            novacore::math::Vec3{0.0F, -0.30F, 0.0F},
+        novacore::math::Vec3{0.42F, 0.42F, 0.42F},
+        view.yawDegrees + 90.0F,
+        {0.10F, 0.16F, 0.18F, 1.0F});
 }
 
 } // namespace nemisis::game

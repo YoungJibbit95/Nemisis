@@ -98,6 +98,76 @@
       "priority": 65,
       "estimated_bytes": 786432,
       "tags": ["character", "third_person", "hitbox_test", "dev_sandbox"]
+    },
+    {
+      "id": "wpn_proto_smg_01",
+      "kind": "mesh",
+      "source": "tools/blender/make_prototype_pack.py",
+      "cooked": "assets/generated/prototype_pack/wpn_proto_smg_01.glb",
+      "streamable": true,
+      "priority": 62,
+      "estimated_bytes": 30568,
+      "tags": ["weapon", "smg", "prototype_pack", "first_person", "world_model", "dev_sandbox"]
+    },
+    {
+      "id": "chr_proto_humanoid_01",
+      "kind": "mesh",
+      "source": "tools/blender/make_prototype_pack.py",
+      "cooked": "assets/generated/prototype_pack/chr_proto_humanoid_01.glb",
+      "streamable": true,
+      "priority": 61,
+      "estimated_bytes": 61760,
+      "tags": ["character", "prototype_pack", "hitbox_test", "dev_sandbox"]
+    },
+    {
+      "id": "map_wall_panel_01",
+      "kind": "mesh",
+      "source": "tools/blender/make_prototype_pack.py",
+      "cooked": "assets/generated/prototype_pack/map_wall_panel_01.glb",
+      "streamable": true,
+      "priority": 55,
+      "estimated_bytes": 14648,
+      "tags": ["environment", "prototype_pack", "wall", "greybox", "dev_sandbox"]
+    },
+    {
+      "id": "map_floor_tile_01",
+      "kind": "mesh",
+      "source": "tools/blender/make_prototype_pack.py",
+      "cooked": "assets/generated/prototype_pack/map_floor_tile_01.glb",
+      "streamable": true,
+      "priority": 56,
+      "estimated_bytes": 13124,
+      "tags": ["environment", "prototype_pack", "floor", "greybox", "dev_sandbox"]
+    },
+    {
+      "id": "map_cover_crate_01",
+      "kind": "mesh",
+      "source": "tools/blender/make_prototype_pack.py",
+      "cooked": "assets/generated/prototype_pack/map_cover_crate_01.glb",
+      "streamable": true,
+      "priority": 58,
+      "estimated_bytes": 16592,
+      "tags": ["environment", "prototype_pack", "cover", "greybox", "dev_sandbox"]
+    },
+    {
+      "id": "map_ramp_01",
+      "kind": "mesh",
+      "source": "tools/blender/make_prototype_pack.py",
+      "cooked": "assets/generated/prototype_pack/map_ramp_01.glb",
+      "streamable": true,
+      "priority": 57,
+      "estimated_bytes": 9804,
+      "tags": ["environment", "prototype_pack", "ramp", "movement_test", "greybox", "dev_sandbox"]
+    },
+    {
+      "id": "map_target_stand_01",
+      "kind": "mesh",
+      "source": "tools/blender/make_prototype_pack.py",
+      "cooked": "assets/generated/prototype_pack/map_target_stand_01.glb",
+      "streamable": true,
+      "priority": 59,
+      "estimated_bytes": 22068,
+      "tags": ["prop", "prototype_pack", "target", "combat_test", "dev_sandbox"]
     }
   ]
 }

@@ -50,18 +50,22 @@ This file mirrors the active work while GitHub Projects write access is blocked 
 - [x] Add NovaCore depth-tested Vulkan world box primitive path.
 - [x] Feed Nemisis Dev Range greybox primitives into the Vulkan 3D renderer.
 - [x] Add `--vulkan-dev-range-smoke-test` and CTest coverage.
+- [x] Add NovaCore Vulkan GLB mesh upload with staging buffers and indexed draw submission.
+- [x] Submit A0 and prototype-pack GLB meshes from Nemisis Dev Range into the Vulkan 3D renderer.
+- [x] Generate Blender prototype-pack GLBs for SMG, humanoid, wall, floor, crate, ramp, and target stand.
+- [x] Catalog and validate prototype-pack assets as required Dev Sandbox renderables.
 
 ## Doing
 
-- [ ] Move from debug-map greybox to in-world mesh greybox rendering.
-- [ ] Add renderer-side mesh upload and draw submission from extracted glTF buffers.
+- [ ] Promote synchronous mesh uploads into renderer-owned resource handles and upload queues.
+- [ ] Expand in-world greybox rendering with lighting/material fallback and better transforms.
 
 ## Next Core
 
 - [ ] Config-loaded sensitivity, cursor policy, and controller response curves.
 - [ ] Packet simulation for latency, jitter, loss, duplication, and reorder.
 - [ ] Vulkan swapchain resize/recreate and validation debug labels.
-- [ ] Uploaded GLB mesh draw path with vertex/index buffers.
+- [ ] Renderer resource residency, reference counting, and deferred destruction.
 - [ ] Full KCC collision foundation for ramps, ledges, slope normals, slide/mantle tests.
 - [ ] Shared server validation for greybox collision and movement corrections.
 
@@ -76,4 +80,4 @@ This file mirrors the active work while GitHub Projects write access is blocked 
 
 ## Blocked
 
-- [ ] No current engine-core blocker. GitHub Projects sync still depends on repository/project permissions for each board mutation.
+- [ ] No current engine-core blocker.

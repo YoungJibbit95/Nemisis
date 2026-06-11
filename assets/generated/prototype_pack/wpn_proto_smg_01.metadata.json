@@ -1,0 +1,21 @@
+{
+  "id": "wpn_proto_smg_01",
+  "source": "tools/blender/make_prototype_pack.py",
+  "export": "assets/generated/prototype_pack/wpn_proto_smg_01.glb",
+  "category": "weapon",
+  "scale_meters": true,
+  "runtime_up_axis": "Y",
+  "gameplay_forward_axis": "+X",
+  "sockets": [
+    "socket_root",
+    "socket_muzzle",
+    "socket_grip_r",
+    "socket_grip_l"
+  ],
+  "collision": "none",
+  "lods": [
+    "wpn_proto_smg_01_lod0"
+  ],
+  "license": "original_project_asset",
+  "generated_by": "tools/blender/make_prototype_pack.py"
+}

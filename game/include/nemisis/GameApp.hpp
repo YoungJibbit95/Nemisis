@@ -21,6 +21,7 @@
 #include "novacore/platform/Window.hpp"
 #include "novacore/render/Renderer.hpp"
 
+#include <array>
 #include <string_view>
 
 namespace nemisis::game {
@@ -50,6 +51,14 @@ private:
     void syncRelativeMouseMode();
     void appendA0MeshWireframePreview(novacore::render::RenderFrameInfo& frame) const;
     void appendGreyboxWorld3D(novacore::render::RenderFrameInfo& frame) const;
+    [[nodiscard]] const novacore::assets::GltfMeshData* findDevMeshData(std::string_view assetId) const;
+    void appendDevMeshInstance(
+        novacore::render::RenderFrameInfo& frame,
+        std::string_view assetId,
+        novacore::math::Vec3 position,
+        novacore::math::Vec3 scale,
+        float yawDegrees,
+        std::array<float, 4> color) const;
 
     GameAppOptions options_;
     novacore::platform::InputSystem input_;

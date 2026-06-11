@@ -1,0 +1,136 @@
+{
+  "pack_id": "nemisis_prototype_pack_01",
+  "generated_at_utc": "2026-06-11T11:28:05+00:00",
+  "generator": "tools/blender/make_prototype_pack.py",
+  "blender_version": "5.1.2",
+  "units": "meters",
+  "external_assets": false,
+  "assets": [
+    {
+      "id": "wpn_proto_smg_01",
+      "category": "weapon",
+      "file": "assets/generated/prototype_pack/wpn_proto_smg_01.glb",
+      "dimensions_m": [
+        1.07,
+        0.11,
+        0.45
+      ],
+      "origin": "Origin at approximate right-hand grip center; forward axis is +X.",
+      "description": "Low-poly SMG/rifle proxy with barrel, stock, magazine, sights, and sockets.",
+      "stats": {
+        "mesh_objects": 16,
+        "vertices": 168,
+        "polygons": 116,
+        "triangles_estimate": 272
+      }
+    },
+    {
+      "id": "chr_proto_humanoid_01",
+      "category": "character",
+      "file": "assets/generated/prototype_pack/chr_proto_humanoid_01.glb",
+      "dimensions_m": [
+        1.03,
+        0.42,
+        1.84
+      ],
+      "origin": "Origin at feet midpoint on the floor.",
+      "description": "Simplified humanoid proxy with clear forward marker and head/root sockets.",
+      "stats": {
+        "mesh_objects": 19,
+        "vertices": 394,
+        "polygons": 328,
+        "triangles_estimate": 712
+      }
+    },
+    {
+      "id": "map_wall_panel_01",
+      "category": "map",
+      "file": "assets/generated/prototype_pack/map_wall_panel_01.glb",
+      "dimensions_m": [
+        4.08,
+        0.22,
+        2.58
+      ],
+      "origin": "Origin at bottom center of the wall footprint.",
+      "description": "Straight wall module for greybox corridors and cover lanes.",
+      "stats": {
+        "mesh_objects": 9,
+        "vertices": 72,
+        "polygons": 54,
+        "triangles_estimate": 108
+      }
+    },
+    {
+      "id": "map_floor_tile_01",
+      "category": "map",
+      "file": "assets/generated/prototype_pack/map_floor_tile_01.glb",
+      "dimensions_m": [
+        4.05,
+        4.05,
+        0.08
+      ],
+      "origin": "Origin at tile center on the top walking plane.",
+      "description": "Four-meter floor tile with shallow grid grooves and a blue front edge.",
+      "stats": {
+        "mesh_objects": 8,
+        "vertices": 64,
+        "polygons": 48,
+        "triangles_estimate": 96
+      }
+    },
+    {
+      "id": "map_cover_crate_01",
+      "category": "map",
+      "file": "assets/generated/prototype_pack/map_cover_crate_01.glb",
+      "dimensions_m": [
+        1.35,
+        1.2,
+        1.0
+      ],
+      "origin": "Origin at bottom center.",
+      "description": "Chest-high cover crate with readable trim and front marking.",
+      "stats": {
+        "mesh_objects": 10,
+        "vertices": 80,
+        "polygons": 60,
+        "triangles_estimate": 120
+      }
+    },
+    {
+      "id": "map_ramp_01",
+      "category": "map",
+      "file": "assets/generated/prototype_pack/map_ramp_01.glb",
+      "dimensions_m": [
+        3.08,
+        2.14,
+        1.0
+      ],
+      "origin": "Origin centered on the lower ramp footprint.",
+      "description": "Simple one-meter-rise ramp wedge with edge rails and traction marks.",
+      "stats": {
+        "mesh_objects": 6,
+        "vertices": 46,
+        "polygons": 35,
+        "triangles_estimate": 68
+      }
+    },
+    {
+      "id": "map_target_stand_01",
+      "category": "map",
+      "file": "assets/generated/prototype_pack/map_target_stand_01.glb",
+      "dimensions_m": [
+        0.95,
+        0.7,
+        1.72
+      ],
+      "origin": "Origin at base center on the floor.",
+      "description": "Portable target stand for weapon and hit-test staging.",
+      "stats": {
+        "mesh_objects": 8,
+        "vertices": 148,
+        "polygons": 90,
+        "triangles_estimate": 264
+      }
+    }
+  ]
+}
