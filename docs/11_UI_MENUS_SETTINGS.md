@@ -79,12 +79,16 @@ HUD elements:
 
 Current debug/UI implementation:
 
-- SDL debug render primitives draw the temporary main menu and dev-range panels.
+- `UiCanvas` is now the game-owned NanoVG-style command layer for UI/HUD primitives.
+- `UiCanvas` records semantic commands for rects, rounded rects, lines, text, progress bars, and crosshairs.
+- The current bridge flushes `UiCanvas` commands into NovaCore debug primitives until the Vulkan-native vector/text backend exists.
+- SDL debug render primitives remain available only through explicit legacy launch paths.
 - `GameMenu` owns Main Menu, Dev Shooting Range, Team Deathmatch placeholder, and Control placeholder screens.
 - `F1` toggles the debug overlay.
 - `Tab` and controller Start/Menu cycle debug overlay pages.
 - Debug pages currently cover Gameplay, Network, and Assets/Render telemetry.
-- This is a temporary development UI path until the custom NanoVG-style renderer replaces SDL debug text.
+- `nemisis_ui_canvas_tests` protects the command recording and flush path.
+- This is a temporary development UI bridge until the custom Vulkan NanoVG-style renderer replaces debug text and primitive flushing.
 
 ## Settings
 

@@ -70,9 +70,38 @@ void testAdsHasLessSpreadThanHipFire() {
 
     const auto hip = nemisis::weapons::buildShotTrace(weapon, request);
     request.ads = true;
+    request.adsAlpha = 1.0F;
     const auto ads = nemisis::weapons::buildShotTrace(weapon, request);
 
     expect(ads.spreadDegrees < hip.spreadDegrees, "ads trace has less spread than hip fire");
+}
+
+void testMovementAndAirborneIncreaseSpread() {
+    const auto weapon = testWeapon();
+    nemisis::weapons::ShotTraceRequest request{};
+    request.seed = 91;
+    request.adsAlpha = 1.0F;
+
+    const auto still = nemisis::weapons::buildShotTrace(weapon, request);
+    request.movementSpeed = 8.0F;
+    request.airborne = true;
+    request.sprinting = true;
+    const auto moving = nemisis::weapons::buildShotTrace(weapon, request);
+
+    expect(moving.spreadDegrees > still.spreadDegrees, "movement, sprint, and airborne state increase spread");
+}
+
+void testRuntimeRecoilOverridesFallback() {
+    const auto weapon = testWeapon();
+    nemisis::weapons::ShotTraceRequest request{};
+    request.shotIndex = 10;
+    request.recoilPitchDegrees = 1.2F;
+    request.recoilYawDegrees = -0.6F;
+
+    const auto trace = nemisis::weapons::buildShotTrace(weapon, request);
+
+    expectNear(trace.recoilPitchDegrees, 1.2F, 0.0001F, "runtime pitch recoil is preserved");
+    expectNear(trace.recoilYawDegrees, -0.6F, 0.0001F, "runtime yaw recoil is preserved");
 }
 
 void testDirectionIsNormalized() {
@@ -93,6 +122,8 @@ int main() {
     testShotTraceIsDeterministic();
     testShotTraceUsesWeaponRangeAndDamage();
     testAdsHasLessSpreadThanHipFire();
+    testMovementAndAirborneIncreaseSpread();
+    testRuntimeRecoilOverridesFallback();
     testDirectionIsNormalized();
 
     if (failures > 0) {

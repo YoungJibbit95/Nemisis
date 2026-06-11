@@ -63,10 +63,18 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [x] Add NovaCore Vulkan world debug line pipeline and submit Dev Range aim/ground-normal lines.
 - [x] Add configurable Dev Range render tuning and `nemisis_render_tuning_tests`.
 - [x] Add KCC ramp height sampling, low-step handling, ground normals, and ledge blocking tests.
+- [x] Replace snap movement with acceleration, friction, air control, slide duration, slide steering, dash duration, and slide-jump momentum.
+- [x] Add `PlayerCameraRig` for natural FPS camera smoothing, FOV kick, head bob, recoil view offsets, weapon sway, and ADS fraction.
+- [x] Expand weapon runtime with ADS blend, recoil accumulation/recovery, burst tracking, reload progress, movement spread, and view-kick telemetry.
+- [x] Expand hitscan traces with runtime recoil, ADS alpha, airborne/sprint spread penalties, and movement speed.
+- [x] Add game-owned `UiCanvas` command layer and route menu/debug primitives through it as the NanoVG-style bridge.
+- [x] Add `nemisis_ui_canvas_tests` and `nemisis_player_camera_rig_tests`.
+- [x] Verify Windows MSVC Vulkan build and 25/25 CTest suite.
 
 ## Doing
 
 - [ ] Expand material fallback controls and resize-safe Vulkan swapchain behavior.
+- [ ] Keep UI moving toward a Vulkan-native text/vector backend while `UiCanvas` feeds the current debug primitive bridge.
 
 ## Next Core
 
@@ -76,6 +84,7 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [ ] Renderer texture/material residency and cross-zone reference counting.
 - [ ] Mantle probes, slide validation, and richer slope/step debug visualization.
 - [ ] Shared server validation for greybox collision and movement corrections.
+- [ ] Feed camera/weapon telemetry into prediction-safe replay snapshots for future reconciliation debugging.
 
 ## Next Gameplay
 
@@ -83,7 +92,7 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [ ] TDM placeholder match lifecycle.
 - [ ] Control placeholder objective lifecycle.
 - [ ] More target dummies and range markers.
-- [ ] First HUD widgets for ammo, health, target damage, and net status.
+- [ ] First `UiCanvas` HUD widgets for ammo, health, target damage, recoil/ADS, and net status.
 - [ ] Wire player health into real hit events, respawn, and server validation.
 
 ## Blocked

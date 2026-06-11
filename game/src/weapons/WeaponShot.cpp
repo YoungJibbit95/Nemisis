@@ -52,8 +52,21 @@ constexpr float kPi = 3.14159265358979323846F;
 ShotTraceResult buildShotTrace(
     const WeaponDefinition& definition,
     const ShotTraceRequest& request) {
-    const float baseSpreadDegrees = request.ads ? definition.adsSpreadDegrees : definition.hipSpreadDegrees;
-    const float movementSpreadDegrees = std::clamp(request.movementSpeed * 0.03F, 0.0F, 1.5F);
+    const float adsAlpha = std::clamp(request.adsAlpha, 0.0F, 1.0F);
+    const float baseSpreadDegrees =
+        (definition.hipSpreadDegrees * (1.0F - adsAlpha)) +
+        (definition.adsSpreadDegrees * adsAlpha);
+    float movementSpreadDegrees =
+        request.movementSpeed *
+        ((definition.hipMovementSpreadPerMeter * (1.0F - adsAlpha)) +
+         (definition.adsMovementSpreadPerMeter * adsAlpha));
+    if (request.airborne) {
+        movementSpreadDegrees += definition.airborneSpreadPenaltyDegrees;
+    }
+    if (request.sprinting) {
+        movementSpreadDegrees += definition.sprintSpreadPenaltyDegrees;
+    }
+    movementSpreadDegrees = std::clamp(movementSpreadDegrees, 0.0F, 2.25F);
     const float spreadDegrees = std::max(0.0F, baseSpreadDegrees + movementSpreadDegrees);
 
     std::uint32_t randomState =
@@ -63,8 +76,14 @@ ShotTraceResult buildShotTrace(
 
     const float spreadYaw = signedUnitRandom(randomState) * spreadDegrees;
     const float spreadPitch = signedUnitRandom(randomState) * spreadDegrees;
-    const float recoilYaw = definition.recoilYawPerShotDegrees * static_cast<float>(request.shotIndex);
-    const float recoilPitch = definition.recoilPitchPerShotDegrees * static_cast<float>(request.shotIndex);
+    const float fallbackRecoilYaw = definition.recoilYawPerShotDegrees * static_cast<float>(request.shotIndex);
+    const float fallbackRecoilPitch = definition.recoilPitchPerShotDegrees * static_cast<float>(request.shotIndex);
+    const float recoilYaw = std::abs(request.recoilYawDegrees) > 0.0001F
+        ? request.recoilYawDegrees
+        : fallbackRecoilYaw;
+    const float recoilPitch = std::abs(request.recoilPitchDegrees) > 0.0001F
+        ? request.recoilPitchDegrees
+        : fallbackRecoilPitch;
 
     const float yawRadians = degreesToRadians(spreadYaw + recoilYaw);
     const float pitchRadians = degreesToRadians(spreadPitch + recoilPitch);
@@ -83,6 +102,8 @@ ShotTraceResult buildShotTrace(
     result.rangeMeters = definition.maxRangeMeters;
     result.damage = definition.damage.closeDamage;
     result.spreadDegrees = spreadDegrees;
+    result.recoilPitchDegrees = recoilPitch;
+    result.recoilYawDegrees = recoilYaw;
     result.seed = request.seed;
     result.shotIndex = request.shotIndex;
     return result;

@@ -55,15 +55,25 @@ Runtime placement:
 - Fixed ticks apply player look and transform movement relative to view yaw.
 - Simulated movement position is mirrored into the player's `TransformComponent`.
 - Pending command count and last processed tick are tracked for future server acknowledgement.
+- `MovementSystem` now accelerates toward target velocity instead of snapping instantly.
+- Ground friction decelerates released input.
+- Air movement has configurable acceleration, max speed, and drag.
+- Slide has configurable impulse, duration, steering, friction, end speed, cooldown, and slide-jump boost.
+- Dash has configurable impulse, steering, duration, and cooldown.
+- Movement state stores slide/dash timers, grounded/airborne time, input magnitude, and last horizontal speed for camera/HUD/debug use.
+- The first `PlayerCameraRig` turns movement state into local visual camera feel: smoothed eye position, head bob, roll, FOV kick, weapon sway, and recoil view offsets.
 
 Replay foundation:
 
 - `nemisis_movement_replay_tests`
-- Sprint distance replay.
+- Ground acceleration/friction replay.
+- Sprint convergence replay.
 - Jump -> double-jump replay.
 - Dash cooldown replay.
+- Slide duration and slide-jump momentum replay.
 - `nemisis_player_command_queue_tests`
 - `nemisis_player_spawn_tests`
+- `nemisis_player_camera_rig_tests`
 
 ## Core States
 
@@ -139,7 +149,9 @@ Movement tuning should live in hot-reload data:
 - Max walk speed / Sprint speed / Tactical Sprint speed.
 - Dash impulse / cooldown.
 - Slide impulse / friction.
+- Slide duration / steering / end speed / slide-jump boost.
 - Air acceleration / Air strafe capability.
+- Ground acceleration / friction / stop speed.
 - Jump velocity / Double Jump impulse.
 - Wall Run speed / duration / friction.
 - Mantle range and duration.
@@ -155,6 +167,5 @@ Movement is acceptable when:
 - Reconciliation is bounded.
 - MKB and controller both feel intentional.
 - Movement tech (Wall Runs, Dashes, Slides) is measurable and consistent.
-
 
 

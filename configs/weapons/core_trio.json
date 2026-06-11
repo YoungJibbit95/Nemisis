@@ -17,12 +17,23 @@
       "max_range": 90,
       "spread": {
         "hip_degrees": 1.1,
-        "ads_degrees": 0.2
+        "ads_degrees": 0.2,
+        "hip_movement_per_meter": 0.034,
+        "ads_movement_per_meter": 0.016,
+        "airborne_penalty_degrees": 0.42,
+        "sprint_penalty_degrees": 0.24
       },
       "recoil": {
         "pitch_per_shot_degrees": 0.075,
-        "yaw_per_shot_degrees": 0.025
+        "yaw_per_shot_degrees": 0.025,
+        "recovery_degrees_per_second": 9.0,
+        "max_pitch_degrees": 4.2,
+        "max_yaw_degrees": 2.2,
+        "noise_degrees": 0.030,
+        "ads_scale": 0.70,
+        "view_kick_degrees": 0.28
       },
+      "ads_fov_multiplier": 0.88,
       "recoil_model": "pattern_noise"
     },
     {
@@ -42,12 +53,23 @@
       "max_range": 55,
       "spread": {
         "hip_degrees": 1.45,
-        "ads_degrees": 0.3
+        "ads_degrees": 0.3,
+        "hip_movement_per_meter": 0.040,
+        "ads_movement_per_meter": 0.020,
+        "airborne_penalty_degrees": 0.48,
+        "sprint_penalty_degrees": 0.30
       },
       "recoil": {
         "pitch_per_shot_degrees": 0.06,
-        "yaw_per_shot_degrees": 0.035
+        "yaw_per_shot_degrees": 0.035,
+        "recovery_degrees_per_second": 10.5,
+        "max_pitch_degrees": 3.8,
+        "max_yaw_degrees": 2.8,
+        "noise_degrees": 0.044,
+        "ads_scale": 0.74,
+        "view_kick_degrees": 0.24
       },
+      "ads_fov_multiplier": 0.90,
       "recoil_model": "pattern_noise"
     },
     {
@@ -63,12 +85,23 @@
       "max_range": 35,
       "spread": {
         "hip_degrees": 4.5,
-        "ads_degrees": 2.4
+        "ads_degrees": 2.4,
+        "hip_movement_per_meter": 0.055,
+        "ads_movement_per_meter": 0.030,
+        "airborne_penalty_degrees": 0.70,
+        "sprint_penalty_degrees": 0.40
       },
       "recoil": {
         "pitch_per_shot_degrees": 0.2,
-        "yaw_per_shot_degrees": 0.08
+        "yaw_per_shot_degrees": 0.08,
+        "recovery_degrees_per_second": 6.0,
+        "max_pitch_degrees": 5.8,
+        "max_yaw_degrees": 3.0,
+        "noise_degrees": 0.070,
+        "ads_scale": 0.82,
+        "view_kick_degrees": 0.65
       },
+      "ads_fov_multiplier": 0.92,
       "recoil_model": "pattern_noise"
     },
     {
@@ -88,12 +121,23 @@
       "max_range": 65,
       "spread": {
         "hip_degrees": 1.0,
-        "ads_degrees": 0.18
+        "ads_degrees": 0.18,
+        "hip_movement_per_meter": 0.026,
+        "ads_movement_per_meter": 0.012,
+        "airborne_penalty_degrees": 0.36,
+        "sprint_penalty_degrees": 0.16
       },
       "recoil": {
         "pitch_per_shot_degrees": 0.04,
-        "yaw_per_shot_degrees": 0.02
+        "yaw_per_shot_degrees": 0.02,
+        "recovery_degrees_per_second": 11.5,
+        "max_pitch_degrees": 2.6,
+        "max_yaw_degrees": 1.4,
+        "noise_degrees": 0.018,
+        "ads_scale": 0.68,
+        "view_kick_degrees": 0.20
       },
+      "ads_fov_multiplier": 0.86,
       "recoil_model": "pattern_noise"
     }
   ]

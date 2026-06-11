@@ -37,7 +37,14 @@ struct StaticMeshPlacement final {
 }
 
 [[nodiscard]] novacore::math::Vec3 playerEyePosition(const DevRangeRenderSceneDesc& desc) {
+    if (desc.player.hasCameraRig) {
+        return desc.player.cameraPosition;
+    }
     return desc.player.position + novacore::math::Vec3{0.0F, 1.65F, 0.0F};
+}
+
+[[nodiscard]] player::PlayerViewComponent renderView(const DevRangeRenderSceneDesc& desc) {
+    return desc.player.hasCameraRig ? desc.player.cameraView : desc.player.view;
 }
 
 [[nodiscard]] std::array<StaticMeshPlacement, 10> staticShowcaseMeshes(bool eliminated) {
@@ -142,9 +149,12 @@ DevRangeRenderSceneStats DevRangeRenderSceneBuilder::append(
     frame.lighting = desc.lighting;
     frame.camera3D.enabled = true;
     frame.camera3D.position = playerEyePosition(desc);
-    frame.camera3D.yawDegrees = desc.player.view.yawDegrees;
-    frame.camera3D.pitchDegrees = desc.player.view.pitchDegrees;
-    frame.camera3D.verticalFovDegrees = desc.verticalFovDegrees;
+    const auto view = renderView(desc);
+    frame.camera3D.yawDegrees = view.yawDegrees;
+    frame.camera3D.pitchDegrees = view.pitchDegrees;
+    frame.camera3D.verticalFovDegrees = desc.player.hasCameraRig
+        ? desc.player.verticalFovDegrees
+        : desc.verticalFovDegrees;
     frame.camera3D.nearPlane = desc.nearPlane;
     frame.camera3D.farPlane = desc.farPlane;
 
@@ -240,18 +250,23 @@ void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
     novacore::render::RenderFrameInfo& frame,
     const DevRangeRenderSceneDesc& desc,
     DevRangeRenderSceneStats& stats) const {
-    const auto vectors = player::viewVectors(desc.player.view);
+    const auto vectors = player::viewVectors(renderView(desc));
     const auto eye = playerEyePosition(desc);
     const auto weaponCenter =
         eye +
         (vectors.forward * 0.92F) +
         (vectors.horizontalRight * 0.28F) +
-        novacore::math::Vec3{0.0F, -0.24F, 0.0F};
+        novacore::math::Vec3{0.0F, -0.24F, 0.0F} +
+        desc.player.weaponSwayOffset;
 
     appendBox(
         frame,
         weaponCenter,
-        {0.18F, 0.08F, 0.42F},
+        {
+            0.18F + (desc.player.adsAlpha * 0.035F),
+            0.08F,
+            0.42F - (desc.player.adsAlpha * 0.055F),
+        },
         kWeaponBoxTint,
         stats);
 
@@ -260,8 +275,12 @@ void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
             desc,
             "wpn_ar_01",
             weaponCenter,
-            {0.35F, 0.35F, 0.35F},
-            desc.player.view.yawDegrees,
+            {
+                0.35F - (desc.player.adsAlpha * 0.04F),
+                0.35F - (desc.player.adsAlpha * 0.04F),
+                0.35F - (desc.player.adsAlpha * 0.04F),
+            },
+            renderView(desc).yawDegrees,
             kWeaponMeshTint,
             stats)) {
         ++stats.firstPersonMeshCount;
@@ -274,9 +293,10 @@ void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
             eye +
                 (vectors.forward * 1.10F) +
                 (vectors.horizontalRight * -0.18F) +
-                novacore::math::Vec3{0.0F, -0.30F, 0.0F},
+                novacore::math::Vec3{0.0F, -0.30F, 0.0F} +
+                (desc.player.weaponSwayOffset * 0.8F),
             {0.42F, 0.42F, 0.42F},
-            desc.player.view.yawDegrees + 90.0F,
+            renderView(desc).yawDegrees + 90.0F,
             kSmgMeshTint,
             stats)) {
         ++stats.firstPersonMeshCount;
@@ -289,9 +309,10 @@ void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
             eye +
                 (vectors.forward * 0.76F) +
                 (vectors.horizontalRight * 0.06F) +
-                novacore::math::Vec3{0.0F, -0.48F, 0.0F},
+                novacore::math::Vec3{0.0F, -0.48F, 0.0F} +
+                (desc.player.weaponSwayOffset * 0.55F),
             {0.32F, 0.32F, 0.32F},
-            desc.player.view.yawDegrees,
+            renderView(desc).yawDegrees,
             kArmsTint,
             stats)) {
         ++stats.firstPersonMeshCount;
@@ -302,7 +323,7 @@ void DevRangeRenderSceneBuilder::appendAimMarker(
     novacore::render::RenderFrameInfo& frame,
     const DevRangeRenderSceneDesc& desc,
     DevRangeRenderSceneStats& stats) const {
-    const auto vectors = player::viewVectors(desc.player.view);
+    const auto vectors = player::viewVectors(renderView(desc));
     const auto aimCenter = playerEyePosition(desc) + (vectors.forward * 18.0F);
 
     appendBox(frame, aimCenter, {0.055F, 0.055F, 0.055F}, kAimCoreTint, stats);
@@ -345,7 +366,7 @@ void DevRangeRenderSceneBuilder::appendWorldDebugLines(
     novacore::render::RenderFrameInfo& frame,
     const DevRangeRenderSceneDesc& desc,
     DevRangeRenderSceneStats& stats) const {
-    const auto vectors = player::viewVectors(desc.player.view);
+    const auto vectors = player::viewVectors(renderView(desc));
     const auto eye = playerEyePosition(desc);
     frame.worldLines.push_back(novacore::render::RenderLine3D{
         eye,

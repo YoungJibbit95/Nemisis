@@ -9,6 +9,7 @@
 #include "nemisis/movement/MovementConfig.hpp"
 #include "nemisis/movement/MovementSystem.hpp"
 #include "nemisis/net/LoopbackCommandBridge.hpp"
+#include "nemisis/player/PlayerCameraRig.hpp"
 #include "nemisis/player/PlayerCommandQueue.hpp"
 #include "nemisis/render/RenderTuning.hpp"
 #include "nemisis/ui/GameMenu.hpp"
@@ -83,6 +84,7 @@ private:
     render::DevRenderTuning renderTuning_;
     net::LoopbackCommandBridge loopbackBridge_;
     player::PlayerCommandQueue localCommandQueue_;
+    player::CameraRigState cameraRig_;
     novacore::ecs::EntityId localPlayerEntity_;
     weapons::WeaponSystem weapons_;
     float debugTargetRespawnSeconds_ = 0.0F;

@@ -103,9 +103,15 @@ std::string DevSandbox::latestSummary() const {
     stream << " weapon=" << latest_.weapon.weaponId
            << " ammo=" << latest_.weapon.ammoInMagazine
            << " shot=" << latest_.weapon.shotIndex
+           << " burst=" << latest_.weapon.burstShotCount
+           << " ads=" << std::fixed << std::setprecision(2) << latest_.weapon.adsAlpha
+           << " recoil=(" << latest_.weapon.recoilPitchOffsetDegrees << ", "
+           << latest_.weapon.recoilYawOffsetDegrees << ')'
            << " reload=" << (latest_.weapon.reloading ? "yes" : "no")
+           << " reloadProgress=" << latest_.weapon.reloadProgress
            << " fire=" << (latest_.fire.fired ? "yes" : "no")
            << " dry=" << (latest_.fire.dryFire ? "yes" : "no")
+           << " moveSpread=" << latest_.fire.movementSpreadDegrees
            << " pending=" << latest_.network.pendingCommandCount;
     if (latest_.hasShot) {
         stream << " traceSeed=" << latest_.shot.seed

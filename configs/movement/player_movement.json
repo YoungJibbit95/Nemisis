@@ -4,18 +4,33 @@
   "sprint_speed": 7.4,
   "tactical_sprint_speed": 8.6,
   "crouch_speed": 3.1,
+  "ground": {
+    "acceleration": 42.0,
+    "deceleration": 34.0,
+    "friction": 10.0,
+    "stop_speed": 1.25
+  },
   "jump_velocity": 5.8,
   "double_jump_impulse": 5.1,
   "gravity": -24.0,
   "air_acceleration": 18.0,
+  "air": {
+    "max_speed": 8.2,
+    "drag": 0.12
+  },
   "slide": {
     "initial_impulse": 8.5,
     "max_duration": 0.9,
     "friction": 7.0,
+    "steering_acceleration": 8.0,
+    "end_speed": 4.0,
+    "jump_boost": 2.5,
     "cooldown": 0.25
   },
   "dash": {
     "impulse": 9.0,
+    "duration": 0.18,
+    "steering_acceleration": 3.0,
     "cooldown": 0.8
   },
   "wall_run": {

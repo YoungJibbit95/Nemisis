@@ -71,11 +71,13 @@ add_executable(nemisis_game
     game/src/net/CommandMessages.cpp
     game/src/net/LoopbackCommandBridge.cpp
     game/src/player/PlayerCommandQueue.cpp
+    game/src/player/PlayerCameraRig.cpp
     game/src/player/PlayerHealth.cpp
     game/src/player/PlayerSpawn.cpp
     game/src/player/PlayerView.cpp
     game/src/render/RenderTuning.cpp
     game/src/ui/GameMenu.cpp
+    game/src/ui/UiCanvas.cpp
     game/src/weapons/WeaponMetrics.cpp
     game/src/weapons/WeaponShot.cpp
     game/src/weapons/WeaponSimulation.cpp
@@ -154,6 +156,7 @@ add_test(NAME nemisis_input_command_tests COMMAND nemisis_input_command_tests)
 add_executable(nemisis_game_menu_tests
     game/src/input/InputBindings.cpp
     game/src/ui/GameMenu.cpp
+    game/src/ui/UiCanvas.cpp
     tests/game_menu_tests.cpp
 )
 
@@ -164,6 +167,19 @@ target_include_directories(nemisis_game_menu_tests
 
 target_link_libraries(nemisis_game_menu_tests PRIVATE Novacore::Engine)
 add_test(NAME nemisis_game_menu_tests COMMAND nemisis_game_menu_tests)
+
+add_executable(nemisis_ui_canvas_tests
+    game/src/ui/UiCanvas.cpp
+    tests/ui_canvas_tests.cpp
+)
+
+target_include_directories(nemisis_ui_canvas_tests
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/game/include
+)
+
+target_link_libraries(nemisis_ui_canvas_tests PRIVATE Novacore::Engine)
+add_test(NAME nemisis_ui_canvas_tests COMMAND nemisis_ui_canvas_tests)
 
 add_executable(nemisis_dev_range_render_scene_tests
     game/src/dev/DevRangeRenderScene.cpp
@@ -379,6 +395,19 @@ target_include_directories(nemisis_player_view_tests
 target_link_libraries(nemisis_player_view_tests PRIVATE Novacore::Engine)
 add_test(NAME nemisis_player_view_tests COMMAND nemisis_player_view_tests)
 
+add_executable(nemisis_player_camera_rig_tests
+    game/src/player/PlayerCameraRig.cpp
+    tests/player_camera_rig_tests.cpp
+)
+
+target_include_directories(nemisis_player_camera_rig_tests
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/game/include
+)
+
+target_link_libraries(nemisis_player_camera_rig_tests PRIVATE Novacore::Engine)
+add_test(NAME nemisis_player_camera_rig_tests COMMAND nemisis_player_camera_rig_tests)
+
 add_executable(nemisis_debug_target_tests
     game/src/dev/DebugTarget.cpp
     tests/debug_target_tests.cpp
@@ -397,6 +426,7 @@ foreach(nemisis_runtime_target IN ITEMS
     nemisis_movement_replay_tests
     nemisis_input_command_tests
     nemisis_game_menu_tests
+    nemisis_ui_canvas_tests
     nemisis_weapon_simulation_tests
     nemisis_player_command_queue_tests
     nemisis_player_health_tests
@@ -411,6 +441,7 @@ foreach(nemisis_runtime_target IN ITEMS
     nemisis_weapon_shot_tests
     nemisis_weapon_metrics_tests
     nemisis_player_view_tests
+    nemisis_player_camera_rig_tests
     nemisis_debug_target_tests
 )
     nemisis_copy_mingw_runtime(${nemisis_runtime_target})

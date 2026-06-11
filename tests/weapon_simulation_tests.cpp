@@ -26,6 +26,10 @@ nemisis::weapons::WeaponDefinition testWeapon() {
     definition.adsTimeSeconds = 0.15F;
     definition.reloadTimeSeconds = 0.25F;
     definition.damage = nemisis::weapons::DamageProfile{30.0F, 24.0F, 18.0F, 1.35F};
+    definition.recoilRecoveryDegreesPerSecond = 12.0F;
+    definition.recoilPitchPerShotDegrees = 0.20F;
+    definition.recoilYawPerShotDegrees = 0.07F;
+    definition.viewKickDegrees = 0.40F;
     return definition;
 }
 
@@ -103,6 +107,49 @@ void testDryFireWhenEmpty() {
     expect(state.ammoInMagazine == 0, "dry fire keeps magazine empty");
 }
 
+void testAdsBlendAndRecoilRecovery() {
+    const auto definition = testWeapon();
+    nemisis::weapons::WeaponRuntimeState state{};
+    state.weaponId = definition.id;
+    state.ammoInMagazine = definition.magazineSize;
+
+    nemisis::weapons::FireRequest adsRequest{};
+    adsRequest.adsHeld = true;
+    adsRequest.fixedDeltaSeconds = definition.adsTimeSeconds * 0.5F;
+    auto result = nemisis::weapons::simulateWeaponTick(definition, state, adsRequest);
+    expect(result.adsAlpha > 0.45F && result.adsAlpha < 0.55F, "ADS blends toward one over ads time");
+
+    nemisis::weapons::FireRequest fireRequest{};
+    fireRequest.triggerHeld = true;
+    fireRequest.adsHeld = true;
+    fireRequest.fixedDeltaSeconds = 0.0F;
+    result = nemisis::weapons::simulateWeaponTick(definition, state, fireRequest);
+    expect(result.fired, "ADS weapon can fire");
+    expect(result.recoilPitchOffsetDegrees > 0.0F, "firing adds pitch recoil");
+    expect(result.viewKickPitchDegrees > 0.0F, "firing emits visual view kick");
+
+    const float recoilAfterShot = state.recoilPitchOffsetDegrees;
+    nemisis::weapons::FireRequest recoverRequest{};
+    recoverRequest.fixedDeltaSeconds = 0.25F;
+    result = nemisis::weapons::simulateWeaponTick(definition, state, recoverRequest);
+    expect(state.recoilPitchOffsetDegrees < recoilAfterShot, "recoil recovers over time");
+}
+
+void testMovementSpreadTelemetry() {
+    const auto definition = testWeapon();
+    nemisis::weapons::WeaponRuntimeState state{};
+    state.weaponId = definition.id;
+    state.ammoInMagazine = definition.magazineSize;
+
+    nemisis::weapons::FireRequest request{};
+    request.movementSpeed = 7.0F;
+    request.airborne = true;
+    request.sprinting = true;
+
+    const auto result = nemisis::weapons::simulateWeaponTick(definition, state, request);
+    expect(result.movementSpreadDegrees > 0.0F, "movement spread telemetry accounts for locomotion state");
+}
+
 } // namespace
 
 int main() {
@@ -110,6 +157,8 @@ int main() {
     testCooldownBlocksImmediateSecondShot();
     testReloadCompletesAfterReloadTime();
     testDryFireWhenEmpty();
+    testAdsBlendAndRecoilRecovery();
+    testMovementSpreadTelemetry();
 
     if (failures > 0) {
         std::cerr << failures << " weapon simulation test(s) failed\n";

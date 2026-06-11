@@ -22,8 +22,14 @@ struct PlayerMovementState final {
     MovementMode mode = MovementMode::Grounded;
     bool hasDoubleJump = true;
     float dashCooldownRemaining = 0.0F;
+    float dashTimeRemaining = 0.0F;
     float slideCooldownRemaining = 0.0F;
+    float slideTimeRemaining = 0.0F;
     float wallRunTimeRemaining = 0.0F;
+    float groundedTimeSeconds = 0.0F;
+    float airborneTimeSeconds = 0.0F;
+    float lastHorizontalSpeed = 0.0F;
+    float inputMagnitude = 0.0F;
 };
 
 class MovementSystem final {
@@ -43,4 +49,3 @@ private:
 };
 
 } // namespace nemisis::movement
-

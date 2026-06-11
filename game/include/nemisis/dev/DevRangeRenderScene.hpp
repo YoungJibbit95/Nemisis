@@ -22,7 +22,16 @@ using MeshResourceLookup = std::unordered_map<std::string, novacore::render::Mes
 struct DevRangePlayerRenderState final {
     novacore::math::Vec3 position{};
     player::PlayerViewComponent view{};
+    novacore::math::Vec3 cameraPosition{};
+    player::PlayerViewComponent cameraView{};
+    novacore::math::Vec3 headBobOffset{};
+    novacore::math::Vec3 weaponSwayOffset{};
+    float cameraRollDegrees = 0.0F;
+    float verticalFovDegrees = 74.0F;
+    float speed01 = 0.0F;
+    float adsAlpha = 0.0F;
     bool hasMovementState = false;
+    bool hasCameraRig = false;
 };
 
 struct DevRangeRenderSceneStats final {

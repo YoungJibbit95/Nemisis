@@ -52,11 +52,17 @@ Current implementation state:
 - `WeaponRuntimeState::weaponId`
 - `WeaponRuntimeState::ammoInMagazine`
 - `WeaponRuntimeState::shotIndex`
+- `WeaponRuntimeState::burstShotCount`
 - `WeaponRuntimeState::fireCooldownRemaining`
 - `WeaponRuntimeState::reloadTimeRemaining`
+- `WeaponRuntimeState::adsAlpha`
+- `WeaponRuntimeState::recoilPitchOffsetDegrees`
+- `WeaponRuntimeState::recoilYawOffsetDegrees`
+- `WeaponRuntimeState::timeSinceLastShotSeconds`
+- `WeaponRuntimeState::reloadProgress`
 - `WeaponRuntimeState::reloading`
 
-The first simulation slice is intentionally deterministic and render-free. It advances fire cooldowns, reload timers, ammo consumption, dry-fire throttling, and shot indices from fixed-tick requests.
+The first simulation slice is intentionally deterministic and render-free. It advances fire cooldowns, reload timers, ammo consumption, dry-fire throttling, shot indices, ADS blend, recoil accumulation/recovery, burst reset, movement spread telemetry, and reload progress from fixed-tick requests.
 
 Current shot trace data:
 
@@ -65,6 +71,7 @@ Current shot trace data:
 - Range.
 - Damage.
 - Spread degrees.
+- Runtime recoil pitch/yaw.
 - Seed.
 - Shot index.
 
@@ -86,8 +93,8 @@ Current implementation:
 
 - Shot seed uses command tick.
 - Shot index comes from `WeaponRuntimeState`.
-- Spread combines hip/ADS weapon spread and movement speed.
-- Recoil offset scales by shot index.
+- Spread combines hip/ADS blend, movement speed, sprinting, and airborne state.
+- Recoil can use runtime recoil offsets from weapon simulation; older fallback still scales by shot index.
 - Direction is normalized for future scene queries.
 
 ## Spread Model
@@ -100,6 +107,8 @@ Spread inputs:
 - Crouch state.
 - Weapon class.
 - Recent shots.
+- ADS alpha.
+- Sprinting state.
 
 Spread should never hide the core feel. The shooter should reward aim and recoil control.
 
@@ -171,6 +180,17 @@ Config fields currently parsed:
 - `spread.ads_degrees`
 - `recoil.pitch_per_shot_degrees`
 - `recoil.yaw_per_shot_degrees`
+- `recoil.recovery_degrees_per_second`
+- `recoil.max_pitch_degrees`
+- `recoil.max_yaw_degrees`
+- `recoil.noise_degrees`
+- `recoil.ads_scale`
+- `recoil.view_kick_degrees`
+- `spread.hip_movement_per_meter`
+- `spread.ads_movement_per_meter`
+- `spread.airborne_penalty_degrees`
+- `spread.sprint_penalty_degrees`
+- `ads_fov_multiplier`
 - `damage.close`
 - `damage.mid`
 - `damage.long`

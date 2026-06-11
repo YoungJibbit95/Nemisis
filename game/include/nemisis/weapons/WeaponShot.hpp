@@ -14,7 +14,12 @@ struct ShotTraceRequest final {
     std::uint32_t seed = 0;
     std::uint32_t shotIndex = 0;
     float movementSpeed = 0.0F;
+    float adsAlpha = 0.0F;
+    float recoilPitchDegrees = 0.0F;
+    float recoilYawDegrees = 0.0F;
     bool ads = false;
+    bool airborne = false;
+    bool sprinting = false;
 };
 
 struct ShotTraceResult final {
@@ -23,6 +28,8 @@ struct ShotTraceResult final {
     float rangeMeters = 0.0F;
     float damage = 0.0F;
     float spreadDegrees = 0.0F;
+    float recoilPitchDegrees = 0.0F;
+    float recoilYawDegrees = 0.0F;
     std::uint32_t seed = 0;
     std::uint32_t shotIndex = 0;
 };

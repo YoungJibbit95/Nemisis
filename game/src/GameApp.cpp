@@ -225,12 +225,22 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
     weapons::FireResult fireResult{};
     weapons::ShotTraceResult shotTrace{};
     bool hasShotTrace = false;
+    const float movementSpeed = movementState != nullptr
+        ? std::sqrt((movementState->velocity.x * movementState->velocity.x) +
+                    (movementState->velocity.z * movementState->velocity.z))
+        : 0.0F;
+    const bool airborne = movementState != nullptr && movementState->mode == movement::MovementMode::Airborne;
+    const bool sprinting = command.sprintHeld || command.tacticalSprintHeld;
     if (weaponState != nullptr) {
         const auto* weapon = weapons_.findWeapon(weaponState->weaponId);
         if (weapon != nullptr) {
             weapons::FireRequest fireRequest{};
             fireRequest.triggerHeld = command.fireHeld;
             fireRequest.reloadPressed = command.reloadPressed;
+            fireRequest.adsHeld = command.adsHeld;
+            fireRequest.movementSpeed = movementSpeed;
+            fireRequest.airborne = airborne;
+            fireRequest.sprinting = sprinting;
             fireRequest.fixedDeltaSeconds = static_cast<float>(context.fixedDeltaSeconds);
             fireResult = weapons::simulateWeaponTick(*weapon, *weaponState, fireRequest);
             if (fireResult.fired && movementState != nullptr) {
@@ -243,10 +253,13 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
                 }
                 shotRequest.seed = static_cast<std::uint32_t>(command.tick);
                 shotRequest.shotIndex = fireResult.shotIndex;
-                shotRequest.movementSpeed =
-                    std::sqrt((movementState->velocity.x * movementState->velocity.x) +
-                              (movementState->velocity.z * movementState->velocity.z));
+                shotRequest.movementSpeed = movementSpeed;
+                shotRequest.adsAlpha = fireResult.adsAlpha;
+                shotRequest.recoilPitchDegrees = fireResult.recoilPitchOffsetDegrees;
+                shotRequest.recoilYawDegrees = fireResult.recoilYawOffsetDegrees;
                 shotRequest.ads = command.adsHeld;
+                shotRequest.airborne = airborne;
+                shotRequest.sprinting = sprinting;
                 shotTrace = weapons::buildShotTrace(*weapon, shotRequest);
                 hasShotTrace = true;
             }
@@ -290,6 +303,27 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
     weapons::WeaponRuntimeState weaponSample{};
     if (weaponState != nullptr) {
         weaponSample = *weaponState;
+    }
+
+    if (movementState != nullptr && view != nullptr) {
+        const auto cameraFrame = player::updateCameraRig(
+            cameraRig_,
+            player::CameraRigInput{
+                movementState->position,
+                movementState->velocity,
+                movementState->mode,
+                *view,
+                weaponSample,
+                command.adsHeld,
+                command.sprintHeld,
+                command.tacticalSprintHeld,
+                command.crouchHeld,
+                static_cast<float>(context.fixedDeltaSeconds),
+            });
+        if (auto* cameraTransform = world_.getComponent<novacore::ecs::TransformComponent>(cameraEntity_);
+            cameraTransform != nullptr) {
+            cameraTransform->position = cameraFrame.position;
+        }
     }
 
     devSandbox_.recordTick(dev::DevSandboxSample{
@@ -489,6 +523,7 @@ void GameApp::ensureLocalPlayer() {
     spawnDesc.position = greyboxWorld_.playerSpawn;
     localPlayerEntity_ = player::spawnLocalPlayer(world_, spawnDesc, weapons_.findWeapon(spawnDesc.activeWeaponId));
     localCommandQueue_.clear();
+    player::resetCameraRig(cameraRig_);
     novacore::core::logInfo("game", "Local player entity spawned");
 }
 
@@ -613,6 +648,18 @@ dev::DevRangePlayerRenderState GameApp::currentPlayerRenderState() const {
     if (const auto* playerView = world_.getComponent<player::PlayerViewComponent>(localPlayerEntity_);
         playerView != nullptr) {
         state.view = *playerView;
+    }
+
+    if (cameraRig_.initialized) {
+        state.cameraPosition = cameraRig_.position;
+        state.cameraView = cameraRig_.view;
+        state.headBobOffset = cameraRig_.headBobOffset;
+        state.weaponSwayOffset = cameraRig_.weaponSwayOffset;
+        state.cameraRollDegrees = cameraRig_.rollDegrees;
+        state.verticalFovDegrees = cameraRig_.verticalFovDegrees;
+        state.speed01 = cameraRig_.speed01;
+        state.adsAlpha = cameraRig_.adsAlpha;
+        state.hasCameraRig = true;
     }
 
     return state;

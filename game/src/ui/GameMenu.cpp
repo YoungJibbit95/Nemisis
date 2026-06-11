@@ -1,6 +1,7 @@
 #include "nemisis/ui/GameMenu.hpp"
 
 #include "nemisis/input/InputBindings.hpp"
+#include "nemisis/ui/UiCanvas.hpp"
 
 #include <algorithm>
 #include <array>
@@ -38,7 +39,7 @@ void addRect(
     float width,
     float height,
     std::array<float, 4> color) {
-    frame.debugRects.push_back(novacore::render::DebugRect{x, y, width, height, color});
+    appendUiRect(frame, UiRect{x, y, width, height}, color);
 }
 
 void addLine(
@@ -48,7 +49,7 @@ void addLine(
     float x1,
     float y1,
     std::array<float, 4> color) {
-    frame.debugLines.push_back(novacore::render::DebugLine{x0, y0, x1, y1, color});
+    appendUiLine(frame, x0, y0, x1, y1, color);
 }
 
 void addText(
@@ -58,7 +59,7 @@ void addText(
     float scale,
     std::array<float, 4> color,
     std::string text) {
-    frame.debugTexts.push_back(novacore::render::DebugText{x, y, scale, color, std::move(text)});
+    appendUiText(frame, x, y, scale, color, std::move(text));
 }
 
 void addHeader(novacore::render::RenderFrameInfo& frame, std::string_view title, std::string_view subtitle) {
@@ -361,45 +362,49 @@ void GameMenu::appendRenderCommands(
     }
 
     if (debugOverlayEnabled_) {
-        addRect(frame, 30.0F, 578.0F, 1210.0F, 110.0F, {0.015F, 0.025F, 0.030F, 0.92F});
+        addRect(frame, 30.0F, 558.0F, 1210.0F, 146.0F, {0.015F, 0.025F, 0.030F, 0.92F});
         addText(
             frame,
             48.0F,
-            594.0F,
+            574.0F,
             2.0F,
             {0.72F, 0.90F, 0.95F, 1.0F},
             "DEBUG " + std::string(debugPageName()) + "  TAB/START");
 
         switch (debugPage_) {
         case DebugPage::Gameplay:
-            addMetric(frame, 48.0F, 624.0F, "SCREEN", std::string(screenName()));
-            addMetric(frame, 48.0F, 650.0F, "MODE", std::string(movementModeName(sample.movementMode)));
-            addMetric(frame, 386.0F, 624.0F, "TICK", std::to_string(sample.tick));
-            addMetric(frame, 386.0F, 650.0F, "SURFACE", std::string(groundKindName(sample.collision.groundKind)) + " " + shortId(sample.collision.groundPrimitiveId));
-            addMetric(frame, 674.0F, 624.0F, "POS", vec3Summary(sample.position));
-            addMetric(frame, 674.0F, 650.0F, "NORMAL", vec3Summary(sample.collision.groundNormal));
-            addMetric(frame, 928.0F, 624.0F, "INPUT", std::string(deviceName(sample.command.device)));
-            addMetric(frame, 928.0F, 650.0F, "KCC", std::to_string(sample.collision.hitCount) + " " + std::string(sample.collision.onRamp ? "Ramp" : sample.collision.stepped ? "Step" : yesNo(sample.collision.blocked)));
+            addMetric(frame, 48.0F, 604.0F, "SCREEN", std::string(screenName()));
+            addMetric(frame, 48.0F, 630.0F, "MODE", std::string(movementModeName(sample.movementMode)));
+            addMetric(frame, 48.0F, 656.0F, "INPUT", std::string(deviceName(sample.command.device)));
+            addMetric(frame, 386.0F, 604.0F, "TICK", std::to_string(sample.tick));
+            addMetric(frame, 386.0F, 630.0F, "WEAPON", shortId(sample.weapon.weaponId, 20));
+            addMetric(frame, 386.0F, 656.0F, "AMMO", std::to_string(sample.weapon.ammoInMagazine) + " / shot " + std::to_string(sample.weapon.shotIndex));
+            addMetric(frame, 674.0F, 604.0F, "POS", vec3Summary(sample.position));
+            addMetric(frame, 674.0F, 630.0F, "ADS", fixedOne(sample.weapon.adsAlpha) + " recoil " + fixedOne(sample.weapon.recoilPitchOffsetDegrees));
+            addMetric(frame, 674.0F, 656.0F, "SPREAD", fixedOne(sample.fire.movementSpreadDegrees));
+            addMetric(frame, 928.0F, 604.0F, "SURFACE", std::string(groundKindName(sample.collision.groundKind)) + " " + shortId(sample.collision.groundPrimitiveId));
+            addMetric(frame, 928.0F, 630.0F, "NORMAL", vec3Summary(sample.collision.groundNormal));
+            addMetric(frame, 928.0F, 656.0F, "KCC", std::to_string(sample.collision.hitCount) + " " + std::string(sample.collision.onRamp ? "Ramp" : sample.collision.stepped ? "Step" : yesNo(sample.collision.blocked)));
             break;
         case DebugPage::Network:
-            addMetric(frame, 48.0F, 624.0F, "CMD TX", std::to_string(sample.netBridge.sentCommandPackets));
-            addMetric(frame, 48.0F, 650.0F, "CMD RX", std::to_string(sample.netBridge.receivedCommandPackets));
-            addMetric(frame, 386.0F, 624.0F, "ACK TX", std::to_string(sample.netBridge.sentAckPackets));
-            addMetric(frame, 386.0F, 650.0F, "ACK RX", std::to_string(sample.netBridge.receivedAckPackets));
-            addMetric(frame, 674.0F, 624.0F, "PENDING", std::to_string(sample.network.pendingCommandCount));
-            addMetric(frame, 674.0F, 650.0F, "ACK TICK", std::to_string(sample.netBridge.lastAcknowledgedTick));
-            addMetric(frame, 928.0F, 624.0F, "SCENE", std::to_string(sceneStats.worldBoxCount) + "B " + std::to_string(sceneStats.meshInstanceCount) + "M " + std::to_string(sceneStats.worldLineCount) + "L");
-            addMetric(frame, 928.0F, 650.0F, "SKIPPED", std::to_string(sceneStats.skippedMeshInstanceCount));
+            addMetric(frame, 48.0F, 604.0F, "CMD TX", std::to_string(sample.netBridge.sentCommandPackets));
+            addMetric(frame, 48.0F, 630.0F, "CMD RX", std::to_string(sample.netBridge.receivedCommandPackets));
+            addMetric(frame, 386.0F, 604.0F, "ACK TX", std::to_string(sample.netBridge.sentAckPackets));
+            addMetric(frame, 386.0F, 630.0F, "ACK RX", std::to_string(sample.netBridge.receivedAckPackets));
+            addMetric(frame, 674.0F, 604.0F, "PENDING", std::to_string(sample.network.pendingCommandCount));
+            addMetric(frame, 674.0F, 630.0F, "ACK TICK", std::to_string(sample.netBridge.lastAcknowledgedTick));
+            addMetric(frame, 928.0F, 604.0F, "SCENE", std::to_string(sceneStats.worldBoxCount) + "B " + std::to_string(sceneStats.meshInstanceCount) + "M " + std::to_string(sceneStats.worldLineCount) + "L");
+            addMetric(frame, 928.0F, 630.0F, "SKIPPED", std::to_string(sceneStats.skippedMeshInstanceCount));
             break;
         case DebugPage::Assets:
-            addMetric(frame, 48.0F, 624.0F, "RENDERER", std::string(rendererBackend));
-            addMetric(frame, 48.0F, 650.0F, "VULKAN", std::string(vulkanSummary).substr(0, 34));
-            addMetric(frame, 386.0F, 624.0F, "MESH CPU", std::to_string(meshStats.registeredResources) + "/" + std::to_string(assetSummary.requiredAssetCount));
-            addMetric(frame, 386.0F, 650.0F, "GPU", std::to_string(meshStats.residentResources) + " RES / " + std::to_string(meshStats.pendingUploadResources) + " PEND");
-            addMetric(frame, 674.0F, 624.0F, "P / V", std::to_string(meshStats.totalPrimitives) + " / " + std::to_string(meshStats.totalVertices));
-            addMetric(frame, 674.0F, 650.0F, "I / Q", std::to_string(meshStats.totalIndices) + " / " + std::to_string(meshStats.uploadQueueLength + queuedAssets));
-            addMetric(frame, 928.0F, 624.0F, "FAILED", std::to_string(meshStats.failedResources));
-            addMetric(frame, 928.0F, 650.0F, "DEFER", std::to_string(meshStats.deferredDestroyCount));
+            addMetric(frame, 48.0F, 604.0F, "RENDERER", std::string(rendererBackend));
+            addMetric(frame, 48.0F, 630.0F, "VULKAN", std::string(vulkanSummary).substr(0, 34));
+            addMetric(frame, 386.0F, 604.0F, "MESH CPU", std::to_string(meshStats.registeredResources) + "/" + std::to_string(assetSummary.requiredAssetCount));
+            addMetric(frame, 386.0F, 630.0F, "GPU", std::to_string(meshStats.residentResources) + " RES / " + std::to_string(meshStats.pendingUploadResources) + " PEND");
+            addMetric(frame, 674.0F, 604.0F, "P / V", std::to_string(meshStats.totalPrimitives) + " / " + std::to_string(meshStats.totalVertices));
+            addMetric(frame, 674.0F, 630.0F, "I / Q", std::to_string(meshStats.totalIndices) + " / " + std::to_string(meshStats.uploadQueueLength + queuedAssets));
+            addMetric(frame, 928.0F, 604.0F, "FAILED", std::to_string(meshStats.failedResources));
+            addMetric(frame, 928.0F, 630.0F, "DEFER", std::to_string(meshStats.deferredDestroyCount));
             break;
         }
     }

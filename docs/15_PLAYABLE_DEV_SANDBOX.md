@@ -12,14 +12,17 @@ It is not a vertical slice yet. It is a developer playground for validating:
 - MKB and controller action mapping.
 - Mouse and right-stick look.
 - Camera-relative movement.
-- Fixed-tick player movement.
-- Weapon fire, cooldown, reload, ammo, and dry fire.
-- Deterministic shot traces with seed, range, direction, spread, and damage.
+- Acceleration/friction based fixed-tick player movement.
+- Slide duration, slide steering, dash duration, air drag, and slide-jump momentum.
+- Smoothed FPS camera rig with FOV kick, head bob, recoil view offsets, and weapon sway.
+- Weapon fire, cooldown, ADS blend, recoil recovery, reload progress, ammo, burst tracking, movement spread, and dry fire.
+- Deterministic shot traces with seed, range, direction, spread, runtime recoil, and damage.
 - Debug target hits, damage, health, elimination, and respawn.
 - Pending command queue metadata plus loopback server acknowledgement.
 - Game asset catalog load and dev-sandbox preload request setup.
 - Relative mouse mode activation while the Dev Shooting Range is active.
 - Multi-page on-screen debug telemetry for gameplay, network, and asset/render state.
+- `UiCanvas` command bridge for menu/debug/HUD primitives before the final Vulkan-native UI backend.
 - Deterministic greybox world data for the first shooting range.
 - Visible in-world Vulkan 3D range with player spawn, target lane, cover, ramps, walls, GLB props, and weapon proxies.
 - Configurable Dev Range render tuning for lighting, FOV, clip planes, and world debug line visibility.
@@ -103,6 +106,8 @@ The sandbox logs every 0.5 seconds through NovaCore logging:
 - Weapon id.
 - Ammo.
 - Shot index.
+- ADS alpha.
+- Runtime recoil offsets.
 - Reload state.
 - Fire/dry-fire result.
 - Pending command count.
@@ -152,15 +157,17 @@ The renderer clear color also changes by state for early visual feedback:
 - The world is represented by deterministic greybox data, Vulkan world boxes, uploaded GLB meshes, first-person proxy meshes, and a 3D aim marker.
 - Dev Range render composition is isolated in `DevRangeRenderSceneBuilder`, with `GameApp` only collecting player state and orchestrating frame flow.
 - Current collision supports floor grounding, bounds, AABB blockers, walkable ramp height sampling, low-step handling, ground normals, and ledges that block until mantle exists.
-- Asset ids, preload requests, generated `.glb` exports, metadata, GLB scene-info imports, CPU mesh extraction, and mesh handles exist, but GPU upload/draw submission is not implemented yet.
+- Asset ids, preload requests, generated `.glb` exports, metadata, GLB scene-info imports, CPU mesh extraction, renderer-owned mesh handles, Vulkan upload queues, and indexed draw submission exist for the current dev assets.
 - Relative mouse mode is requested for the dev range, but sensitivity, cursor policy settings, and raw input config are not data-driven yet.
 - Debug target hit resolution is a focused sphere test, not full scene collision.
 - The command bridge is loopback only; real UDP transport, prediction/reconciliation, and remote snapshots are not implemented yet.
+- UI currently reaches Vulkan through the debug primitive bridge; the final SDF/MSDF text and vector path is still pending.
 
 ## Next Dev Sandbox Upgrades
 
 - Config-loaded sensitivity and response curves.
 - HUD health/ammo panels backed by player health and weapon state.
+- Recoil/ADS debug HUD widgets fed from `WeaponRuntimeState` and `PlayerCameraRig`.
 - More debug targets and measured TTK tests.
 - Full KCC collision against greybox floors, walls, cover, ramps, and ledges.
 - Renderer-owned resource handles, upload queues, and deferred destruction for current GLB meshes.

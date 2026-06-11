@@ -10,6 +10,10 @@
 - Input actions are translated into `PlayerInputCommand` for fixed-tick gameplay.
 - Default input bindings cover MKB plus controller stick/buttons/triggers.
 - Weapon runtime state supports ammo, shot index, fire cooldown, reload timer, and dry fire.
+- Weapon runtime state now also tracks ADS alpha, burst count, recoil pitch/yaw offsets, reload progress, and time since last shot.
+- Weapon shot traces now consume runtime recoil, ADS blend, movement speed, sprinting, and airborne state for deterministic spread/recoil directions.
+- Movement simulation is acceleration/friction based instead of snap-to-speed, with slide duration, slide steering, slide-jump momentum, dash duration, air drag, and horizontal speed telemetry.
+- A local `PlayerCameraRig` produces smoothed render-camera position, visual pitch/yaw recoil, head bob, weapon sway offsets, roll, speed fraction, ADS fraction, and FOV kick.
 - Local player spawning creates a NovaCore ECS entity with identity, local-input, network, loadout, movement, and weapon runtime components.
 - A tick-ordered `PlayerCommandQueue` keeps unacknowledged local commands for future server reconciliation.
 - The playable dev sandbox updates actions from NovaCore window input snapshots.
@@ -26,6 +30,7 @@
 - `GameAssetCatalog` loads the game asset manifest through NovaCore's asset registry backbone and queues dev-sandbox preload requests.
 - `DevAssetBindings` validates required A0 asset ids, loads glTF metadata, imports GLB scene info, extracts CPU mesh data, and registers mesh handles through NovaCore.
 - Barebones runtime menu exists with Main Menu, Dev Shooting Range, TDM placeholder, and Control placeholder screens.
+- Menus/debug HUD now route their primitive output through a game-owned `UiCanvas` command layer that mirrors the planned NanoVG-style API before the final Vulkan text/vector backend lands.
 - SDL debug UI remains available only through explicit legacy launch flags.
 - Debug UI now has Gameplay, Network, and Assets pages, toggled with Tab or controller Start/Menu.
 - Assets debug UI reports renderer backend plus NovaCore's Vulkan runtime/device summary.
@@ -49,9 +54,23 @@
 - Weapon metrics estimate damage band, shots-to-eliminate, and measured TTK for 150 HP balance targets.
 - `docs/19_PROJECT_KANBAN.md` tracks completed, doing, next, and blocked work until GitHub Projects access is available.
 - Movement replay tests cover sprint distance, jump/double-jump, dash cooldown, and config-driven tuning.
-- Input command, weapon simulation, weapon shot, player view, debug target, dev sandbox, player spawn, command queue, command message, asset binding, render tuning, greybox world/collision, and loopback bridge tests cover the newest gameplay bridge.
+- Movement replay tests cover acceleration, friction, sprint convergence, jump/double-jump, dash cooldown, slide duration, slide-jump momentum, and config-driven tuning.
+- Input command, weapon simulation, weapon shot, UI canvas, player camera rig, player view, debug target, dev sandbox, player spawn, command queue, command message, asset binding, render tuning, greybox world/collision, and loopback bridge tests cover the newest gameplay bridge.
 
 ## Added In Latest Block
+
+- Added acceleration/friction-based ground movement, air steering limits, air drag, slide timers, slide steering, slide end speed, slide jump boost, dash duration, and horizontal speed telemetry.
+- Added hot-reload movement config fields for ground, air, slide, and dash feel tuning.
+- Added `PlayerCameraRig` as the first natural FPS camera layer with smoothed eye position, recoil view offsets, FOV kick, head bob, roll, weapon sway, speed fraction, and ADS fraction.
+- Wired the camera rig into `GameApp` and `DevRangeRenderSceneBuilder` so the Vulkan Dev Range uses a smoothed visual FPS camera and weapon placement offsets.
+- Expanded weapon definitions with recoil recovery, max recoil clamps, recoil noise, ADS recoil scale, movement/air/sprint spread penalties, ADS FOV multiplier, and view-kick tuning.
+- Expanded weapon runtime simulation with ADS blend, burst shot count, recoil accumulation/recovery, reload progress, movement spread telemetry, and deterministic visual kick.
+- Expanded shot tracing so ADS alpha, runtime recoil, sprinting, airborne state, and movement speed shape deterministic hitscan directions.
+- Added `UiCanvas` as the game-owned NanoVG-style command layer and routed `GameMenu` debug primitives through it.
+- Added `nemisis_ui_canvas_tests` and `nemisis_player_camera_rig_tests`, raising the local suite to 25 passing tests.
+- Verified `cmake --preset windows-msvc-debug`, full Debug build, Vulkan shader compilation through `F:\VulkanSDK\1.4.350.0`, and `ctest -C Debug` with 25/25 passing tests.
+
+## Earlier Blocks
 
 - Added `CommandPacket` and `CommandAck` serialization for the first client/server command protocol.
 - Added `LoopbackCommandBridge` to send pending local commands through a NovaCore loopback channel and trim acknowledged commands.
