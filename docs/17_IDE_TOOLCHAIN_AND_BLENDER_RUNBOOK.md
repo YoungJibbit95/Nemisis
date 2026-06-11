@@ -120,6 +120,7 @@ The verified Vulkan smoke log includes:
 - `Vulkan runtime detected: 1.4.350 / NVIDIA GeForce RTX 3070 Ti (discrete)`.
 - `Vulkan swapchain created: 1280x720 images=3`.
 - `Vulkan world box graphics pipeline created`.
+- `Vulkan world line graphics pipeline created`.
 - `Vulkan world mesh graphics pipeline created`.
 - `Dev mesh assets ready: 15/15 metadata=15 imported=15`.
 - `Launch profile: renderer=vulkan require_vulkan=true start_screen=dev_range lock_dev_range=true`.
@@ -127,8 +128,9 @@ The verified Vulkan smoke log includes:
 - `Vulkan mesh resident: env_test_arena_kit_01`.
 - `Vulkan mesh resident: wpn_proto_smg_01`.
 - `Vulkan mesh resident: chr_dev_arms_a`.
-- `Vulkan world box draw submission active: boxes=21`.
+- `Vulkan world box draw submission active: boxes=23`.
 - `Vulkan world mesh draw submission active: meshes=13`.
+- `Vulkan world line draw submission active: lines=1`.
 
 ## Blender CLI
 

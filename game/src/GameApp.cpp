@@ -98,6 +98,7 @@ void GameApp::onStartup() {
     };
     watchConfig("input", "configs/input/default_input.json");
     watchConfig("movement", "configs/movement/player_movement.json");
+    watchConfig("render", "configs/render/dev_range_render.json");
     watchConfig("weapons", "configs/weapons/core_trio.json");
     watchConfig("modes", "configs/game_modes/tdm_control.json");
 
@@ -193,6 +194,14 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
         }
         if (collisionSample.grounded && movementState->velocity.y < 0.0F) {
             movementState->velocity.y = 0.0F;
+        }
+        if (collisionSample.grounded) {
+            movementState->hasDoubleJump = true;
+            if (movementState->mode == movement::MovementMode::Airborne ||
+                movementState->mode == movement::MovementMode::Dashing ||
+                movementState->mode == movement::MovementMode::Mantling) {
+                movementState->mode = movement::MovementMode::Grounded;
+            }
         }
         movementState->position = collisionSample.position;
         if (auto* transform = world_.getComponent<novacore::ecs::TransformComponent>(localPlayerEntity_);
@@ -328,6 +337,24 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
     const auto meshStats = renderer_.meshResourceStats();
     novacore::render::RenderFrameInfo frameInfo{};
     frameInfo.clearColor = menu_.gameplayActive() ? devSandbox_.clearColor() : menu_.clearColor();
+    if (menu_.gameplayActive()) {
+        latestDevRangeRenderStats_ = devRangeRenderer_.append(
+            frameInfo,
+            dev::DevRangeRenderSceneDesc{
+                &greyboxWorld_,
+                &debugTarget_,
+                &devSandbox_.latestSample().collision,
+                &devMeshResources_,
+                currentPlayerRenderState(),
+                renderTuning_.lighting,
+                renderTuning_.showWorldDebugLines,
+                renderTuning_.verticalFovDegrees,
+                renderTuning_.nearPlane,
+                renderTuning_.farPlane,
+            });
+    } else {
+        latestDevRangeRenderStats_ = {};
+    }
     menu_.appendRenderCommands(
         frameInfo,
         devSandbox_.latestSample(),
@@ -336,18 +363,9 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
         renderer_.vulkanSummary(),
         assetStreamer_.pendingCount(),
         devAssetSummary_,
-        meshStats);
+        meshStats,
+        latestDevRangeRenderStats_);
     appendA0MeshWireframePreview(frameInfo);
-    if (menu_.gameplayActive()) {
-        (void)devRangeRenderer_.append(
-            frameInfo,
-            dev::DevRangeRenderSceneDesc{
-                &greyboxWorld_,
-                &debugTarget_,
-                &devMeshResources_,
-                currentPlayerRenderState(),
-            });
-    }
     renderer_.beginFrame(frameInfo);
     renderer_.endFrame();
 }
@@ -404,6 +422,14 @@ void GameApp::applyConfig(std::string_view name) {
         return;
     }
 
+    if (name == "render") {
+        const auto* document = configRegistry_.find("render");
+        if (document != nullptr) {
+            renderTuning_ = render::devRenderTuningFromConfig(*document, renderTuning_);
+        }
+        return;
+    }
+
     if (name == "weapons") {
         const auto* document = configRegistry_.find("weapons");
         if (document != nullptr && !weapons_.loadFromConfig(*document)) {
@@ -423,6 +449,7 @@ void GameApp::applyConfig(std::string_view name) {
 
 void GameApp::applyLoadedConfigs() {
     applyConfig("movement");
+    applyConfig("render");
     applyConfig("weapons");
 }
 

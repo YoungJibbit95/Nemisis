@@ -458,6 +458,29 @@ Acceptance:
 - The same smoke logs `Vulkan mesh resident: chr_dev_arms_a`.
 - The same smoke logs `Vulkan world mesh draw submission active: meshes=13`.
 - The same smoke logs `Vulkan world box draw submission active: boxes=21`.
+
+## Step 26 - Vulkan World Lines, Lighting Tuning, And KCC Ramp/Step Pass
+
+Implementation:
+
+- Add NovaCore `RenderWorldLighting` to `RenderFrameInfo`.
+- Feed compact sun-direction plus ambient lighting through Vulkan push constants for world boxes and GLB meshes.
+- Add NovaCore `RenderLine3D` and a Vulkan `world_line` pipeline for depth-tested in-world debug rays.
+- Submit Dev Range aim rays and KCC ground-normal lines through the real Vulkan 3D path.
+- Add `configs/render/dev_range_render.json` for Dev Range lighting, FOV, clip planes, and debug line visibility.
+- Add `nemisis::render::DevRenderTuning` with config parsing, clamping, and hot reload through `GameApp`.
+- Expand greybox collision with ramp height sampling, walkable ground normals, low-step handling, and ledge blocking.
+- Add low-step and mid-ledge training pieces to the Dev Range greybox.
+- Surface KCC ground surface, ramp/step state, and normals in dev telemetry/debug metrics.
+- Add `nemisis_render_tuning_tests` and expand collision/scene-builder tests.
+
+Acceptance:
+
+- `novacore_smoke_tests` passes after shader/layout changes.
+- `ctest --test-dir cmake-build-codex-vulkan --output-on-failure` reports 23/23 Nemisis tests passing.
+- `nemisis_game --vulkan-dev-range-smoke-test` logs `Vulkan world line graphics pipeline created`.
+- The same smoke logs `Vulkan world line draw submission active: lines=1`.
+- The same smoke logs `Vulkan world box draw submission active: boxes=23`.
 - `nemisis_game --sdl-debug-smoke-test` still reaches the explicit legacy SDL path for UI/debug testing.
 - CTest passes with 21 Nemisis tests.
 - NovaCore standalone smoke tests still pass.

@@ -10,6 +10,7 @@
 #include "nemisis/movement/MovementSystem.hpp"
 #include "nemisis/net/LoopbackCommandBridge.hpp"
 #include "nemisis/player/PlayerCommandQueue.hpp"
+#include "nemisis/render/RenderTuning.hpp"
 #include "nemisis/ui/GameMenu.hpp"
 #include "nemisis/weapons/WeaponSystem.hpp"
 
@@ -76,8 +77,10 @@ private:
     dev::DevSandbox devSandbox_;
     dev::GreyboxWorld greyboxWorld_ = dev::createDevRangeGreyboxWorld();
     dev::DevRangeRenderSceneBuilder devRangeRenderer_;
+    dev::DevRangeRenderSceneStats latestDevRangeRenderStats_;
     ui::GameMenu menu_;
     movement::MovementSystem movement_;
+    render::DevRenderTuning renderTuning_;
     net::LoopbackCommandBridge loopbackBridge_;
     player::PlayerCommandQueue localCommandQueue_;
     novacore::ecs::EntityId localPlayerEntity_;

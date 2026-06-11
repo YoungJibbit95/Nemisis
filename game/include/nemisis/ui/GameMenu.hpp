@@ -1,6 +1,7 @@
 #pragma once
 
 #include "nemisis/assets/DevAssetBindings.hpp"
+#include "nemisis/dev/DevRangeRenderScene.hpp"
 #include "nemisis/dev/DevSandbox.hpp"
 #include "nemisis/dev/GreyboxWorld.hpp"
 
@@ -39,7 +40,8 @@ public:
         std::string_view vulkanSummary,
         std::size_t queuedAssets,
         const nemisis::assets::DevAssetBindingSummary& assetSummary,
-        const novacore::render::MeshResourceStats& meshStats) const;
+        const novacore::render::MeshResourceStats& meshStats,
+        const nemisis::dev::DevRangeRenderSceneStats& sceneStats) const;
 
     [[nodiscard]] GameScreen screen() const;
     [[nodiscard]] bool gameplayActive() const;

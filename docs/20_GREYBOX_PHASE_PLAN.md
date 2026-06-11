@@ -67,7 +67,7 @@ Still planned:
 Acceptance:
 
 - Player can move around a visible greybox arena.
-- Walls, cover, ramps, and floor block or support movement.
+- Walls, cover, ramps, floor, low steps, and ledges block or support movement.
 - Debug target is represented by an in-world proxy mesh.
 - First-person weapon proxy can be attached to the camera or drawn as a placeholder.
 
@@ -113,5 +113,4 @@ Acceptance:
 
 We are in Greybox Phase 0 now.
 
-Phase 1 has crossed the first in-world asset threshold. Metadata, mesh handles, A0 scene-info import, CPU mesh extraction, Vulkan runtime probe, compiled Vulkan 3D primitive path, debug wireframe preview, renderer-owned GLB resource upload/draw, first-person mesh proxies, and first collision pieces are in. The remaining Phase 1 threshold is a fuller KCC with ramp/ledge behavior plus renderer polish for lighting/material fallback and swapchain resilience.
-The first renderer GLB upload/draw threshold is now crossed; the remaining Phase 1 pressure is turning that synchronous path into durable renderer resources and advancing the KCC so the visible assets become the playable collision truth.
+Phase 1 has crossed the first in-world asset threshold. Metadata, mesh handles, A0 scene-info import, CPU mesh extraction, Vulkan runtime probe, compiled Vulkan 3D primitive path, debug wireframe preview, renderer-owned GLB resource upload/draw, first-person mesh proxies, world debug lines, configurable lighting/FOV tuning, ramp sampling, low-step handling, and ledge blocking are in. The remaining Phase 1 pressure is mantle probes, slide validation, richer material fallback, swapchain resilience, and keeping visual assets aligned with collision truth.

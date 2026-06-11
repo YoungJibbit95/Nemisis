@@ -139,6 +139,7 @@ DevRangeRenderSceneStats DevRangeRenderSceneBuilder::append(
         return stats;
     }
 
+    frame.lighting = desc.lighting;
     frame.camera3D.enabled = true;
     frame.camera3D.position = playerEyePosition(desc);
     frame.camera3D.yawDegrees = desc.player.view.yawDegrees;
@@ -154,6 +155,9 @@ DevRangeRenderSceneStats DevRangeRenderSceneBuilder::append(
     appendStaticShowcaseMeshes(frame, desc, stats);
     appendFirstPersonMeshes(frame, desc, stats);
     appendAimMarker(frame, desc, stats);
+    if (desc.showWorldDebugLines) {
+        appendWorldDebugLines(frame, desc, stats);
+    }
     return stats;
 }
 
@@ -335,6 +339,34 @@ void DevRangeRenderSceneBuilder::appendAimMarker(
         kAimLineTint,
         stats);
     ++stats.aimMarkerBoxCount;
+}
+
+void DevRangeRenderSceneBuilder::appendWorldDebugLines(
+    novacore::render::RenderFrameInfo& frame,
+    const DevRangeRenderSceneDesc& desc,
+    DevRangeRenderSceneStats& stats) const {
+    const auto vectors = player::viewVectors(desc.player.view);
+    const auto eye = playerEyePosition(desc);
+    frame.worldLines.push_back(novacore::render::RenderLine3D{
+        eye,
+        eye + (vectors.forward * 24.0F),
+        {0.40F, 0.92F, 1.0F, 1.0F},
+    });
+    ++stats.worldLineCount;
+
+    if (desc.collision != nullptr && desc.collision->grounded) {
+        const auto normalBase = desc.player.position + novacore::math::Vec3{0.0F, 0.08F, 0.0F};
+        frame.worldLines.push_back(novacore::render::RenderLine3D{
+            normalBase,
+            normalBase + (desc.collision->groundNormal * 1.2F),
+            desc.collision->onRamp
+                ? std::array<float, 4>{0.30F, 1.0F, 0.55F, 1.0F}
+                : desc.collision->stepped
+                    ? std::array<float, 4>{0.95F, 0.80F, 0.24F, 1.0F}
+                    : std::array<float, 4>{0.72F, 0.95F, 1.0F, 1.0F},
+        });
+        ++stats.worldLineCount;
+    }
 }
 
 } // namespace nemisis::dev

@@ -122,6 +122,33 @@ void addMetric(
     return value ? "Yes" : "No";
 }
 
+[[nodiscard]] std::string_view groundKindName(dev::GreyboxPrimitiveKind kind) {
+    switch (kind) {
+    case dev::GreyboxPrimitiveKind::Floor:
+        return "Floor";
+    case dev::GreyboxPrimitiveKind::Wall:
+        return "Wall";
+    case dev::GreyboxPrimitiveKind::Ramp:
+        return "Ramp";
+    case dev::GreyboxPrimitiveKind::Cover:
+        return "Cover";
+    case dev::GreyboxPrimitiveKind::Spawn:
+        return "Spawn";
+    case dev::GreyboxPrimitiveKind::RangeMarker:
+        return "Marker";
+    case dev::GreyboxPrimitiveKind::Target:
+        return "Target";
+    }
+    return "Unknown";
+}
+
+[[nodiscard]] std::string shortId(std::string value, std::size_t maxChars = 17) {
+    if (value.size() <= maxChars) {
+        return value;
+    }
+    return value.substr(0, maxChars);
+}
+
 struct MapPoint final {
     float x = 0.0F;
     float y = 0.0F;
@@ -279,7 +306,8 @@ void GameMenu::appendRenderCommands(
     std::string_view vulkanSummary,
     std::size_t queuedAssets,
     const nemisis::assets::DevAssetBindingSummary& assetSummary,
-    const novacore::render::MeshResourceStats& meshStats) const {
+    const novacore::render::MeshResourceStats& meshStats,
+    const nemisis::dev::DevRangeRenderSceneStats& sceneStats) const {
     addRect(frame, 0.0F, 0.0F, 1280.0F, 720.0F, {0.0F, 0.0F, 0.0F, 0.05F});
     addRect(frame, 38.0F, 30.0F, 510.0F, 146.0F, {0.025F, 0.045F, 0.055F, 0.92F});
 
@@ -333,7 +361,7 @@ void GameMenu::appendRenderCommands(
     }
 
     if (debugOverlayEnabled_) {
-        addRect(frame, 30.0F, 578.0F, 1060.0F, 110.0F, {0.015F, 0.025F, 0.030F, 0.92F});
+        addRect(frame, 30.0F, 578.0F, 1210.0F, 110.0F, {0.015F, 0.025F, 0.030F, 0.92F});
         addText(
             frame,
             48.0F,
@@ -347,9 +375,11 @@ void GameMenu::appendRenderCommands(
             addMetric(frame, 48.0F, 624.0F, "SCREEN", std::string(screenName()));
             addMetric(frame, 48.0F, 650.0F, "MODE", std::string(movementModeName(sample.movementMode)));
             addMetric(frame, 386.0F, 624.0F, "TICK", std::to_string(sample.tick));
-            addMetric(frame, 386.0F, 650.0F, "INPUT", std::string(deviceName(sample.command.device)));
+            addMetric(frame, 386.0F, 650.0F, "SURFACE", std::string(groundKindName(sample.collision.groundKind)) + " " + shortId(sample.collision.groundPrimitiveId));
             addMetric(frame, 674.0F, 624.0F, "POS", vec3Summary(sample.position));
-            addMetric(frame, 674.0F, 650.0F, "COLLIDE", std::to_string(sample.collision.hitCount) + " / " + std::string(yesNo(sample.collision.blocked)));
+            addMetric(frame, 674.0F, 650.0F, "NORMAL", vec3Summary(sample.collision.groundNormal));
+            addMetric(frame, 928.0F, 624.0F, "INPUT", std::string(deviceName(sample.command.device)));
+            addMetric(frame, 928.0F, 650.0F, "KCC", std::to_string(sample.collision.hitCount) + " " + std::string(sample.collision.onRamp ? "Ramp" : sample.collision.stepped ? "Step" : yesNo(sample.collision.blocked)));
             break;
         case DebugPage::Network:
             addMetric(frame, 48.0F, 624.0F, "CMD TX", std::to_string(sample.netBridge.sentCommandPackets));
@@ -358,6 +388,8 @@ void GameMenu::appendRenderCommands(
             addMetric(frame, 386.0F, 650.0F, "ACK RX", std::to_string(sample.netBridge.receivedAckPackets));
             addMetric(frame, 674.0F, 624.0F, "PENDING", std::to_string(sample.network.pendingCommandCount));
             addMetric(frame, 674.0F, 650.0F, "ACK TICK", std::to_string(sample.netBridge.lastAcknowledgedTick));
+            addMetric(frame, 928.0F, 624.0F, "SCENE", std::to_string(sceneStats.worldBoxCount) + "B " + std::to_string(sceneStats.meshInstanceCount) + "M " + std::to_string(sceneStats.worldLineCount) + "L");
+            addMetric(frame, 928.0F, 650.0F, "SKIPPED", std::to_string(sceneStats.skippedMeshInstanceCount));
             break;
         case DebugPage::Assets:
             addMetric(frame, 48.0F, 624.0F, "RENDERER", std::string(rendererBackend));

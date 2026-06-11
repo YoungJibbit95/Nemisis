@@ -74,6 +74,7 @@ add_executable(nemisis_game
     game/src/player/PlayerHealth.cpp
     game/src/player/PlayerSpawn.cpp
     game/src/player/PlayerView.cpp
+    game/src/render/RenderTuning.cpp
     game/src/ui/GameMenu.cpp
     game/src/weapons/WeaponMetrics.cpp
     game/src/weapons/WeaponShot.cpp
@@ -178,6 +179,19 @@ target_include_directories(nemisis_dev_range_render_scene_tests
 
 target_link_libraries(nemisis_dev_range_render_scene_tests PRIVATE Novacore::Engine)
 add_test(NAME nemisis_dev_range_render_scene_tests COMMAND nemisis_dev_range_render_scene_tests)
+
+add_executable(nemisis_render_tuning_tests
+    game/src/render/RenderTuning.cpp
+    tests/render_tuning_tests.cpp
+)
+
+target_include_directories(nemisis_render_tuning_tests
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/game/include
+)
+
+target_link_libraries(nemisis_render_tuning_tests PRIVATE Novacore::Engine)
+add_test(NAME nemisis_render_tuning_tests COMMAND nemisis_render_tuning_tests)
 
 add_executable(nemisis_weapon_simulation_tests
     game/src/weapons/WeaponSimulation.cpp

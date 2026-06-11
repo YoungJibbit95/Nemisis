@@ -120,6 +120,13 @@ std::string DevSandbox::latestSummary() const {
            << " eliminated=" << (latest_.targetHit.eliminated ? "yes" : "no")
            << " collisionHits=" << latest_.collision.hitCount
            << " blocked=" << (latest_.collision.blocked ? "yes" : "no")
+           << " grounded=" << (latest_.collision.grounded ? "yes" : "no")
+           << " ramp=" << (latest_.collision.onRamp ? "yes" : "no")
+           << " stepped=" << (latest_.collision.stepped ? "yes" : "no")
+           << " ground=" << latest_.collision.groundPrimitiveId
+           << " normal=";
+    appendVec3(stream, latest_.collision.groundNormal);
+    stream
            << " cmdPackets=" << latest_.netBridge.sentCommandPackets
            << " acks=" << latest_.netBridge.receivedAckPackets
            << " ackTick=" << latest_.netBridge.lastAcknowledgedTick;

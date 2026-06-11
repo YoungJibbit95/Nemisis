@@ -1,6 +1,7 @@
 #pragma once
 
 #include "nemisis/dev/DebugTarget.hpp"
+#include "nemisis/dev/GreyboxCollision.hpp"
 #include "nemisis/dev/GreyboxWorld.hpp"
 #include "nemisis/movement/MovementSystem.hpp"
 #include "nemisis/player/PlayerComponents.hpp"
@@ -27,6 +28,7 @@ struct DevRangePlayerRenderState final {
 struct DevRangeRenderSceneStats final {
     std::size_t worldBoxCount = 0;
     std::size_t meshInstanceCount = 0;
+    std::size_t worldLineCount = 0;
     std::size_t skippedMeshInstanceCount = 0;
     std::size_t firstPersonMeshCount = 0;
     std::size_t aimMarkerBoxCount = 0;
@@ -35,8 +37,11 @@ struct DevRangeRenderSceneStats final {
 struct DevRangeRenderSceneDesc final {
     const GreyboxWorld* greyboxWorld = nullptr;
     const DebugTargetState* debugTarget = nullptr;
+    const GreyboxCollisionResult* collision = nullptr;
     const MeshResourceLookup* meshResources = nullptr;
     DevRangePlayerRenderState player{};
+    novacore::render::RenderWorldLighting lighting{{0.30F, 0.88F, 0.34F}, 0.38F};
+    bool showWorldDebugLines = true;
     float verticalFovDegrees = 74.0F;
     float nearPlane = 0.03F;
     float farPlane = 120.0F;
@@ -79,6 +84,11 @@ private:
         DevRangeRenderSceneStats& stats) const;
 
     void appendAimMarker(
+        novacore::render::RenderFrameInfo& frame,
+        const DevRangeRenderSceneDesc& desc,
+        DevRangeRenderSceneStats& stats) const;
+
+    void appendWorldDebugLines(
         novacore::render::RenderFrameInfo& frame,
         const DevRangeRenderSceneDesc& desc,
         DevRangeRenderSceneStats& stats) const;

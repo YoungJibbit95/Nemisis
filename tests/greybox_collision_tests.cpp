@@ -48,6 +48,48 @@ void testOpenLaneStaysFree() {
     expect(!result.blocked, "player spawn is not blocked");
     expect(result.hitCount == 0, "open lane has no blocking collision");
     expect(result.grounded, "feet at floor are grounded");
+    expect(result.groundPrimitiveId == "floor_main", "open lane reports floor as ground");
+    expect(!result.onRamp, "open lane is not on a ramp");
+    expect(!result.stepped, "open lane is not a step");
+}
+
+void testRampSurfaceGroundsPlayer() {
+    const auto world = nemisis::dev::createDevRangeGreyboxWorld();
+    const auto result = nemisis::dev::resolveGreyboxPlayerCollision(
+        world,
+        nemisis::dev::GreyboxCollisionQuery{{-13.5F, 0.28F, -1.0F}, 0.42F, 1.80F});
+
+    expect(result.grounded, "player snaps to ramp surface");
+    expect(result.onRamp, "ramp collision reports ramp state");
+    expect(!result.blocked, "walkable ramp does not block movement");
+    expect(result.groundPrimitiveId == "ramp_left_slide", "ramp collision reports primitive id");
+    expect(result.position.y > 0.40F && result.position.y < 0.50F, "ramp collision resolves sampled height");
+    expect(result.groundNormal.y > 0.98F, "ramp normal stays walkable");
+    expect(result.groundNormal.z < 0.0F, "positive-z ramp normal leans against slope");
+}
+
+void testLowStepIsWalkable() {
+    const auto world = nemisis::dev::createDevRangeGreyboxWorld();
+    const auto result = nemisis::dev::resolveGreyboxPlayerCollision(
+        world,
+        nemisis::dev::GreyboxCollisionQuery{{-3.5F, 0.0F, -7.0F}, 0.42F, 1.80F});
+
+    expect(result.grounded, "player remains grounded on low step");
+    expect(result.stepped, "low step reports stepped state");
+    expect(!result.blocked, "low step does not block movement");
+    expect(result.groundPrimitiveId == "step_training_low", "step collision reports primitive id");
+    expect(result.position.y > 0.34F && result.position.y < 0.38F, "step collision resolves top height");
+}
+
+void testMidLedgeStillBlocksWithoutMantle() {
+    const auto world = nemisis::dev::createDevRangeGreyboxWorld();
+    const auto result = nemisis::dev::resolveGreyboxPlayerCollision(
+        world,
+        nemisis::dev::GreyboxCollisionQuery{{3.8F, 0.0F, -6.5F}, 0.42F, 1.80F});
+
+    expect(result.blocked, "mid ledge blocks until mantle exists");
+    expect(!result.stepped, "mid ledge is above step height");
+    expect(result.lastPrimitiveId == "ledge_training_mid", "mid ledge reports primitive id");
 }
 
 } // namespace
@@ -56,6 +98,9 @@ int main() {
     testBoundsClamp();
     testCoverPushout();
     testOpenLaneStaysFree();
+    testRampSurfaceGroundsPlayer();
+    testLowStepIsWalkable();
+    testMidLedgeStillBlocksWithoutMantle();
 
     if (failures > 0) {
         std::cerr << failures << " greybox collision test(s) failed\n";

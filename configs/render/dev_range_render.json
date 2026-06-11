@@ -1,0 +1,19 @@
+{
+  "profile": "dev_range_readable_vulkan",
+  "lighting": {
+    "sun_direction": {
+      "x": 0.3,
+      "y": 0.88,
+      "z": 0.34
+    },
+    "ambient_intensity": 0.38
+  },
+  "camera": {
+    "vertical_fov_degrees": 74.0,
+    "near_plane": 0.03,
+    "far_plane": 120.0
+  },
+  "debug": {
+    "world_lines": true
+  }
+}

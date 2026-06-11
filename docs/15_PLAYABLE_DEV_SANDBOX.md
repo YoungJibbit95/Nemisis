@@ -22,6 +22,8 @@ It is not a vertical slice yet. It is a developer playground for validating:
 - Multi-page on-screen debug telemetry for gameplay, network, and asset/render state.
 - Deterministic greybox world data for the first shooting range.
 - Visible in-world Vulkan 3D range with player spawn, target lane, cover, ramps, walls, GLB props, and weapon proxies.
+- Configurable Dev Range render tuning for lighting, FOV, clip planes, and world debug line visibility.
+- World-space Vulkan debug lines for aim rays and KCC ground normals.
 - Budgeted A0 environment GLB wireframe preview drawn from extracted CPU mesh data.
 
 ## Run
@@ -127,7 +129,7 @@ The on-screen debug overlay currently has these pages:
 
 The Dev Shooting Range screen also draws a greybox range map:
 
-- Floor bounds, walls, cover, ramps, spawn points, range markers, and target marker.
+- Floor bounds, walls, cover, ramps, low step, mid ledge, spawn points, range markers, and target marker.
 - A budgeted wireframe overlay from the imported A0 environment GLB.
 - Local player square and current yaw direction.
 - Line from player to the current target lane.
@@ -146,10 +148,10 @@ The renderer clear color also changes by state for early visual feedback:
 
 - Renderer defaults to Vulkan 3D in normal game launches.
 - SDL debug visuals are a legacy fallback/debug path behind `--sdl-debug`.
-- The compiled Vulkan backend can create a window swapchain, depth buffer, world box pipeline, world mesh pipeline, renderer-owned mesh resources, upload queued indexed GLB draws, and deferred GPU mesh destruction through the default launch profile.
+- The compiled Vulkan backend can create a window swapchain, depth buffer, world box pipeline, world line pipeline, world mesh pipeline, renderer-owned mesh resources, upload queued indexed GLB draws, and deferred GPU mesh destruction through the default launch profile.
 - The world is represented by deterministic greybox data, Vulkan world boxes, uploaded GLB meshes, first-person proxy meshes, and a 3D aim marker.
 - Dev Range render composition is isolated in `DevRangeRenderSceneBuilder`, with `GameApp` only collecting player state and orchestrating frame flow.
-- Current collision is a first capsule/AABB-style greybox resolver, not the final KCC with slope normals, step height, mantle probes, or ramp behavior.
+- Current collision supports floor grounding, bounds, AABB blockers, walkable ramp height sampling, low-step handling, ground normals, and ledges that block until mantle exists.
 - Asset ids, preload requests, generated `.glb` exports, metadata, GLB scene-info imports, CPU mesh extraction, and mesh handles exist, but GPU upload/draw submission is not implemented yet.
 - Relative mouse mode is requested for the dev range, but sensitivity, cursor policy settings, and raw input config are not data-driven yet.
 - Debug target hit resolution is a focused sphere test, not full scene collision.

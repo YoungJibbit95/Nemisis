@@ -16,7 +16,9 @@ void addPrimitive(
     Vec3 center,
     Vec3 halfExtents,
     std::array<float, 4> color,
-    bool blocksMovement) {
+    bool blocksMovement,
+    GreyboxRampDirection rampDirection = GreyboxRampDirection::None,
+    float stepOverrideHeight = 0.0F) {
     world.primitives.push_back(GreyboxPrimitive{
         std::move(id),
         kind,
@@ -24,6 +26,8 @@ void addPrimitive(
         halfExtents,
         color,
         blocksMovement,
+        rampDirection,
+        stepOverrideHeight,
     });
 }
 
@@ -43,9 +47,11 @@ GreyboxWorld createDevRangeGreyboxWorld() {
     addPrimitive(world, "cover_left_mid", GreyboxPrimitiveKind::Cover, Vec3{-8.0F, 0.8F, 4.0F}, Vec3{2.0F, 0.8F, 1.0F}, {0.35F, 0.41F, 0.40F, 1.0F}, true);
     addPrimitive(world, "cover_right_mid", GreyboxPrimitiveKind::Cover, Vec3{8.0F, 0.8F, 4.0F}, Vec3{2.0F, 0.8F, 1.0F}, {0.35F, 0.41F, 0.40F, 1.0F}, true);
     addPrimitive(world, "cover_center_low", GreyboxPrimitiveKind::Cover, Vec3{0.0F, 0.45F, 7.5F}, Vec3{2.8F, 0.45F, 0.8F}, {0.38F, 0.43F, 0.42F, 1.0F}, true);
+    addPrimitive(world, "step_training_low", GreyboxPrimitiveKind::Cover, Vec3{-3.5F, 0.18F, -7.0F}, Vec3{1.4F, 0.18F, 1.0F}, {0.31F, 0.46F, 0.43F, 1.0F}, true, GreyboxRampDirection::None, 0.36F);
+    addPrimitive(world, "ledge_training_mid", GreyboxPrimitiveKind::Cover, Vec3{3.8F, 0.65F, -6.5F}, Vec3{1.5F, 0.65F, 1.0F}, {0.36F, 0.38F, 0.46F, 1.0F}, true);
 
-    addPrimitive(world, "ramp_left_slide", GreyboxPrimitiveKind::Ramp, Vec3{-13.5F, 0.45F, -1.0F}, Vec3{3.0F, 0.45F, 4.0F}, {0.28F, 0.39F, 0.37F, 1.0F}, true);
-    addPrimitive(world, "ramp_right_slide", GreyboxPrimitiveKind::Ramp, Vec3{13.5F, 0.45F, -1.0F}, Vec3{3.0F, 0.45F, 4.0F}, {0.28F, 0.39F, 0.37F, 1.0F}, true);
+    addPrimitive(world, "ramp_left_slide", GreyboxPrimitiveKind::Ramp, Vec3{-13.5F, 0.45F, -1.0F}, Vec3{3.0F, 0.45F, 4.0F}, {0.28F, 0.39F, 0.37F, 1.0F}, true, GreyboxRampDirection::PositiveZ);
+    addPrimitive(world, "ramp_right_slide", GreyboxPrimitiveKind::Ramp, Vec3{13.5F, 0.45F, -1.0F}, Vec3{3.0F, 0.45F, 4.0F}, {0.28F, 0.39F, 0.37F, 1.0F}, true, GreyboxRampDirection::PositiveZ);
 
     addPrimitive(world, "spawn_player", GreyboxPrimitiveKind::Spawn, world.playerSpawn, Vec3{1.2F, 0.05F, 1.2F}, {0.10F, 0.55F, 0.70F, 1.0F}, false);
     addPrimitive(world, "spawn_enemy_proxy", GreyboxPrimitiveKind::Spawn, Vec3{0.0F, 0.0F, 15.0F}, Vec3{1.2F, 0.05F, 1.2F}, {0.70F, 0.20F, 0.14F, 1.0F}, false);

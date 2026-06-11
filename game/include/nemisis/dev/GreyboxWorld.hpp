@@ -18,6 +18,14 @@ enum class GreyboxPrimitiveKind {
     Target
 };
 
+enum class GreyboxRampDirection {
+    None,
+    PositiveZ,
+    NegativeZ,
+    PositiveX,
+    NegativeX
+};
+
 struct GreyboxPrimitive final {
     std::string id;
     GreyboxPrimitiveKind kind = GreyboxPrimitiveKind::Floor;
@@ -25,6 +33,8 @@ struct GreyboxPrimitive final {
     novacore::math::Vec3 halfExtents{1.0F, 1.0F, 1.0F};
     std::array<float, 4> color{0.30F, 0.36F, 0.38F, 1.0F};
     bool blocksMovement = false;
+    GreyboxRampDirection rampDirection = GreyboxRampDirection::None;
+    float stepOverrideHeight = 0.0F;
 };
 
 struct GreyboxWorld final {

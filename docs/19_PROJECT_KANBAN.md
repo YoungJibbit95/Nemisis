@@ -60,10 +60,13 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [x] Add first-person arms proxy and 3D aim marker to the Vulkan Dev Range.
 - [x] Promote mesh rendering into renderer-owned resource handles, Vulkan upload queue, residency stats, and deferred destruction.
 - [x] Add `DevRangeRenderSceneBuilder` and `nemisis_dev_range_render_scene_tests`.
+- [x] Add NovaCore Vulkan world debug line pipeline and submit Dev Range aim/ground-normal lines.
+- [x] Add configurable Dev Range render tuning and `nemisis_render_tuning_tests`.
+- [x] Add KCC ramp height sampling, low-step handling, ground normals, and ledge blocking tests.
 
 ## Doing
 
-- [ ] Expand in-world greybox rendering with lighting/material fallback and better transforms.
+- [ ] Expand material fallback controls and resize-safe Vulkan swapchain behavior.
 
 ## Next Core
 
@@ -71,7 +74,7 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [ ] Packet simulation for latency, jitter, loss, duplication, and reorder.
 - [ ] Vulkan swapchain resize/recreate and validation debug labels.
 - [ ] Renderer texture/material residency and cross-zone reference counting.
-- [ ] Full KCC collision foundation for ramps, ledges, slope normals, slide/mantle tests.
+- [ ] Mantle probes, slide validation, and richer slope/step debug visualization.
 - [ ] Shared server validation for greybox collision and movement corrections.
 
 ## Next Gameplay

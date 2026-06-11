@@ -84,6 +84,10 @@ void testDevRangeRenderSceneBuildsExpectedSubmissions() {
     player.view.yawDegrees = 32.0F;
     player.view.pitchDegrees = -7.0F;
     player.hasMovementState = true;
+    nemisis::dev::GreyboxCollisionResult collision{};
+    collision.grounded = true;
+    collision.groundPrimitiveId = "floor_main";
+    collision.groundNormal = {0.0F, 1.0F, 0.0F};
 
     novacore::render::RenderFrameInfo frame{};
     const auto stats = nemisis::dev::DevRangeRenderSceneBuilder{}.append(
@@ -91,6 +95,7 @@ void testDevRangeRenderSceneBuildsExpectedSubmissions() {
         nemisis::dev::DevRangeRenderSceneDesc{
             &world,
             &target,
+            &collision,
             &lookup,
             player,
         });
@@ -102,6 +107,8 @@ void testDevRangeRenderSceneBuildsExpectedSubmissions() {
     expect(frame.camera3D.yawDegrees == 32.0F, "dev range render scene copies yaw");
     expect(frame.camera3D.pitchDegrees == -7.0F, "dev range render scene copies pitch");
     expect(frame.camera3D.verticalFovDegrees == 74.0F, "dev range render scene uses default FOV");
+    expect(frame.lighting.ambientIntensity > 0.37F && frame.lighting.ambientIntensity < 0.39F, "dev range render scene applies lighting profile");
+    expect(frame.lighting.sunDirection.y > 0.80F, "dev range lighting points from above");
 
     expect(!world.primitives.empty(), "greybox world fixture has primitives");
     expect(stats.worldBoxCount == world.primitives.size() + 6U, "dev range render scene emits world, weapon, and aim boxes");
@@ -111,6 +118,8 @@ void testDevRangeRenderSceneBuildsExpectedSubmissions() {
     expect(stats.skippedMeshInstanceCount == 0, "dev range render scene skips no mesh when lookup is complete");
     expect(stats.firstPersonMeshCount == 3, "dev range render scene emits three first-person mesh anchors");
     expect(stats.aimMarkerBoxCount == 5, "dev range render scene emits five aim marker boxes");
+    expect(stats.worldLineCount == 2, "dev range render scene emits aim and ground-normal lines");
+    expect(frame.worldLines.size() == 2, "frame receives world debug lines");
 
     const auto firstMesh = frame.worldMeshes.front();
     expect(firstMesh.assetId == "env_test_arena_kit_01", "first dev mesh is the arena kit");
@@ -137,6 +146,7 @@ void testDevRangeRenderSceneCountsMissingMeshHandles() {
         nemisis::dev::DevRangeRenderSceneDesc{
             &world,
             &target,
+            nullptr,
             &lookup,
             player,
         });
@@ -145,6 +155,7 @@ void testDevRangeRenderSceneCountsMissingMeshHandles() {
     expect(frame.worldMeshes.size() == 11, "frame mesh count drops missing handles");
     expect(stats.skippedMeshInstanceCount == 2, "dev range render scene counts missing handles");
     expect(stats.firstPersonMeshCount == 1, "first-person mesh stats reflect missing weapon/arms handles");
+    expect(stats.worldLineCount == 1, "dev range render scene still emits aim line without collision sample");
 }
 
 void testDevRangeRenderSceneHandlesMissingInputs() {
@@ -158,12 +169,39 @@ void testDevRangeRenderSceneHandlesMissingInputs() {
     expect(stats.meshInstanceCount == 0, "dev range render scene reports zero meshes without world/input");
 }
 
+void testDevRangeRenderSceneCanDisableDebugLines() {
+    novacore::render::Renderer renderer;
+    auto lookup = registerSceneMeshes(renderer);
+    const auto world = nemisis::dev::createDevRangeGreyboxWorld();
+    nemisis::dev::DebugTargetState target{};
+    nemisis::dev::GreyboxCollisionResult collision{};
+    collision.grounded = true;
+    collision.groundNormal = {0.0F, 1.0F, 0.0F};
+
+    novacore::render::RenderFrameInfo frame{};
+    const auto stats = nemisis::dev::DevRangeRenderSceneBuilder{}.append(
+        frame,
+        nemisis::dev::DevRangeRenderSceneDesc{
+            &world,
+            &target,
+            &collision,
+            &lookup,
+            {},
+            {},
+            false,
+        });
+
+    expect(stats.worldLineCount == 0, "dev range render scene can disable world debug lines");
+    expect(frame.worldLines.empty(), "frame receives no world lines when disabled");
+}
+
 } // namespace
 
 int main() {
     testDevRangeRenderSceneBuildsExpectedSubmissions();
     testDevRangeRenderSceneCountsMissingMeshHandles();
     testDevRangeRenderSceneHandlesMissingInputs();
+    testDevRangeRenderSceneCanDisableDebugLines();
 
     if (failures > 0) {
         std::cerr << failures << " dev range render scene test(s) failed\n";
