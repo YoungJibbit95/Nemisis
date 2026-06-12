@@ -13,6 +13,9 @@ First-person:
 - Camera-space animation.
 - Recoil camera and weapon offsets.
 - Reload and inspect animations.
+- Wall-run gravity control press: left hand crosses to the right forearm and taps the boot-inverter control.
+- Double-jump energy step: left hand throws/projects a compact platform under the player's feet before the second jump impulse.
+- Mantle reach: left hand reaches forward/up toward the ledge while the KCC prepares a future mantle attach.
 
 Third-person:
 
@@ -22,6 +25,9 @@ Third-person:
 - Weapon sockets.
 - Hitboxes.
 - Network interpolation.
+- Readable gravity-boot glow while wall-running.
+- Readable air-step platform VFX on double jump.
+- Wall-jump detach and mantle-reach body poses.
 
 ## Import Path
 
@@ -40,6 +46,7 @@ Before real animation exists:
 - Remote players can use simple proxy meshes.
 - Hitboxes can be capsules.
 - Weapon sockets can be debug transforms.
+- Movement-tech cues can be rendered as debug meshes/VFX boxes until authored clips exist.
 
 ## Animation System Phases
 
@@ -79,6 +86,25 @@ Animation must provide:
 - Reload event timings.
 - Hitbox pose data.
 - Third-person readable movement states.
+- Movement-tech event hooks from `MovementTechState`:
+  - `WallRunGravityArmTrigger` starts the first-person right-arm button press.
+  - `GravityBootsActive` keeps boot glow and third-person wall-run readability alive.
+  - `DoubleJumpEnergyPlatform` starts the left-hand platform throw and air-step VFX.
+  - `WallJumpDetach` starts detach/brace animation.
+  - `MantleReach` starts the ledge-reach pose.
+
+The movement-tech hooks are presentation cues, not ability gates. Movement remains controlled by KCC state, surface probes, and deterministic input commands.
+
+## Current Placeholder Visuals
+
+Until authored skeleton clips exist, `DevRangeRenderSceneBuilder` renders small debug geometry for the same cues:
+
+- Boot glow boxes when gravity inverters are active.
+- A forearm control light on wall-run entry.
+- A short-lived energy platform on double jump.
+- A left-hand reach marker when mantle input is requested in air.
+
+These are intentionally simple but they lock down timing, naming, and gameplay integration before animation assets are final.
 
 ## Network Considerations
 

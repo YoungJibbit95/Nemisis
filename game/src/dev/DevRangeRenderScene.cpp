@@ -259,6 +259,7 @@ DevRangeRenderSceneStats DevRangeRenderSceneBuilder::append(
     appendStaticShowcaseMeshes(frame, desc, stats);
     appendTargetLaneMeshes(frame, desc, stats);
     appendFirstPersonMeshes(frame, desc, stats);
+    appendMovementTechVisuals(frame, desc, stats);
     appendAimMarker(frame, desc, stats);
     if (desc.showWorldDebugLines) {
         appendWorldDebugLines(frame, desc, stats);
@@ -507,6 +508,61 @@ void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
     }
     if (armsMeshAppended) {
         ++stats.firstPersonMeshCount;
+    }
+}
+
+void DevRangeRenderSceneBuilder::appendMovementTechVisuals(
+    novacore::render::RenderFrameInfo& frame,
+    const DevRangeRenderSceneDesc& desc,
+    DevRangeRenderSceneStats& stats) const {
+    const auto& tech = desc.player.movementTech;
+    const auto vectors = player::viewVectors(renderView(desc));
+    const auto eye = playerEyePosition(desc);
+    const auto bootBase = desc.player.position + novacore::math::Vec3{0.0F, 0.16F, 0.0F};
+
+    if (tech.gravityInvertersActive || tech.gravityInverterGlowSeconds > 0.0F) {
+        const auto right = vectors.horizontalRight;
+        const auto glowColor = tech.wallRunArmTriggerPressed
+            ? std::array<float, 4>{0.96F, 0.58F, 0.18F, 1.0F}
+            : std::array<float, 4>{0.08F, 0.86F, 1.0F, 1.0F};
+        appendBox(frame, bootBase + (right * 0.18F), {0.09F, 0.035F, 0.14F}, glowColor, stats);
+        appendBox(frame, bootBase - (right * 0.18F), {0.09F, 0.035F, 0.14F}, glowColor, stats);
+
+        if (tech.wallRunArmTriggerPressed || tech.wallRunArmTriggerSeconds > 0.0F) {
+            appendBox(
+                frame,
+                eye + (vectors.forward * 0.48F) - (right * 0.26F) + novacore::math::Vec3{0.0F, -0.36F, 0.0F},
+                {0.045F, 0.028F, 0.035F},
+                {0.98F, 0.42F, 0.14F, 1.0F},
+                stats);
+        }
+    }
+
+    if (tech.doubleJumpPlatformThrown || tech.energyPlatformSeconds > 0.0F) {
+        const auto platformCenter = tech.energyPlatformCenter.lengthSquared() > 0.0001F
+            ? tech.energyPlatformCenter
+            : desc.player.position + novacore::math::Vec3{0.0F, -0.18F, 0.0F};
+        appendBox(
+            frame,
+            platformCenter,
+            {0.52F, 0.018F, 0.32F},
+            {0.18F, 0.82F, 1.0F, 1.0F},
+            stats);
+        appendBox(
+            frame,
+            platformCenter + novacore::math::Vec3{0.0F, 0.028F, 0.0F},
+            {0.32F, 0.012F, 0.18F},
+            {0.88F, 0.98F, 1.0F, 1.0F},
+            stats);
+    }
+
+    if (tech.mantleReachTriggered || tech.mantleReachSeconds > 0.0F) {
+        appendBox(
+            frame,
+            eye + (vectors.forward * 0.62F) - (vectors.horizontalRight * 0.24F) + novacore::math::Vec3{0.0F, -0.30F, 0.0F},
+            {0.035F, 0.035F, 0.16F},
+            {0.72F, 0.94F, 1.0F, 1.0F},
+            stats);
     }
 }
 

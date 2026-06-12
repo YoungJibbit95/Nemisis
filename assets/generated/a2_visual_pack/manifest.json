@@ -1,6 +1,6 @@
 {
   "pack_id": "nemisis_a2_visual_pack",
-  "generated_at_utc": "2026-06-12T08:58:57+00:00",
+  "generated_at_utc": "2026-06-12T13:52:16+00:00",
   "generator": "tools/blender/make_a2_visual_pack.py",
   "blender_version": "5.1.2",
   "units": "meters",
@@ -24,8 +24,8 @@
       "file": "assets/generated/a2_visual_pack/wpn_a2_blackout_carbine_01.glb",
       "metadata": "assets/generated/a2_visual_pack/wpn_a2_blackout_carbine_01.metadata.json",
       "dimensions_m": [
-        0.1865,
-        1.321,
+        0.21,
+        1.395,
         0.6178
       ],
       "target_dimensions_m": [
@@ -34,7 +34,7 @@
         0.55
       ],
       "origin": "Origin at approximate right-hand grip/root; Blender forward axis is +Y.",
-      "description": "Compact blackout-style generic carbine blockout with suppressed-looking front mass, micro optic, magazine, and orange/teal inspection marks.",
+      "description": "Grounded compact carbine blockout with a short barrel, linear muzzle device, buffer tube, M-LOK-like side slots, magazine ribs, micro optic, and muted inspection marks.",
       "sockets": [
         "socket_muzzle",
         "socket_grip_r",
@@ -47,7 +47,8 @@
       "notes": [
         "original_generic_dev_art",
         "fps_visible_testasset",
-        "orange_teal_accents",
+        "grounded_firearm_language",
+        "muted_range_marks",
         "no_brand_or_real_functional_details"
       ],
       "collision": "none",
@@ -55,12 +56,12 @@
         "wpn_a2_blackout_carbine_01_lod0",
         "wpn_a2_blackout_carbine_01_lod1"
       ],
-      "bytes": 34632,
+      "bytes": 60456,
       "stats": {
-        "mesh_objects": 16,
-        "vertices": 192,
-        "polygons": 128,
-        "triangles_estimate": 320
+        "mesh_objects": 32,
+        "vertices": 320,
+        "polygons": 224,
+        "triangles_estimate": 512
       }
     },
     {
@@ -79,9 +80,9 @@
       "file": "assets/generated/a2_visual_pack/wpn_a2_modular_rifle_01.glb",
       "metadata": "assets/generated/a2_visual_pack/wpn_a2_modular_rifle_01.metadata.json",
       "dimensions_m": [
-        0.23,
+        0.2359,
         1.6385,
-        0.7092
+        0.7062
       ],
       "target_dimensions_m": [
         0.2,
@@ -89,7 +90,7 @@
         0.64
       ],
       "origin": "Origin at approximate right-hand grip/root; Blender forward axis is +Y.",
-      "description": "Generic modular assault-rifle silhouette with long rail, optic mass, side slots, foregrip, and readable attachment sockets.",
+      "description": "Grounded modular rifle silhouette with long rail, charging handle, dust-cover details, side slots, backup sights, foregrip, optic mass, and readable attachment sockets.",
       "sockets": [
         "socket_muzzle",
         "socket_grip_r",
@@ -104,19 +105,20 @@
         "original_generic_dev_art",
         "fps_visible_testasset",
         "modular_attachment_language",
-        "orange_teal_accents"
+        "grounded_firearm_language",
+        "muted_witness_marks"
       ],
       "collision": "none",
       "lods": [
         "wpn_a2_modular_rifle_01_lod0",
         "wpn_a2_modular_rifle_01_lod1"
       ],
-      "bytes": 46016,
+      "bytes": 58972,
       "stats": {
-        "mesh_objects": 23,
-        "vertices": 248,
-        "polygons": 170,
-        "triangles_estimate": 404
+        "mesh_objects": 31,
+        "vertices": 312,
+        "polygons": 218,
+        "triangles_estimate": 500
       }
     },
     {
@@ -137,7 +139,7 @@
       "dimensions_m": [
         0.128,
         0.4937,
-        0.399
+        0.397
       ],
       "target_dimensions_m": [
         0.13,
@@ -145,7 +147,7 @@
         0.38
       ],
       "origin": "Origin at approximate right-hand grip/root; Blender forward axis is +Y.",
-      "description": "Compact generic striker-style sidearm blockout with slide/frame separation, underbarrel rail, sights, and color-coded socket marks.",
+      "description": "Compact generic striker-style sidearm blockout with slide/frame separation, ejection-port and serration details, underbarrel rail, grip texture, and subdued sights.",
       "sockets": [
         "socket_muzzle",
         "socket_grip_r",
@@ -159,19 +161,20 @@
         "original_generic_dev_art",
         "fps_visible_testasset",
         "compact_sidearm",
-        "orange_teal_accents"
+        "grounded_firearm_language",
+        "muted_sight_marks"
       ],
       "collision": "none",
       "lods": [
         "wpn_a2_striker_sidearm_01_lod0",
         "wpn_a2_striker_sidearm_01_lod1"
       ],
-      "bytes": 27700,
+      "bytes": 35684,
       "stats": {
-        "mesh_objects": 14,
-        "vertices": 140,
-        "polygons": 98,
-        "triangles_estimate": 224
+        "mesh_objects": 19,
+        "vertices": 180,
+        "polygons": 128,
+        "triangles_estimate": 284
       }
     },
     {

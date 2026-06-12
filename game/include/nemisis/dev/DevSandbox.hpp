@@ -27,6 +27,7 @@ struct DevSandboxSample final {
     novacore::math::Vec3 position{};
     novacore::math::Vec3 velocity{};
     movement::MovementMode movementMode = movement::MovementMode::Grounded;
+    movement::MovementTechState movementTech{};
     weapons::WeaponRuntimeState weapon{};
     weapons::FireResult fire{};
     weapons::ShotTraceResult shot{};

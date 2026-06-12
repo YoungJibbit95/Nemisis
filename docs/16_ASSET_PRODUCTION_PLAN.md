@@ -51,6 +51,8 @@ Nemisis should read as a competitive sci-fi arena shooter:
 - High gameplay readability over visual noise.
 - Mid-contrast arenas with strong team/objective color accents.
 - Weapons with clear class silhouettes: AR stable, SMG compact, shotgun heavy, sidearm readable.
+- Weapon art should lean more grounded and real-world plausible than futuristic: muted polymer/metal parts, believable rails, stocks, charging handles, magazine ribs, dust covers, ejection ports, sights, and attachment sockets.
+- Weapon art must remain original and generic. Do not copy real firearm names, manufacturer marks, logos, exact silhouettes, or protected game weapons.
 - Movement surfaces must visually explain use: slide ramps, mantle ledges, wall-run strips, jump pads, ziplines.
 
 ## Coordinate And Scale Rules
@@ -215,14 +217,21 @@ Acceptance:
 
 Current generated outputs:
 
-- `wpn_a2_blackout_carbine_01`: compact blackout-style generic carbine direction for the first AR/SMG-like first-person test.
-- `wpn_a2_modular_rifle_01`: longer modular rifle direction for assault-rifle/marksman silhouette tests.
-- `wpn_a2_striker_sidearm_01`: compact striker-style sidearm direction for fallback weapon tests.
+- `wpn_a2_blackout_carbine_01`: grounded compact carbine direction with short barrel, linear muzzle device, buffer tube, M-LOK-like side slots, magazine ribs, micro optic, muted range marks, and no real-world branding.
+- `wpn_a2_modular_rifle_01`: grounded modular rifle direction with long rail, charging handle, dust cover, forward-assist-like detail, backup sights, side slots, foregrip, optic mass, and readable attachment sockets.
+- `wpn_a2_striker_sidearm_01`: compact generic striker-style sidearm direction with slide/frame separation, ejection-port and serration details, underbarrel rail, grip texture, subdued sights, and no copied real model name.
 - `chr_a2_pilot_operator_01`: US soldier plus sci-fi pilot/operator proxy with capsule and hitbox guide meshes.
 - `map_a2_wallrun_panel_01`: teal-accent wall-run panel for movement readability and collision surface tagging.
 - `map_a2_slide_ramp_01`: slide-ramp test module.
 - `map_a2_cover_crate_01`: chest-high cover crate/module.
 - `prop_a2_range_hero_01`: small interactive range/scoring hero prop.
+
+Movement lore requirements for future character/arms assets:
+
+- Wall-run clips need a left-hand-to-right-forearm control press that represents gravity-inverter activation.
+- Wall-run third-person presentation needs readable boot glow while contact remains valid.
+- Double-jump clips need a left-hand energy-platform throw/project gesture followed by an air-step beat.
+- Mantle clips need a physical ledge-reach/readiness pose that can transition into climb-up once mantle probes are implemented.
 
 Generated files:
 

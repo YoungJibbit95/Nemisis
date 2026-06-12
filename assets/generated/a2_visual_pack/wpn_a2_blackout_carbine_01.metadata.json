@@ -17,8 +17,8 @@
   "blender_up_axis": "+Z",
   "blender_forward_axis": "+Y",
   "dimensions_m": [
-    0.1865,
-    1.321,
+    0.21,
+    1.395,
     0.6178
   ],
   "target_dimensions_m": [
@@ -48,7 +48,8 @@
   "notes": [
     "original_generic_dev_art",
     "fps_visible_testasset",
-    "orange_teal_accents",
+    "grounded_firearm_language",
+    "muted_range_marks",
     "no_brand_or_real_functional_details"
   ],
   "collision": "none",
@@ -60,12 +61,12 @@
   "external_assets": false,
   "visual_reference_note": "Original procedural dev-art using broad FPS and sci-fi test-asset language only; no brands, logos, copied protected silhouettes, or real functional implementation details.",
   "generated_by": "tools/blender/make_a2_visual_pack.py",
-  "generated_at_utc": "2026-06-12T08:58:57+00:00",
+  "generated_at_utc": "2026-06-12T13:52:15+00:00",
   "stats": {
-    "mesh_objects": 16,
-    "vertices": 192,
-    "polygons": 128,
-    "triangles_estimate": 320
+    "mesh_objects": 32,
+    "vertices": 320,
+    "polygons": 224,
+    "triangles_estimate": 512
   },
-  "bytes": 34632
+  "bytes": 60456
 }

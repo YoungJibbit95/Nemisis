@@ -101,11 +101,17 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [x] Catalog, import, extract, register, and render 28/28 required Dev Sandbox renderables.
 - [x] Add A2 asset preview rendering through `tools/blender/render_a2_preview.py`.
 - [x] Verify NovaCore smoke tests and Nemisis 32/32 CTest suite after the A2/PhysicsWorld block.
+- [x] Add Vulkan-native UI primitive rendering for `UiCanvas` rects, lines, and bitmap debug text.
+- [x] Surface Vulkan UI draw counts in backend stats and the Nemisis Assets debug page.
+- [x] Add movement-tech cues for wall-run gravity activation, gravity boots, double-jump energy platforms, wall-jump detach, and mantle reach.
+- [x] Add Dev Range placeholder visuals for gravity boots, arm-button activation, energy-step platforms, and mantle reach.
+- [x] Shift A2 weapon generator output toward grounded, realistic, unbranded carbine/rifle/sidearm blockouts.
+- [x] Document movement lore and animation requirements for gravity-inverter boots, energy-platform double jumps, and future mantle/climb.
 
 ## Doing
 
 - [ ] Expand material fallback controls, validation labels, and renderer resize stress coverage.
-- [ ] Keep UI moving toward a Vulkan-native text/vector backend while `UiCanvas` feeds the current debug primitive bridge.
+- [ ] Keep UI moving from the new Vulkan primitive path toward a richer text/vector backend.
 - [ ] Start texture/material binding for A1/A2 GLBs so imported assets look less like tinted blockouts.
 - [ ] Grow the multi-target Dev Range into timed drills, TTK panels, and recoil-control scoring.
 - [ ] Deepen KCC physics into capsule sweeps, mantle probes, moving platform contacts, and server replay validation.
@@ -118,6 +124,7 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [ ] Renderer texture/material residency and cross-zone reference counting.
 - [ ] Mantle probes, slide validation, and richer slope/step debug visualization.
 - [ ] Wall-run camera feel, wall detach rules, wall-run cooldown, and surface eligibility tuning.
+- [ ] Convert movement-tech debug visuals into authored first-person and third-person animation clips.
 - [ ] Shared server validation for greybox collision and movement corrections.
 - [ ] Feed camera/weapon telemetry into prediction-safe replay snapshots for future reconciliation debugging.
 

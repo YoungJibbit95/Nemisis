@@ -101,6 +101,7 @@ std::string DevSandbox::latestSummary() const {
     stream << " vel=";
     appendVec3(stream, latest_.velocity);
     stream << " weapon=" << latest_.weapon.weaponId
+           << " tech=" << movement::movementTechCueName(movement::dominantMovementTechCue(latest_.movementTech))
            << " ammo=" << latest_.weapon.ammoInMagazine
            << " shot=" << latest_.weapon.shotIndex
            << " burst=" << latest_.weapon.burstShotCount

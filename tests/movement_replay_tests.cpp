@@ -82,6 +82,8 @@ void testJumpDoubleJumpReplay() {
     state = movement.simulate(state, command, dt);
     expect(!state.hasDoubleJump, "double jump is consumed");
     expect(state.velocity.y > 0.0F, "double jump refreshes upward velocity");
+    expect(state.tech.doubleJumpPlatformThrown, "double jump throws energy platform cue");
+    expect(state.tech.energyPlatformSeconds > 0.0F, "double jump platform cue starts timer");
 }
 
 void testDashCooldownReplay() {
@@ -154,12 +156,15 @@ void testWallRunContactAndWallJumpReplay() {
     expect(state.hasWallRunContact, "wallrun contact marks telemetry flag");
     expect(state.wallRunTimeRemaining > 1.0F, "wallrun contact starts timer");
     expect(state.velocity.z >= movement.tuning().wallRunSpeed, "wallrun contact aligns speed to wall tangent");
+    expect(state.tech.wallRunArmTriggerPressed, "wallrun contact presses arm gravity trigger cue");
+    expect(state.tech.gravityInvertersActive, "wallrun contact activates gravity boot cue");
 
     command.jumpPressed = true;
     state = movement.simulate(state, command, dt);
     expect(state.mode == nemisis::movement::MovementMode::Airborne, "jumping from wallrun returns airborne");
     expect(state.velocity.x > movement.tuning().wallJumpImpulse - 0.1F, "wall jump pushes away from wall normal");
     expect(state.velocity.y > 4.0F, "wall jump gives upward impulse");
+    expect(state.tech.wallJumpDetachTriggered, "wall jump triggers detach animation cue");
 }
 
 void testMovementTuningConfigReplay() {

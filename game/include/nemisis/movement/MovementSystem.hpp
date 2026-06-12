@@ -1,5 +1,6 @@
 #pragma once
 
+#include "nemisis/movement/MovementTech.hpp"
 #include "nemisis/movement/MovementTuning.hpp"
 #include "nemisis/player/PlayerInputCommand.hpp"
 
@@ -21,6 +22,7 @@ struct PlayerMovementState final {
     novacore::math::Vec3 velocity{};
     novacore::math::Vec3 wallRunNormal{};
     novacore::math::Vec3 wallRunTangent{};
+    MovementTechState tech{};
     MovementMode mode = MovementMode::Grounded;
     bool hasDoubleJump = true;
     bool hasWallRunContact = false;

@@ -36,6 +36,8 @@ void testSummaryIncludesPlayableTelemetry() {
     sample.target.health = 122.0F;
     sample.target.hitsTaken = 2;
     sample.targetHit.hit = true;
+    sample.movementTech.doubleJumpPlatformThrown = true;
+    sample.movementTech.energyPlatformSeconds = 0.2F;
     sample.collision.nearWallRunSurface = true;
     sample.collision.wallPrimitiveId = "wallrun_left_panel_a";
 
@@ -45,6 +47,7 @@ void testSummaryIncludesPlayableTelemetry() {
     expect(summary.find("tick=42") != std::string::npos, "summary includes tick");
     expect(summary.find("weapon=ar_01") != std::string::npos, "summary includes weapon");
     expect(summary.find("ammo=29") != std::string::npos, "summary includes ammo");
+    expect(summary.find("tech=energy-step") != std::string::npos, "summary includes movement tech cue");
     expect(summary.find("fire=yes") != std::string::npos, "summary includes fire result");
     expect(summary.find("pending=3") != std::string::npos, "summary includes pending commands");
     expect(summary.find("targetsAlive=4/4") != std::string::npos, "summary includes target lane count");

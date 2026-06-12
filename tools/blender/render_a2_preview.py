@@ -104,6 +104,12 @@ def scale_objects(objects: list[bpy.types.Object], factor: float) -> None:
             obj.scale = (obj.scale.x * factor, obj.scale.y * factor, obj.scale.z * factor)
 
 
+def rotate_root_objects(objects: list[bpy.types.Object], radians_z: float) -> None:
+    for obj in objects:
+        if obj.parent is None:
+            obj.rotation_euler.z += radians_z
+
+
 def add_label(text: str, location: tuple[float, float, float]) -> None:
     bpy.ops.object.text_add(location=location, rotation=(math.radians(64.0), 0.0, 0.0))
     label = bpy.context.object
@@ -182,6 +188,7 @@ def load_manifest(path: Path) -> list[dict[str, object]]:
 
 def import_asset(asset: dict[str, object], location: tuple[float, float, float], max_footprint: float) -> None:
     asset_id = str(asset["id"])
+    category = str(asset.get("category", ""))
     file_path = REPO_ROOT / str(asset["file"])
     if not file_path.exists():
         raise SystemExit(f"Missing GLB for {asset_id}: {file_path}")
@@ -192,11 +199,15 @@ def import_asset(asset: dict[str, object], location: tuple[float, float, float],
     for obj in imported:
         obj.name = f"{asset_id}_{obj.name}"
 
+    if category == "weapon":
+        rotate_root_objects(imported, math.radians(90.0))
+
     mins, maxs = imported_world_bounds(imported)
     size = maxs - mins
     footprint = max(size.x, size.y, 0.001)
     height = max(size.z, 0.001)
-    scale = min(max_footprint / footprint, 2.0 / height, 1.35)
+    max_scale = 1.85 if category == "weapon" else 1.35
+    scale = min(max_footprint / footprint, 2.0 / height, max_scale)
     scale_objects(imported, scale)
 
     mins, maxs = imported_world_bounds(imported)

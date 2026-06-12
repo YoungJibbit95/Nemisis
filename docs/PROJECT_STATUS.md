@@ -6,6 +6,7 @@
 - `main.cpp` is thin and delegates to `nemisis::game::GameApp`.
 - Game modules exist for input, player commands, movement, and weapons.
 - Movement supports sprint, tactical sprint tuning, jump, double jump, dash, slide, and the first wall-run contact/wall-jump flow.
+- Movement now carries presentation-facing tech cues for wall-run gravity activation, boot glow, double-jump energy platform, wall-jump detach, and mantle reach.
 - Weapon registry supports AR, SMG, shotgun, and sidearm definitions.
 - Input actions are translated into `PlayerInputCommand` for fixed-tick gameplay.
 - Default input bindings cover MKB plus controller stick/buttons/triggers.
@@ -43,6 +44,7 @@
 - Assets debug UI reports renderer backend plus NovaCore's Vulkan runtime/device summary.
 - Assets debug UI reports renderer mesh-resource CPU/GPU residency, pending uploads, failed uploads, deferred destroys, and indexed primitive/vertex/index totals.
 - Assets debug UI reports NovaCore backend frame stats: swapchain size/readiness, submitted and skipped frames, swapchain recreate count, and last world box/mesh/line submission counts.
+- Assets debug UI reports NovaCore Vulkan UI primitive counts so menu/HUD visibility can be diagnosed from inside the game.
 - Plain `nemisis_game` now starts in the Vulkan Main Menu with real 3D/Vulkan UI primitive rendering.
 - `nemisis_game --dev-range` starts directly in the Vulkan Dev Range with real 3D GLB mesh rendering.
 - `nemisis_game --smoke-test` uses the default Vulkan Main Menu profile for short validation.
@@ -74,6 +76,20 @@
 - Input command, weapon simulation, weapon shot, UI canvas, player camera rig, player view, debug target, dev sandbox, player spawn, command queue, command message, asset binding, render tuning, greybox world/collision, and loopback bridge tests cover the newest gameplay bridge.
 
 ## Added In Latest Block
+
+- Fixed the Vulkan Main Menu grey-screen path by adding NovaCore Vulkan UI rect/line/text primitive submission for the existing `UiCanvas` debug/menu commands.
+- Added backend frame stats for Vulkan UI rects, lines, and text commands and surfaced them in the Nemisis Assets debug page.
+- Added `MovementTechState` and `MovementTechCue` so wall-run gravity inverters, double-jump energy platforms, wall-jump detach, and mantle reach are represented as deterministic gameplay-adjacent presentation cues.
+- Wired wall-run entry, wall-run continuation/exit, wall jump, double jump, and mantle input into movement-tech cue emission.
+- Added first Dev Range placeholder visuals for gravity boot glow, right-arm wall-run activation, double-jump energy platforms, and mantle reach.
+- Expanded movement replay and dev sandbox tests to assert the new tech cues.
+- Updated the A2 weapon generator toward grounded, realistic carbine/rifle/sidearm blockouts with muted materials and firearm-like detail language while staying original and unbranded.
+- Documented the Nemisis movement lore for gravity-inverter boots, left-hand energy-platform double jumps, and future mantle/climb animation requirements.
+- Regenerated the A2 visual pack and preview with Blender 5.1.2; the current dev asset import reports 489 primitives, 36,224 vertices, and 56,112 indices across the required dev renderables.
+- Verified `cmake --build --preset windows-msvc-debug --config Debug`, full `ctest` with 32/32 passing tests, `nemisis_game.exe --smoke-test`, and `nemisis_game.exe --vulkan-dev-range-smoke-test`.
+- Verified direct Vulkan runtime logs show UI primitive submission in both default Main Menu and Dev Range smoke paths.
+
+## Previous A2/PhysicsWorld Block
 
 - Added NovaCore-backed `PhysicsWorld` integration to Nemisis greybox collision, including surface-kind mapping for floor, wall, ramp, cover, slide ramp, ledge, wall-run panel, and trigger primitives.
 - Added four wall-run panel primitives to the Dev Shooting Range and surfaced wall-run contact, wall normal, wall tangent, and wall primitive ids in debug telemetry/UI.

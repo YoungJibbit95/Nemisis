@@ -451,43 +451,55 @@ def build_blackout_carbine() -> None:
     black = material("mat_a2_carbine_black_polymer", (0.018, 0.021, 0.023, 1.0))
     graphite = material("mat_a2_carbine_graphite_metal", (0.20, 0.215, 0.225, 1.0), metallic=0.12)
     rubber = material("mat_a2_carbine_rubber", (0.006, 0.007, 0.008, 1.0))
-    teal = material("mat_a2_carbine_teal_socket_marks", (0.02, 0.70, 0.76, 1.0))
-    orange = material("mat_a2_carbine_orange_range_mark", (1.0, 0.38, 0.04, 1.0))
-    glass = material("mat_a2_carbine_smoke_glass", (0.04, 0.11, 0.13, 1.0), roughness=0.35)
+    marker = material("mat_a2_carbine_muted_socket_marks", (0.52, 0.58, 0.55, 1.0))
+    safety = material("mat_a2_carbine_muted_safety_mark", (0.74, 0.38, 0.14, 1.0))
+    fde = material("mat_a2_carbine_flat_dark_earth", (0.36, 0.31, 0.24, 1.0))
+    glass = material("mat_a2_carbine_smoke_glass", (0.025, 0.040, 0.045, 1.0), roughness=0.42)
 
     cube("wpn_a2_blackout_carbine_01_lod0_upper_receiver", (0.0, 0.055, 0.055), (0.165, 0.350, 0.095), graphite, root)
     cube("wpn_a2_blackout_carbine_01_lod0_lower_receiver", (0.0, -0.075, -0.020), (0.150, 0.255, 0.090), black, root)
     cube("wpn_a2_blackout_carbine_01_lod0_flush_top_rail", (0.0, 0.115, 0.145), (0.090, 0.520, 0.024), rubber, root)
+    cube("wpn_a2_blackout_carbine_01_lod0_charging_handle", (0.0, -0.145, 0.135), (0.125, 0.045, 0.030), rubber, root)
+    cube("wpn_a2_blackout_carbine_01_lod0_ejection_port", (0.088, 0.050, 0.070), (0.014, 0.145, 0.052), rubber, root)
+    cube("wpn_a2_blackout_carbine_01_lod0_bolt_release", (-0.088, -0.020, 0.030), (0.014, 0.065, 0.034), graphite, root)
     cube("wpn_a2_blackout_carbine_01_lod0_compact_handguard", (0.0, 0.360, 0.027), (0.185, 0.300, 0.095), black, root)
+    for y in (0.230, 0.315, 0.400, 0.485):
+        cube(f"wpn_a2_blackout_carbine_01_lod0_mlok_slot_l_{y:.2f}", (-0.099, y, 0.030), (0.012, 0.055, 0.024), graphite, root)
+        cube(f"wpn_a2_blackout_carbine_01_lod0_mlok_slot_r_{y:.2f}", (0.099, y, 0.030), (0.012, 0.055, 0.024), graphite, root)
     cylinder(
-        "wpn_a2_blackout_carbine_01_lod0_suppressed_barrel_proxy",
+        "wpn_a2_blackout_carbine_01_lod0_short_barrel",
         (0.0, 0.585, 0.032),
-        0.045,
+        0.032,
         0.300,
-        rubber,
-        root,
-        vertices=20,
-        rotation=(math.pi / 2.0, 0.0, 0.0),
-    )
-    cylinder(
-        "wpn_a2_blackout_carbine_01_lod0_muzzle_ring",
-        (0.0, 0.760, 0.032),
-        0.052,
-        0.042,
         graphite,
         root,
         vertices=20,
         rotation=(math.pi / 2.0, 0.0, 0.0),
     )
-    cube("wpn_a2_blackout_carbine_01_lod0_minimal_stock", (0.0, -0.365, 0.035), (0.145, 0.250, 0.070), rubber, root)
-    cube("wpn_a2_blackout_carbine_01_lod0_stock_pad", (0.0, -0.520, 0.040), (0.180, 0.040, 0.120), rubber, root)
+    cylinder(
+        "wpn_a2_blackout_carbine_01_lod0_linear_muzzle_device",
+        (0.0, 0.760, 0.032),
+        0.042,
+        0.070,
+        rubber,
+        root,
+        vertices=20,
+        rotation=(math.pi / 2.0, 0.0, 0.0),
+    )
+    cube("wpn_a2_blackout_carbine_01_lod0_buffer_tube", (0.0, -0.360, 0.070), (0.072, 0.300, 0.052), graphite, root)
+    cube("wpn_a2_blackout_carbine_01_lod0_minimal_stock", (0.0, -0.430, 0.035), (0.145, 0.250, 0.070), fde, root)
+    cube("wpn_a2_blackout_carbine_01_lod0_stock_pad", (0.0, -0.580, 0.040), (0.180, 0.040, 0.120), rubber, root)
     cube("wpn_a2_blackout_carbine_01_lod0_magazine", (0.0, -0.015, -0.205), (0.085, 0.070, 0.260), black, root, rotation=(math.radians(-5.5), 0.0, 0.0))
+    cube("wpn_a2_blackout_carbine_01_lod0_magazine_front_rib", (0.0, 0.026, -0.212), (0.090, 0.012, 0.205), graphite, root, rotation=(math.radians(-5.5), 0.0, 0.0))
+    cube("wpn_a2_blackout_carbine_01_lod0_magazine_rear_rib", (0.0, -0.058, -0.212), (0.090, 0.012, 0.205), graphite, root, rotation=(math.radians(-5.5), 0.0, 0.0))
     cube("wpn_a2_blackout_carbine_01_lod0_grip", (0.0, -0.225, -0.165), (0.075, 0.065, 0.205), rubber, root, rotation=(math.radians(-10.0), 0.0, 0.0))
-    cube("wpn_a2_blackout_carbine_01_lod0_front_stop", (0.0, 0.255, -0.092), (0.085, 0.045, 0.085), teal, root)
+    cube("wpn_a2_blackout_carbine_01_lod0_front_stop", (0.0, 0.255, -0.092), (0.085, 0.045, 0.085), rubber, root)
     cube("wpn_a2_blackout_carbine_01_lod0_micro_optic_mount", (0.0, -0.015, 0.195), (0.110, 0.100, 0.035), rubber, root)
     cube("wpn_a2_blackout_carbine_01_lod0_micro_optic_body", (0.0, -0.015, 0.250), (0.092, 0.075, 0.060), glass, root)
-    cube("wpn_a2_blackout_carbine_01_lod0_orange_selector_mark", (-0.088, -0.045, 0.020), (0.012, 0.090, 0.036), orange, root)
-    cube("wpn_a2_blackout_carbine_01_lod0_teal_muzzle_mark", (0.0, 0.720, 0.092), (0.070, 0.028, 0.018), teal, root)
+    cube("wpn_a2_blackout_carbine_01_lod0_front_backup_sight", (0.0, 0.520, 0.185), (0.055, 0.032, 0.045), graphite, root)
+    cube("wpn_a2_blackout_carbine_01_lod0_rear_backup_sight", (0.0, -0.190, 0.184), (0.064, 0.036, 0.044), graphite, root)
+    cube("wpn_a2_blackout_carbine_01_lod0_safety_mark", (-0.088, -0.045, 0.020), (0.012, 0.090, 0.030), safety, root)
+    cube("wpn_a2_blackout_carbine_01_lod0_muzzle_index_mark", (0.0, 0.720, 0.092), (0.060, 0.018, 0.014), marker, root)
     cube("wpn_a2_blackout_carbine_01_lod1_blockout", (0.0, 0.090, 0.015), (0.120, 1.170, 0.085), black, root)
 
     empty_socket("socket_muzzle", (0.0, 0.792, 0.032), root)
@@ -506,17 +518,21 @@ def build_modular_rifle() -> None:
 
     dark = material("mat_a2_modular_rifle_dark_polymer", (0.045, 0.049, 0.050, 1.0))
     metal = material("mat_a2_modular_rifle_gunmetal", (0.31, 0.325, 0.33, 1.0), metallic=0.14)
-    panel = material("mat_a2_modular_rifle_cool_panel", (0.18, 0.25, 0.28, 1.0))
-    teal = material("mat_a2_modular_rifle_teal_accents", (0.0, 0.66, 0.72, 1.0))
-    orange = material("mat_a2_modular_rifle_orange_key", (1.0, 0.39, 0.05, 1.0))
-    glass = material("mat_a2_modular_rifle_optic_glass", (0.035, 0.12, 0.14, 1.0), roughness=0.34)
+    panel = material("mat_a2_modular_rifle_warm_magazine", (0.24, 0.235, 0.215, 1.0))
+    slot_shadow = material("mat_a2_modular_rifle_slot_shadow", (0.025, 0.028, 0.030, 1.0))
+    witness = material("mat_a2_modular_rifle_muted_witness_mark", (0.68, 0.55, 0.34, 1.0))
+    glass = material("mat_a2_modular_rifle_optic_glass", (0.030, 0.045, 0.050, 1.0), roughness=0.40)
 
     cube("wpn_a2_modular_rifle_01_lod0_receiver", (0.0, 0.030, 0.045), (0.180, 0.390, 0.105), metal, root)
+    cube("wpn_a2_modular_rifle_01_lod0_forward_assist", (0.103, -0.060, 0.085), (0.025, 0.055, 0.040), dark, root, rotation=(0.0, 0.0, math.radians(12.0)))
+    cube("wpn_a2_modular_rifle_01_lod0_dust_cover", (0.102, 0.080, 0.052), (0.014, 0.170, 0.060), slot_shadow, root)
+    cube("wpn_a2_modular_rifle_01_lod0_charging_handle", (0.0, -0.175, 0.140), (0.134, 0.048, 0.028), dark, root)
     cube("wpn_a2_modular_rifle_01_lod0_rail_spine", (0.0, 0.155, 0.158), (0.100, 0.770, 0.026), dark, root)
     cube("wpn_a2_modular_rifle_01_lod0_modular_handguard", (0.0, 0.450, 0.030), (0.195, 0.500, 0.090), dark, root)
     for y in (0.245, 0.380, 0.515, 0.650):
-        cube(f"wpn_a2_modular_rifle_01_lod0_side_slot_l_{y:.2f}", (-0.106, y, 0.030), (0.018, 0.070, 0.030), teal, root)
-        cube(f"wpn_a2_modular_rifle_01_lod0_side_slot_r_{y:.2f}", (0.106, y, 0.030), (0.018, 0.070, 0.030), teal, root)
+        cube(f"wpn_a2_modular_rifle_01_lod0_side_slot_l_{y:.2f}", (-0.106, y, 0.030), (0.018, 0.070, 0.030), slot_shadow, root)
+        cube(f"wpn_a2_modular_rifle_01_lod0_side_slot_r_{y:.2f}", (0.106, y, 0.030), (0.018, 0.070, 0.030), slot_shadow, root)
+    cube("wpn_a2_modular_rifle_01_lod0_gas_block", (0.0, 0.685, 0.075), (0.090, 0.055, 0.075), metal, root)
     cylinder(
         "wpn_a2_modular_rifle_01_lod0_barrel_visual",
         (0.0, 0.780, 0.043),
@@ -540,12 +556,16 @@ def build_modular_rifle() -> None:
     cube("wpn_a2_modular_rifle_01_lod0_adjustable_stock_beam", (0.0, -0.395, 0.055), (0.115, 0.320, 0.060), dark, root)
     cube("wpn_a2_modular_rifle_01_lod0_adjustable_stock_pad", (0.0, -0.600, 0.055), (0.190, 0.052, 0.145), dark, root)
     cube("wpn_a2_modular_rifle_01_lod0_magazine", (0.0, -0.030, -0.215), (0.095, 0.075, 0.305), panel, root, rotation=(math.radians(-5.0), 0.0, 0.0))
+    cube("wpn_a2_modular_rifle_01_lod0_magazine_rib_front", (0.0, 0.014, -0.225), (0.102, 0.014, 0.250), dark, root, rotation=(math.radians(-5.0), 0.0, 0.0))
+    cube("wpn_a2_modular_rifle_01_lod0_magazine_rib_rear", (0.0, -0.072, -0.225), (0.102, 0.014, 0.250), dark, root, rotation=(math.radians(-5.0), 0.0, 0.0))
     cube("wpn_a2_modular_rifle_01_lod0_grip", (0.0, -0.240, -0.172), (0.076, 0.064, 0.215), dark, root, rotation=(math.radians(-9.0), 0.0, 0.0))
     cube("wpn_a2_modular_rifle_01_lod0_angled_foregrip", (0.0, 0.340, -0.120), (0.078, 0.060, 0.170), dark, root, rotation=(math.radians(8.0), 0.0, 0.0))
     cube("wpn_a2_modular_rifle_01_lod0_optic_base", (0.0, 0.045, 0.213), (0.125, 0.128, 0.036), dark, root)
     cube("wpn_a2_modular_rifle_01_lod0_optic_body", (0.0, 0.045, 0.275), (0.120, 0.100, 0.078), glass, root)
-    cube("wpn_a2_modular_rifle_01_lod0_optic_orange_index", (0.0, 0.098, 0.330), (0.075, 0.020, 0.018), orange, root)
-    cube("wpn_a2_modular_rifle_01_lod0_mag_orange_index", (0.0, -0.075, -0.070), (0.100, 0.018, 0.046), orange, root)
+    cube("wpn_a2_modular_rifle_01_lod0_front_backup_sight", (0.0, 0.720, 0.187), (0.060, 0.032, 0.050), metal, root)
+    cube("wpn_a2_modular_rifle_01_lod0_rear_backup_sight", (0.0, -0.165, 0.188), (0.070, 0.034, 0.048), metal, root)
+    cube("wpn_a2_modular_rifle_01_lod0_optic_witness_mark", (0.0, 0.098, 0.330), (0.055, 0.014, 0.012), witness, root)
+    cube("wpn_a2_modular_rifle_01_lod0_mag_witness_mark", (0.0, -0.075, -0.070), (0.088, 0.012, 0.034), witness, root)
     cube("wpn_a2_modular_rifle_01_lod1_blockout", (0.0, 0.145, 0.018), (0.135, 1.340, 0.092), dark, root)
 
     empty_socket("socket_muzzle", (0.0, 1.025, 0.043), root)
@@ -566,11 +586,13 @@ def build_striker_sidearm() -> None:
     frame = material("mat_a2_striker_frame_black", (0.035, 0.037, 0.041, 1.0))
     slide = material("mat_a2_striker_slide_graphite", (0.275, 0.290, 0.305, 1.0), metallic=0.08)
     dark = material("mat_a2_striker_dark_detail", (0.010, 0.011, 0.013, 1.0))
-    teal = material("mat_a2_striker_teal_sight", (0.0, 0.68, 0.73, 1.0))
-    orange = material("mat_a2_striker_orange_index", (1.0, 0.36, 0.04, 1.0))
+    sight = material("mat_a2_striker_sight_dots", (0.72, 0.78, 0.72, 1.0))
+    baseplate = material("mat_a2_striker_baseplate_graphite", (0.090, 0.094, 0.098, 1.0))
 
     cube("wpn_a2_striker_sidearm_01_lod0_slide", (0.0, 0.060, 0.062), (0.128, 0.315, 0.063), slide, root)
-    cube("wpn_a2_striker_sidearm_01_lod0_slide_front_cut", (0.0, 0.195, 0.107), (0.110, 0.060, 0.014), dark, root)
+    cube("wpn_a2_striker_sidearm_01_lod0_slide_front_serration", (0.0, 0.195, 0.107), (0.110, 0.060, 0.014), dark, root)
+    cube("wpn_a2_striker_sidearm_01_lod0_slide_rear_serration", (0.0, -0.095, 0.107), (0.110, 0.052, 0.014), dark, root)
+    cube("wpn_a2_striker_sidearm_01_lod0_ejection_port", (0.0, 0.090, 0.108), (0.096, 0.075, 0.016), dark, root)
     cube("wpn_a2_striker_sidearm_01_lod0_frame", (0.0, 0.010, 0.006), (0.115, 0.238, 0.056), frame, root)
     cube("wpn_a2_striker_sidearm_01_lod0_underbarrel_rail", (0.0, 0.100, -0.040), (0.096, 0.145, 0.026), dark, root)
     cylinder(
@@ -586,11 +608,13 @@ def build_striker_sidearm() -> None:
     cube("wpn_a2_striker_sidearm_01_lod0_grip_core", (0.0, -0.112, -0.128), (0.078, 0.078, 0.225), frame, root, rotation=(math.radians(-12.0), 0.0, 0.0))
     cube("wpn_a2_striker_sidearm_01_lod0_grip_panel_l", (-0.042, -0.112, -0.128), (0.012, 0.068, 0.175), dark, root, rotation=(math.radians(-12.0), 0.0, 0.0))
     cube("wpn_a2_striker_sidearm_01_lod0_grip_panel_r", (0.042, -0.112, -0.128), (0.012, 0.068, 0.175), dark, root, rotation=(math.radians(-12.0), 0.0, 0.0))
+    for z in (-0.075, -0.125, -0.175):
+        cube(f"wpn_a2_striker_sidearm_01_lod0_grip_texture_{z:.2f}", (0.0, -0.168, z), (0.084, 0.012, 0.016), dark, root, rotation=(math.radians(-12.0), 0.0, 0.0))
     cube("wpn_a2_striker_sidearm_01_lod0_trigger_guard", (0.0, 0.032, -0.066), (0.102, 0.080, 0.036), frame, root)
     cube("wpn_a2_striker_sidearm_01_lod0_trigger_proxy", (0.0, 0.002, -0.067), (0.032, 0.018, 0.064), dark, root, rotation=(math.radians(-9.0), 0.0, 0.0))
-    cube("wpn_a2_striker_sidearm_01_lod0_front_sight_teal", (0.0, 0.202, 0.108), (0.033, 0.024, 0.019), teal, root)
-    cube("wpn_a2_striker_sidearm_01_lod0_rear_sight_teal", (0.0, -0.078, 0.111), (0.052, 0.032, 0.022), teal, root)
-    cube("wpn_a2_striker_sidearm_01_lod0_base_plate_orange", (0.0, -0.182, -0.256), (0.094, 0.084, 0.025), orange, root, rotation=(math.radians(-12.0), 0.0, 0.0))
+    cube("wpn_a2_striker_sidearm_01_lod0_front_sight_dot", (0.0, 0.202, 0.108), (0.026, 0.018, 0.014), sight, root)
+    cube("wpn_a2_striker_sidearm_01_lod0_rear_sight_notch", (0.0, -0.078, 0.111), (0.052, 0.032, 0.018), sight, root)
+    cube("wpn_a2_striker_sidearm_01_lod0_base_plate", (0.0, -0.182, -0.256), (0.094, 0.084, 0.025), baseplate, root, rotation=(math.radians(-12.0), 0.0, 0.0))
     cube("wpn_a2_striker_sidearm_01_lod1_blockout", (0.0, 0.020, 0.010), (0.105, 0.375, 0.078), frame, root)
 
     empty_socket("socket_muzzle", (0.0, 0.287, 0.064), root)
@@ -834,7 +858,7 @@ ASSETS: tuple[AssetSpec, ...] = (
         tags=("all", "weapon", "weapons", "carbine", "blackout", "wpn_a2_blackout_carbine_01"),
         target_dimensions_m=(0.19, 1.31, 0.55),
         origin_note="Origin at approximate right-hand grip/root; Blender forward axis is +Y.",
-        description="Compact blackout-style generic carbine blockout with suppressed-looking front mass, micro optic, magazine, and orange/teal inspection marks.",
+        description="Grounded compact carbine blockout with a short barrel, linear muzzle device, buffer tube, M-LOK-like side slots, magazine ribs, micro optic, and muted inspection marks.",
         sockets=("socket_muzzle", "socket_grip_r", "socket_grip_l", "socket_optic", "socket_mag", "socket_eject", "socket_vfx"),
         socket_notes={
             "socket_muzzle": "Visual muzzle/VFX reference, points along Blender +Y.",
@@ -845,7 +869,7 @@ ASSETS: tuple[AssetSpec, ...] = (
             "socket_eject": "Right-side casing/VFX reference.",
             "socket_vfx": "Alias for muzzle effect placement.",
         },
-        notes=("original_generic_dev_art", "fps_visible_testasset", "orange_teal_accents", "no_brand_or_real_functional_details"),
+        notes=("original_generic_dev_art", "fps_visible_testasset", "grounded_firearm_language", "muted_range_marks", "no_brand_or_real_functional_details"),
         collision="none",
         lods=("wpn_a2_blackout_carbine_01_lod0", "wpn_a2_blackout_carbine_01_lod1"),
         build=build_blackout_carbine,
@@ -856,7 +880,7 @@ ASSETS: tuple[AssetSpec, ...] = (
         tags=("all", "weapon", "weapons", "rifle", "assault_rifle", "modular", "wpn_a2_modular_rifle_01"),
         target_dimensions_m=(0.20, 1.63, 0.64),
         origin_note="Origin at approximate right-hand grip/root; Blender forward axis is +Y.",
-        description="Generic modular assault-rifle silhouette with long rail, optic mass, side slots, foregrip, and readable attachment sockets.",
+        description="Grounded modular rifle silhouette with long rail, charging handle, dust-cover details, side slots, backup sights, foregrip, optic mass, and readable attachment sockets.",
         sockets=("socket_muzzle", "socket_grip_r", "socket_grip_l", "socket_optic", "socket_underbarrel", "socket_mag", "socket_eject", "socket_vfx"),
         socket_notes={
             "socket_muzzle": "Visual muzzle/VFX reference, points along Blender +Y.",
@@ -868,7 +892,7 @@ ASSETS: tuple[AssetSpec, ...] = (
             "socket_eject": "Right-side casing/VFX reference.",
             "socket_vfx": "Alias for muzzle effect placement.",
         },
-        notes=("original_generic_dev_art", "fps_visible_testasset", "modular_attachment_language", "orange_teal_accents"),
+        notes=("original_generic_dev_art", "fps_visible_testasset", "modular_attachment_language", "grounded_firearm_language", "muted_witness_marks"),
         collision="none",
         lods=("wpn_a2_modular_rifle_01_lod0", "wpn_a2_modular_rifle_01_lod1"),
         build=build_modular_rifle,
@@ -879,7 +903,7 @@ ASSETS: tuple[AssetSpec, ...] = (
         tags=("all", "weapon", "weapons", "sidearm", "striker", "pistol", "wpn_a2_striker_sidearm_01"),
         target_dimensions_m=(0.13, 0.47, 0.38),
         origin_note="Origin at approximate right-hand grip/root; Blender forward axis is +Y.",
-        description="Compact generic striker-style sidearm blockout with slide/frame separation, underbarrel rail, sights, and color-coded socket marks.",
+        description="Compact generic striker-style sidearm blockout with slide/frame separation, ejection-port and serration details, underbarrel rail, grip texture, and subdued sights.",
         sockets=("socket_muzzle", "socket_grip_r", "socket_grip_l", "socket_optic", "socket_rail", "socket_eject", "socket_vfx"),
         socket_notes={
             "socket_muzzle": "Visual muzzle/VFX reference, points along Blender +Y.",
@@ -890,7 +914,7 @@ ASSETS: tuple[AssetSpec, ...] = (
             "socket_eject": "Right-side casing/VFX reference.",
             "socket_vfx": "Alias for muzzle effect placement.",
         },
-        notes=("original_generic_dev_art", "fps_visible_testasset", "compact_sidearm", "orange_teal_accents"),
+        notes=("original_generic_dev_art", "fps_visible_testasset", "compact_sidearm", "grounded_firearm_language", "muted_sight_marks"),
         collision="none",
         lods=("wpn_a2_striker_sidearm_01_lod0", "wpn_a2_striker_sidearm_01_lod1"),
         build=build_striker_sidearm,

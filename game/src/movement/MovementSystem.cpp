@@ -147,6 +147,7 @@ PlayerMovementState MovementSystem::simulate(
     const player::PlayerInputCommand& command,
     float fixedDeltaSeconds) const {
     fixedDeltaSeconds = std::max(0.0F, fixedDeltaSeconds);
+    beginMovementTechFrame(state.tech, fixedDeltaSeconds);
     state.dashCooldownRemaining = consumeCooldown(state.dashCooldownRemaining, fixedDeltaSeconds);
     state.dashTimeRemaining = consumeCooldown(state.dashTimeRemaining, fixedDeltaSeconds);
     state.slideCooldownRemaining = consumeCooldown(state.slideCooldownRemaining, fixedDeltaSeconds);
@@ -177,6 +178,7 @@ PlayerMovementState MovementSystem::simulate(
         state.mode = state.position.y <= 0.001F ? MovementMode::Grounded : MovementMode::Airborne;
     }
     if (state.mode == MovementMode::WallRunning && state.wallRunTimeRemaining <= 0.0F) {
+        stopGravityBoots(state.tech);
         state.mode = MovementMode::Airborne;
     }
 
@@ -270,6 +272,7 @@ PlayerMovementState MovementSystem::simulate(
             novacore::math::Vec3{0.0F, tuning_.doubleJumpImpulse, 0.0F};
         state.wallRunTimeRemaining = 0.0F;
         state.hasDoubleJump = true;
+        triggerWallJumpDetach(state.tech);
         state.mode = MovementMode::Airborne;
     } else if (command.jumpPressed && isGroundedLike(state.mode)) {
         state.velocity.y = tuning_.jumpVelocity;
@@ -281,8 +284,11 @@ PlayerMovementState MovementSystem::simulate(
         state.hasDoubleJump = true;
         state.mode = MovementMode::Airborne;
     } else if ((command.doubleJumpPressed || command.jumpPressed) && state.mode == MovementMode::Airborne && state.hasDoubleJump) {
+        triggerDoubleJumpPlatform(state.tech, state.position);
         state.velocity.y = tuning_.doubleJumpImpulse;
         state.hasDoubleJump = false;
+    } else if (command.mantlePressed && state.mode == MovementMode::Airborne) {
+        triggerMantleReach(state.tech);
     }
 
     if (state.mode != MovementMode::Grounded &&
@@ -297,6 +303,7 @@ PlayerMovementState MovementSystem::simulate(
         state.position.y = 0.0F;
         state.velocity.y = 0.0F;
         state.hasDoubleJump = true;
+        stopGravityBoots(state.tech);
         if (state.mode == MovementMode::Airborne || state.mode == MovementMode::Dashing) {
             state.mode = MovementMode::Grounded;
         }
@@ -328,6 +335,7 @@ PlayerMovementState MovementSystem::applyWallRunContact(
 
     if (!wantsWallRun) {
         if (state.mode == MovementMode::WallRunning) {
+            stopGravityBoots(state.tech);
             state.mode = MovementMode::Airborne;
         }
         return state;
@@ -338,10 +346,16 @@ PlayerMovementState MovementSystem::applyWallRunContact(
         return state;
     }
 
+    const bool enteringWallRun = state.mode != MovementMode::WallRunning || !state.hasWallRunContact;
     state.mode = MovementMode::WallRunning;
     state.hasWallRunContact = true;
     state.wallRunNormal = normalizedOrZero(contact.normal);
     state.wallRunTangent = tangent;
+    if (enteringWallRun) {
+        triggerWallRunGravityTech(state.tech, state.wallRunNormal);
+    } else {
+        keepGravityBootsActive(state.tech, state.wallRunNormal);
+    }
     if (state.wallRunTimeRemaining <= 0.0F) {
         state.wallRunTimeRemaining = tuning_.wallRunMaxDurationSeconds;
     }

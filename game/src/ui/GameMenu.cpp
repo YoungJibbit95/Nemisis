@@ -749,7 +749,7 @@ void renderDebugOverlay(
         addMetric(frame, 386.0F, 656.0F, "AMMO", std::to_string(sample.weapon.ammoInMagazine) + " / shot " + std::to_string(sample.weapon.shotIndex));
         addMetric(frame, 674.0F, 604.0F, "POS", vec3Summary(sample.position));
         addMetric(frame, 674.0F, 630.0F, "ADS", fixedOne(sample.weapon.adsAlpha) + " recoil " + fixedOne(sample.weapon.recoilPitchOffsetDegrees));
-        addMetric(frame, 674.0F, 656.0F, "SPREAD", fixedOne(sample.fire.movementSpreadDegrees));
+        addMetric(frame, 674.0F, 656.0F, "TECH", std::string(movement::movementTechCueName(movement::dominantMovementTechCue(sample.movementTech))));
         addMetric(frame, 928.0F, 604.0F, "HP", fixedOne(sample.playerHealth.health) + "/" + fixedOne(sample.playerHealth.maxHealth));
         addMetric(frame, 928.0F, 630.0F, "RANGE", std::to_string(sample.rangeSession.score.targetsEliminated) + " elim " + percent(dev::devRangeAccuracy(sample.rangeSession.score)));
         addMetric(
@@ -783,6 +783,7 @@ void renderDebugOverlay(
         addMetric(frame, 674.0F, 630.0F, "FRAME", std::to_string(backendFrameStats.submittedFrames) + " / q " + std::to_string(meshStats.uploadQueueLength + queuedAssets));
         addMetric(frame, 928.0F, 604.0F, "RECREATE", std::to_string(backendFrameStats.swapchainRecreateCount) + " / skip " + std::to_string(backendFrameStats.skippedFrames));
         addMetric(frame, 928.0F, 630.0F, "DRAW", std::to_string(backendFrameStats.lastWorldBoxCount) + "B " + std::to_string(backendFrameStats.lastWorldMeshCount) + "M " + std::to_string(backendFrameStats.lastWorldLineCount) + "L");
+        addMetric(frame, 928.0F, 656.0F, "UI", std::to_string(backendFrameStats.lastUiRectCount) + "R " + std::to_string(backendFrameStats.lastUiLineCount) + "L " + std::to_string(backendFrameStats.lastUiTextCount) + "T");
         break;
     }
 }

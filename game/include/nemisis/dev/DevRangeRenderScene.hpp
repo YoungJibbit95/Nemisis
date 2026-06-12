@@ -29,6 +29,7 @@ struct DevRangePlayerRenderState final {
     player::PlayerViewComponent cameraView{};
     novacore::math::Vec3 headBobOffset{};
     novacore::math::Vec3 weaponSwayOffset{};
+    movement::MovementTechState movementTech{};
     float cameraRollDegrees = 0.0F;
     float verticalFovDegrees = 74.0F;
     float speed01 = 0.0F;
@@ -101,6 +102,11 @@ private:
         DevRangeRenderSceneStats& stats) const;
 
     void appendFirstPersonMeshes(
+        novacore::render::RenderFrameInfo& frame,
+        const DevRangeRenderSceneDesc& desc,
+        DevRangeRenderSceneStats& stats) const;
+
+    void appendMovementTechVisuals(
         novacore::render::RenderFrameInfo& frame,
         const DevRangeRenderSceneDesc& desc,
         DevRangeRenderSceneStats& stats) const;

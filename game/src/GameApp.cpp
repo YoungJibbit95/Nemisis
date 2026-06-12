@@ -365,6 +365,7 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
         movementSample.position,
         movementSample.velocity,
         movementSample.mode,
+        movementState != nullptr ? movementState->tech : movement::MovementTechState{},
         weaponSample,
         fireResult,
         shotTrace,
@@ -894,6 +895,7 @@ dev::DevRangePlayerRenderState GameApp::currentPlayerRenderState() const {
     if (const auto* movementState = world_.getComponent<movement::PlayerMovementState>(localPlayerEntity_);
         movementState != nullptr) {
         state.position = movementState->position;
+        state.movementTech = movementState->tech;
         state.hasMovementState = true;
     } else if (const auto* transform = world_.getComponent<novacore::ecs::TransformComponent>(localPlayerEntity_);
         transform != nullptr) {
