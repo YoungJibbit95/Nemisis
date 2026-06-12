@@ -3,6 +3,7 @@
 #include "nemisis/assets/DevAssetBindings.hpp"
 #include "nemisis/assets/GameAssetCatalog.hpp"
 #include "nemisis/dev/DebugTarget.hpp"
+#include "nemisis/dev/DevRangeSession.hpp"
 #include "nemisis/dev/DevRangeRenderScene.hpp"
 #include "nemisis/dev/DevSandbox.hpp"
 #include "nemisis/dev/GreyboxWorld.hpp"
@@ -14,6 +15,7 @@
 #include "nemisis/player/PlayerProfile.hpp"
 #include "nemisis/render/RenderTuning.hpp"
 #include "nemisis/settings/GameSettings.hpp"
+#include "nemisis/settings/UserSettingsPersistence.hpp"
 #include "nemisis/ui/GameMenu.hpp"
 #include "nemisis/weapons/WeaponAttachments.hpp"
 #include "nemisis/weapons/WeaponSystem.hpp"
@@ -28,6 +30,7 @@
 #include "novacore/render/Renderer.hpp"
 
 #include <array>
+#include <filesystem>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -56,10 +59,14 @@ private:
     void loadAssetCatalog();
     void applyConfig(std::string_view name);
     void applyLoadedConfigs();
+    void loadUserSettings();
+    void persistUserSettingsIfChanged();
     void rebuildActiveAttachmentSummary();
     void syncRuntimeLoadout();
     void ensureActiveWeapon(weapons::WeaponRuntimeState& weaponState, const weapons::WeaponDefinition& effectiveWeapon);
     void ensureLocalPlayer();
+    void resetDevRangeState();
+    void tickRangeSession(float fixedDeltaSeconds);
     void syncRelativeMouseMode();
     void registerDevMeshResources();
     void releaseDevMeshResources();
@@ -80,6 +87,8 @@ private:
     std::unordered_map<std::string, novacore::render::MeshResourceHandle> devMeshResources_;
     novacore::ecs::EntityId cameraEntity_;
     dev::DebugTargetState debugTarget_;
+    dev::DevRangeSessionState devRangeSession_;
+    dev::DevRangeSessionTuning devRangeTuning_;
     dev::DevSandbox devSandbox_;
     dev::GreyboxWorld greyboxWorld_ = dev::createDevRangeGreyboxWorld();
     dev::DevRangeRenderSceneBuilder devRangeRenderer_;
@@ -97,7 +106,8 @@ private:
     weapons::AttachmentRegistry attachmentRegistry_;
     weapons::WeaponLoadout activeLoadout_ = weapons::defaultPrototypeLoadout();
     weapons::AttachmentBuildSummary activeAttachmentBuild_;
-    float debugTargetRespawnSeconds_ = 0.0F;
+    std::filesystem::path userSettingsPath_ = settings::defaultUserSettingsPath();
+    std::string lastPersistedUserSettings_;
     bool relativeMouseDesired_ = false;
 };
 

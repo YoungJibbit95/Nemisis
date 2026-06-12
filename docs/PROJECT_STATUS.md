@@ -69,6 +69,17 @@
 
 ## Added In Latest Block
 
+- Added `DevRangeSession` as a focused gameplay-session layer for the playable range: shots fired, hits, eliminations, accuracy, current/best streak, damage dealt, range reset count, target respawn, player respawn, regen delay, and short event text.
+- Persisted player-facing runtime settings and loadout selections through `configs/user/nemisis_user.json` using `UserSettingsPersistence`, while preserving config-driven defaults when no user file exists.
+- Added `ResetRange` input on keyboard `P` and controller `Y` to reset the Dev Range, player transform, camera rig, health, command queue, weapon runtime, and target state.
+- Wired `PlayerHealthComponent` into the Dev Range sample and HUD path so health, down/respawn state, and future damage/regen validation have a single component-owned source.
+- Expanded the Dev Range HUD with health, ammo, range score, accuracy, streak, best streak, target respawn timer, and session event text.
+- Updated debug telemetry so the Gameplay page reports player HP and range score/accuracy alongside KCC state.
+- Added focused unit tests for user settings persistence and Dev Range session behavior, raising the local suite to 30 passing tests.
+- Verified `cmake --build --preset windows-msvc-debug --config Debug`, `ctest --test-dir build/windows-msvc-debug -C Debug`, `nemisis_game.exe --smoke-test`, and `nemisis_game.exe --vulkan-dev-range-smoke-test`.
+
+## Previous Block
+
 - Added A1 asset production through the Blender/Codex asset-agent path: compact rifle, modern rifle, compact sidearm, stylized operator, and first-person arms.
 - Registered the A1 assets as required Dev Sandbox renderables and verified 20/20 required renderables import, extract CPU mesh data, register with NovaCore, and become Vulkan resident in smoke runs.
 - Changed the default launch profile so plain `nemisis_game` starts in the Vulkan Main Menu, while `--dev-range` remains the explicit direct Firing Range path.
@@ -84,7 +95,7 @@
 - Added `nemisis_weapon_attachments_tests`, `nemisis_game_settings_tests`, and `nemisis_player_profile_tests`, raising the suite to 28 passing tests.
 - Verified `cmake --preset windows-msvc-debug`, full Debug build, direct `nemisis_game.exe --smoke-test`, and `ctest -C Debug` with 28/28 passing tests.
 
-## Previous Block
+## Earlier Movement/UI Block
 
 - Added acceleration/friction-based ground movement, air steering limits, air drag, slide timers, slide steering, slide end speed, slide jump boost, dash duration, and horizontal speed telemetry.
 - Added hot-reload movement config fields for ground, air, slide, and dash feel tuning.
@@ -172,8 +183,8 @@
 
 ## Next Game Blocks
 
-- Persist settings/loadout changes to user config files.
-- Wire player health into hit resolution, HUD health, respawn, and server validation.
+- Feed player damage and respawn through authoritative hit events and future server validation.
+- Add more target dummies, lane timers, and measured TTK panels to the Dev Range session.
 - Expand debug UI pages with frame timings, entity counts, packet loss simulation, and reconciliation error.
 - Expand greybox collision into mantle probes, slide validation, and richer slope/step debug visualization.
 - Add resize-safe Vulkan swapchain recreation and validation/debug labels.

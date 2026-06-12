@@ -39,6 +39,7 @@ inline constexpr std::string_view SelectDevRange = "select_dev_range";
 inline constexpr std::string_view SelectTdm = "select_tdm";
 inline constexpr std::string_view SelectControl = "select_control";
 inline constexpr std::string_view SelectMainMenu = "select_main_menu";
+inline constexpr std::string_view ResetRange = "reset_range";
 
 } // namespace actions
 
@@ -48,6 +49,7 @@ inline constexpr std::uint16_t W = 87;
 inline constexpr std::uint16_t A = 65;
 inline constexpr std::uint16_t E = 69;
 inline constexpr std::uint16_t Q = 81;
+inline constexpr std::uint16_t P = 80;
 inline constexpr std::uint16_t S = 83;
 inline constexpr std::uint16_t D = 68;
 inline constexpr std::uint16_t R = 82;
@@ -88,6 +90,7 @@ namespace gamepad_buttons {
 inline constexpr std::uint16_t A = 0;
 inline constexpr std::uint16_t B = 1;
 inline constexpr std::uint16_t X = 2;
+inline constexpr std::uint16_t Y = 3;
 inline constexpr std::uint16_t LeftShoulder = 4;
 inline constexpr std::uint16_t RightShoulder = 5;
 inline constexpr std::uint16_t Start = 6;

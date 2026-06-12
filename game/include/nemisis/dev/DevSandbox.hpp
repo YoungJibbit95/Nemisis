@@ -3,6 +3,7 @@
 #include "nemisis/movement/MovementSystem.hpp"
 #include "nemisis/dev/DebugTarget.hpp"
 #include "nemisis/dev/GreyboxCollision.hpp"
+#include "nemisis/dev/DevRangeSession.hpp"
 #include "nemisis/net/LoopbackCommandBridge.hpp"
 #include "nemisis/player/PlayerComponents.hpp"
 #include "nemisis/player/PlayerInputCommand.hpp"
@@ -29,6 +30,8 @@ struct DevSandboxSample final {
     weapons::FireResult fire{};
     weapons::ShotTraceResult shot{};
     bool hasShot = false;
+    player::PlayerHealthComponent playerHealth{};
+    DevRangeSessionState rangeSession{};
     DebugTargetState target{};
     DebugTargetHitResult targetHit{};
     player::PlayerNetworkComponent network{};

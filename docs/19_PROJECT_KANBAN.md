@@ -81,16 +81,21 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [x] Bind active first-person weapon and arms to camera/view, ADS, sway, and recoil.
 - [x] Add `nemisis_weapon_attachments_tests`, `nemisis_game_settings_tests`, and `nemisis_player_profile_tests`.
 - [x] Verify Windows MSVC Vulkan build, direct smoke run, and 28/28 CTest suite.
+- [x] Persist runtime settings and active loadout to `configs/user/nemisis_user.json`.
+- [x] Add Dev Range session scoring, accuracy, streaks, target respawn, reset feedback, and player health HUD data.
+- [x] Add keyboard `P` and controller `Y` Dev Range reset action.
+- [x] Add `nemisis_user_settings_persistence_tests` and `nemisis_dev_range_session_tests`.
+- [x] Verify Windows MSVC Vulkan build, direct smoke runs, and 30/30 CTest suite.
 
 ## Doing
 
 - [ ] Expand material fallback controls and resize-safe Vulkan swapchain behavior.
 - [ ] Keep UI moving toward a Vulkan-native text/vector backend while `UiCanvas` feeds the current debug primitive bridge.
 - [ ] Start texture/material binding for A1 GLBs so imported assets look less like tinted blockouts.
+- [ ] Grow the Dev Range from one dummy lane into a proper greybox weapon-test loop.
 
 ## Next Core
 
-- [ ] Persist settings/loadout changes to user config files.
 - [ ] Cursor policy, raw-input options, and richer controller response curves.
 - [ ] Packet simulation for latency, jitter, loss, duplication, and reorder.
 - [ ] Vulkan swapchain resize/recreate and validation debug labels.
@@ -101,12 +106,11 @@ This file mirrors the active work locally while GitHub Projects also track the l
 
 ## Next Gameplay
 
-- [ ] Dev shooting range mode shell with spawn/reset flow.
 - [ ] TDM placeholder match lifecycle.
 - [ ] Control placeholder objective lifecycle.
 - [ ] More target dummies and range markers.
-- [ ] Health/respawn HUD widgets backed by player health and target hit state.
-- [ ] Wire player health into real hit events, respawn, and server validation.
+- [ ] Player damage sources, down-state, respawn flow, and future server validation.
+- [ ] Recoil/ADS/range-score HUD widgets fed from runtime telemetry.
 
 ## Blocked
 

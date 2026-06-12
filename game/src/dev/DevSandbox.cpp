@@ -112,6 +112,11 @@ std::string DevSandbox::latestSummary() const {
            << " fire=" << (latest_.fire.fired ? "yes" : "no")
            << " dry=" << (latest_.fire.dryFire ? "yes" : "no")
            << " moveSpread=" << latest_.fire.movementSpreadDegrees
+           << " hp=" << latest_.playerHealth.health << "/" << latest_.playerHealth.maxHealth
+           << " playerDown=" << (latest_.playerHealth.eliminated ? "yes" : "no")
+           << " score=" << latest_.rangeSession.score.targetsEliminated
+           << " accuracy=" << devRangeAccuracy(latest_.rangeSession.score)
+           << " streak=" << latest_.rangeSession.score.currentStreak
            << " pending=" << latest_.network.pendingCommandCount;
     if (latest_.hasShot) {
         stream << " traceSeed=" << latest_.shot.seed

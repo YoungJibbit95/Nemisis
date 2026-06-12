@@ -81,6 +81,12 @@ Settings:
 - Aim assist toggle/intensity where allowed.
 - Vibration.
 
+Current persistence slice:
+
+- Runtime mouse/controller look settings, HUD scale, damage-number visibility, aim-assist toggles, and active loadout are saved to `configs/user/nemisis_user.json`.
+- Missing user settings fall back to config defaults.
+- Invalid stored attachment ids are ignored during load so stale user files do not crash startup.
+
 ## Acceptance
 
 Input is acceptable when:
@@ -100,6 +106,7 @@ Current implemented slice:
 - Right trigger maps to fire.
 - Left trigger maps to ADS.
 - Gamepad button bindings cover jump, dash, slide, sprint, mantle, and reload.
+- Keyboard `P` and controller `Y` map to `ResetRange` for the Dev Shooting Range.
 - `F1` toggles the debug overlay.
 - `Tab` cycles debug overlay pages.
 - Controller Start/Menu cycles debug overlay pages.
@@ -107,9 +114,10 @@ Current implemented slice:
 - Controller shoulders switch menu tabs.
 - Left/Right and controller D-pad left/right adjust live Loadout/Settings rows.
 - Mouse/controller look sensitivity and ADS look scaling are applied by `InputCommandBuilder`.
+- Runtime Settings and Loadout edits persist through `UserSettingsPersistence`.
 - Aim assist config values are parsed and exposed, but no target slowdown/rotation assist is applied yet.
 - Dev Shooting Range requests relative mouse mode while gameplay is active.
-- Input command tests verify keyboard/mouse, controller command generation, and settings-scaled look output.
+- Input command tests verify keyboard/mouse, controller command generation, settings-scaled look output, and shared action-map behavior.
 
 
 

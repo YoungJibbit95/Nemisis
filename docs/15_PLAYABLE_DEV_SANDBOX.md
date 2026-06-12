@@ -28,9 +28,12 @@ It is not a vertical slice yet. It is a developer playground for validating:
 - Live settings for mouse/controller sensitivity, ADS look scaling, HUD scale, damage-number visibility, aim-assist flags, and debug world-line visibility.
 - Six-slot attachment loadouts with effective weapon summaries for ADS, recoil, spread, reload, range, view kick, magazine size, and mobility.
 - Account/Profile stats for K/D, win rate, best weapon, best operator, and accuracy.
+- Persisted user settings/loadout snapshot under `configs/user/nemisis_user.json` after live runtime edits.
 - Deterministic greybox world data for the first shooting range.
 - Visible in-world Vulkan 3D range with player spawn, target lane, cover, ramps, walls, GLB props, and weapon proxies.
 - Active first-person weapon and arms rendering driven by camera/view, ADS, weapon sway, recoil, and current loadout.
+- Dev Range session scoring for shots fired, hits, eliminations, damage dealt, accuracy, current streak, best streak, range resets, target respawn, and session event text.
+- HUD health panel backed by `PlayerHealthComponent`.
 - Configurable Dev Range render tuning for lighting, FOV, clip planes, and world debug line visibility.
 - World-space Vulkan debug lines for aim rays and KCC ground normals.
 - Budgeted A0 environment GLB wireframe preview drawn from extracted CPU mesh data.
@@ -73,6 +76,7 @@ MKB:
 - `MouseLeft`: fire.
 - `MouseRight`: ADS.
 - `R`: reload.
+- `P`: reset Dev Shooting Range.
 
 Controller:
 
@@ -84,6 +88,7 @@ Controller:
 - `RightTrigger`: fire.
 - `LeftTrigger`: ADS.
 - `X`: reload.
+- `Y`: reset Dev Shooting Range.
 
 Menu:
 
@@ -127,6 +132,8 @@ The sandbox logs every 0.5 seconds through NovaCore logging:
 - Received acknowledgement count.
 - Last server-acknowledged tick.
 - Shot trace seed, range, and direction when a shot fires.
+- Player health and down-state sample.
+- Dev Range score, accuracy, streak, best streak, damage dealt, and reset count.
 - Debug target health.
 - Debug target hit count.
 - Hit/elimination result.
@@ -140,9 +147,18 @@ The sandbox logs every 0.5 seconds through NovaCore logging:
 
 The on-screen debug overlay currently has these pages:
 
-- Gameplay: screen, movement mode, tick, input device, position, and collision state.
+- Gameplay: screen, movement mode, tick, input device, position, collision state, player HP, range eliminations, accuracy, and streak.
 - Network: command packet counters, acknowledgement counters, pending command count, and last acknowledged tick.
 - Assets: renderer backend, Vulkan runtime summary, queued asset count, CPU/GPU mesh-resource residency, upload queue length, failed/deferred counts, primitive count, vertex count, and index count.
+
+The Dev Shooting Range HUD currently shows:
+
+- Weapon/ammo state and active attachment build.
+- Player health progress and current HP.
+- Range eliminations, accuracy, current streak, and best streak.
+- Target HP and target respawn timer.
+- Short session event text for hits, eliminations, reloads, and resets.
+- `P / Y` reset hint.
 
 The Dev Shooting Range screen also draws a greybox range map:
 
@@ -168,6 +184,8 @@ The renderer clear color also changes by state for early visual feedback:
 - The compiled Vulkan backend can create a window swapchain, depth buffer, world box pipeline, world line pipeline, world mesh pipeline, renderer-owned mesh resources, upload queued indexed GLB draws, and deferred GPU mesh destruction through the default launch profile.
 - The world is represented by deterministic greybox data, Vulkan world boxes, uploaded GLB meshes, first-person proxy meshes, and a 3D aim marker.
 - First-person weapon rendering now uses the active loadout asset instead of a fixed independent debug weapon.
+- Settings and loadout edits are persisted through the user settings snapshot after live menu changes.
+- Dev Range reset restores player movement, transform, camera view, health, weapon runtime, command queue, target state, and session feedback.
 - Dev Range render composition is isolated in `DevRangeRenderSceneBuilder`, with `GameApp` only collecting player state and orchestrating frame flow.
 - Current collision supports floor grounding, bounds, AABB blockers, walkable ramp height sampling, low-step handling, ground normals, and ledges that block until mantle exists.
 - Asset ids, preload requests, generated `.glb` exports, metadata, GLB scene-info imports, CPU mesh extraction, renderer-owned mesh handles, Vulkan upload queues, and indexed draw submission exist for the current dev assets.
@@ -178,10 +196,9 @@ The renderer clear color also changes by state for early visual feedback:
 
 ## Next Dev Sandbox Upgrades
 
-- Persisted settings/loadout user config writes.
-- HUD health/ammo panels backed by player health and weapon state.
 - Recoil/ADS debug HUD widgets fed from `WeaponRuntimeState` and `PlayerCameraRig`.
 - More debug targets and measured TTK tests.
+- Player damage sources, down-state, and respawn flow driven by authoritative hit events.
 - Full KCC collision against greybox floors, walls, cover, ramps, and ledges.
 - Renderer-owned resource handles, upload queues, and deferred destruction for current GLB meshes.
 - Real UI text rendering after the SDL debug text path is replaced by the custom UI renderer.

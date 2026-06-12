@@ -97,8 +97,11 @@ Current debug/UI implementation:
 - The current bridge flushes `UiCanvas` commands into NovaCore debug primitives until the Vulkan-native vector/text backend exists.
 - SDL debug render primitives remain available only through explicit legacy launch paths.
 - `GameMenu` owns Main Menu tabs, Loading, Dev Shooting Range, Team Deathmatch placeholder, and Control placeholder screens.
+- The Dev Shooting Range HUD now shows weapon/ammo, active range score, accuracy, streaks, target HP, target respawn, player health, and short event feedback.
+- The Gameplay debug page includes player HP and Dev Range score/accuracy in addition to movement and collision telemetry.
 - `Q/E` and controller shoulders switch top-level menu tabs.
 - Left/Right and controller D-pad left/right adjust Loadout and Settings values live.
+- Keyboard `P` and controller `Y` reset the active Dev Shooting Range session while gameplay is active.
 - `F1` toggles the debug overlay.
 - `Tab` and controller Start/Menu cycle debug overlay pages.
 - Debug pages currently cover Gameplay, Network, and Assets/Render telemetry.
@@ -131,10 +134,12 @@ Current implemented settings:
 - Damage number visibility.
 - HUD scale.
 - Debug world-line visibility.
+- Runtime persistence for the above player-facing settings plus the active loadout snapshot.
 
 Current gap:
 
-- Runtime edits are live for the current session but are not persisted back to a user settings file yet.
+- Graphics/audio settings still need deeper categories, validation, and per-setting apply/restart policy.
+- The final Vulkan-native text/vector UI backend is still pending; current UI records NanoVG-style commands and flushes through the debug primitive bridge.
 
 ## Acceptance
 

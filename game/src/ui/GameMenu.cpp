@@ -611,6 +611,21 @@ void renderDevRangeHud(
     addMetric(frame, 1030.0F, 92.0F, "HUD", fixedTwo(settings.video.hudScale));
     addMetric(frame, 1030.0F, 122.0F, "DMG", std::string(yesNo(settings.gameplay.showDamageNumbers)));
 
+    const float healthRatio = sample.playerHealth.maxHealth > 0.0F
+        ? std::clamp(sample.playerHealth.health / sample.playerHealth.maxHealth, 0.0F, 1.0F)
+        : 0.0F;
+    addRect(frame, 58.0F, 34.0F, 330.0F, 116.0F, palette::Panel);
+    addText(frame, 80.0F, 58.0F, 2.0F, palette::TextPrimary, "PLAYER");
+    addProgress(frame, {80.0F, 94.0F, 210.0F, 14.0F}, healthRatio, {0.11F, 0.05F, 0.05F, 1.0F}, healthRatio > 0.35F ? palette::Success : palette::Danger);
+    addMetric(frame, 80.0F, 122.0F, "HP", fixedOne(sample.playerHealth.health) + " / " + fixedOne(sample.playerHealth.maxHealth));
+
+    addRect(frame, 414.0F, 34.0F, 360.0F, 116.0F, palette::Panel);
+    addText(frame, 436.0F, 58.0F, 2.0F, palette::Accent, "RANGE SESSION");
+    addMetric(frame, 436.0F, 92.0F, "ELIMS", std::to_string(sample.rangeSession.score.targetsEliminated));
+    addMetric(frame, 436.0F, 122.0F, "ACC", percent(dev::devRangeAccuracy(sample.rangeSession.score)));
+    addMetric(frame, 610.0F, 92.0F, "STREAK", std::to_string(sample.rangeSession.score.currentStreak));
+    addMetric(frame, 610.0F, 122.0F, "BEST", std::to_string(sample.rangeSession.score.bestStreak));
+
     if (sample.fire.fired) {
         addText(
             frame,
@@ -623,6 +638,13 @@ void renderDevRangeHud(
     if (sample.targetHit.hit && settings.gameplay.showDamageNumbers) {
         addText(frame, 674.0F, 286.0F, 2.0F, palette::Warning, "-" + fixedOne(sample.targetHit.damageApplied));
     }
+    if (!sample.rangeSession.eventText.empty()) {
+        addText(frame, 544.0F, 250.0F, 3.0F, palette::Accent, sample.rangeSession.eventText);
+    }
+    if (sample.rangeSession.targetRespawnSeconds > 0.0F) {
+        addText(frame, 530.0F, 286.0F, 2.0F, palette::Warning, "TARGET RESPAWN " + fixedOne(sample.rangeSession.targetRespawnSeconds));
+    }
+    addText(frame, 58.0F, 164.0F, 1.0F, palette::TextSecondary, "P / Y resets range  -  Q/E or LB/RB tabs in menu");
 }
 
 void renderDevRangePanels(
@@ -677,8 +699,8 @@ void renderDebugOverlay(
         addMetric(frame, 674.0F, 604.0F, "POS", vec3Summary(sample.position));
         addMetric(frame, 674.0F, 630.0F, "ADS", fixedOne(sample.weapon.adsAlpha) + " recoil " + fixedOne(sample.weapon.recoilPitchOffsetDegrees));
         addMetric(frame, 674.0F, 656.0F, "SPREAD", fixedOne(sample.fire.movementSpreadDegrees));
-        addMetric(frame, 928.0F, 604.0F, "SURFACE", std::string(groundKindName(sample.collision.groundKind)) + " " + shortId(sample.collision.groundPrimitiveId));
-        addMetric(frame, 928.0F, 630.0F, "NORMAL", vec3Summary(sample.collision.groundNormal));
+        addMetric(frame, 928.0F, 604.0F, "HP", fixedOne(sample.playerHealth.health) + "/" + fixedOne(sample.playerHealth.maxHealth));
+        addMetric(frame, 928.0F, 630.0F, "RANGE", std::to_string(sample.rangeSession.score.targetsEliminated) + " elim " + percent(dev::devRangeAccuracy(sample.rangeSession.score)));
         addMetric(frame, 928.0F, 656.0F, "KCC", std::to_string(sample.collision.hitCount) + " " + std::string(sample.collision.onRamp ? "Ramp" : sample.collision.stepped ? "Step" : yesNo(sample.collision.blocked)));
         break;
     case DebugPage::Network:

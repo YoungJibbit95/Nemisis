@@ -5,6 +5,7 @@
 #include "nemisis/input/InputBindings.hpp"
 #include "nemisis/input/InputCommandBuilder.hpp"
 #include "nemisis/player/PlayerComponents.hpp"
+#include "nemisis/player/PlayerHealth.hpp"
 #include "nemisis/player/PlayerSpawn.hpp"
 #include "nemisis/player/PlayerView.hpp"
 #include "nemisis/weapons/WeaponSimulation.hpp"
@@ -27,7 +28,6 @@ namespace nemisis::game {
 namespace {
 
 constexpr std::string_view kDefaultWeaponId = "ar_01";
-constexpr float kDebugTargetRespawnDelaySeconds = 1.5F;
 
 struct MeshPreviewBounds final {
     float minX = std::numeric_limits<float>::max();
@@ -79,6 +79,12 @@ void addPreviewLine(
     });
 }
 
+[[nodiscard]] bool actionPressed(
+    const novacore::platform::InputActionMap& actions,
+    std::string_view action) {
+    return actions.stateOrDefault(action).pressed;
+}
+
 } // namespace
 
 GameApp::GameApp(GameAppOptions options)
@@ -105,6 +111,7 @@ void GameApp::onStartup() {
     watchConfig("modes", "configs/game_modes/tdm_control.json");
 
     applyLoadedConfigs();
+    loadUserSettings();
     loadAssetCatalog();
 
     novacore::platform::WindowDesc windowDesc{};
@@ -225,6 +232,8 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
         ensureActiveWeapon(*weaponState, activeAttachmentBuild_.effectiveWeapon);
     }
 
+    tickRangeSession(static_cast<float>(context.fixedDeltaSeconds));
+
     weapons::FireResult fireResult{};
     weapons::ShotTraceResult shotTrace{};
     bool hasShotTrace = false;
@@ -272,18 +281,24 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
     dev::DebugTargetHitResult targetHit{};
     if (hasShotTrace) {
         targetHit = dev::applyShotToDebugTarget(debugTarget_, shotTrace);
-        if (targetHit.eliminated) {
-            debugTargetRespawnSeconds_ = kDebugTargetRespawnDelaySeconds;
-        }
+    }
+    dev::recordShotResult(devRangeSession_, fireResult, targetHit, devRangeTuning_);
+    if (targetHit.eliminated) {
+        dev::beginTargetRespawn(devRangeSession_, devRangeTuning_);
     }
 
-    if (debugTarget_.eliminated && debugTargetRespawnSeconds_ > 0.0F) {
-        debugTargetRespawnSeconds_ = std::max(
-            0.0F,
-            debugTargetRespawnSeconds_ - static_cast<float>(context.fixedDeltaSeconds));
-        if (debugTargetRespawnSeconds_ <= 0.0F) {
-            dev::resetDebugTarget(debugTarget_);
+    if (dev::tickTargetRespawn(devRangeSession_, static_cast<float>(context.fixedDeltaSeconds))) {
+        dev::resetDebugTarget(debugTarget_);
+    }
+
+    player::PlayerHealthComponent healthSample{};
+    if (auto* health = world_.getComponent<player::PlayerHealthComponent>(localPlayerEntity_);
+        health != nullptr) {
+        dev::tickPlayerRegen(devRangeSession_, *health, static_cast<float>(context.fixedDeltaSeconds), devRangeTuning_);
+        if (dev::tickPlayerRespawn(devRangeSession_, *health, static_cast<float>(context.fixedDeltaSeconds))) {
+            resetDevRangeState();
         }
+        healthSample = *health;
     }
 
     player::PlayerNetworkComponent networkSample{};
@@ -339,6 +354,8 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
         fireResult,
         shotTrace,
         hasShotTrace,
+        healthSample,
+        devRangeSession_,
         debugTarget_,
         targetHit,
         networkSample,
@@ -354,6 +371,10 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
     menu_.update(actions_, settings_, activeLoadout_, attachmentRegistry_);
     menu_.updateFrame(context.deltaSeconds);
     syncRuntimeLoadout();
+    persistUserSettingsIfChanged();
+    if (menu_.gameplayActive() && actionPressed(actions_, input::actions::ResetRange)) {
+        resetDevRangeState();
+    }
     if (options_.lockDevRange && !menu_.gameplayActive()) {
         menu_.showDevRange();
     }
@@ -504,6 +525,49 @@ void GameApp::applyLoadedConfigs() {
     applyConfig("weapons");
 }
 
+void GameApp::loadUserSettings() {
+    settings::UserSettingsSnapshot fallback{};
+    fallback.settings = settings_;
+    fallback.loadout = activeLoadout_;
+
+    const auto result = settings::loadUserSettingsSnapshot(userSettingsPath_, fallback, attachmentRegistry_);
+    if (!result.ok()) {
+        for (const auto& error : result.errors) {
+            novacore::core::logWarning("game", error);
+        }
+        lastPersistedUserSettings_ = settings::serializeUserSettingsSnapshot(fallback);
+        return;
+    }
+
+    if (result.loaded) {
+        settings_ = result.snapshot.settings;
+        activeLoadout_ = result.snapshot.loadout;
+        novacore::core::logInfo("game", "User settings loaded: " + userSettingsPath_.string());
+    }
+    lastPersistedUserSettings_ = settings::serializeUserSettingsSnapshot(settings::UserSettingsSnapshot{settings_, activeLoadout_});
+}
+
+void GameApp::persistUserSettingsIfChanged() {
+    const settings::UserSettingsSnapshot snapshot{settings_, activeLoadout_};
+    const auto serialized = settings::serializeUserSettingsSnapshot(snapshot);
+    if (serialized == lastPersistedUserSettings_) {
+        return;
+    }
+
+    const auto result = settings::saveUserSettingsSnapshot(userSettingsPath_, snapshot);
+    if (!result.ok()) {
+        for (const auto& error : result.errors) {
+            novacore::core::logWarning("game", error);
+        }
+        return;
+    }
+
+    lastPersistedUserSettings_ = serialized;
+    if (result.saved) {
+        novacore::core::logInfo("game", "User settings saved: " + userSettingsPath_.string());
+    }
+}
+
 void GameApp::rebuildActiveAttachmentSummary() {
     if (activeLoadout_.weaponId.empty() || weapons_.findWeapon(activeLoadout_.weaponId) == nullptr) {
         activeLoadout_.weaponId = std::string(kDefaultWeaponId);
@@ -573,6 +637,47 @@ void GameApp::ensureLocalPlayer() {
     localCommandQueue_.clear();
     player::resetCameraRig(cameraRig_);
     novacore::core::logInfo("game", "Local player entity spawned");
+}
+
+void GameApp::resetDevRangeState() {
+    ensureLocalPlayer();
+    rebuildActiveAttachmentSummary();
+    dev::resetDebugTarget(debugTarget_);
+    dev::recordRangeReset(devRangeSession_, devRangeTuning_);
+
+    if (auto* movementState = world_.getComponent<movement::PlayerMovementState>(localPlayerEntity_);
+        movementState != nullptr) {
+        *movementState = {};
+        movementState->position = greyboxWorld_.playerSpawn;
+    }
+    if (auto* transform = world_.getComponent<novacore::ecs::TransformComponent>(localPlayerEntity_);
+        transform != nullptr) {
+        transform->position = greyboxWorld_.playerSpawn;
+    }
+    if (auto* cameraTransform = world_.getComponent<novacore::ecs::TransformComponent>(cameraEntity_);
+        cameraTransform != nullptr) {
+        cameraTransform->position = greyboxWorld_.playerSpawn + novacore::math::Vec3{0.0F, 1.65F, 0.0F};
+    }
+    if (auto* view = world_.getComponent<player::PlayerViewComponent>(localPlayerEntity_);
+        view != nullptr) {
+        *view = {};
+    }
+    if (auto* health = world_.getComponent<player::PlayerHealthComponent>(localPlayerEntity_);
+        health != nullptr) {
+        player::resetHealth(*health);
+    }
+    if (auto* weapon = world_.getComponent<weapons::WeaponRuntimeState>(localPlayerEntity_);
+        weapon != nullptr) {
+        *weapon = {};
+        ensureActiveWeapon(*weapon, activeAttachmentBuild_.effectiveWeapon);
+    }
+
+    localCommandQueue_.clear();
+    player::resetCameraRig(cameraRig_);
+}
+
+void GameApp::tickRangeSession(float fixedDeltaSeconds) {
+    dev::tickSessionFeedback(devRangeSession_, fixedDeltaSeconds);
 }
 
 void GameApp::syncRelativeMouseMode() {
