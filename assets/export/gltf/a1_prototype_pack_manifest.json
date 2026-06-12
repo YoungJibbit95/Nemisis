@@ -1,0 +1,198 @@
+{
+  "pack_id": "nemisis_a1_prototype_pack",
+  "generated_at_utc": "2026-06-12T06:53:23+00:00",
+  "generator": "tools/blender/make_a1_prototype_pack.py",
+  "blender_version": "5.1.2",
+  "units": "meters",
+  "external_assets": false,
+  "asset_count": 5,
+  "assets": [
+    {
+      "id": "wpn_a1_compact_rifle_01",
+      "category": "weapon",
+      "source": "assets/source/blender/weapons/wpn_a1_compact_rifle_01.blend",
+      "export": "assets/export/gltf/weapons/wpn_a1_compact_rifle_01.glb",
+      "metadata": "assets/export/gltf/weapons/wpn_a1_compact_rifle_01.metadata.json",
+      "dimensions_m": [
+        0.1875,
+        1.14,
+        0.5324
+      ],
+      "target_dimensions_m": [
+        0.19,
+        1.13,
+        0.49
+      ],
+      "description": "Compact generic rifle blockout with short receiver, enclosed front silhouette, compact rear support, readable magazine, and inspection sockets.",
+      "sockets": [
+        "socket_muzzle",
+        "socket_grip_r",
+        "socket_grip_l",
+        "socket_eject",
+        "socket_vfx"
+      ],
+      "collision": "none",
+      "lods": [
+        "wpn_a1_compact_rifle_01_lod0",
+        "wpn_a1_compact_rifle_01_lod1"
+      ],
+      "bytes": 31692,
+      "stats": {
+        "mesh_objects": 15,
+        "vertices": 176,
+        "polygons": 118,
+        "triangles_estimate": 292
+      }
+    },
+    {
+      "id": "wpn_a1_modern_rifle_01",
+      "category": "weapon",
+      "source": "assets/source/blender/weapons/wpn_a1_modern_rifle_01.blend",
+      "export": "assets/export/gltf/weapons/wpn_a1_modern_rifle_01.glb",
+      "metadata": "assets/export/gltf/weapons/wpn_a1_modern_rifle_01.metadata.json",
+      "dimensions_m": [
+        0.185,
+        1.4525,
+        0.645
+      ],
+      "target_dimensions_m": [
+        0.19,
+        1.45,
+        0.57
+      ],
+      "description": "Generic modern assault-rifle-style blockout with long front rail silhouette, rear support, optic mass, magazine, and animation sockets.",
+      "sockets": [
+        "socket_muzzle",
+        "socket_grip_r",
+        "socket_grip_l",
+        "socket_eject",
+        "socket_vfx"
+      ],
+      "collision": "none",
+      "lods": [
+        "wpn_a1_modern_rifle_01_lod0",
+        "wpn_a1_modern_rifle_01_lod1"
+      ],
+      "bytes": 32644,
+      "stats": {
+        "mesh_objects": 15,
+        "vertices": 184,
+        "polygons": 122,
+        "triangles_estimate": 308
+      }
+    },
+    {
+      "id": "wpn_a1_compact_sidearm_01",
+      "category": "weapon",
+      "source": "assets/source/blender/weapons/wpn_a1_compact_sidearm_01.blend",
+      "export": "assets/export/gltf/weapons/wpn_a1_compact_sidearm_01.glb",
+      "metadata": "assets/export/gltf/weapons/wpn_a1_compact_sidearm_01.metadata.json",
+      "dimensions_m": [
+        0.125,
+        0.4688,
+        0.3842
+      ],
+      "target_dimensions_m": [
+        0.13,
+        0.45,
+        0.35
+      ],
+      "description": "Generic compact sidearm blockout with clear slide/frame/grip silhouette, simple sights, and first-person sockets.",
+      "sockets": [
+        "socket_muzzle",
+        "socket_grip_r",
+        "socket_grip_l",
+        "socket_eject",
+        "socket_vfx"
+      ],
+      "collision": "none",
+      "lods": [
+        "wpn_a1_compact_sidearm_01_lod0",
+        "wpn_a1_compact_sidearm_01_lod1"
+      ],
+      "bytes": 22468,
+      "stats": {
+        "mesh_objects": 11,
+        "vertices": 116,
+        "polygons": 80,
+        "triangles_estimate": 188
+      }
+    },
+    {
+      "id": "chr_a1_stylized_operator_01",
+      "category": "character",
+      "source": "assets/source/blender/characters/chr_a1_stylized_operator_01.blend",
+      "export": "assets/export/gltf/characters/chr_a1_stylized_operator_01.glb",
+      "metadata": "assets/export/gltf/characters/chr_a1_stylized_operator_01.metadata.json",
+      "dimensions_m": [
+        1.1355,
+        0.8,
+        1.885
+      ],
+      "target_dimensions_m": [
+        1.02,
+        0.56,
+        1.84
+      ],
+      "description": "Stylized sci-fi operator blockout combining readable military gear, pilot-like helmet/visor language, mobility-pack shapes, rig, hitbox guides, and sockets.",
+      "sockets": [
+        "socket_root",
+        "socket_camera",
+        "socket_weapon_root",
+        "socket_hand_r",
+        "socket_hand_l",
+        "socket_head",
+        "socket_backpack",
+        "socket_vfx"
+      ],
+      "collision": "col_chr_a1_stylized_operator_01_capsule",
+      "lods": [
+        "chr_a1_stylized_operator_01_lod0"
+      ],
+      "bytes": 127772,
+      "stats": {
+        "mesh_objects": 34,
+        "vertices": 752,
+        "polygons": 630,
+        "triangles_estimate": 1368
+      }
+    },
+    {
+      "id": "chr_a1_fp_arms_01",
+      "category": "character",
+      "source": "assets/source/blender/characters/chr_a1_fp_arms_01.blend",
+      "export": "assets/export/gltf/characters/chr_a1_fp_arms_01.glb",
+      "metadata": "assets/export/gltf/characters/chr_a1_fp_arms_01.metadata.json",
+      "dimensions_m": [
+        0.6206,
+        0.8221,
+        0.3355
+      ],
+      "target_dimensions_m": [
+        0.58,
+        0.89,
+        0.44
+      ],
+      "description": "Optional first-person arms blockout with simple sleeves, gloves, wrist armor, rig bones, and weapon alignment sockets.",
+      "sockets": [
+        "socket_camera",
+        "socket_weapon_root",
+        "socket_hand_r",
+        "socket_hand_l",
+        "socket_vfx"
+      ],
+      "collision": "none",
+      "lods": [
+        "chr_a1_fp_arms_01_lod0",
+        "chr_a1_fp_arms_01_lod1"
+      ],
+      "bytes": 29076,
+      "stats": {
+        "mesh_objects": 10,
+        "vertices": 160,
+        "polygons": 100,
+        "triangles_estimate": 280
+      }
+    }
+  ]
+}

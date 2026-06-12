@@ -2,7 +2,8 @@
   "mouse": {
     "sensitivity_x": 1.0,
     "sensitivity_y": 1.0,
-    "ads_multiplier": 0.85
+    "ads_multiplier": 0.85,
+    "invert_y": false
   },
   "actions": {
     "jump": "Space",
@@ -42,6 +43,18 @@
       "slowdown_strength": 0.22,
       "rotation_strength": 0.08
     }
+  },
+  "gameplay": {
+    "hold_to_sprint": true,
+    "toggle_ads": false,
+    "show_hit_markers": true,
+    "show_damage_numbers": true,
+    "screen_shake_scale": 0.65
+  },
+  "video": {
+    "hud_scale": 1.0,
+    "menu_safe_area": 0.96,
+    "show_debug_world_lines": true
   }
 }
 

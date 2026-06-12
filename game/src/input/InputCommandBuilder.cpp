@@ -69,6 +69,13 @@ namespace {
 player::PlayerInputCommand buildPlayerInputCommand(
     const novacore::platform::InputActionMap& actions,
     std::uint64_t tick) {
+    return buildPlayerInputCommand(actions, tick, settings::GameSettings{});
+}
+
+player::PlayerInputCommand buildPlayerInputCommand(
+    const novacore::platform::InputActionMap& actions,
+    std::uint64_t tick,
+    const settings::GameSettings& settings) {
     player::PlayerInputCommand command{};
     command.tick = tick;
 
@@ -79,9 +86,6 @@ player::PlayerInputCommand buildPlayerInputCommand(
 
     command.move.x = std::clamp(right - left, -1.0F, 1.0F);
     command.move.y = std::clamp(forward - backward, -1.0F, 1.0F);
-    command.look.x = state(actions, actions::LookRight).value;
-    command.look.y = state(actions, actions::LookUp).value;
-
     command.jumpPressed = pressed(actions, actions::Jump);
     command.doubleJumpPressed = pressed(actions, actions::DoubleJump);
     command.crouchHeld = down(actions, actions::Slide);
@@ -95,6 +99,12 @@ player::PlayerInputCommand buildPlayerInputCommand(
     command.adsHeld = down(actions, actions::Ads);
     command.reloadPressed = pressed(actions, actions::Reload);
     command.device = dominantDevice(actions);
+
+    const bool controller = command.device == novacore::platform::InputDeviceKind::Controller;
+    command.look.x = state(actions, actions::LookRight).value *
+        settings::effectiveLookScaleX(settings, controller, command.adsHeld);
+    command.look.y = state(actions, actions::LookUp).value *
+        settings::effectiveLookScaleY(settings, controller, command.adsHeld);
 
     return command;
 }

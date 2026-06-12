@@ -168,6 +168,56 @@
       "priority": 59,
       "estimated_bytes": 22068,
       "tags": ["prop", "prototype_pack", "target", "combat_test", "dev_sandbox"]
+    },
+    {
+      "id": "wpn_a1_compact_rifle_01",
+      "kind": "mesh",
+      "source": "assets/source/blender/weapons/wpn_a1_compact_rifle_01.blend",
+      "cooked": "assets/export/gltf/weapons/wpn_a1_compact_rifle_01.glb",
+      "streamable": true,
+      "priority": 74,
+      "estimated_bytes": 31692,
+      "tags": ["weapon", "rifle", "compact", "a1_prototype_pack", "first_person", "world_model", "visual_blockout", "dev_sandbox"]
+    },
+    {
+      "id": "wpn_a1_modern_rifle_01",
+      "kind": "mesh",
+      "source": "assets/source/blender/weapons/wpn_a1_modern_rifle_01.blend",
+      "cooked": "assets/export/gltf/weapons/wpn_a1_modern_rifle_01.glb",
+      "streamable": true,
+      "priority": 75,
+      "estimated_bytes": 32644,
+      "tags": ["weapon", "rifle", "assault_rifle", "a1_prototype_pack", "first_person", "world_model", "visual_blockout", "dev_sandbox"]
+    },
+    {
+      "id": "wpn_a1_compact_sidearm_01",
+      "kind": "mesh",
+      "source": "assets/source/blender/weapons/wpn_a1_compact_sidearm_01.blend",
+      "cooked": "assets/export/gltf/weapons/wpn_a1_compact_sidearm_01.glb",
+      "streamable": true,
+      "priority": 70,
+      "estimated_bytes": 22468,
+      "tags": ["weapon", "sidearm", "a1_prototype_pack", "first_person", "world_model", "visual_blockout", "dev_sandbox"]
+    },
+    {
+      "id": "chr_a1_stylized_operator_01",
+      "kind": "mesh",
+      "source": "assets/source/blender/characters/chr_a1_stylized_operator_01.blend",
+      "cooked": "assets/export/gltf/characters/chr_a1_stylized_operator_01.glb",
+      "streamable": true,
+      "priority": 73,
+      "estimated_bytes": 127772,
+      "tags": ["character", "third_person", "operator", "a1_prototype_pack", "hitbox_test", "visual_blockout", "dev_sandbox"]
+    },
+    {
+      "id": "chr_a1_fp_arms_01",
+      "kind": "mesh",
+      "source": "assets/source/blender/characters/chr_a1_fp_arms_01.blend",
+      "cooked": "assets/export/gltf/characters/chr_a1_fp_arms_01.glb",
+      "streamable": true,
+      "priority": 69,
+      "estimated_bytes": 29076,
+      "tags": ["character", "first_person_arms", "a1_prototype_pack", "animation_test", "visual_blockout", "dev_sandbox"]
     }
   ]
 }

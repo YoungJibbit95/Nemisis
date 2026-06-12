@@ -7,7 +7,8 @@ The playable dev sandbox is the first runtime loop for testing Nemisis features 
 It is not a vertical slice yet. It is a developer playground for validating:
 
 - Vulkan-first Dev Shooting Range boot.
-- Barebones main menu and mode selection through the explicit legacy/debug path.
+- Vulkan-first Main Menu boot with Play, Gamemodes, Loadout, Character, Settings, Account, and Loading screens.
+- Dev Shooting Range direct boot through `--dev-range`.
 - Window event input.
 - MKB and controller action mapping.
 - Mouse and right-stick look.
@@ -23,8 +24,13 @@ It is not a vertical slice yet. It is a developer playground for validating:
 - Relative mouse mode activation while the Dev Shooting Range is active.
 - Multi-page on-screen debug telemetry for gameplay, network, and asset/render state.
 - `UiCanvas` command bridge for menu/debug/HUD primitives before the final Vulkan-native UI backend.
+- UI image placeholder commands backed by committed SVG/PNG-style UI art paths.
+- Live settings for mouse/controller sensitivity, ADS look scaling, HUD scale, damage-number visibility, aim-assist flags, and debug world-line visibility.
+- Six-slot attachment loadouts with effective weapon summaries for ADS, recoil, spread, reload, range, view kick, magazine size, and mobility.
+- Account/Profile stats for K/D, win rate, best weapon, best operator, and accuracy.
 - Deterministic greybox world data for the first shooting range.
 - Visible in-world Vulkan 3D range with player spawn, target lane, cover, ramps, walls, GLB props, and weapon proxies.
+- Active first-person weapon and arms rendering driven by camera/view, ADS, weapon sway, recoil, and current loadout.
 - Configurable Dev Range render tuning for lighting, FOV, clip planes, and world debug line visibility.
 - World-space Vulkan debug lines for aim rays and KCC ground normals.
 - Budgeted A0 environment GLB wireframe preview drawn from extracted CPU mesh data.
@@ -43,11 +49,12 @@ Current environment note:
 
 - `cmake-build-debug` has been verified with CLion's bundled MinGW/Ninja.
 - NovaCore fetches SDL3 automatically when no installed SDL3 package is found.
-- Plain `nemisis_game.exe` now starts the Vulkan Dev Range directly.
-- The smoke run now reports `Launch profile: renderer=vulkan require_vulkan=true start_screen=dev_range lock_dev_range=true`.
+- Plain `nemisis_game.exe` now starts the Vulkan Main Menu.
+- `nemisis_game.exe --dev-range` starts the Vulkan Dev Range directly.
+- The smoke run now reports `Launch profile: renderer=vulkan require_vulkan=true start_screen=menu lock_dev_range=false`.
 - Vulkan SDK is now visible at `F:\VulkanSDK\1.4.350.0`.
 - `nemisis_game --sdl-debug` starts the old SDL debug menu path explicitly.
-- `nemisis_game --menu --sdl-debug` is the current way to inspect the old menu/debug UI.
+- `nemisis_game --sdl-debug` is the current way to inspect the old SDL debug path.
 - `nemisis_game --vulkan-smoke-test` still validates Vulkan without auto-entering the Dev Range.
 - `nemisis_game --vulkan-dev-range-smoke-test` remains a named explicit version of the default 3D smoke.
 - Generated A0 and prototype-pack assets are registered as NovaCore renderer mesh resources and rendered in-world through the Vulkan GLB mesh path.
@@ -84,6 +91,8 @@ Menu:
 - `2`: Team Deathmatch placeholder.
 - `3`: Control placeholder.
 - `Up/Down`: move menu selection.
+- `Left/Right`: adjust selected Loadout/Settings values.
+- `Q/E`: switch top-level menu tabs.
 - `Enter`: load selected menu item.
 - `Esc`: return to main menu.
 - `F1`: toggle debug overlay.
@@ -91,6 +100,8 @@ Menu:
 - Controller `A`: confirm.
 - Controller `B`: back.
 - Controller D-pad up/down: move menu selection.
+- Controller D-pad left/right: adjust selected Loadout/Settings values.
+- Controller shoulders: switch top-level menu tabs.
 - Controller Start/Menu: cycle debug overlay page when the overlay is visible.
 
 ## Telemetry
@@ -104,6 +115,7 @@ The sandbox logs every 0.5 seconds through NovaCore logging:
 - Position and velocity.
 - View-relative aiming state through shot trace direction.
 - Weapon id.
+- Active attachment/effective weapon state through HUD and loading UI.
 - Ammo.
 - Shot index.
 - ADS alpha.
@@ -155,17 +167,18 @@ The renderer clear color also changes by state for early visual feedback:
 - SDL debug visuals are a legacy fallback/debug path behind `--sdl-debug`.
 - The compiled Vulkan backend can create a window swapchain, depth buffer, world box pipeline, world line pipeline, world mesh pipeline, renderer-owned mesh resources, upload queued indexed GLB draws, and deferred GPU mesh destruction through the default launch profile.
 - The world is represented by deterministic greybox data, Vulkan world boxes, uploaded GLB meshes, first-person proxy meshes, and a 3D aim marker.
+- First-person weapon rendering now uses the active loadout asset instead of a fixed independent debug weapon.
 - Dev Range render composition is isolated in `DevRangeRenderSceneBuilder`, with `GameApp` only collecting player state and orchestrating frame flow.
 - Current collision supports floor grounding, bounds, AABB blockers, walkable ramp height sampling, low-step handling, ground normals, and ledges that block until mantle exists.
 - Asset ids, preload requests, generated `.glb` exports, metadata, GLB scene-info imports, CPU mesh extraction, renderer-owned mesh handles, Vulkan upload queues, and indexed draw submission exist for the current dev assets.
-- Relative mouse mode is requested for the dev range, but sensitivity, cursor policy settings, and raw input config are not data-driven yet.
+- Relative mouse mode is requested for the dev range; mouse/controller sensitivity is data-driven, while cursor policy persistence and raw-input options are still pending.
 - Debug target hit resolution is a focused sphere test, not full scene collision.
 - The command bridge is loopback only; real UDP transport, prediction/reconciliation, and remote snapshots are not implemented yet.
 - UI currently reaches Vulkan through the debug primitive bridge; the final SDF/MSDF text and vector path is still pending.
 
 ## Next Dev Sandbox Upgrades
 
-- Config-loaded sensitivity and response curves.
+- Persisted settings/loadout user config writes.
 - HUD health/ammo panels backed by player health and weapon state.
 - Recoil/ADS debug HUD widgets fed from `WeaponRuntimeState` and `PlayerCameraRig`.
 - More debug targets and measured TTK tests.

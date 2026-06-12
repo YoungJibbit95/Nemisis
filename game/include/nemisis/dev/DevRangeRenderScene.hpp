@@ -5,12 +5,14 @@
 #include "nemisis/dev/GreyboxWorld.hpp"
 #include "nemisis/movement/MovementSystem.hpp"
 #include "nemisis/player/PlayerComponents.hpp"
+#include "nemisis/weapons/WeaponTypes.hpp"
 
 #include "novacore/math/Types.hpp"
 #include "novacore/render/Renderer.hpp"
 
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -30,6 +32,10 @@ struct DevRangePlayerRenderState final {
     float verticalFovDegrees = 74.0F;
     float speed01 = 0.0F;
     float adsAlpha = 0.0F;
+    std::string activeWeaponId = "ar_01";
+    weapons::WeaponClass activeWeaponClass = weapons::WeaponClass::AssaultRifle;
+    weapons::WeaponRuntimeState weapon{};
+    std::uint16_t effectiveMagazineSize = 0;
     bool hasMovementState = false;
     bool hasCameraRig = false;
 };

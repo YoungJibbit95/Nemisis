@@ -184,3 +184,118 @@ Acceptance:
 - Sidearm reads clearly at first-person and pickup scale.
 - Slide, grip, and muzzle are visually distinct.
 - Uses original primitive geometry only.
+
+## Brief 08 - A1 Compact Rifle Blockout
+
+Asset id: `wpn_a1_compact_rifle_01`
+
+Purpose: compact generic rifle silhouette for A1 first-person/world-model scale checks, inspired only by broad compact PDW/rifle proportions.
+
+Requirements:
+
+- Scale: compact rifle blockout around 1.1 m in Blender forward length.
+- Origin: grip/root area suitable for weapon socket attachment.
+- Meshes: short receiver, enclosed front silhouette, compact rear support, magazine, grip, sight blocks, small color ID marks.
+- Materials: dark polymer, gunmetal, rubber, teal/orange inspection accents.
+- Sockets: `socket_muzzle`, `socket_grip_r`, `socket_grip_l`, `socket_eject`, `socket_vfx`.
+- LODs: `wpn_a1_compact_rifle_01_lod0`, `wpn_a1_compact_rifle_01_lod1`.
+- Export: `assets/export/gltf/weapons/wpn_a1_compact_rifle_01.glb`.
+- Metadata: `assets/export/gltf/weapons/wpn_a1_compact_rifle_01.metadata.json`.
+
+Acceptance:
+
+- Reads as compact and distinct from the longer rifle.
+- Contains no protected brand names, logos, copied silhouettes, or real functional implementation details.
+- Sockets are easy to inspect in Blender and metadata.
+
+## Brief 09 - A1 Modern Rifle Blockout
+
+Asset id: `wpn_a1_modern_rifle_01`
+
+Purpose: generic modern assault-rifle-style visual blockout for A1 weapon silhouette comparison.
+
+Requirements:
+
+- Scale: longer than the compact rifle, around 1.45 m in Blender forward length.
+- Origin: grip/root area suitable for weapon socket attachment.
+- Meshes: receiver, long front rail silhouette, rear support, magazine, grip, support grip, optic mass, simple color ID marks.
+- Materials: dark polymer, gunmetal, muted panel color, blue/glass accents.
+- Sockets: `socket_muzzle`, `socket_grip_r`, `socket_grip_l`, `socket_eject`, `socket_vfx`.
+- LODs: `wpn_a1_modern_rifle_01_lod0`, `wpn_a1_modern_rifle_01_lod1`.
+- Export: `assets/export/gltf/weapons/wpn_a1_modern_rifle_01.glb`.
+- Metadata: `assets/export/gltf/weapons/wpn_a1_modern_rifle_01.metadata.json`.
+
+Acceptance:
+
+- Reads as a stable modern rifle without copying any protected product design.
+- Keeps the asset at visual game blockout level only.
+- Magazine, grip, support area, muzzle socket, and optic mass are readable.
+
+## Brief 10 - A1 Compact Sidearm Blockout
+
+Asset id: `wpn_a1_compact_sidearm_01`
+
+Purpose: generic compact sidearm visual blockout for first-person, pickup, and holster-scale tests.
+
+Requirements:
+
+- Scale: compact sidearm blockout around 0.45 m in Blender forward length.
+- Origin: grip/root area suitable for weapon socket attachment.
+- Meshes: slide, frame, grip, visual front opening, trigger guard shape, simple sights, base plate.
+- Materials: dark polymer, metal slide, dark details, small orange inspection accent.
+- Sockets: `socket_muzzle`, `socket_grip_r`, `socket_grip_l`, `socket_eject`, `socket_vfx`.
+- LODs: `wpn_a1_compact_sidearm_01_lod0`, `wpn_a1_compact_sidearm_01_lod1`.
+- Export: `assets/export/gltf/weapons/wpn_a1_compact_sidearm_01.glb`.
+- Metadata: `assets/export/gltf/weapons/wpn_a1_compact_sidearm_01.metadata.json`.
+
+Acceptance:
+
+- Reads clearly as a compact sidearm at first-person and pickup scale.
+- Contains no logos, product names, or copied protected design details.
+- Remains primitive dev-art with no real weapon functionality represented.
+
+## Brief 11 - A1 Stylized Operator
+
+Asset id: `chr_a1_stylized_operator_01`
+
+Purpose: stylized character blockout mixing grounded soldier readability, pilot-like helmet/visor language, and sci-fi armor shapes for A1 hitbox and animation tests.
+
+Requirements:
+
+- Scale: roughly 1.8 m tall with feet/root origin at world base.
+- Meshes: torso, pelvis, helmet, visor, shoulder pads, arms, gloves, legs, boots, backpack/mobility pack shapes, team accent panels.
+- Skeleton: stable humanoid bone names.
+- Hitbox guides: head, torso, pelvis.
+- Collision: `col_chr_a1_stylized_operator_01_capsule`.
+- Sockets: `socket_root`, `socket_camera`, `socket_weapon_root`, `socket_hand_r`, `socket_hand_l`, `socket_head`, `socket_backpack`, `socket_vfx`.
+- Export: `assets/export/gltf/characters/chr_a1_stylized_operator_01.glb`.
+- Metadata: `assets/export/gltf/characters/chr_a1_stylized_operator_01.metadata.json`.
+
+Acceptance:
+
+- Reads as original stylized sci-fi soldier dev-art, not copied franchise art.
+- Helmet, chest, hands, backpack, and limb proportions are readable.
+- Rig sockets and hitbox guide meshes are present.
+
+## Brief 12 - A1 First-Person Arms
+
+Asset id: `chr_a1_fp_arms_01`
+
+Purpose: optional A1 first-person arms blockout for weapon socket and rough animation pose tests.
+
+Requirements:
+
+- Scale: matched to A1 weapon grip/socket positions.
+- Origin: camera/root alignment point.
+- Meshes: left/right upper arms, forearms, gloves, wrist armor, alignment bar.
+- Skeleton: stable arm bone names.
+- Sockets: `socket_camera`, `socket_weapon_root`, `socket_hand_r`, `socket_hand_l`, `socket_vfx`.
+- LODs: `chr_a1_fp_arms_01_lod0`, `chr_a1_fp_arms_01_lod1`.
+- Export: `assets/export/gltf/characters/chr_a1_fp_arms_01.glb`.
+- Metadata: `assets/export/gltf/characters/chr_a1_fp_arms_01.metadata.json`.
+
+Acceptance:
+
+- Arms leave a clear center aim line for testing.
+- Hands line up with the A1 rifle/sidearm grip socket family well enough for blockout review.
+- No final IK or final animation polish is implied.

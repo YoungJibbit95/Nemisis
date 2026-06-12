@@ -11,8 +11,11 @@
 #include "nemisis/net/LoopbackCommandBridge.hpp"
 #include "nemisis/player/PlayerCameraRig.hpp"
 #include "nemisis/player/PlayerCommandQueue.hpp"
+#include "nemisis/player/PlayerProfile.hpp"
 #include "nemisis/render/RenderTuning.hpp"
+#include "nemisis/settings/GameSettings.hpp"
 #include "nemisis/ui/GameMenu.hpp"
+#include "nemisis/weapons/WeaponAttachments.hpp"
 #include "nemisis/weapons/WeaponSystem.hpp"
 
 #include "novacore/core/Application.hpp"
@@ -34,8 +37,8 @@ namespace nemisis::game {
 struct GameAppOptions final {
     bool preferVulkanRenderer = true;
     bool requireVulkanRenderer = true;
-    bool autoEnterDevRange = true;
-    bool lockDevRange = true;
+    bool autoEnterDevRange = false;
+    bool lockDevRange = false;
 };
 
 class GameApp final : public novacore::core::IApplicationDelegate {
@@ -53,7 +56,9 @@ private:
     void loadAssetCatalog();
     void applyConfig(std::string_view name);
     void applyLoadedConfigs();
-    void ensureActiveWeapon(weapons::WeaponRuntimeState& weaponState, std::string_view requestedWeaponId);
+    void rebuildActiveAttachmentSummary();
+    void syncRuntimeLoadout();
+    void ensureActiveWeapon(weapons::WeaponRuntimeState& weaponState, const weapons::WeaponDefinition& effectiveWeapon);
     void ensureLocalPlayer();
     void syncRelativeMouseMode();
     void registerDevMeshResources();
@@ -80,13 +85,18 @@ private:
     dev::DevRangeRenderSceneBuilder devRangeRenderer_;
     dev::DevRangeRenderSceneStats latestDevRangeRenderStats_;
     ui::GameMenu menu_;
+    settings::GameSettings settings_;
     movement::MovementSystem movement_;
     render::DevRenderTuning renderTuning_;
     net::LoopbackCommandBridge loopbackBridge_;
     player::PlayerCommandQueue localCommandQueue_;
     player::CameraRigState cameraRig_;
+    player::AccountStats accountStats_ = player::prototypeAccountStats();
     novacore::ecs::EntityId localPlayerEntity_;
     weapons::WeaponSystem weapons_;
+    weapons::AttachmentRegistry attachmentRegistry_;
+    weapons::WeaponLoadout activeLoadout_ = weapons::defaultPrototypeLoadout();
+    weapons::AttachmentBuildSummary activeAttachmentBuild_;
     float debugTargetRespawnSeconds_ = 0.0F;
     bool relativeMouseDesired_ = false;
 };

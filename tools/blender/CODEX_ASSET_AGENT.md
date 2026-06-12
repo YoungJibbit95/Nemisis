@@ -68,6 +68,23 @@ The generator currently emits dev geometry for:
 - `wpn_sidearm_01`
 - `env_test_arena_kit_01`
 
+The A1 prototype-pack generator creates original visual blockouts for a compact rifle, modern rifle, compact sidearm, stylized operator, and optional first-person arms:
+
+```powershell
+blender --background --python tools/blender/make_a1_prototype_pack.py
+```
+
+Useful `--only` values:
+
+- `all`
+- `weapons`
+- `characters`
+- `compact_rifle`
+- `modern_rifle`
+- `sidearm`
+- `operator`
+- `arms`
+
 ## Acceptance Before Commit
 
 - Source `.blend` exists.

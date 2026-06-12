@@ -46,6 +46,25 @@ void appendCommandToFrame(const UiCommand& command, novacore::render::RenderFram
         appendUiLine(frame, cx, cy + gap, cx, cy + gap + length, command.color);
         break;
     }
+    case UiCommandKind::Image:
+        appendUiRect(frame, command.rect, command.secondaryColor);
+        appendUiRect(
+            frame,
+            UiRect{
+                command.rect.x + 2.0F,
+                command.rect.y + 2.0F,
+                std::max(0.0F, command.rect.width - 4.0F),
+                std::max(0.0F, command.rect.height - 4.0F),
+            },
+            command.color);
+        appendUiText(
+            frame,
+            command.rect.x + 8.0F,
+            command.rect.y + std::max(18.0F, command.rect.height - 18.0F),
+            1.0F,
+            palette::TextPrimary,
+            command.assetId);
+        break;
     }
 }
 
@@ -117,6 +136,16 @@ void UiCanvas::crosshair(float centerX, float centerY, float gap, float length, 
     command.radius = std::max(0.0F, gap);
     command.value = std::max(0.0F, length);
     command.color = color;
+    commands_.push_back(std::move(command));
+}
+
+void UiCanvas::image(UiRect rect, std::string assetId, UiColor tint) {
+    UiCommand command{};
+    command.kind = UiCommandKind::Image;
+    command.rect = rect;
+    command.assetId = std::move(assetId);
+    command.color = tint;
+    command.secondaryColor = palette::Blueprint;
     commands_.push_back(std::move(command));
 }
 

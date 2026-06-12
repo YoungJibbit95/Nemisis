@@ -30,15 +30,25 @@
 - `GameAssetCatalog` loads the game asset manifest through NovaCore's asset registry backbone and queues dev-sandbox preload requests.
 - `DevAssetBindings` validates required A0 asset ids, loads glTF metadata, imports GLB scene info, extracts CPU mesh data, and registers mesh handles through NovaCore.
 - Barebones runtime menu exists with Main Menu, Dev Shooting Range, TDM placeholder, and Control placeholder screens.
+- Main Menu now has Play, Gamemodes, Loadout, Character, Settings, and Account tabs.
+- The normal `nemisis_game` launch starts in the Vulkan Main Menu; `--dev-range` remains the explicit fast path into the range.
+- The menu owns a loading screen flow for Firing Range, TDM, and Control placeholders.
+- Runtime game settings now cover mouse sensitivity, controller sensitivity, aim assist flags, damage numbers, HUD scale, and debug world-line visibility.
+- Loadout state now owns attachment slots for optic, barrel, muzzle, underbarrel, magazine, and stock.
+- Attachment builds produce an effective weapon definition for ADS, reload, spread, recoil, range, view kick, magazine size, and mobility.
+- Account/profile stats now feed the Account tab with K/D, win rate, best weapon, and best operator values.
 - Menus/debug HUD now route their primitive output through a game-owned `UiCanvas` command layer that mirrors the planned NanoVG-style API before the final Vulkan text/vector backend lands.
 - SDL debug UI remains available only through explicit legacy launch flags.
 - Debug UI now has Gameplay, Network, and Assets pages, toggled with Tab or controller Start/Menu.
 - Assets debug UI reports renderer backend plus NovaCore's Vulkan runtime/device summary.
 - Assets debug UI reports renderer mesh-resource CPU/GPU residency, pending uploads, failed uploads, deferred destroys, and indexed primitive/vertex/index totals.
-- Plain `nemisis_game` now starts directly in the Vulkan Dev Range with real 3D GLB mesh rendering.
-- `nemisis_game --smoke-test` uses the same default Vulkan Dev Range profile for short validation.
+- Plain `nemisis_game` now starts in the Vulkan Main Menu with real 3D/Vulkan UI primitive rendering.
+- `nemisis_game --dev-range` starts directly in the Vulkan Dev Range with real 3D GLB mesh rendering.
+- `nemisis_game --smoke-test` uses the default Vulkan Main Menu profile for short validation.
 - `nemisis_game --sdl-debug` is the explicit legacy path for old SDL debug UI testing.
 - The Dev Range now submits imported GLB meshes to NovaCore's Vulkan world mesh path.
+- A1 prototype weapon/operator assets are cataloged, imported, registered, and rendered in the Dev Range path.
+- The first-person weapon is now selected from the active loadout and follows the camera/view instead of floating as an independent debug mesh.
 - Dev GLB assets are registered once as renderer-owned mesh resources and submitted by stable `MeshResourceHandle`.
 - `DevRangeRenderSceneBuilder` now owns Dev Range camera/world/first-person/aim-marker render composition outside `GameApp`.
 - Dev Range render tuning loads lighting, FOV, clip planes, and world debug line visibility from `configs/render/dev_range_render.json`.
@@ -58,6 +68,23 @@
 - Input command, weapon simulation, weapon shot, UI canvas, player camera rig, player view, debug target, dev sandbox, player spawn, command queue, command message, asset binding, render tuning, greybox world/collision, and loopback bridge tests cover the newest gameplay bridge.
 
 ## Added In Latest Block
+
+- Added A1 asset production through the Blender/Codex asset-agent path: compact rifle, modern rifle, compact sidearm, stylized operator, and first-person arms.
+- Registered the A1 assets as required Dev Sandbox renderables and verified 20/20 required renderables import, extract CPU mesh data, register with NovaCore, and become Vulkan resident in smoke runs.
+- Changed the default launch profile so plain `nemisis_game` starts in the Vulkan Main Menu, while `--dev-range` remains the explicit direct Firing Range path.
+- Expanded `GameMenu` into a deeper prototype shell with Play, Gamemodes, Loadout, Character, Settings, Account, and Loading screens.
+- Added `UiCanvas::image` placeholder commands plus SVG-backed UI art for Firing Range, Loadout, Operator, Settings, and Dev Range loading.
+- Added runtime `GameSettings` for mouse/controller sensitivity, ADS look scaling, aim assist toggles, damage number visibility, HUD scale, safe area, and debug world-line visibility.
+- Added `WeaponAttachments` with six slots, prototype attachments, loadout cycling, and effective-weapon build summaries.
+- Wired the active attachment build into `GameApp` so weapon simulation, shot tracing, ammo caps, loading UI, and HUD all read the effective weapon.
+- Added `PlayerProfile` prototype stats for Account UI: K/D, win rate, best weapon, best operator, damage per match, and accuracy.
+- Added Q/E and controller shoulder tab navigation, with Left/Right kept for live Loadout/Settings adjustment.
+- Reworked first-person Dev Range weapon rendering so the active weapon asset follows the camera forward/right vectors, ADS blend, weapon sway, and recoil offsets; added view-held hands and muzzle feedback boxes.
+- Updated Dev Range static showcase to include the A1 operator and modern rifle assets.
+- Added `nemisis_weapon_attachments_tests`, `nemisis_game_settings_tests`, and `nemisis_player_profile_tests`, raising the suite to 28 passing tests.
+- Verified `cmake --preset windows-msvc-debug`, full Debug build, direct `nemisis_game.exe --smoke-test`, and `ctest -C Debug` with 28/28 passing tests.
+
+## Previous Block
 
 - Added acceleration/friction-based ground movement, air steering limits, air drag, slide timers, slide steering, slide end speed, slide jump boost, dash duration, and horizontal speed telemetry.
 - Added hot-reload movement config fields for ground, air, slide, and dash feel tuning.
@@ -145,7 +172,7 @@
 
 ## Next Game Blocks
 
-- Add configurable MKB/controller sensitivity loading and response curves.
+- Persist settings/loadout changes to user config files.
 - Wire player health into hit resolution, HUD health, respawn, and server validation.
 - Expand debug UI pages with frame timings, entity counts, packet loss simulation, and reconciliation error.
 - Expand greybox collision into mantle probes, slide validation, and richer slope/step debug visualization.

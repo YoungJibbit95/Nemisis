@@ -27,6 +27,10 @@ inline constexpr std::string_view Ads = "ads";
 inline constexpr std::string_view Reload = "reload";
 inline constexpr std::string_view MenuUp = "menu_up";
 inline constexpr std::string_view MenuDown = "menu_down";
+inline constexpr std::string_view MenuLeft = "menu_left";
+inline constexpr std::string_view MenuRight = "menu_right";
+inline constexpr std::string_view MenuPrevTab = "menu_prev_tab";
+inline constexpr std::string_view MenuNextTab = "menu_next_tab";
 inline constexpr std::string_view MenuConfirm = "menu_confirm";
 inline constexpr std::string_view MenuBack = "menu_back";
 inline constexpr std::string_view ToggleDebug = "toggle_debug";
@@ -42,6 +46,8 @@ namespace key_codes {
 
 inline constexpr std::uint16_t W = 87;
 inline constexpr std::uint16_t A = 65;
+inline constexpr std::uint16_t E = 69;
+inline constexpr std::uint16_t Q = 81;
 inline constexpr std::uint16_t S = 83;
 inline constexpr std::uint16_t D = 68;
 inline constexpr std::uint16_t R = 82;
@@ -58,6 +64,8 @@ inline constexpr std::uint16_t Digit3 = 51;
 inline constexpr std::uint16_t F1 = 112;
 inline constexpr std::uint16_t Up = 1000;
 inline constexpr std::uint16_t Down = 1001;
+inline constexpr std::uint16_t Left = 1002;
+inline constexpr std::uint16_t Right = 1003;
 
 } // namespace key_codes
 
@@ -80,10 +88,14 @@ namespace gamepad_buttons {
 inline constexpr std::uint16_t A = 0;
 inline constexpr std::uint16_t B = 1;
 inline constexpr std::uint16_t X = 2;
+inline constexpr std::uint16_t LeftShoulder = 4;
+inline constexpr std::uint16_t RightShoulder = 5;
 inline constexpr std::uint16_t Start = 6;
 inline constexpr std::uint16_t LeftStick = 8;
 inline constexpr std::uint16_t DPadUp = 11;
 inline constexpr std::uint16_t DPadDown = 12;
+inline constexpr std::uint16_t DPadLeft = 13;
+inline constexpr std::uint16_t DPadRight = 14;
 
 } // namespace gamepad_buttons
 

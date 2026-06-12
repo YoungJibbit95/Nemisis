@@ -103,8 +103,13 @@ Current implemented slice:
 - `F1` toggles the debug overlay.
 - `Tab` cycles debug overlay pages.
 - Controller Start/Menu cycles debug overlay pages.
+- `Q/E` switch menu tabs for keyboard users.
+- Controller shoulders switch menu tabs.
+- Left/Right and controller D-pad left/right adjust live Loadout/Settings rows.
+- Mouse/controller look sensitivity and ADS look scaling are applied by `InputCommandBuilder`.
+- Aim assist config values are parsed and exposed, but no target slowdown/rotation assist is applied yet.
 - Dev Shooting Range requests relative mouse mode while gameplay is active.
-- Input command tests verify keyboard/mouse and controller command generation.
+- Input command tests verify keyboard/mouse, controller command generation, and settings-scaled look output.
 
 
 

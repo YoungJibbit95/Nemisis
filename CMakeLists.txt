@@ -73,11 +73,14 @@ add_executable(nemisis_game
     game/src/player/PlayerCommandQueue.cpp
     game/src/player/PlayerCameraRig.cpp
     game/src/player/PlayerHealth.cpp
+    game/src/player/PlayerProfile.cpp
     game/src/player/PlayerSpawn.cpp
     game/src/player/PlayerView.cpp
     game/src/render/RenderTuning.cpp
+    game/src/settings/GameSettings.cpp
     game/src/ui/GameMenu.cpp
     game/src/ui/UiCanvas.cpp
+    game/src/weapons/WeaponAttachments.cpp
     game/src/weapons/WeaponMetrics.cpp
     game/src/weapons/WeaponShot.cpp
     game/src/weapons/WeaponSimulation.cpp
@@ -128,6 +131,7 @@ add_executable(nemisis_movement_replay_tests
     game/src/input/InputCommandBuilder.cpp
     game/src/movement/MovementConfig.cpp
     game/src/movement/MovementSystem.cpp
+    game/src/settings/GameSettings.cpp
     tests/movement_replay_tests.cpp
 )
 
@@ -142,6 +146,7 @@ add_test(NAME nemisis_movement_replay_tests COMMAND nemisis_movement_replay_test
 add_executable(nemisis_input_command_tests
     game/src/input/InputBindings.cpp
     game/src/input/InputCommandBuilder.cpp
+    game/src/settings/GameSettings.cpp
     tests/input_command_tests.cpp
 )
 
@@ -155,8 +160,11 @@ add_test(NAME nemisis_input_command_tests COMMAND nemisis_input_command_tests)
 
 add_executable(nemisis_game_menu_tests
     game/src/input/InputBindings.cpp
+    game/src/player/PlayerProfile.cpp
+    game/src/settings/GameSettings.cpp
     game/src/ui/GameMenu.cpp
     game/src/ui/UiCanvas.cpp
+    game/src/weapons/WeaponAttachments.cpp
     tests/game_menu_tests.cpp
 )
 
@@ -382,6 +390,45 @@ target_include_directories(nemisis_weapon_metrics_tests
 target_link_libraries(nemisis_weapon_metrics_tests PRIVATE Novacore::Engine)
 add_test(NAME nemisis_weapon_metrics_tests COMMAND nemisis_weapon_metrics_tests)
 
+add_executable(nemisis_weapon_attachments_tests
+    game/src/weapons/WeaponAttachments.cpp
+    tests/weapon_attachments_tests.cpp
+)
+
+target_include_directories(nemisis_weapon_attachments_tests
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/game/include
+)
+
+target_link_libraries(nemisis_weapon_attachments_tests PRIVATE Novacore::Engine)
+add_test(NAME nemisis_weapon_attachments_tests COMMAND nemisis_weapon_attachments_tests)
+
+add_executable(nemisis_game_settings_tests
+    game/src/settings/GameSettings.cpp
+    tests/game_settings_tests.cpp
+)
+
+target_include_directories(nemisis_game_settings_tests
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/game/include
+)
+
+target_link_libraries(nemisis_game_settings_tests PRIVATE Novacore::Engine)
+add_test(NAME nemisis_game_settings_tests COMMAND nemisis_game_settings_tests)
+
+add_executable(nemisis_player_profile_tests
+    game/src/player/PlayerProfile.cpp
+    tests/player_profile_tests.cpp
+)
+
+target_include_directories(nemisis_player_profile_tests
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/game/include
+)
+
+target_link_libraries(nemisis_player_profile_tests PRIVATE Novacore::Engine)
+add_test(NAME nemisis_player_profile_tests COMMAND nemisis_player_profile_tests)
+
 add_executable(nemisis_player_view_tests
     game/src/player/PlayerView.cpp
     tests/player_view_tests.cpp
@@ -440,6 +487,9 @@ foreach(nemisis_runtime_target IN ITEMS
     nemisis_greybox_collision_tests
     nemisis_weapon_shot_tests
     nemisis_weapon_metrics_tests
+    nemisis_weapon_attachments_tests
+    nemisis_game_settings_tests
+    nemisis_player_profile_tests
     nemisis_player_view_tests
     nemisis_player_camera_rig_tests
     nemisis_debug_target_tests

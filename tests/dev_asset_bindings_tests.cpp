@@ -51,6 +51,11 @@ std::vector<AssetSpec> requiredSpecs() {
         {"map_cover_crate_01", "mesh", "environment", "tools/blender/make_prototype_pack.py", "assets/generated/prototype_pack/map_cover_crate_01.glb", "box"},
         {"map_ramp_01", "mesh", "environment", "tools/blender/make_prototype_pack.py", "assets/generated/prototype_pack/map_ramp_01.glb", "ramp_wedge"},
         {"map_target_stand_01", "mesh", "prop", "tools/blender/make_prototype_pack.py", "assets/generated/prototype_pack/map_target_stand_01.glb", "box"},
+        {"wpn_a1_compact_rifle_01", "mesh", "weapon", "assets/source/blender/weapons/wpn_a1_compact_rifle_01.blend", "assets/export/gltf/weapons/wpn_a1_compact_rifle_01.glb"},
+        {"wpn_a1_modern_rifle_01", "mesh", "weapon", "assets/source/blender/weapons/wpn_a1_modern_rifle_01.blend", "assets/export/gltf/weapons/wpn_a1_modern_rifle_01.glb"},
+        {"wpn_a1_compact_sidearm_01", "mesh", "weapon", "assets/source/blender/weapons/wpn_a1_compact_sidearm_01.blend", "assets/export/gltf/weapons/wpn_a1_compact_sidearm_01.glb"},
+        {"chr_a1_stylized_operator_01", "mesh", "character", "assets/source/blender/characters/chr_a1_stylized_operator_01.blend", "assets/export/gltf/characters/chr_a1_stylized_operator_01.glb", "col_chr_a1_stylized_operator_01_capsule"},
+        {"chr_a1_fp_arms_01", "mesh", "character", "assets/source/blender/characters/chr_a1_fp_arms_01.blend", "assets/export/gltf/characters/chr_a1_fp_arms_01.glb"},
     };
 }
 

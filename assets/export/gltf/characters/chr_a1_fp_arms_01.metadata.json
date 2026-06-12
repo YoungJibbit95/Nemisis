@@ -1,0 +1,45 @@
+{
+  "id": "chr_a1_fp_arms_01",
+  "source": "assets/source/blender/characters/chr_a1_fp_arms_01.blend",
+  "export": "assets/export/gltf/characters/chr_a1_fp_arms_01.glb",
+  "category": "character",
+  "scale_meters": true,
+  "runtime_up_axis": "Y",
+  "gameplay_forward_axis": "+Z",
+  "blender_forward_axis": "+Y",
+  "dimensions_m": [
+    0.6206,
+    0.8221,
+    0.3355
+  ],
+  "target_dimensions_m": [
+    0.58,
+    0.89,
+    0.44
+  ],
+  "origin": "Origin at camera/root alignment point.",
+  "sockets": [
+    "socket_camera",
+    "socket_weapon_root",
+    "socket_hand_r",
+    "socket_hand_l",
+    "socket_vfx"
+  ],
+  "collision": "none",
+  "lods": [
+    "chr_a1_fp_arms_01_lod0",
+    "chr_a1_fp_arms_01_lod1"
+  ],
+  "license": "original_project_asset",
+  "external_assets": false,
+  "visual_reference_note": "Original procedural blockout inspired by broad sci-fi shooter silhouettes; no protected marks, copied geometry, or real functional implementation details.",
+  "generated_by": "tools/blender/make_a1_prototype_pack.py",
+  "generated_at_utc": "2026-06-12T06:53:23+00:00",
+  "stats": {
+    "mesh_objects": 10,
+    "vertices": 160,
+    "polygons": 100,
+    "triangles_estimate": 280
+  },
+  "bytes": 29076
+}

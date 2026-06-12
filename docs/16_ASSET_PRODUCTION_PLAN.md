@@ -20,10 +20,25 @@ Current local environment:
 - Blender is not currently in PATH, so call the helper with `-BlenderPath` or add the Blender folder to PATH.
 - A0 dev primitives have been generated as `.blend`, `.glb`, and metadata files under `assets/source/blender` and `assets/export/gltf`.
 - A prototype-pack generator has also produced lightweight GLBs under `assets/generated/prototype_pack` for fast render/greybox iteration.
+- A1 shooter prototype assets have been generated through `tools/blender/make_a1_prototype_pack.py`.
 
 The first generator script is `tools/blender/make_dev_primitives.py`. It creates source `.blend` files, glTF exports, and metadata for the target dummy, player capsule proxy, first-person arms proxy, third-person soldier proxy, AR/SMG/sidearm blockouts, and movement test arena kit.
 
 The second generator script is `tools/blender/make_prototype_pack.py`. It creates a small procedural pack for an SMG, humanoid, wall panel, floor tile, cover crate, ramp, and target stand. These assets are cataloged as required Dev Sandbox renderables so NovaCore's GLB import and Vulkan mesh upload path can be tested quickly.
+
+The A1 generator script is `tools/blender/make_a1_prototype_pack.py`. It creates original, generic blockout assets inspired by the requested weapon/operator direction without copying protected designs or using brand names:
+
+- `wpn_a1_compact_rifle_01`: compact 300BLK-style rifle direction.
+- `wpn_a1_modern_rifle_01`: modern modular assault-rifle direction.
+- `wpn_a1_compact_sidearm_01`: compact striker-fired sidearm direction.
+- `chr_a1_stylized_operator_01`: US soldier + sci-fi pilot/operator hybrid.
+- `chr_a1_fp_arms_01`: first-person arms for weapon-hold tests.
+
+Run command:
+
+```powershell
+& "F:\Program Files\Blender Foundation\Blender 5.1\blender.exe" --background --python tools\blender\make_a1_prototype_pack.py
+```
 
 Nemisis runtime asset ids are declared in `configs/assets/nemisis_assets.json`. This catalog is loaded by `GameAssetCatalog` and mounted through NovaCore's asset manifest/registry backbone.
 
@@ -156,6 +171,8 @@ Current generated outputs:
 - Matching `.glb` exports and `.metadata.json` files under `assets/export/gltf`.
 - Prototype-pack GLBs plus metadata under `assets/generated/prototype_pack`.
 - Prototype-pack assets are now included in `configs/assets/nemisis_assets.json` and validated by `DevAssetBindings`.
+- A1 prototype-pack `.blend`, `.glb`, and metadata files for compact rifle, modern rifle, compact sidearm, stylized operator, and first-person arms.
+- A1 assets are now included in `configs/assets/nemisis_assets.json`, required by `DevAssetBindings`, imported into NovaCore CPU mesh data, registered as renderer mesh resources, and uploaded into the Vulkan Dev Range smoke path.
 
 ### A1 - Shooter Test Field Kit
 

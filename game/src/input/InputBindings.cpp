@@ -86,6 +86,12 @@ novacore::platform::InputActionMap createDefaultActionMap() {
     bindButton(actionMap, actions::Reload, keyboard(key_codes::R));
     bindButton(actionMap, actions::MenuUp, keyboard(key_codes::Up));
     bindButton(actionMap, actions::MenuDown, keyboard(key_codes::Down));
+    bindButton(actionMap, actions::MenuLeft, keyboard(key_codes::Left));
+    bindButton(actionMap, actions::MenuRight, keyboard(key_codes::Right));
+    bindButton(actionMap, actions::MenuLeft, keyboard(key_codes::A));
+    bindButton(actionMap, actions::MenuRight, keyboard(key_codes::D));
+    bindButton(actionMap, actions::MenuPrevTab, keyboard(key_codes::Q));
+    bindButton(actionMap, actions::MenuNextTab, keyboard(key_codes::E));
     bindButton(actionMap, actions::MenuConfirm, keyboard(key_codes::Enter));
     bindButton(actionMap, actions::MenuBack, keyboard(key_codes::Escape));
     bindButton(actionMap, actions::ToggleDebug, keyboard(key_codes::F1));
@@ -113,6 +119,10 @@ novacore::platform::InputActionMap createDefaultActionMap() {
     bindButton(actionMap, actions::Reload, gamepadButton(gamepad_buttons::X));
     bindButton(actionMap, actions::MenuUp, gamepadButton(gamepad_buttons::DPadUp));
     bindButton(actionMap, actions::MenuDown, gamepadButton(gamepad_buttons::DPadDown));
+    bindButton(actionMap, actions::MenuLeft, gamepadButton(gamepad_buttons::DPadLeft));
+    bindButton(actionMap, actions::MenuRight, gamepadButton(gamepad_buttons::DPadRight));
+    bindButton(actionMap, actions::MenuPrevTab, gamepadButton(gamepad_buttons::LeftShoulder));
+    bindButton(actionMap, actions::MenuNextTab, gamepadButton(gamepad_buttons::RightShoulder));
     bindButton(actionMap, actions::MenuConfirm, gamepadButton(gamepad_buttons::A));
     bindButton(actionMap, actions::MenuBack, gamepadButton(gamepad_buttons::B));
     bindButton(actionMap, actions::SelectMainMenu, gamepadButton(gamepad_buttons::B));

@@ -26,6 +26,11 @@ constexpr RequiredDevAssetIds kRequiredDevAssets{
     "map_cover_crate_01",
     "map_ramp_01",
     "map_target_stand_01",
+    "wpn_a1_compact_rifle_01",
+    "wpn_a1_modern_rifle_01",
+    "wpn_a1_compact_sidearm_01",
+    "chr_a1_stylized_operator_01",
+    "chr_a1_fp_arms_01",
 };
 
 void appendErrors(

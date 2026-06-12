@@ -1,0 +1,47 @@
+{
+  "id": "chr_a1_stylized_operator_01",
+  "source": "assets/source/blender/characters/chr_a1_stylized_operator_01.blend",
+  "export": "assets/export/gltf/characters/chr_a1_stylized_operator_01.glb",
+  "category": "character",
+  "scale_meters": true,
+  "runtime_up_axis": "Y",
+  "gameplay_forward_axis": "+Z",
+  "blender_forward_axis": "+Y",
+  "dimensions_m": [
+    1.1355,
+    0.8,
+    1.885
+  ],
+  "target_dimensions_m": [
+    1.02,
+    0.56,
+    1.84
+  ],
+  "origin": "Origin at feet/root on the floor.",
+  "sockets": [
+    "socket_root",
+    "socket_camera",
+    "socket_weapon_root",
+    "socket_hand_r",
+    "socket_hand_l",
+    "socket_head",
+    "socket_backpack",
+    "socket_vfx"
+  ],
+  "collision": "col_chr_a1_stylized_operator_01_capsule",
+  "lods": [
+    "chr_a1_stylized_operator_01_lod0"
+  ],
+  "license": "original_project_asset",
+  "external_assets": false,
+  "visual_reference_note": "Original procedural blockout inspired by broad sci-fi shooter silhouettes; no protected marks, copied geometry, or real functional implementation details.",
+  "generated_by": "tools/blender/make_a1_prototype_pack.py",
+  "generated_at_utc": "2026-06-12T06:53:23+00:00",
+  "stats": {
+    "mesh_objects": 34,
+    "vertices": 752,
+    "polygons": 630,
+    "triangles_estimate": 1368
+  },
+  "bytes": 127772
+}

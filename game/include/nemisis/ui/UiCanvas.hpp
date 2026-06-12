@@ -25,7 +25,8 @@ enum class UiCommandKind {
     Line,
     Text,
     ProgressBar,
-    Crosshair
+    Crosshair,
+    Image
 };
 
 struct UiCommand final {
@@ -40,6 +41,7 @@ struct UiCommand final {
     float value = 0.0F;
     UiColor color{1.0F, 1.0F, 1.0F, 1.0F};
     UiColor secondaryColor{0.0F, 0.0F, 0.0F, 1.0F};
+    std::string assetId;
     std::string text;
 };
 
@@ -60,6 +62,7 @@ public:
     void text(float x, float y, float scale, UiColor color, std::string text);
     void progressBar(UiRect rect, float value, UiColor background, UiColor foreground);
     void crosshair(float centerX, float centerY, float gap, float length, UiColor color);
+    void image(UiRect rect, std::string assetId, UiColor tint = {1.0F, 1.0F, 1.0F, 1.0F});
 
     void appendToRenderFrame(novacore::render::RenderFrameInfo& frame) const;
 
@@ -83,6 +86,8 @@ inline constexpr UiColor TextSecondary{0.52F, 0.64F, 0.70F, 1.0F};
 inline constexpr UiColor Warning{0.95F, 0.68F, 0.22F, 1.0F};
 inline constexpr UiColor Danger{0.85F, 0.14F, 0.10F, 1.0F};
 inline constexpr UiColor TransparentBlack{0.0F, 0.0F, 0.0F, 0.05F};
+inline constexpr UiColor Blueprint{0.075F, 0.15F, 0.19F, 0.92F};
+inline constexpr UiColor Success{0.28F, 0.88F, 0.55F, 1.0F};
 
 } // namespace palette
 

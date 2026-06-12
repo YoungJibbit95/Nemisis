@@ -54,7 +54,7 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [x] Submit A0 and prototype-pack GLB meshes from Nemisis Dev Range into the Vulkan 3D renderer.
 - [x] Generate Blender prototype-pack GLBs for SMG, humanoid, wall, floor, crate, ramp, and target stand.
 - [x] Catalog and validate prototype-pack assets as required Dev Sandbox renderables.
-- [x] Make plain `nemisis_game` boot directly into the Vulkan 3D Dev Range.
+- [x] Make `nemisis_game --dev-range` boot directly into the Vulkan 3D Dev Range.
 - [x] Disable silent SDL debug fallback for the default Vulkan launch profile.
 - [x] Add explicit legacy `--sdl-debug` launch flags.
 - [x] Add first-person arms proxy and 3D aim marker to the Vulkan Dev Range.
@@ -70,15 +70,28 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [x] Add game-owned `UiCanvas` command layer and route menu/debug primitives through it as the NanoVG-style bridge.
 - [x] Add `nemisis_ui_canvas_tests` and `nemisis_player_camera_rig_tests`.
 - [x] Verify Windows MSVC Vulkan build and 25/25 CTest suite.
+- [x] Generate A1 Blender assets for compact rifle, modern rifle, compact sidearm, stylized operator, and first-person arms.
+- [x] Catalog, import, extract, register, and Vulkan-reside 20/20 required Dev Sandbox renderables.
+- [x] Make plain `nemisis_game` boot into the Vulkan Main Menu while keeping `--dev-range` for direct range launch.
+- [x] Expand main menu into Play, Gamemodes, Loadout, Character, Settings, Account, and Loading screens.
+- [x] Add live mouse/controller settings, ADS look scaling, HUD scale, damage-number toggles, and aim-assist flags.
+- [x] Add six-slot weapon attachment loadouts and effective-weapon build summaries.
+- [x] Feed active attachment builds into weapon simulation, shot tracing, HUD, and loading UI.
+- [x] Add Account/Profile stats for K/D, win rate, best weapon, and best operator.
+- [x] Bind active first-person weapon and arms to camera/view, ADS, sway, and recoil.
+- [x] Add `nemisis_weapon_attachments_tests`, `nemisis_game_settings_tests`, and `nemisis_player_profile_tests`.
+- [x] Verify Windows MSVC Vulkan build, direct smoke run, and 28/28 CTest suite.
 
 ## Doing
 
 - [ ] Expand material fallback controls and resize-safe Vulkan swapchain behavior.
 - [ ] Keep UI moving toward a Vulkan-native text/vector backend while `UiCanvas` feeds the current debug primitive bridge.
+- [ ] Start texture/material binding for A1 GLBs so imported assets look less like tinted blockouts.
 
 ## Next Core
 
-- [ ] Config-loaded sensitivity, cursor policy, and controller response curves.
+- [ ] Persist settings/loadout changes to user config files.
+- [ ] Cursor policy, raw-input options, and richer controller response curves.
 - [ ] Packet simulation for latency, jitter, loss, duplication, and reorder.
 - [ ] Vulkan swapchain resize/recreate and validation debug labels.
 - [ ] Renderer texture/material residency and cross-zone reference counting.
@@ -92,7 +105,7 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [ ] TDM placeholder match lifecycle.
 - [ ] Control placeholder objective lifecycle.
 - [ ] More target dummies and range markers.
-- [ ] First `UiCanvas` HUD widgets for ammo, health, target damage, recoil/ADS, and net status.
+- [ ] Health/respawn HUD widgets backed by player health and target hit state.
 - [ ] Wire player health into real hit events, respawn, and server validation.
 
 ## Blocked

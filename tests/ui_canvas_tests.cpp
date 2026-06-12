@@ -27,15 +27,16 @@ void testCanvasRecordsAndFlushesCommands() {
         0.5F,
         nemisis::ui::palette::PanelRaised,
         nemisis::ui::palette::Accent);
+    canvas.image({180.0F, 72.0F, 64.0F, 32.0F}, "assets/ui/icons/loadout.svg", nemisis::ui::palette::Blueprint);
     canvas.crosshair(640.0F, 360.0F, 6.0F, 12.0F, nemisis::ui::palette::TextPrimary);
 
-    expect(canvas.commandCount() == 4, "canvas records semantic commands");
+    expect(canvas.commandCount() == 5, "canvas records semantic commands");
     expect(canvas.frameDesc().width == 1920.0F, "canvas stores frame width");
 
     novacore::render::RenderFrameInfo frame{};
     canvas.appendToRenderFrame(frame);
-    expect(frame.debugRects.size() == 3, "rounded rect and progress bar flush to debug rects");
-    expect(frame.debugTexts.size() == 1, "text flushes to debug text");
+    expect(frame.debugRects.size() == 5, "rounded rect, image placeholder, and progress bar flush to debug rects");
+    expect(frame.debugTexts.size() == 2, "text and image asset label flush to debug text");
     expect(frame.debugLines.size() == 4, "crosshair flushes to four lines");
 }
 

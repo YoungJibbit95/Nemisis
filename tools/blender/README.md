@@ -67,6 +67,42 @@ Generated dev primitive asset ids:
 
 The generated assets are dev primitives only. They are meant to unblock gameplay testing, scale checks, sockets, and importer work before final art.
 
+## Generate A1 Prototype Pack
+
+From the Nemisis repository root:
+
+```powershell
+blender --background --python tools/blender/make_a1_prototype_pack.py
+```
+
+If Blender is not in PATH:
+
+```powershell
+& "F:\Program Files\Blender Foundation\Blender 5.1\blender.exe" --background --python tools/blender/make_a1_prototype_pack.py
+```
+
+Generate one A1 group:
+
+```powershell
+blender --background --python tools/blender/make_a1_prototype_pack.py -- --only weapons
+blender --background --python tools/blender/make_a1_prototype_pack.py -- --only characters
+blender --background --python tools/blender/make_a1_prototype_pack.py -- --only compact_rifle
+blender --background --python tools/blender/make_a1_prototype_pack.py -- --only modern_rifle
+blender --background --python tools/blender/make_a1_prototype_pack.py -- --only sidearm
+blender --background --python tools/blender/make_a1_prototype_pack.py -- --only operator
+blender --background --python tools/blender/make_a1_prototype_pack.py -- --only arms
+```
+
+Generated A1 prototype asset ids:
+
+- `wpn_a1_compact_rifle_01`
+- `wpn_a1_modern_rifle_01`
+- `wpn_a1_compact_sidearm_01`
+- `chr_a1_stylized_operator_01`
+- `chr_a1_fp_arms_01`
+
+The A1 pack writes `.blend` sources under `assets/source/blender`, `.glb` exports under `assets/export/gltf`, metadata JSON next to each export, and `assets/export/gltf/a1_prototype_pack_manifest.json`.
+
 ## Codex Agent Handoff
 
 - `CODEX_ASSET_AGENT.md` describes the expected agent workflow.

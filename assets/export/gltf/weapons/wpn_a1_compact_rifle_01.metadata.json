@@ -1,0 +1,45 @@
+{
+  "id": "wpn_a1_compact_rifle_01",
+  "source": "assets/source/blender/weapons/wpn_a1_compact_rifle_01.blend",
+  "export": "assets/export/gltf/weapons/wpn_a1_compact_rifle_01.glb",
+  "category": "weapon",
+  "scale_meters": true,
+  "runtime_up_axis": "Y",
+  "gameplay_forward_axis": "+Z",
+  "blender_forward_axis": "+Y",
+  "dimensions_m": [
+    0.1875,
+    1.14,
+    0.5324
+  ],
+  "target_dimensions_m": [
+    0.19,
+    1.13,
+    0.49
+  ],
+  "origin": "Origin at approximate right-hand grip/root; Blender forward axis is +Y.",
+  "sockets": [
+    "socket_muzzle",
+    "socket_grip_r",
+    "socket_grip_l",
+    "socket_eject",
+    "socket_vfx"
+  ],
+  "collision": "none",
+  "lods": [
+    "wpn_a1_compact_rifle_01_lod0",
+    "wpn_a1_compact_rifle_01_lod1"
+  ],
+  "license": "original_project_asset",
+  "external_assets": false,
+  "visual_reference_note": "Original procedural blockout inspired by broad sci-fi shooter silhouettes; no protected marks, copied geometry, or real functional implementation details.",
+  "generated_by": "tools/blender/make_a1_prototype_pack.py",
+  "generated_at_utc": "2026-06-12T06:53:23+00:00",
+  "stats": {
+    "mesh_objects": 15,
+    "vertices": 176,
+    "polygons": 118,
+    "triangles_estimate": 292
+  },
+  "bytes": 31692
+}

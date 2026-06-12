@@ -161,7 +161,11 @@ Code foundation:
 - `nemisis::weapons::ShotTraceResult`
 - `nemisis::weapons::TtkEstimate`
 - `nemisis::weapons::WeaponSystem`
+- `nemisis::weapons::AttachmentRegistry`
+- `nemisis::weapons::WeaponLoadout`
+- `nemisis::weapons::AttachmentBuildSummary`
 - `WeaponSystem::loadFromConfig`
+- `nemisis::weapons::buildWeaponWithAttachments`
 - `nemisis::weapons::simulateWeaponTick`
 - `nemisis::weapons::buildShotTrace`
 - `nemisis::weapons::estimateTimeToKill`
@@ -197,6 +201,50 @@ Config fields currently parsed:
 - `damage.head_multiplier`
 - `pellets`
 - `damage_per_pellet`
+
+## Attachments
+
+Attachments are now a first-class gameplay path, not just UI labels.
+
+Implemented slots:
+
+- Optic.
+- Barrel.
+- Muzzle.
+- Underbarrel.
+- Magazine.
+- Stock.
+
+The active `WeaponLoadout` stores the base weapon id plus one attachment id per slot. `buildWeaponWithAttachments` produces an effective `WeaponDefinition` that is used by runtime simulation, shot tracing, ammo caps, loading UI, and HUD.
+
+Current modifier surface:
+
+- ADS time scale.
+- Reload time scale.
+- Hip/ADS spread scale.
+- Recoil pitch/yaw scale.
+- Recoil recovery scale.
+- Movement spread scale.
+- Max range scale.
+- View kick scale.
+- Magazine size delta.
+- Mobility modifier for UI/build feel.
+
+Current prototype attachments:
+
+- Reflex Micro.
+- Holo Combat.
+- 8.5 Short Barrel.
+- 16 Precision Barrel.
+- Compact Comp.
+- Angled Grip.
+- Fast Mag.
+- Extended Mag.
+- Pilot Wire Stock.
+
+Tests:
+
+- `nemisis_weapon_attachments_tests` verifies default build application, magazine capacity changes, slot wrapping, and missing attachment handling.
 
 ## Feedback
 

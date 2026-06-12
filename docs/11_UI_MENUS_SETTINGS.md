@@ -61,6 +61,18 @@ V1 screens:
 - Loadout placeholder.
 - Pause menu.
 
+Current runtime screens:
+
+- Main Menu shell.
+- Play tab with Firing Range entry.
+- Gamemodes tab with TDM and Control placeholders.
+- Loadout tab with base weapon and six attachment slots.
+- Character tab with operator/helmet/armor/rig placeholder rows.
+- Settings tab with live mouse sensitivity, controller sensitivity, HUD scale, aim assist, and damage-number toggles.
+- Account tab with K/D, win rate, best weapon, best operator, damage per match, and accuracy.
+- Loading screen for Firing Range and placeholder modes.
+- Dev Shooting Range HUD/debug screen.
+
 ## HUD
 
 HUD elements:
@@ -81,9 +93,12 @@ Current debug/UI implementation:
 
 - `UiCanvas` is now the game-owned NanoVG-style command layer for UI/HUD primitives.
 - `UiCanvas` records semantic commands for rects, rounded rects, lines, text, progress bars, and crosshairs.
+- `UiCanvas` records image placeholder commands so committed UI art paths can be wired before the final texture backend exists.
 - The current bridge flushes `UiCanvas` commands into NovaCore debug primitives until the Vulkan-native vector/text backend exists.
 - SDL debug render primitives remain available only through explicit legacy launch paths.
-- `GameMenu` owns Main Menu, Dev Shooting Range, Team Deathmatch placeholder, and Control placeholder screens.
+- `GameMenu` owns Main Menu tabs, Loading, Dev Shooting Range, Team Deathmatch placeholder, and Control placeholder screens.
+- `Q/E` and controller shoulders switch top-level menu tabs.
+- Left/Right and controller D-pad left/right adjust Loadout and Settings values live.
 - `F1` toggles the debug overlay.
 - `Tab` and controller Start/Menu cycle debug overlay pages.
 - Debug pages currently cover Gameplay, Network, and Assets/Render telemetry.
@@ -103,6 +118,23 @@ Settings categories:
 - Network/debug.
 
 Settings persist to user config and apply predictably. Some settings apply immediately; renderer backend changes may require restart.
+
+Current implemented settings:
+
+- Mouse sensitivity X/Y.
+- Mouse ADS multiplier.
+- Mouse invert Y.
+- Controller look sensitivity X/Y.
+- Controller deadzones as parsed config values.
+- Controller response curve string placeholder.
+- Aim assist enable/slowdown/rotation values.
+- Damage number visibility.
+- HUD scale.
+- Debug world-line visibility.
+
+Current gap:
+
+- Runtime edits are live for the current session but are not persisted back to a user settings file yet.
 
 ## Acceptance
 

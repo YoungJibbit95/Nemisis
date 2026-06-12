@@ -1,5 +1,6 @@
 #include "nemisis/input/InputBindings.hpp"
 #include "nemisis/input/InputCommandBuilder.hpp"
+#include "nemisis/settings/GameSettings.hpp"
 
 #include <cstdlib>
 #include <iostream>
@@ -136,6 +137,35 @@ void testControllerLookBuildsCommand() {
     expect(command.device == novacore::platform::InputDeviceKind::Controller, "controller look becomes command device");
 }
 
+void testLookSensitivitySettingsScaleCommand() {
+    auto actionMap = nemisis::input::createDefaultActionMap();
+    novacore::platform::InputSnapshot snapshot;
+    snapshot.addAxisDelta(
+        {novacore::platform::InputControlKind::MouseAxis, nemisis::input::mouse_axes::X},
+        10.0F,
+        novacore::platform::InputDeviceKind::KeyboardMouse);
+    snapshot.addAxisDelta(
+        {novacore::platform::InputControlKind::MouseAxis, nemisis::input::mouse_axes::Y},
+        -10.0F,
+        novacore::platform::InputDeviceKind::KeyboardMouse);
+    snapshot.setButton(
+        {novacore::platform::InputControlKind::MouseButton, nemisis::input::mouse_codes::Right},
+        true,
+        novacore::platform::InputDeviceKind::KeyboardMouse);
+
+    nemisis::settings::GameSettings settings{};
+    settings.mouse.sensitivityX = 2.0F;
+    settings.mouse.sensitivityY = 1.5F;
+    settings.mouse.adsMultiplier = 0.5F;
+
+    actionMap.update(snapshot);
+    const auto command = nemisis::input::buildPlayerInputCommand(actionMap, 17, settings);
+
+    expect(command.adsHeld, "settings scale test holds ADS");
+    expect(command.look.x > 0.99F && command.look.x < 1.01F, "mouse x is scaled by sensitivity and ADS multiplier");
+    expect(command.look.y > 0.74F && command.look.y < 0.76F, "mouse y is scaled by sensitivity and ADS multiplier");
+}
+
 } // namespace
 
 int main() {
@@ -145,6 +175,7 @@ int main() {
     testControllerDeadzoneDoesNotMove();
     testMouseLookBuildsCommand();
     testControllerLookBuildsCommand();
+    testLookSensitivitySettingsScaleCommand();
 
     if (failures > 0) {
         std::cerr << failures << " input command test(s) failed\n";
