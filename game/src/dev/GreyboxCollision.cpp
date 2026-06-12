@@ -137,6 +137,25 @@ GreyboxCollisionResult resolveGreyboxPlayerCollision(
     result.wallPrimitiveId = resolved.wallColliderId;
     result.groundKind = kindForPrimitiveId(world, resolved.groundColliderId, resolved.groundKind);
     result.wallKind = kindForPrimitiveId(world, resolved.wallColliderId, resolved.wallKind);
+
+    const auto mantle = physicsWorld.probeMantle(novacore::physics::MantleProbe{
+        query.position,
+        query.mantleForward,
+        query.radius,
+        query.height,
+        query.mantleMaxDistance,
+        query.mantleMinHeight,
+        query.mantleMaxHeight,
+        0.18F,
+    });
+    result.mantleCandidate = mantle.hit;
+    result.mantleObstaclePoint = mantle.obstaclePoint;
+    result.mantleTargetPosition = mantle.targetPosition;
+    result.mantleNormal = mantle.normal;
+    result.mantleDistance = mantle.distance;
+    result.mantleHeight = mantle.height;
+    result.mantlePrimitiveId = mantle.colliderId;
+    result.mantleKind = kindForPrimitiveId(world, mantle.colliderId, mantle.kind);
     return result;
 }
 

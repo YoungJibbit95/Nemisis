@@ -139,6 +139,8 @@ std::string DevSandbox::latestSummary() const {
            << " ramp=" << (latest_.collision.onRamp ? "yes" : "no")
            << " slideSurface=" << (latest_.collision.nearSlideSurface ? "yes" : "no")
            << " wallrunSurface=" << (latest_.collision.nearWallRunSurface ? "yes" : "no")
+           << " mantle=" << (latest_.collision.mantleCandidate ? latest_.collision.mantlePrimitiveId : "none")
+           << " mantleHeight=" << latest_.collision.mantleHeight
            << " stepped=" << (latest_.collision.stepped ? "yes" : "no")
            << " ground=" << latest_.collision.groundPrimitiveId
            << " wall=" << latest_.collision.wallPrimitiveId
@@ -174,6 +176,9 @@ std::array<float, 4> DevSandbox::clearColor() const {
     }
     if (latest_.movementMode == movement::MovementMode::WallRunning) {
         return {0.02F, 0.09F, 0.12F, 1.0F};
+    }
+    if (latest_.movementMode == movement::MovementMode::Mantling) {
+        return {0.06F, 0.075F, 0.025F, 1.0F};
     }
     if (latest_.movementMode == movement::MovementMode::Airborne) {
         return {0.075F, 0.045F, 0.13F, 1.0F};

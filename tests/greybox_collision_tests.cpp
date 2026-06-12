@@ -92,6 +92,31 @@ void testMidLedgeStillBlocksWithoutMantle() {
     expect(result.lastPrimitiveId == "ledge_training_mid", "mid ledge reports primitive id");
 }
 
+void testMidLedgeReportsMantleCandidate() {
+    const auto world = nemisis::dev::createDevRangeGreyboxWorld();
+    nemisis::dev::GreyboxCollisionQuery query{};
+    query.position = {3.8F, 0.0F, -8.05F};
+    query.mantleForward = {0.0F, 0.0F, 1.0F};
+    query.mantleMaxDistance = 1.45F;
+    query.mantleMinHeight = 0.44F;
+    query.mantleMaxHeight = 1.45F;
+
+    const auto result = nemisis::dev::resolveGreyboxPlayerCollision(world, query);
+
+    expect(result.mantleCandidate, "mid ledge reports mantle candidate when approached from front");
+    expect(result.mantlePrimitiveId == "ledge_training_mid", "mantle candidate reports primitive id");
+    expect(result.mantleKind == nemisis::dev::GreyboxPrimitiveKind::Ledge, "mantle candidate reports primitive kind");
+    expect(result.mantleTargetPosition.y > 1.25F && result.mantleTargetPosition.y < 1.35F, "mantle target lands on ledge top");
+    expect(result.mantleNormal.z < 0.0F, "mantle normal faces approach");
+
+    nemisis::dev::GreyboxCollisionQuery topQuery{};
+    topQuery.position = result.mantleTargetPosition;
+    const auto topResult = nemisis::dev::resolveGreyboxPlayerCollision(world, topQuery);
+    expect(topResult.grounded, "mantle target is grounded");
+    expect(!topResult.blocked, "mantle target does not side-block");
+    expect(topResult.groundPrimitiveId == "ledge_training_mid", "mantle target grounds on ledge");
+}
+
 void testWallRunPanelReportsSurfaceContact() {
     const auto world = nemisis::dev::createDevRangeGreyboxWorld();
     const auto result = nemisis::dev::resolveGreyboxPlayerCollision(
@@ -115,6 +140,7 @@ int main() {
     testRampSurfaceGroundsPlayer();
     testLowStepIsWalkable();
     testMidLedgeStillBlocksWithoutMantle();
+    testMidLedgeReportsMantleCandidate();
     testWallRunPanelReportsSurfaceContact();
 
     if (failures > 0) {

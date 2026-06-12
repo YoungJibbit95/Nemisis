@@ -564,6 +564,18 @@ void DevRangeRenderSceneBuilder::appendMovementTechVisuals(
             {0.72F, 0.94F, 1.0F, 1.0F},
             stats);
     }
+
+    if (tech.mantleClimbTriggered || tech.mantleClimbSeconds > 0.0F) {
+        const auto target = tech.mantleTargetPosition.lengthSquared() > 0.0001F
+            ? tech.mantleTargetPosition
+            : desc.player.position;
+        appendBox(
+            frame,
+            target + novacore::math::Vec3{0.0F, 0.08F, 0.0F},
+            {0.34F, 0.035F, 0.34F},
+            {0.98F, 0.86F, 0.24F, 1.0F},
+            stats);
+    }
 }
 
 void DevRangeRenderSceneBuilder::appendAimMarker(
@@ -648,6 +660,22 @@ void DevRangeRenderSceneBuilder::appendWorldDebugLines(
             wallBase,
             wallBase + (desc.collision->wallTangent * 1.85F),
             {1.0F, 0.58F, 0.18F, 1.0F},
+        });
+        ++stats.worldLineCount;
+    }
+
+    if (desc.collision != nullptr && desc.collision->mantleCandidate) {
+        const auto start = eye - novacore::math::Vec3{0.0F, 0.25F, 0.0F};
+        frame.worldLines.push_back(novacore::render::RenderLine3D{
+            start,
+            desc.collision->mantleObstaclePoint,
+            {0.95F, 0.78F, 0.18F, 1.0F},
+        });
+        ++stats.worldLineCount;
+        frame.worldLines.push_back(novacore::render::RenderLine3D{
+            desc.collision->mantleObstaclePoint,
+            desc.collision->mantleTargetPosition + novacore::math::Vec3{0.0F, 0.08F, 0.0F},
+            {0.98F, 0.92F, 0.38F, 1.0F},
         });
         ++stats.worldLineCount;
     }

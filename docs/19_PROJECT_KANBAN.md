@@ -107,6 +107,9 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [x] Add Dev Range placeholder visuals for gravity boots, arm-button activation, energy-step platforms, and mantle reach.
 - [x] Shift A2 weapon generator output toward grounded, realistic, unbranded carbine/rifle/sidearm blockouts.
 - [x] Document movement lore and animation requirements for gravity-inverter boots, energy-platform double jumps, and future mantle/climb.
+- [x] Add NovaCore mantle probes for reachable cover/ledge tops and ledge-top standing resolution.
+- [x] Wire Nemisis mantle candidates through GreyboxCollision, GameApp, MovementSystem, HUD/debug telemetry, and Dev Range debug lines.
+- [x] Add `mantle-climb` movement-tech cue and replay/debug/render tests for the first mantle foundation.
 
 ## Doing
 
@@ -114,7 +117,7 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [ ] Keep UI moving from the new Vulkan primitive path toward a richer text/vector backend.
 - [ ] Start texture/material binding for A1/A2 GLBs so imported assets look less like tinted blockouts.
 - [ ] Grow the multi-target Dev Range into timed drills, TTK panels, and recoil-control scoring.
-- [ ] Deepen KCC physics into capsule sweeps, mantle probes, moving platform contacts, and server replay validation.
+- [ ] Deepen KCC physics into capsule sweeps, timed mantle climb curves, moving platform contacts, and server replay validation.
 
 ## Next Core
 
@@ -122,7 +125,7 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [ ] Packet simulation for latency, jitter, loss, duplication, and reorder.
 - [ ] Vulkan validation debug labels and resize stress tests.
 - [ ] Renderer texture/material residency and cross-zone reference counting.
-- [ ] Mantle probes, slide validation, and richer slope/step debug visualization.
+- [ ] Timed mantle attach/climb curves, slide validation, and richer slope/step debug visualization.
 - [ ] Wall-run camera feel, wall detach rules, wall-run cooldown, and surface eligibility tuning.
 - [ ] Convert movement-tech debug visuals into authored first-person and third-person animation clips.
 - [ ] Shared server validation for greybox collision and movement corrections.

@@ -16,6 +16,10 @@ struct GreyboxCollisionQuery final {
     float maxStepHeight = 0.42F;
     float snapDownDistance = 0.35F;
     float walkableSlopeCosine = 0.68F;
+    novacore::math::Vec3 mantleForward{};
+    float mantleMaxDistance = 1.25F;
+    float mantleMinHeight = 0.44F;
+    float mantleMaxHeight = 1.45F;
 };
 
 struct GreyboxCollisionResult final {
@@ -26,6 +30,8 @@ struct GreyboxCollisionResult final {
     novacore::math::Vec3 wallTangent{};
     float groundHeight = 0.0F;
     float wallDistance = 0.0F;
+    float mantleDistance = 0.0F;
+    float mantleHeight = 0.0F;
     std::size_t hitCount = 0;
     bool grounded = false;
     bool blocked = false;
@@ -33,11 +39,17 @@ struct GreyboxCollisionResult final {
     bool onRamp = false;
     bool nearWallRunSurface = false;
     bool nearSlideSurface = false;
+    bool mantleCandidate = false;
     std::string lastPrimitiveId;
     std::string groundPrimitiveId;
     std::string wallPrimitiveId;
+    std::string mantlePrimitiveId;
     GreyboxPrimitiveKind groundKind = GreyboxPrimitiveKind::Floor;
     GreyboxPrimitiveKind wallKind = GreyboxPrimitiveKind::Wall;
+    GreyboxPrimitiveKind mantleKind = GreyboxPrimitiveKind::Ledge;
+    novacore::math::Vec3 mantleObstaclePoint{};
+    novacore::math::Vec3 mantleTargetPosition{};
+    novacore::math::Vec3 mantleNormal{};
 };
 
 [[nodiscard]] GreyboxCollisionResult resolveGreyboxPlayerCollision(

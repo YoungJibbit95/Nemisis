@@ -40,6 +40,9 @@ void testSummaryIncludesPlayableTelemetry() {
     sample.movementTech.energyPlatformSeconds = 0.2F;
     sample.collision.nearWallRunSurface = true;
     sample.collision.wallPrimitiveId = "wallrun_left_panel_a";
+    sample.collision.mantleCandidate = true;
+    sample.collision.mantlePrimitiveId = "ledge_training_mid";
+    sample.collision.mantleHeight = 1.3F;
 
     sandbox.recordTick(sample);
     const auto summary = sandbox.latestSummary();
@@ -54,6 +57,7 @@ void testSummaryIncludesPlayableTelemetry() {
     expect(summary.find("targetHp=122.0") != std::string::npos, "summary includes target health");
     expect(summary.find("hit=yes") != std::string::npos, "summary includes target hit");
     expect(summary.find("wallrunSurface=yes") != std::string::npos, "summary includes wallrun surface state");
+    expect(summary.find("mantle=ledge_training_mid") != std::string::npos, "summary includes mantle candidate id");
     expect(summary.find("wall=wallrun_left_panel_a") != std::string::npos, "summary includes wall contact id");
 }
 

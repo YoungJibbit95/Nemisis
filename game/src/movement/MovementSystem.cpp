@@ -369,4 +369,26 @@ PlayerMovementState MovementSystem::applyWallRunContact(
     return state;
 }
 
+PlayerMovementState MovementSystem::applyMantleCandidate(
+    PlayerMovementState state,
+    const player::PlayerInputCommand& command,
+    MantleCandidate candidate,
+    float fixedDeltaSeconds) const {
+    (void)fixedDeltaSeconds;
+    if (!command.mantlePressed || !candidate.available) {
+        return state;
+    }
+
+    state.position = candidate.targetPosition;
+    state.velocity = {};
+    state.mode = MovementMode::Mantling;
+    state.hasDoubleJump = true;
+    state.hasWallRunContact = false;
+    state.wallRunTimeRemaining = 0.0F;
+    state.lastHorizontalSpeed = 0.0F;
+    stopGravityBoots(state.tech);
+    triggerMantleClimb(state.tech, candidate.targetPosition, candidate.normal);
+    return state;
+}
+
 } // namespace nemisis::movement

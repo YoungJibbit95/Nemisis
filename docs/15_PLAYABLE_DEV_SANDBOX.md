@@ -39,7 +39,7 @@ It is not a vertical slice yet. It is a developer playground for validating:
 - Four-lane Dev Target Range with nearest-target hit selection, active lane tracking, per-lane respawn timers, and alive/down counts.
 - HUD health panel backed by `PlayerHealthComponent`.
 - Configurable Dev Range render tuning for lighting, FOV, clip planes, and world debug line visibility.
-- World-space Vulkan debug lines for aim rays and KCC ground normals.
+- World-space Vulkan debug lines for aim rays, KCC ground normals, wall-run normals/tangents, and mantle candidate paths.
 - Budgeted A0 environment GLB wireframe preview drawn from extracted CPU mesh data.
 
 ## Run
@@ -199,7 +199,8 @@ The renderer clear color also changes by state for early visual feedback:
 - Settings and loadout edits are persisted through the user settings snapshot after live menu changes.
 - Dev Range reset restores player movement, transform, camera view, health, weapon runtime, command queue, all target lanes, and session feedback.
 - Dev Range render composition is isolated in `DevRangeRenderSceneBuilder`, with `GameApp` only collecting player state and orchestrating frame flow.
-- Current collision supports floor grounding, bounds, AABB blockers, walkable ramp height sampling, low-step handling, ground normals, and ledges that block until mantle exists.
+- Current collision supports floor grounding, bounds, AABB blockers, walkable ramp height sampling, low-step handling, ground normals, ledge blocking, and first mantle probes against cover/ledge tops.
+- Mantle currently uses a deterministic target snap onto valid ledge tops with `mantle-climb` tech cues and debug lines; future work should replace the snap with a timed attach/climb curve once animation clips exist.
 - Current collision is backed by NovaCore's first `PhysicsWorld` layer and now reports wall-run panels, slide surfaces, wall normals, and wall tangents for movement/gameplay systems.
 - Current movement includes a first wall-run contact/wall-jump implementation tuned slower than Titanfall-style movement so it can be iterated safely in the greybox range.
 - Asset ids, preload requests, generated `.glb` exports, metadata, GLB scene-info imports, CPU mesh extraction, renderer-owned mesh handles, Vulkan upload queues, and indexed draw submission exist for the current dev assets.
@@ -215,8 +216,8 @@ The renderer clear color also changes by state for early visual feedback:
 - Recoil/ADS debug HUD widgets fed from `WeaponRuntimeState` and `PlayerCameraRig`.
 - Timed range drills, measured TTK panels, recoil-control scoring, and lane-specific score breakdowns.
 - Player damage sources, down-state, and respawn flow driven by authoritative hit events.
-- Full KCC collision against greybox floors, walls, cover, ramps, and ledges.
-- Deeper KCC work: capsule sweeps, wall-run camera feel, mantle probes, wall detach rules, moving platforms, and server replay validation.
+- Full capsule-sweep KCC collision against greybox floors, walls, cover, ramps, and ledges.
+- Deeper KCC work: timed mantle attach/climb curves, wall-run camera feel, wall detach rules, moving platforms, and server replay validation.
 - Texture/material binding on top of the existing renderer-owned resource handles, upload queues, and deferred destruction for current GLB meshes.
 - Real UI text rendering after the SDL debug text path is replaced by the custom UI renderer.
 - Real client/server packet transport after the loopback bridge is stable.

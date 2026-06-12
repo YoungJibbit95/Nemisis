@@ -7,6 +7,7 @@
 - Game modules exist for input, player commands, movement, and weapons.
 - Movement supports sprint, tactical sprint tuning, jump, double jump, dash, slide, and the first wall-run contact/wall-jump flow.
 - Movement now carries presentation-facing tech cues for wall-run gravity activation, boot glow, double-jump energy platform, wall-jump detach, and mantle reach.
+- Movement now supports the first engine-backed mantle/climb foundation: NovaCore mantle probe, ledge-top target snap, `mantle-climb` tech cue, and debug visualization.
 - Weapon registry supports AR, SMG, shotgun, and sidearm definitions.
 - Input actions are translated into `PlayerInputCommand` for fixed-tick gameplay.
 - Default input bindings cover MKB plus controller stick/buttons/triggers.
@@ -62,7 +63,7 @@
 - The active first-person loadout now uses A2 weapon proxies for rifle/sidearm visual tests.
 - The dev range requests relative mouse mode through NovaCore while menus keep normal cursor behavior.
 - The Dev Shooting Range now owns a deterministic `GreyboxWorld` with floor, walls, cover, ramps, spawns, range markers, and a target lane.
-- The Dev Shooting Range now applies greybox collision resolution for bounds, blocking cover/walls, floor grounding, walkable ramps, low steps, and non-mantle ledges.
+- The Dev Shooting Range now applies greybox collision resolution for bounds, blocking cover/walls, floor grounding, walkable ramps, low steps, ledge blocking, and first mantle candidates.
 - Greybox collision is now backed by NovaCore's `novacore::physics::PhysicsWorld` foundation instead of a game-only collision path.
 - The Dev Shooting Range now includes wall-run panels, wall-run surface classification, wall normal/tangent debug data, and first wall-run movement transitions.
 - The SDL debug UI draws the greybox as a top-down range map with player position, view direction, target marker, and range helpers.
@@ -76,6 +77,16 @@
 - Input command, weapon simulation, weapon shot, UI canvas, player camera rig, player view, debug target, dev sandbox, player spawn, command queue, command message, asset binding, render tuning, greybox world/collision, and loopback bridge tests cover the newest gameplay bridge.
 
 ## Added In Latest Block
+
+- Added NovaCore `PhysicsWorld::probeMantle`, `MantleProbe`, and `MantleProbeResult` for deterministic cover/ledge top detection with obstacle point, target foot position, approach normal, height, distance, surface kind, and collider id.
+- Updated NovaCore ledge top resolution so successful mantle target snaps ground cleanly instead of side-blocking the player.
+- Added Nemisis `GreyboxCollisionResult` mantle telemetry and wired `GameApp` to query mantle candidates from the current view direction.
+- Added `MovementSystem::applyMantleCandidate` and `mantle-climb` movement-tech cue so pressing mantle on a valid candidate moves the KCC to the ledge top and records animation/VFX data.
+- Added Dev Range debug lines for mantle candidate paths, Gameplay HUD KCC state reporting, sandbox telemetry for mantle id/height, and placeholder mantle-climb visual boxes.
+- Expanded NovaCore smoke, Nemisis greybox collision, movement replay, dev sandbox, and render-scene tests for mantle probe/target/climb/debug coverage.
+- Verified NovaCore Debug build + CTest, Nemisis Debug build + 32/32 CTest, and direct `nemisis_game.exe --vulkan-dev-range-smoke-test`.
+
+## Previous Movement Lore/A2 UI Block
 
 - Fixed the Vulkan Main Menu grey-screen path by adding NovaCore Vulkan UI rect/line/text primitive submission for the existing `UiCanvas` debug/menu commands.
 - Added backend frame stats for Vulkan UI rects, lines, and text commands and surfaced them in the Nemisis Assets debug page.

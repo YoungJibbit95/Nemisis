@@ -760,6 +760,8 @@ void renderDebugOverlay(
             std::to_string(sample.collision.hitCount) + " " +
                 std::string(sample.collision.nearWallRunSurface
                         ? "WallRun"
+                        : sample.collision.mantleCandidate
+                            ? "Mantle"
                         : sample.collision.onRamp
                             ? "Ramp"
                             : sample.collision.stepped ? "Step" : yesNo(sample.collision.blocked)));

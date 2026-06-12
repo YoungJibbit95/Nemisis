@@ -43,6 +43,12 @@ struct WallRunContact final {
     novacore::math::Vec3 tangent{};
 };
 
+struct MantleCandidate final {
+    bool available = false;
+    novacore::math::Vec3 targetPosition{};
+    novacore::math::Vec3 normal{};
+};
+
 class MovementSystem final {
 public:
     explicit MovementSystem(MovementTuning tuning = {});
@@ -59,6 +65,12 @@ public:
         PlayerMovementState state,
         const player::PlayerInputCommand& command,
         WallRunContact contact,
+        float fixedDeltaSeconds) const;
+
+    [[nodiscard]] PlayerMovementState applyMantleCandidate(
+        PlayerMovementState state,
+        const player::PlayerInputCommand& command,
+        MantleCandidate candidate,
         float fixedDeltaSeconds) const;
 
 private:

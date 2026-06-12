@@ -13,7 +13,8 @@ enum class MovementTechCue {
     GravityBootsActive,
     DoubleJumpEnergyPlatform,
     WallJumpDetach,
-    MantleReach
+    MantleReach,
+    MantleClimb
 };
 
 struct MovementTechState final {
@@ -22,16 +23,20 @@ struct MovementTechState final {
     bool doubleJumpPlatformThrown = false;
     bool wallJumpDetachTriggered = false;
     bool mantleReachTriggered = false;
+    bool mantleClimbTriggered = false;
 
     float wallRunArmTriggerSeconds = 0.0F;
     float gravityInverterGlowSeconds = 0.0F;
     float energyPlatformSeconds = 0.0F;
     float wallJumpDetachSeconds = 0.0F;
     float mantleReachSeconds = 0.0F;
+    float mantleClimbSeconds = 0.0F;
 
     novacore::math::Vec3 energyPlatformCenter{};
     novacore::math::Vec3 energyPlatformNormal{0.0F, 1.0F, 0.0F};
     novacore::math::Vec3 wallRunNormal{};
+    novacore::math::Vec3 mantleTargetPosition{};
+    novacore::math::Vec3 mantleNormal{};
 };
 
 inline constexpr float kWallRunArmTriggerCueSeconds = 0.24F;
@@ -39,6 +44,7 @@ inline constexpr float kGravityInverterGlowCueSeconds = 0.30F;
 inline constexpr float kEnergyPlatformCueSeconds = 0.32F;
 inline constexpr float kWallJumpDetachCueSeconds = 0.18F;
 inline constexpr float kMantleReachCueSeconds = 0.28F;
+inline constexpr float kMantleClimbCueSeconds = 0.34F;
 
 [[nodiscard]] inline float consumeTechTimer(float value, float fixedDeltaSeconds) {
     return std::max(0.0F, value - std::max(0.0F, fixedDeltaSeconds));
@@ -49,11 +55,13 @@ inline void beginMovementTechFrame(MovementTechState& tech, float fixedDeltaSeco
     tech.doubleJumpPlatformThrown = false;
     tech.wallJumpDetachTriggered = false;
     tech.mantleReachTriggered = false;
+    tech.mantleClimbTriggered = false;
     tech.wallRunArmTriggerSeconds = consumeTechTimer(tech.wallRunArmTriggerSeconds, fixedDeltaSeconds);
     tech.gravityInverterGlowSeconds = consumeTechTimer(tech.gravityInverterGlowSeconds, fixedDeltaSeconds);
     tech.energyPlatformSeconds = consumeTechTimer(tech.energyPlatformSeconds, fixedDeltaSeconds);
     tech.wallJumpDetachSeconds = consumeTechTimer(tech.wallJumpDetachSeconds, fixedDeltaSeconds);
     tech.mantleReachSeconds = consumeTechTimer(tech.mantleReachSeconds, fixedDeltaSeconds);
+    tech.mantleClimbSeconds = consumeTechTimer(tech.mantleClimbSeconds, fixedDeltaSeconds);
 }
 
 inline void triggerWallRunGravityTech(MovementTechState& tech, novacore::math::Vec3 wallNormal) {
@@ -92,9 +100,24 @@ inline void triggerMantleReach(MovementTechState& tech) {
     tech.mantleReachSeconds = kMantleReachCueSeconds;
 }
 
+inline void triggerMantleClimb(
+    MovementTechState& tech,
+    novacore::math::Vec3 targetPosition,
+    novacore::math::Vec3 normal) {
+    tech.mantleClimbTriggered = true;
+    tech.mantleReachTriggered = true;
+    tech.mantleClimbSeconds = kMantleClimbCueSeconds;
+    tech.mantleReachSeconds = std::max(tech.mantleReachSeconds, kMantleReachCueSeconds);
+    tech.mantleTargetPosition = targetPosition;
+    tech.mantleNormal = normal;
+}
+
 [[nodiscard]] inline MovementTechCue dominantMovementTechCue(const MovementTechState& tech) {
     if (tech.doubleJumpPlatformThrown || tech.energyPlatformSeconds > 0.0F) {
         return MovementTechCue::DoubleJumpEnergyPlatform;
+    }
+    if (tech.mantleClimbTriggered || tech.mantleClimbSeconds > 0.0F) {
+        return MovementTechCue::MantleClimb;
     }
     if (tech.wallRunArmTriggerPressed || tech.wallRunArmTriggerSeconds > 0.0F) {
         return MovementTechCue::WallRunGravityArmTrigger;
@@ -125,6 +148,8 @@ inline void triggerMantleReach(MovementTechState& tech) {
         return "wall-detach";
     case MovementTechCue::MantleReach:
         return "mantle-reach";
+    case MovementTechCue::MantleClimb:
+        return "mantle-climb";
     }
     return "unknown";
 }

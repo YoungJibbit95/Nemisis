@@ -194,9 +194,33 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
     dev::GreyboxCollisionResult collisionSample{};
     if (movementState != nullptr) {
         *movementState = movement_.simulate(*movementState, movementCommand, static_cast<float>(context.fixedDeltaSeconds));
+        const auto mantleForward = view != nullptr
+            ? player::viewVectors(*view).forward
+            : novacore::math::Vec3{0.0F, 0.0F, 1.0F};
+        dev::GreyboxCollisionQuery collisionQuery{};
+        collisionQuery.position = movementState->position;
+        collisionQuery.radius = 0.42F;
+        collisionQuery.height = 1.80F;
+        collisionQuery.mantleForward = mantleForward;
+        collisionQuery.mantleMaxDistance = movement_.tuning().mantleMaxRange;
+        collisionQuery.mantleMinHeight = collisionQuery.maxStepHeight + 0.02F;
+        collisionQuery.mantleMaxHeight = movement_.tuning().mantleMaxHeight;
         collisionSample = dev::resolveGreyboxPlayerCollision(
             greyboxWorld_,
-            dev::GreyboxCollisionQuery{movementState->position, 0.42F, 1.80F});
+            collisionQuery);
+        if (movementCommand.mantlePressed && collisionSample.mantleCandidate) {
+            *movementState = movement_.applyMantleCandidate(
+                *movementState,
+                movementCommand,
+                movement::MantleCandidate{
+                    true,
+                    collisionSample.mantleTargetPosition,
+                    collisionSample.mantleNormal,
+                },
+                static_cast<float>(context.fixedDeltaSeconds));
+            collisionQuery.position = movementState->position;
+            collisionSample = dev::resolveGreyboxPlayerCollision(greyboxWorld_, collisionQuery);
+        }
         const bool wallRunCandidate = collisionSample.nearWallRunSurface && !collisionSample.grounded;
         if (collisionSample.blocked && !wallRunCandidate) {
             if (std::abs(collisionSample.correction.x) > 0.0001F) {

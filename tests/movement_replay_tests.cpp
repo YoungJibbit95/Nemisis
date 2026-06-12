@@ -167,6 +167,35 @@ void testWallRunContactAndWallJumpReplay() {
     expect(state.tech.wallJumpDetachTriggered, "wall jump triggers detach animation cue");
 }
 
+void testMantleCandidateReplay() {
+    nemisis::movement::MovementSystem movement;
+    nemisis::movement::PlayerMovementState state{};
+    state.position = {3.8F, 0.72F, -7.9F};
+    state.velocity = {0.0F, -1.5F, 3.0F};
+    state.mode = nemisis::movement::MovementMode::Airborne;
+
+    nemisis::player::PlayerInputCommand command{};
+    command.mantlePressed = true;
+
+    state = movement.applyMantleCandidate(
+        state,
+        command,
+        nemisis::movement::MantleCandidate{
+            true,
+            {3.8F, 1.30F, -6.95F},
+            {0.0F, 0.0F, -1.0F},
+        },
+        1.0F / 60.0F);
+
+    expect(state.mode == nemisis::movement::MovementMode::Mantling, "mantle candidate enters mantling mode");
+    expect(state.position.y > 1.25F && state.position.y < 1.35F, "mantle candidate snaps to target top height");
+    expect(state.velocity.lengthSquared() <= 0.0001F, "mantle candidate clears movement velocity");
+    expect(state.hasDoubleJump, "mantle candidate refreshes double jump on ledge");
+    expect(state.tech.mantleClimbTriggered, "mantle candidate triggers climb cue");
+    expect(nemisis::movement::dominantMovementTechCue(state.tech) == nemisis::movement::MovementTechCue::MantleClimb,
+           "mantle climb becomes dominant tech cue");
+}
+
 void testMovementTuningConfigReplay() {
     constexpr std::string_view json = R"({
         "sprint_speed": 10.0,
@@ -200,6 +229,7 @@ int main() {
     testDashCooldownReplay();
     testSlideDurationAndSlideJumpReplay();
     testWallRunContactAndWallJumpReplay();
+    testMantleCandidateReplay();
     testMovementTuningConfigReplay();
 
     if (failures > 0) {

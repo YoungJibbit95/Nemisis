@@ -65,7 +65,7 @@ Runtime placement:
 - Wall-run contact uses NovaCore `PhysicsWorld` wall-run surface probes, stores wall normal/tangent, carries tangent velocity, preserves double jump, and supports the first wall-jump impulse.
 - Wall-run entry now emits a movement-tech cue for the operator arm-button animation and gravity-inverter boot glow.
 - Double-jump now emits a movement-tech cue for the left-hand energy-platform throw/step visual.
-- Mantle input in air now emits a first animation/VFX cue even before full mantle physics lands.
+- Mantle input now checks NovaCore mantle probes against cover/ledge tops, snaps to a deterministic target foot position, and emits mantle-reach/mantle-climb animation/VFX cues.
 - Movement state stores slide/dash timers, grounded/airborne time, input magnitude, and last horizontal speed for camera/HUD/debug use.
 - The first `PlayerCameraRig` turns movement state into local visual camera feel: smoothed eye position, head bob, roll, FOV kick, weapon sway, and recoil view offsets.
 
@@ -106,7 +106,7 @@ Implemented foundation:
 - Dash (multi-directional, tactical cooldown).
 - Wall Run contact entry and Wall Jump.
 - Wall Run and Double Jump movement-tech visual cues.
-- Mantle reach cue hook for upcoming climb physics.
+- First mantle/climb foundation with engine-backed ledge probe, deterministic target snap, debug lines, and `mantle-climb` cue.
 
 Planned features:
 
@@ -121,7 +121,7 @@ Wall-running is not a hero ability or limited tactical power. In the Nemisis uni
 
 Double-jumping uses a different piece of operator kit. The operator throws or projects a compact energy platform with the left hand, plants one mid-air step on it, then pushes off. Gameplay still treats this as a deterministic second jump with one available charge, but animation/VFX must represent the energy step instead of a generic booster jump.
 
-Mantle and climb tech should read as physical operator traversal rather than magic. The current implementation emits a mantle-reach cue when the player requests a mantle in air; the full mantle probe/attach/climb transition is still a planned KCC step.
+Mantle and climb tech should read as physical operator traversal rather than magic. The current implementation uses NovaCore mantle probes to find cover/ledge tops in front of the player, validates a landing position, snaps the KCC to the target top as a first deterministic foundation, and emits mantle-reach/mantle-climb cues for first-person arms and future third-person animation.
 
 Current code hooks:
 
@@ -131,6 +131,8 @@ Current code hooks:
 - `triggerDoubleJumpPlatform`: spawns the energy-platform cue below the operator on double jump.
 - `triggerWallJumpDetach`: emits a detach cue when jumping away from a wall.
 - `triggerMantleReach`: emits the early mantle/climb reach cue.
+- `triggerMantleClimb`: emits the first successful climb cue and stores the mantle target/normal for VFX and animation.
+- `PhysicsWorld::probeMantle`: finds reachable cover/ledge tops and reports obstacle point, target foot position, approach normal, height, distance, and collider id.
 
 Advanced tech requirements:
 

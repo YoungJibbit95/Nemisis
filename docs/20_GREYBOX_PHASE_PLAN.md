@@ -64,7 +64,7 @@ Implemented foundation:
 Still planned:
 
 - Add basic material fallback selection, texture/material binding, and stronger light/debug controls.
-- Replace the first static-collider KCC layer with capsule sweeps, richer depenetration ordering, mantle probes, and moving-platform contacts.
+- Replace the first static-collider KCC layer with capsule sweeps, richer depenetration ordering, timed mantle attach/climb curves, and moving-platform contacts.
 - Add debug overlays for entity count, physics time, contact manifold count, wall-run eligibility, and server replay validation.
 
 Acceptance:
@@ -116,4 +116,4 @@ Acceptance:
 
 We are in Greybox Phase 0 now.
 
-Phase 1 has crossed the first in-world asset threshold. Metadata, mesh handles, A0/A1/A2 scene-info import, CPU mesh extraction, Vulkan runtime probe, compiled Vulkan 3D primitive path, renderer-owned GLB resource upload/draw, first-person mesh proxies, world debug lines, configurable lighting/FOV tuning, NovaCore-backed ramp/step/ledge/wall-run surface queries, and A2 visual assets are in. The remaining Phase 1 pressure is capsule sweeps, mantle probes, slide validation, richer material fallback, swapchain resilience, and keeping visual assets aligned with collision truth.
+Phase 1 has crossed the first in-world asset threshold. Metadata, mesh handles, A0/A1/A2 scene-info import, CPU mesh extraction, Vulkan runtime probe, compiled Vulkan 3D primitive path, renderer-owned GLB resource upload/draw, first-person mesh proxies, world debug lines, configurable lighting/FOV tuning, NovaCore-backed ramp/step/ledge/wall-run/mantle surface queries, and A2 visual assets are in. The remaining Phase 1 pressure is capsule sweeps, timed mantle climb polish, slide validation, richer material fallback, swapchain resilience, and keeping visual assets aligned with collision truth.

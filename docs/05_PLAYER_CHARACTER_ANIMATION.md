@@ -92,6 +92,7 @@ Animation must provide:
   - `DoubleJumpEnergyPlatform` starts the left-hand platform throw and air-step VFX.
   - `WallJumpDetach` starts detach/brace animation.
   - `MantleReach` starts the ledge-reach pose.
+  - `MantleClimb` starts the successful ledge pull-up/climb beat and carries the target position/normal.
 
 The movement-tech hooks are presentation cues, not ability gates. Movement remains controlled by KCC state, surface probes, and deterministic input commands.
 
@@ -103,6 +104,7 @@ Until authored skeleton clips exist, `DevRangeRenderSceneBuilder` renders small 
 - A forearm control light on wall-run entry.
 - A short-lived energy platform on double jump.
 - A left-hand reach marker when mantle input is requested in air.
+- A ledge-top highlight when the first mantle/climb snap succeeds.
 
 These are intentionally simple but they lock down timing, naming, and gameplay integration before animation assets are final.
 

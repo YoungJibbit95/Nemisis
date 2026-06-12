@@ -212,6 +212,32 @@ void testDevRangeRenderSceneCanDisableDebugLines() {
     expect(frame.worldLines.empty(), "frame receives no world lines when disabled");
 }
 
+void testDevRangeRenderSceneDrawsMantleCandidateDebugLines() {
+    novacore::render::Renderer renderer;
+    auto lookup = registerSceneMeshes(renderer);
+    const auto world = nemisis::dev::createDevRangeGreyboxWorld();
+    auto targetRange = nemisis::dev::makeDefaultDevTargetRange();
+    nemisis::dev::GreyboxCollisionResult collision{};
+    collision.mantleCandidate = true;
+    collision.mantleObstaclePoint = {3.8F, 1.3F, -7.5F};
+    collision.mantleTargetPosition = {3.8F, 1.3F, -6.95F};
+    collision.mantlePrimitiveId = "ledge_training_mid";
+
+    novacore::render::RenderFrameInfo frame{};
+    const auto stats = nemisis::dev::DevRangeRenderSceneBuilder{}.append(
+        frame,
+        nemisis::dev::DevRangeRenderSceneDesc{
+            &world,
+            &targetRange,
+            &collision,
+            &lookup,
+            {},
+        });
+
+    expect(stats.worldLineCount == 3, "dev range render scene emits aim and mantle candidate lines");
+    expect(frame.worldLines.size() == 3, "frame receives mantle candidate world lines");
+}
+
 } // namespace
 
 int main() {
@@ -219,6 +245,7 @@ int main() {
     testDevRangeRenderSceneCountsMissingMeshHandles();
     testDevRangeRenderSceneHandlesMissingInputs();
     testDevRangeRenderSceneCanDisableDebugLines();
+    testDevRangeRenderSceneDrawsMantleCandidateDebugLines();
 
     if (failures > 0) {
         std::cerr << failures << " dev range render scene test(s) failed\n";
