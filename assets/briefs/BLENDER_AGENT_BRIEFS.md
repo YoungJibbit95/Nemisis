@@ -299,3 +299,44 @@ Acceptance:
 - Arms leave a clear center aim line for testing.
 - Hands line up with the A1 rifle/sidearm grip socket family well enough for blockout review.
 - No final IK or final animation polish is implied.
+
+## Brief 13 - A2 Visual FPS Test Pack
+
+Pack id: `nemisis_a2_visual_pack`
+
+Generator: `tools/blender/make_a2_visual_pack.py`
+
+Purpose: first visible A2 FPS testasset pack with readable weapon, character, movement-map, cover, and range-prop silhouettes. All assets are original procedural dev-art with no logos, brands, copied protected shapes, marketplace input, or real functional implementation details.
+
+Output:
+
+- Sources: `assets/source/blender/a2_visual_pack/*.blend`.
+- Exports: `assets/generated/a2_visual_pack/*.glb`.
+- Metadata: `assets/generated/a2_visual_pack/*.metadata.json`.
+- Manifest: `assets/generated/a2_visual_pack/manifest.json`.
+
+Asset ids:
+
+- `wpn_a2_blackout_carbine_01` - compact blackout-style generic carbine.
+- `wpn_a2_modular_rifle_01` - modular assault-rifle silhouette.
+- `wpn_a2_striker_sidearm_01` - compact striker-style sidearm.
+- `chr_a2_pilot_operator_01` - sci-fi pilot/operator proxy.
+- `map_a2_wallrun_panel_01` - wallrun panel module.
+- `map_a2_slide_ramp_01` - slide ramp module.
+- `map_a2_cover_crate_01` - cover crate/module.
+- `prop_a2_range_hero_01` - small range hero prop / scoring beacon.
+
+Requirements:
+
+- Style: visible testasset silhouettes with multiple materials, readable dark/light shape separation, and orange/teal gameplay accents.
+- Weapon sockets: include muzzle, right/left grip, eject/VFX, and optic or rail sockets where useful.
+- Character sockets: include root, camera, weapon root, hands, head, backpack, and VFX; include a simple humanoid rig, hitbox guides, and collision capsule.
+- Map sockets/notes: include snap and movement reference sockets; wallrun pieces must carry `wall_run` tags, slide pieces must carry `slide` tags.
+- Metadata: include id, category, tags, dimensions, target dimensions, sockets, socket notes, origin, collision, LOD names, generator, stats, and generated time.
+- CLI: support at least `--only all`, `--only weapons`, `--only characters`, `--only map`, and single asset ids.
+
+Acceptance:
+
+- Each asset is distinct at gameplay test distance and inspectable in Blender.
+- GLB files, metadata JSON files, and manifest are generated into the A2 pack folder.
+- The pack remains generic project dev-art and does not suggest final licensed art direction.

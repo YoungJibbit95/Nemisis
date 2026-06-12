@@ -1,0 +1,71 @@
+{
+  "id": "wpn_a2_blackout_carbine_01",
+  "source": "assets/source/blender/a2_visual_pack/wpn_a2_blackout_carbine_01.blend",
+  "export": "assets/generated/a2_visual_pack/wpn_a2_blackout_carbine_01.glb",
+  "category": "weapon",
+  "tags": [
+    "all",
+    "weapon",
+    "weapons",
+    "carbine",
+    "blackout",
+    "wpn_a2_blackout_carbine_01"
+  ],
+  "scale_meters": true,
+  "runtime_up_axis": "Y",
+  "gameplay_forward_axis": "+Z",
+  "blender_up_axis": "+Z",
+  "blender_forward_axis": "+Y",
+  "dimensions_m": [
+    0.1865,
+    1.321,
+    0.6178
+  ],
+  "target_dimensions_m": [
+    0.19,
+    1.31,
+    0.55
+  ],
+  "origin": "Origin at approximate right-hand grip/root; Blender forward axis is +Y.",
+  "sockets": [
+    "socket_muzzle",
+    "socket_grip_r",
+    "socket_grip_l",
+    "socket_optic",
+    "socket_mag",
+    "socket_eject",
+    "socket_vfx"
+  ],
+  "socket_notes": {
+    "socket_muzzle": "Visual muzzle/VFX reference, points along Blender +Y.",
+    "socket_grip_r": "Approximate right-hand grip anchor for first-person/world-model tests.",
+    "socket_grip_l": "Front support hand anchor.",
+    "socket_optic": "Top attachment/reference point for sight alignment.",
+    "socket_mag": "Magazine pickup/reload reference point.",
+    "socket_eject": "Right-side casing/VFX reference.",
+    "socket_vfx": "Alias for muzzle effect placement."
+  },
+  "notes": [
+    "original_generic_dev_art",
+    "fps_visible_testasset",
+    "orange_teal_accents",
+    "no_brand_or_real_functional_details"
+  ],
+  "collision": "none",
+  "lods": [
+    "wpn_a2_blackout_carbine_01_lod0",
+    "wpn_a2_blackout_carbine_01_lod1"
+  ],
+  "license": "original_project_asset",
+  "external_assets": false,
+  "visual_reference_note": "Original procedural dev-art using broad FPS and sci-fi test-asset language only; no brands, logos, copied protected silhouettes, or real functional implementation details.",
+  "generated_by": "tools/blender/make_a2_visual_pack.py",
+  "generated_at_utc": "2026-06-12T08:58:57+00:00",
+  "stats": {
+    "mesh_objects": 16,
+    "vertices": 192,
+    "polygons": 128,
+    "triangles_estimate": 320
+  },
+  "bytes": 34632
+}

@@ -33,6 +33,8 @@ It is not a vertical slice yet. It is a developer playground for validating:
 - Deterministic greybox world data for the first shooting range.
 - Visible in-world Vulkan 3D range with player spawn, target lane, cover, ramps, walls, GLB props, and weapon proxies.
 - Active first-person weapon and arms rendering driven by camera/view, ADS, weapon sway, recoil, and current loadout.
+- A2 visual FPS test assets in the range: blackout-style carbine, modular rifle, striker sidearm, pilot/operator proxy, wall-run panel, slide ramp, cover crate, and range hero prop.
+- First wall-run panel contacts, wall-run transition, wall-jump impulse, and wall normal/tangent debug visualization.
 - Dev Range session scoring for shots fired, hits, eliminations, damage dealt, accuracy, current streak, best streak, range resets, target respawn, and session event text.
 - Four-lane Dev Target Range with nearest-target hit selection, active lane tracking, per-lane respawn timers, and alive/down counts.
 - HUD health panel backed by `PlayerHealthComponent`.
@@ -64,6 +66,7 @@ Current environment note:
 - `nemisis_game --vulkan-dev-range-smoke-test` remains a named explicit version of the default 3D smoke.
 - `nemisis_game --menu-flow-smoke-test` drives the real game executable through Main Menu, Loadout, Settings, Account, Loading, Dev Range, TDM, and Control screens for UI/game-flow regression coverage.
 - Generated A0 and prototype-pack assets are registered as NovaCore renderer mesh resources and rendered in-world through the Vulkan GLB mesh path.
+- Generated A2 visual assets are also required runtime renderables and are registered through the same NovaCore mesh-resource path.
 - The generated A0 proxy metadata, GLB scene info, and CPU mesh data are now loaded at startup and registered into NovaCore mesh handles.
 
 ## Controls
@@ -149,6 +152,7 @@ The sandbox logs every 0.5 seconds through NovaCore logging:
 - Active debug page.
 - Dev mesh asset readiness.
 - Greybox collision hit/block state.
+- Greybox ground surface, slide surface, wall-run surface, wall primitive id, wall normal, and wall tangent.
 
 The on-screen debug overlay currently has these pages:
 
@@ -169,6 +173,7 @@ The Dev Shooting Range HUD currently shows:
 The Dev Shooting Range screen also draws a greybox range map:
 
 - Floor bounds, walls, cover, ramps, low step, mid ledge, spawn points, range markers, and target marker.
+- Wall-run panel lanes used by the first wall-run contact implementation.
 - A budgeted wireframe overlay from the imported A0 environment GLB.
 - Local player square and current yaw direction.
 - Line from player to the current target lane.
@@ -195,8 +200,10 @@ The renderer clear color also changes by state for early visual feedback:
 - Dev Range reset restores player movement, transform, camera view, health, weapon runtime, command queue, all target lanes, and session feedback.
 - Dev Range render composition is isolated in `DevRangeRenderSceneBuilder`, with `GameApp` only collecting player state and orchestrating frame flow.
 - Current collision supports floor grounding, bounds, AABB blockers, walkable ramp height sampling, low-step handling, ground normals, and ledges that block until mantle exists.
+- Current collision is backed by NovaCore's first `PhysicsWorld` layer and now reports wall-run panels, slide surfaces, wall normals, and wall tangents for movement/gameplay systems.
+- Current movement includes a first wall-run contact/wall-jump implementation tuned slower than Titanfall-style movement so it can be iterated safely in the greybox range.
 - Asset ids, preload requests, generated `.glb` exports, metadata, GLB scene-info imports, CPU mesh extraction, renderer-owned mesh handles, Vulkan upload queues, and indexed draw submission exist for the current dev assets.
-- Vulkan Dev Range smoke currently submits 29 world boxes, 19 mesh instances, and at least one debug line.
+- Vulkan Dev Range smoke currently reports 30 catalog assets, 28/28 registered dev mesh resources, 460 imported primitives, 35,528 vertices, 55,068 indices, 33 world boxes, 27 mesh instances, and at least one world debug line through the same `nemisis_game` executable.
 - Menu flow smoke currently reaches the Main Menu tabs, loading screens, live Dev Range, and gamemode placeholders without leaving `nemisis_game`.
 - Relative mouse mode is requested for the dev range; mouse/controller sensitivity is data-driven, while cursor policy persistence and raw-input options are still pending.
 - Debug target hit resolution is a focused sphere test, not full scene collision.
@@ -209,6 +216,7 @@ The renderer clear color also changes by state for early visual feedback:
 - Timed range drills, measured TTK panels, recoil-control scoring, and lane-specific score breakdowns.
 - Player damage sources, down-state, and respawn flow driven by authoritative hit events.
 - Full KCC collision against greybox floors, walls, cover, ramps, and ledges.
+- Deeper KCC work: capsule sweeps, wall-run camera feel, mantle probes, wall detach rules, moving platforms, and server replay validation.
 - Texture/material binding on top of the existing renderer-owned resource handles, upload queues, and deferred destruction for current GLB meshes.
 - Real UI text rendering after the SDL debug text path is replaced by the custom UI renderer.
 - Real client/server packet transport after the loopback bridge is stable.

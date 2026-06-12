@@ -103,6 +103,56 @@ Generated A1 prototype asset ids:
 
 The A1 pack writes `.blend` sources under `assets/source/blender`, `.glb` exports under `assets/export/gltf`, metadata JSON next to each export, and `assets/export/gltf/a1_prototype_pack_manifest.json`.
 
+## Generate A2 Visual Pack
+
+From the Nemisis repository root:
+
+```powershell
+blender --background --python tools/blender/make_a2_visual_pack.py
+```
+
+If Blender is not in PATH:
+
+```powershell
+& "F:\Program Files\Blender Foundation\Blender 5.1\blender.exe" --background --python tools/blender/make_a2_visual_pack.py
+```
+
+Generate one A2 group or asset:
+
+```powershell
+blender --background --python tools/blender/make_a2_visual_pack.py -- --only weapons
+blender --background --python tools/blender/make_a2_visual_pack.py -- --only characters
+blender --background --python tools/blender/make_a2_visual_pack.py -- --only map
+blender --background --python tools/blender/make_a2_visual_pack.py -- --only wpn_a2_blackout_carbine_01
+```
+
+Generated A2 visual asset ids:
+
+- `wpn_a2_blackout_carbine_01`
+- `wpn_a2_modular_rifle_01`
+- `wpn_a2_striker_sidearm_01`
+- `chr_a2_pilot_operator_01`
+- `map_a2_wallrun_panel_01`
+- `map_a2_slide_ramp_01`
+- `map_a2_cover_crate_01`
+- `prop_a2_range_hero_01`
+
+The A2 pack writes `.blend` sources under `assets/source/blender/a2_visual_pack`, flat `.glb` exports and metadata under `assets/generated/a2_visual_pack`, and `assets/generated/a2_visual_pack/manifest.json`.
+
+Render the A2 preview sheet:
+
+```powershell
+blender --background --python tools/blender/render_a2_preview.py
+```
+
+If Blender is not in PATH:
+
+```powershell
+& "F:\Program Files\Blender Foundation\Blender 5.1\blender.exe" --background --python tools/blender/render_a2_preview.py
+```
+
+The preview script imports the generated A2 GLBs, arranges them in a simple studio scene, and writes `assets/generated/a2_visual_pack/a2_visual_pack_preview.png` plus a reusable preview `.blend` file.
+
 ## Codex Agent Handoff
 
 - `CODEX_ASSET_AGENT.md` describes the expected agent workflow.

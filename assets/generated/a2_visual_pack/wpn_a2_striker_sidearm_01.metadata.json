@@ -1,0 +1,72 @@
+{
+  "id": "wpn_a2_striker_sidearm_01",
+  "source": "assets/source/blender/a2_visual_pack/wpn_a2_striker_sidearm_01.blend",
+  "export": "assets/generated/a2_visual_pack/wpn_a2_striker_sidearm_01.glb",
+  "category": "weapon",
+  "tags": [
+    "all",
+    "weapon",
+    "weapons",
+    "sidearm",
+    "striker",
+    "pistol",
+    "wpn_a2_striker_sidearm_01"
+  ],
+  "scale_meters": true,
+  "runtime_up_axis": "Y",
+  "gameplay_forward_axis": "+Z",
+  "blender_up_axis": "+Z",
+  "blender_forward_axis": "+Y",
+  "dimensions_m": [
+    0.128,
+    0.4937,
+    0.399
+  ],
+  "target_dimensions_m": [
+    0.13,
+    0.47,
+    0.38
+  ],
+  "origin": "Origin at approximate right-hand grip/root; Blender forward axis is +Y.",
+  "sockets": [
+    "socket_muzzle",
+    "socket_grip_r",
+    "socket_grip_l",
+    "socket_optic",
+    "socket_rail",
+    "socket_eject",
+    "socket_vfx"
+  ],
+  "socket_notes": {
+    "socket_muzzle": "Visual muzzle/VFX reference, points along Blender +Y.",
+    "socket_grip_r": "Right-hand grip anchor.",
+    "socket_grip_l": "Support hand or inspection anchor.",
+    "socket_optic": "Tiny top sight/optic alignment reference.",
+    "socket_rail": "Lower rail attachment test socket.",
+    "socket_eject": "Right-side casing/VFX reference.",
+    "socket_vfx": "Alias for muzzle effect placement."
+  },
+  "notes": [
+    "original_generic_dev_art",
+    "fps_visible_testasset",
+    "compact_sidearm",
+    "orange_teal_accents"
+  ],
+  "collision": "none",
+  "lods": [
+    "wpn_a2_striker_sidearm_01_lod0",
+    "wpn_a2_striker_sidearm_01_lod1"
+  ],
+  "license": "original_project_asset",
+  "external_assets": false,
+  "visual_reference_note": "Original procedural dev-art using broad FPS and sci-fi test-asset language only; no brands, logos, copied protected silhouettes, or real functional implementation details.",
+  "generated_by": "tools/blender/make_a2_visual_pack.py",
+  "generated_at_utc": "2026-06-12T08:58:57+00:00",
+  "stats": {
+    "mesh_objects": 14,
+    "vertices": 140,
+    "polygons": 98,
+    "triangles_estimate": 224
+  },
+  "bytes": 27700
+}

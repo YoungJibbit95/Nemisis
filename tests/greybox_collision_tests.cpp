@@ -92,6 +92,20 @@ void testMidLedgeStillBlocksWithoutMantle() {
     expect(result.lastPrimitiveId == "ledge_training_mid", "mid ledge reports primitive id");
 }
 
+void testWallRunPanelReportsSurfaceContact() {
+    const auto world = nemisis::dev::createDevRangeGreyboxWorld();
+    const auto result = nemisis::dev::resolveGreyboxPlayerCollision(
+        world,
+        nemisis::dev::GreyboxCollisionQuery{{-18.1F, 0.72F, -5.5F}, 0.42F, 1.80F});
+
+    expect(result.blocked, "wallrun panel still blocks capsule penetration");
+    expect(!result.grounded, "airborne wallrun probe does not snap to floor");
+    expect(result.nearWallRunSurface, "wallrun panel reports runnable surface contact");
+    expect(result.wallPrimitiveId == "wallrun_left_panel_a", "wallrun contact reports primitive id");
+    expect(result.wallKind == nemisis::dev::GreyboxPrimitiveKind::WallRunPanel, "wallrun contact reports primitive kind");
+    expect(result.wallTangent.lengthSquared() > 0.5F, "wallrun contact provides tangent direction");
+}
+
 } // namespace
 
 int main() {
@@ -101,6 +115,7 @@ int main() {
     testRampSurfaceGroundsPlayer();
     testLowStepIsWalkable();
     testMidLedgeStillBlocksWithoutMantle();
+    testWallRunPanelReportsSurfaceContact();
 
     if (failures > 0) {
         std::cerr << failures << " greybox collision test(s) failed\n";

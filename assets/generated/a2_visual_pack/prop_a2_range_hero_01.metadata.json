@@ -1,0 +1,68 @@
+{
+  "id": "prop_a2_range_hero_01",
+  "source": "assets/source/blender/a2_visual_pack/prop_a2_range_hero_01.blend",
+  "export": "assets/generated/a2_visual_pack/prop_a2_range_hero_01.glb",
+  "category": "prop",
+  "tags": [
+    "all",
+    "map",
+    "maps",
+    "prop",
+    "props",
+    "range",
+    "hero_prop",
+    "target",
+    "prop_a2_range_hero_01"
+  ],
+  "scale_meters": true,
+  "runtime_up_axis": "Y",
+  "gameplay_forward_axis": "+Z",
+  "blender_up_axis": "+Z",
+  "blender_forward_axis": "+Y",
+  "dimensions_m": [
+    0.76,
+    0.76,
+    1.47
+  ],
+  "target_dimensions_m": [
+    0.78,
+    0.5,
+    1.47
+  ],
+  "origin": "Origin at floor center of the prop footprint.",
+  "sockets": [
+    "socket_interact",
+    "socket_target_center",
+    "socket_vfx",
+    "socket_snap_center"
+  ],
+  "socket_notes": {
+    "socket_interact": "Player interaction/UI reference.",
+    "socket_target_center": "Hitscan target center reference.",
+    "socket_vfx": "Holographic panel effect/reference point.",
+    "socket_snap_center": "Grid placement reference."
+  },
+  "notes": [
+    "range_hero_prop",
+    "target_center",
+    "interactive_test_prop",
+    "orange_teal_accents"
+  ],
+  "collision": "visual_only_use_simple_cylinder_or_box_collision",
+  "lods": [
+    "prop_a2_range_hero_01_lod0",
+    "prop_a2_range_hero_01_lod1"
+  ],
+  "license": "original_project_asset",
+  "external_assets": false,
+  "visual_reference_note": "Original procedural dev-art using broad FPS and sci-fi test-asset language only; no brands, logos, copied protected silhouettes, or real functional implementation details.",
+  "generated_by": "tools/blender/make_a2_visual_pack.py",
+  "generated_at_utc": "2026-06-12T08:58:57+00:00",
+  "stats": {
+    "mesh_objects": 13,
+    "vertices": 304,
+    "polygons": 178,
+    "triangles_estimate": 556
+  },
+  "bytes": 43940
+}

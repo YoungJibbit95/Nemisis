@@ -36,6 +36,8 @@ void testSummaryIncludesPlayableTelemetry() {
     sample.target.health = 122.0F;
     sample.target.hitsTaken = 2;
     sample.targetHit.hit = true;
+    sample.collision.nearWallRunSurface = true;
+    sample.collision.wallPrimitiveId = "wallrun_left_panel_a";
 
     sandbox.recordTick(sample);
     const auto summary = sandbox.latestSummary();
@@ -48,6 +50,8 @@ void testSummaryIncludesPlayableTelemetry() {
     expect(summary.find("targetsAlive=4/4") != std::string::npos, "summary includes target lane count");
     expect(summary.find("targetHp=122.0") != std::string::npos, "summary includes target health");
     expect(summary.find("hit=yes") != std::string::npos, "summary includes target hit");
+    expect(summary.find("wallrunSurface=yes") != std::string::npos, "summary includes wallrun surface state");
+    expect(summary.find("wall=wallrun_left_panel_a") != std::string::npos, "summary includes wall contact id");
 }
 
 void testClearColorReflectsState() {

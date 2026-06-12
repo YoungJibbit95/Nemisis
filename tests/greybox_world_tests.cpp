@@ -25,7 +25,9 @@ void testDevRangeGreyboxComposition() {
     expect(nemisis::dev::countPrimitivesByKind(world, nemisis::dev::GreyboxPrimitiveKind::Floor) == 1, "one floor");
     expect(nemisis::dev::countPrimitivesByKind(world, nemisis::dev::GreyboxPrimitiveKind::Wall) == 3, "three walls");
     expect(nemisis::dev::countPrimitivesByKind(world, nemisis::dev::GreyboxPrimitiveKind::Cover) >= 3, "cover primitives exist");
+    expect(nemisis::dev::countPrimitivesByKind(world, nemisis::dev::GreyboxPrimitiveKind::Ledge) == 1, "one mantle/ledge training primitive");
     expect(nemisis::dev::countPrimitivesByKind(world, nemisis::dev::GreyboxPrimitiveKind::Ramp) == 2, "two ramp primitives");
+    expect(nemisis::dev::countPrimitivesByKind(world, nemisis::dev::GreyboxPrimitiveKind::WallRunPanel) == 4, "wallrun panels exist");
     expect(nemisis::dev::countPrimitivesByKind(world, nemisis::dev::GreyboxPrimitiveKind::Spawn) == 2, "two spawn markers");
     expect(nemisis::dev::findPrimitive(world, "target_debug_dummy") != nullptr, "target proxy exists");
     expect(world.playerSpawn.z < 0.0F, "player spawn starts near shooting lane entrance");

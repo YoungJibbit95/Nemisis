@@ -112,6 +112,22 @@ struct HorizontalInput final {
         mode == MovementMode::Dashing;
 }
 
+[[nodiscard]] novacore::math::Vec3 chooseWallRunTangent(
+    novacore::math::Vec3 tangent,
+    novacore::math::Vec3 velocity,
+    novacore::math::Vec3 inputDirection) {
+    tangent = normalizedOrZero(tangent);
+    if (tangent.lengthSquared() <= 0.0001F) {
+        return {};
+    }
+
+    const auto preferred = inputDirection.lengthSquared() > 0.0001F ? inputDirection : normalizedOrZero(horizontalVelocity(velocity));
+    if ((preferred.x * tangent.x) + (preferred.z * tangent.z) < 0.0F) {
+        tangent = tangent * -1.0F;
+    }
+    return tangent;
+}
+
 } // namespace
 
 MovementSystem::MovementSystem(MovementTuning tuning)
@@ -136,6 +152,7 @@ PlayerMovementState MovementSystem::simulate(
     state.slideCooldownRemaining = consumeCooldown(state.slideCooldownRemaining, fixedDeltaSeconds);
     state.slideTimeRemaining = consumeCooldown(state.slideTimeRemaining, fixedDeltaSeconds);
     state.wallRunTimeRemaining = consumeCooldown(state.wallRunTimeRemaining, fixedDeltaSeconds);
+    state.hasWallRunContact = false;
 
     const auto input = horizontalInput(command.move);
     const auto direction = input.direction;
@@ -158,6 +175,9 @@ PlayerMovementState MovementSystem::simulate(
     if (state.mode == MovementMode::Sliding &&
         (state.slideTimeRemaining <= 0.0F || horizontalSpeed(state.velocity) <= tuning_.slideEndSpeed)) {
         state.mode = state.position.y <= 0.001F ? MovementMode::Grounded : MovementMode::Airborne;
+    }
+    if (state.mode == MovementMode::WallRunning && state.wallRunTimeRemaining <= 0.0F) {
+        state.mode = MovementMode::Airborne;
     }
 
     if (state.mode == MovementMode::Grounded) {
@@ -206,6 +226,13 @@ PlayerMovementState MovementSystem::simulate(
             desired,
             tuning_.dashSteeringAcceleration,
             fixedDeltaSeconds);
+    } else if (state.mode == MovementMode::WallRunning) {
+        const auto tangent = chooseWallRunTangent(state.wallRunTangent, state.velocity, direction);
+        if (tangent.lengthSquared() > 0.0001F) {
+            state.velocity.x = tangent.x * tuning_.wallRunSpeed;
+            state.velocity.z = tangent.z * tuning_.wallRunSpeed;
+        }
+        state.velocity.y = std::max(state.velocity.y, -1.15F);
     }
 
     if (command.slidePressed && state.mode == MovementMode::Grounded && state.slideCooldownRemaining <= 0.0F) {
@@ -234,7 +261,17 @@ PlayerMovementState MovementSystem::simulate(
         state.mode = MovementMode::Dashing;
     }
 
-    if (command.jumpPressed && isGroundedLike(state.mode)) {
+    if (command.jumpPressed && state.mode == MovementMode::WallRunning) {
+        const auto tangent = chooseWallRunTangent(state.wallRunTangent, state.velocity, direction);
+        const auto normal = normalizedOrZero(state.wallRunNormal);
+        state.velocity =
+            (tangent * (tuning_.wallRunSpeed * 0.74F)) +
+            (normal * tuning_.wallJumpImpulse) +
+            novacore::math::Vec3{0.0F, tuning_.doubleJumpImpulse, 0.0F};
+        state.wallRunTimeRemaining = 0.0F;
+        state.hasDoubleJump = true;
+        state.mode = MovementMode::Airborne;
+    } else if (command.jumpPressed && isGroundedLike(state.mode)) {
         state.velocity.y = tuning_.jumpVelocity;
         if (state.mode == MovementMode::Sliding) {
             const auto slideDirection = normalizedOrZero(horizontalVelocity(state.velocity));
@@ -248,7 +285,9 @@ PlayerMovementState MovementSystem::simulate(
         state.hasDoubleJump = false;
     }
 
-    if (state.mode != MovementMode::Grounded && state.mode != MovementMode::Mantling) {
+    if (state.mode != MovementMode::Grounded &&
+        state.mode != MovementMode::Mantling &&
+        state.mode != MovementMode::WallRunning) {
         state.velocity.y += tuning_.gravity * fixedDeltaSeconds;
     }
 
@@ -269,6 +308,49 @@ PlayerMovementState MovementSystem::simulate(
     }
 
     state.velocity = clampHorizontalSpeed(state.velocity, tuning_.maxValidatedHorizontalSpeed);
+    state.lastHorizontalSpeed = horizontalSpeed(state.velocity);
+    return state;
+}
+
+PlayerMovementState MovementSystem::applyWallRunContact(
+    PlayerMovementState state,
+    const player::PlayerInputCommand& command,
+    WallRunContact contact,
+    float fixedDeltaSeconds) const {
+    fixedDeltaSeconds = std::max(0.0F, fixedDeltaSeconds);
+    const auto input = horizontalInput(command.move);
+    const bool wantsWallRun = contact.available &&
+        input.magnitude > 0.20F &&
+        state.position.y > 0.20F &&
+        state.mode != MovementMode::Grounded &&
+        state.mode != MovementMode::Sliding &&
+        state.mode != MovementMode::Mantling;
+
+    if (!wantsWallRun) {
+        if (state.mode == MovementMode::WallRunning) {
+            state.mode = MovementMode::Airborne;
+        }
+        return state;
+    }
+
+    const auto tangent = chooseWallRunTangent(contact.tangent, state.velocity, input.direction);
+    if (tangent.lengthSquared() <= 0.0001F) {
+        return state;
+    }
+
+    state.mode = MovementMode::WallRunning;
+    state.hasWallRunContact = true;
+    state.wallRunNormal = normalizedOrZero(contact.normal);
+    state.wallRunTangent = tangent;
+    if (state.wallRunTimeRemaining <= 0.0F) {
+        state.wallRunTimeRemaining = tuning_.wallRunMaxDurationSeconds;
+    }
+
+    const float speed = std::max(tuning_.wallRunSpeed, horizontalSpeed(state.velocity));
+    state.velocity.x = tangent.x * speed;
+    state.velocity.z = tangent.z * speed;
+    state.velocity.y = std::clamp(state.velocity.y + (1.25F * fixedDeltaSeconds), -0.85F, 1.25F);
+    state.hasDoubleJump = true;
     state.lastHorizontalSpeed = horizontalSpeed(state.velocity);
     return state;
 }

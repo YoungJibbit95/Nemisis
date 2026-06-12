@@ -1,0 +1,74 @@
+{
+  "id": "chr_a2_pilot_operator_01",
+  "source": "assets/source/blender/a2_visual_pack/chr_a2_pilot_operator_01.blend",
+  "export": "assets/generated/a2_visual_pack/chr_a2_pilot_operator_01.glb",
+  "category": "character",
+  "tags": [
+    "all",
+    "character",
+    "characters",
+    "operator",
+    "pilot",
+    "proxy",
+    "chr_a2_pilot_operator_01"
+  ],
+  "scale_meters": true,
+  "runtime_up_axis": "Y",
+  "gameplay_forward_axis": "+Z",
+  "blender_up_axis": "+Z",
+  "blender_forward_axis": "+Y",
+  "dimensions_m": [
+    1.1355,
+    0.8,
+    1.885
+  ],
+  "target_dimensions_m": [
+    1.02,
+    0.61,
+    1.84
+  ],
+  "origin": "Origin at feet/root on the floor.",
+  "sockets": [
+    "socket_root",
+    "socket_camera",
+    "socket_weapon_root",
+    "socket_hand_r",
+    "socket_hand_l",
+    "socket_head",
+    "socket_backpack",
+    "socket_vfx"
+  ],
+  "socket_notes": {
+    "socket_root": "Feet/root placement point.",
+    "socket_camera": "Approximate eye/camera reference.",
+    "socket_weapon_root": "Weapon attachment reference.",
+    "socket_hand_r": "Right hand reference point.",
+    "socket_hand_l": "Left hand reference point.",
+    "socket_head": "Head target/attachment reference.",
+    "socket_backpack": "Mobility pack attachment/VFX reference.",
+    "socket_vfx": "Pack thruster/VFX reference."
+  },
+  "notes": [
+    "original_generic_dev_art",
+    "pilot_operator_proxy",
+    "humanoid_rig",
+    "hitbox_guides",
+    "orange_teal_accents"
+  ],
+  "collision": "col_chr_a2_pilot_operator_01_capsule",
+  "lods": [
+    "chr_a2_pilot_operator_01_lod0"
+  ],
+  "license": "original_project_asset",
+  "external_assets": false,
+  "visual_reference_note": "Original procedural dev-art using broad FPS and sci-fi test-asset language only; no brands, logos, copied protected silhouettes, or real functional implementation details.",
+  "generated_by": "tools/blender/make_a2_visual_pack.py",
+  "generated_at_utc": "2026-06-12T08:58:57+00:00",
+  "stats": {
+    "mesh_objects": 42,
+    "vertices": 856,
+    "polygons": 698,
+    "triangles_estimate": 1544
+  },
+  "bytes": 144940
+}

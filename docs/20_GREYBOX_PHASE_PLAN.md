@@ -28,10 +28,14 @@ Implemented:
 - NovaCore registers extracted GLB mesh data as renderer-owned resources, queues Vulkan upload into device-local vertex/index buffers, and tracks residency/deferred destruction.
 - Dev Range submits A0 arena/weapon/character assets plus generated prototype-pack assets as first in-world mesh instances.
 - Prototype-pack GLBs now cover SMG, humanoid, wall, floor, crate, ramp, and target stand placeholders.
-- Plain `nemisis_game` boots into the Vulkan 3D Dev Range with `require_vulkan=true`.
-- The Dev Range is locked during normal Vulkan play so returning to an unrendered 2D debug menu cannot blank the screen.
+- Plain `nemisis_game` boots into the Vulkan Main Menu with `require_vulkan=true`.
+- `nemisis_game --dev-range` boots directly into the Vulkan 3D Dev Range for fast iteration.
+- The Dev Range and menu now both run through the same `nemisis_game` executable so gameplay, UI, loading, and smoke-test paths stay unified.
 - First-person arms and a small 3D aim marker are submitted into the Vulkan frame.
 - First greybox collision resolver blocks player bounds and primitive overlap.
+- NovaCore `PhysicsWorld` now backs greybox collision resolution, surface metadata, wall-run contact, and wall probe reporting.
+- Wall-run panel primitives are in the map and feed wall normal/tangent debug data into movement and UI.
+- A2 visual-pack assets are visible in-world and include first serious weapon, operator, and map-piece proxies.
 
 Acceptance:
 
@@ -59,10 +63,9 @@ Implemented foundation:
 
 Still planned:
 
-- Promote synchronous mesh upload into renderer-owned resource handles and upload queues.
-- Add basic material fallback selection and light/debug controls.
-- Replace first primitive pushout with full KCC slope/step/mantle behavior.
-- Add debug overlays for entity count, primitive count, collision contact, ground normal, and movement mode.
+- Add basic material fallback selection, texture/material binding, and stronger light/debug controls.
+- Replace the first static-collider KCC layer with capsule sweeps, richer depenetration ordering, mantle probes, and moving-platform contacts.
+- Add debug overlays for entity count, physics time, contact manifold count, wall-run eligibility, and server replay validation.
 
 Acceptance:
 
@@ -113,4 +116,4 @@ Acceptance:
 
 We are in Greybox Phase 0 now.
 
-Phase 1 has crossed the first in-world asset threshold. Metadata, mesh handles, A0 scene-info import, CPU mesh extraction, Vulkan runtime probe, compiled Vulkan 3D primitive path, debug wireframe preview, renderer-owned GLB resource upload/draw, first-person mesh proxies, world debug lines, configurable lighting/FOV tuning, ramp sampling, low-step handling, and ledge blocking are in. The remaining Phase 1 pressure is mantle probes, slide validation, richer material fallback, swapchain resilience, and keeping visual assets aligned with collision truth.
+Phase 1 has crossed the first in-world asset threshold. Metadata, mesh handles, A0/A1/A2 scene-info import, CPU mesh extraction, Vulkan runtime probe, compiled Vulkan 3D primitive path, renderer-owned GLB resource upload/draw, first-person mesh proxies, world debug lines, configurable lighting/FOV tuning, NovaCore-backed ramp/step/ledge/wall-run surface queries, and A2 visual assets are in. The remaining Phase 1 pressure is capsule sweeps, mantle probes, slide validation, richer material fallback, swapchain resilience, and keeping visual assets aligned with collision truth.

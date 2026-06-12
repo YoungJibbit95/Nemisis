@@ -13,6 +13,8 @@ enum class GreyboxPrimitiveKind {
     Wall,
     Ramp,
     Cover,
+    Ledge,
+    WallRunPanel,
     Spawn,
     RangeMarker,
     Target

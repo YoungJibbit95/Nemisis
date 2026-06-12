@@ -60,15 +60,15 @@ struct StaticMeshPlacement final {
 
 [[nodiscard]] std::string_view firstPersonWeaponAssetId(std::string_view weaponId) {
     if (weaponId == "sidearm_01") {
-        return "wpn_a1_compact_sidearm_01";
+        return "wpn_a2_striker_sidearm_01";
     }
     if (weaponId == "smg_01") {
-        return "wpn_a1_modern_rifle_01";
+        return "wpn_a2_blackout_carbine_01";
     }
     if (weaponId == "shotgun_01") {
-        return "wpn_a1_modern_rifle_01";
+        return "wpn_a2_modular_rifle_01";
     }
-    return "wpn_a1_compact_rifle_01";
+    return "wpn_a2_blackout_carbine_01";
 }
 
 [[nodiscard]] std::string_view fallbackWeaponAssetId(std::string_view weaponId) {
@@ -91,7 +91,7 @@ struct StaticMeshPlacement final {
     return kWeaponMeshTint;
 }
 
-[[nodiscard]] std::array<StaticMeshPlacement, 9> staticShowcaseMeshes() {
+[[nodiscard]] std::array<StaticMeshPlacement, 17> staticShowcaseMeshes() {
     return {
         StaticMeshPlacement{
             "env_test_arena_kit_01",
@@ -155,6 +155,62 @@ struct StaticMeshPlacement final {
             {1.0F, 1.0F, 1.0F},
             180.0F,
             kDummyTargetTint,
+        },
+        StaticMeshPlacement{
+            "chr_a2_pilot_operator_01",
+            {-13.0F, 0.0F, 11.0F},
+            {1.0F, 1.0F, 1.0F},
+            140.0F,
+            {0.22F, 0.64F, 0.72F, 1.0F},
+        },
+        StaticMeshPlacement{
+            "wpn_a2_blackout_carbine_01",
+            {-8.2F, 1.05F, -9.2F},
+            {0.88F, 0.88F, 0.88F},
+            25.0F,
+            {0.14F, 0.18F, 0.17F, 1.0F},
+        },
+        StaticMeshPlacement{
+            "wpn_a2_modular_rifle_01",
+            {-5.8F, 1.08F, -9.2F},
+            {0.82F, 0.82F, 0.82F},
+            25.0F,
+            {0.13F, 0.18F, 0.20F, 1.0F},
+        },
+        StaticMeshPlacement{
+            "wpn_a2_striker_sidearm_01",
+            {-3.6F, 1.00F, -9.2F},
+            {0.92F, 0.92F, 0.92F},
+            25.0F,
+            {0.16F, 0.15F, 0.14F, 1.0F},
+        },
+        StaticMeshPlacement{
+            "map_a2_wallrun_panel_01",
+            {-18.4F, 0.0F, -5.5F},
+            {1.0F, 1.0F, 1.0F},
+            90.0F,
+            {0.08F, 0.58F, 0.70F, 1.0F},
+        },
+        StaticMeshPlacement{
+            "map_a2_slide_ramp_01",
+            {-13.5F, 0.0F, -6.2F},
+            {1.0F, 1.0F, 1.0F},
+            0.0F,
+            {0.15F, 0.60F, 0.52F, 1.0F},
+        },
+        StaticMeshPlacement{
+            "map_a2_cover_crate_01",
+            {12.5F, 0.0F, 3.8F},
+            {1.0F, 1.0F, 1.0F},
+            -18.0F,
+            {0.40F, 0.48F, 0.44F, 1.0F},
+        },
+        StaticMeshPlacement{
+            "prop_a2_range_hero_01",
+            {0.0F, 0.0F, 11.6F},
+            {1.0F, 1.0F, 1.0F},
+            180.0F,
+            {0.95F, 0.50F, 0.20F, 1.0F},
         },
     };
 }
@@ -520,6 +576,22 @@ void DevRangeRenderSceneBuilder::appendWorldDebugLines(
                 : desc.collision->stepped
                     ? std::array<float, 4>{0.95F, 0.80F, 0.24F, 1.0F}
                     : std::array<float, 4>{0.72F, 0.95F, 1.0F, 1.0F},
+        });
+        ++stats.worldLineCount;
+    }
+
+    if (desc.collision != nullptr && desc.collision->nearWallRunSurface) {
+        const auto wallBase = desc.player.position + novacore::math::Vec3{0.0F, 1.18F, 0.0F};
+        frame.worldLines.push_back(novacore::render::RenderLine3D{
+            wallBase,
+            wallBase + (desc.collision->wallNormal * 1.05F),
+            {0.15F, 0.90F, 1.0F, 1.0F},
+        });
+        ++stats.worldLineCount;
+        frame.worldLines.push_back(novacore::render::RenderLine3D{
+            wallBase,
+            wallBase + (desc.collision->wallTangent * 1.85F),
+            {1.0F, 0.58F, 0.18F, 1.0F},
         });
         ++stats.worldLineCount;
     }

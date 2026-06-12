@@ -1,0 +1,69 @@
+{
+  "id": "map_a2_slide_ramp_01",
+  "source": "assets/source/blender/a2_visual_pack/map_a2_slide_ramp_01.blend",
+  "export": "assets/generated/a2_visual_pack/map_a2_slide_ramp_01.glb",
+  "category": "map",
+  "tags": [
+    "all",
+    "map",
+    "maps",
+    "environment",
+    "ramp",
+    "slide",
+    "slide_ramp",
+    "map_a2_slide_ramp_01"
+  ],
+  "scale_meters": true,
+  "runtime_up_axis": "Y",
+  "gameplay_forward_axis": "+Z",
+  "blender_up_axis": "+Z",
+  "blender_forward_axis": "+Y",
+  "dimensions_m": [
+    4.0976,
+    2.355,
+    1.0454
+  ],
+  "target_dimensions_m": [
+    4.08,
+    2.35,
+    0.98
+  ],
+  "origin": "Origin centered on the lower ramp footprint; top snap is 0.92 m above floor.",
+  "sockets": [
+    "socket_snap_bottom",
+    "socket_snap_top",
+    "socket_slide_entry",
+    "socket_slide_exit",
+    "socket_vfx"
+  ],
+  "socket_notes": {
+    "socket_snap_bottom": "Lower grid connection point.",
+    "socket_snap_top": "Upper grid connection point.",
+    "socket_slide_entry": "Suggested slide entry reference.",
+    "socket_slide_exit": "Suggested slide exit reference.",
+    "socket_vfx": "Center movement effect/reference point."
+  },
+  "notes": [
+    "slide",
+    "movement_readability",
+    "4m_grid_module",
+    "orange_teal_accents"
+  ],
+  "collision": "visual_only_use_simple_ramp_collision",
+  "lods": [
+    "map_a2_slide_ramp_01_lod0",
+    "map_a2_slide_ramp_01_lod1"
+  ],
+  "license": "original_project_asset",
+  "external_assets": false,
+  "visual_reference_note": "Original procedural dev-art using broad FPS and sci-fi test-asset language only; no brands, logos, copied protected silhouettes, or real functional implementation details.",
+  "generated_by": "tools/blender/make_a2_visual_pack.py",
+  "generated_at_utc": "2026-06-12T08:58:57+00:00",
+  "stats": {
+    "mesh_objects": 11,
+    "vertices": 86,
+    "polygons": 65,
+    "triangles_estimate": 128
+  },
+  "bytes": 18652
+}

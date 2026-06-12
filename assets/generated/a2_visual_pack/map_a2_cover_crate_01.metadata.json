@@ -1,0 +1,65 @@
+{
+  "id": "map_a2_cover_crate_01",
+  "source": "assets/source/blender/a2_visual_pack/map_a2_cover_crate_01.blend",
+  "export": "assets/generated/a2_visual_pack/map_a2_cover_crate_01.glb",
+  "category": "map",
+  "tags": [
+    "all",
+    "map",
+    "maps",
+    "environment",
+    "cover",
+    "crate",
+    "module",
+    "map_a2_cover_crate_01"
+  ],
+  "scale_meters": true,
+  "runtime_up_axis": "Y",
+  "gameplay_forward_axis": "+Z",
+  "blender_up_axis": "+Z",
+  "blender_forward_axis": "+Y",
+  "dimensions_m": [
+    1.75,
+    1.3335,
+    1.31
+  ],
+  "target_dimensions_m": [
+    1.7,
+    1.3,
+    1.31
+  ],
+  "origin": "Origin at bottom center; height is chest-cover scale for FPS testing.",
+  "sockets": [
+    "socket_snap_center",
+    "socket_cover_peak",
+    "socket_vfx"
+  ],
+  "socket_notes": {
+    "socket_snap_center": "Grid placement reference.",
+    "socket_cover_peak": "Peek/cover height reference on the front face.",
+    "socket_vfx": "Front cover mark effect/reference point."
+  },
+  "notes": [
+    "cover",
+    "chest_high",
+    "arena_module",
+    "orange_teal_accents"
+  ],
+  "collision": "visual_only_use_box_collision",
+  "lods": [
+    "map_a2_cover_crate_01_lod0",
+    "map_a2_cover_crate_01_lod1"
+  ],
+  "license": "original_project_asset",
+  "external_assets": false,
+  "visual_reference_note": "Original procedural dev-art using broad FPS and sci-fi test-asset language only; no brands, logos, copied protected silhouettes, or real functional implementation details.",
+  "generated_by": "tools/blender/make_a2_visual_pack.py",
+  "generated_at_utc": "2026-06-12T08:58:57+00:00",
+  "stats": {
+    "mesh_objects": 15,
+    "vertices": 120,
+    "polygons": 90,
+    "triangles_estimate": 180
+  },
+  "bytes": 25032
+}

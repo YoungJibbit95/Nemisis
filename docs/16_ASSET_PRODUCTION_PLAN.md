@@ -173,6 +173,8 @@ Current generated outputs:
 - Prototype-pack assets are now included in `configs/assets/nemisis_assets.json` and validated by `DevAssetBindings`.
 - A1 prototype-pack `.blend`, `.glb`, and metadata files for compact rifle, modern rifle, compact sidearm, stylized operator, and first-person arms.
 - A1 assets are now included in `configs/assets/nemisis_assets.json`, required by `DevAssetBindings`, imported into NovaCore CPU mesh data, registered as renderer mesh resources, and uploaded into the Vulkan Dev Range smoke path.
+- A2 visual-pack `.blend`, `.glb`, metadata, manifest, preview `.blend`, and preview `.png` files for the current weapon/operator/map test set.
+- A2 assets are now included in `configs/assets/nemisis_assets.json`, required by `DevAssetBindings`, imported into NovaCore CPU mesh data, registered as renderer mesh resources, instanced in the Vulkan Dev Range, and used for first-person weapon visual tests.
 
 ### A1 - Shooter Test Field Kit
 
@@ -210,6 +212,32 @@ Acceptance:
 - Required sockets exist: muzzle, right grip, left support, casing/ejection optional.
 - First-person and world scale are both checked.
 - Materials are simple PBR and do not rely on copyrighted branding.
+
+Current generated outputs:
+
+- `wpn_a2_blackout_carbine_01`: compact blackout-style generic carbine direction for the first AR/SMG-like first-person test.
+- `wpn_a2_modular_rifle_01`: longer modular rifle direction for assault-rifle/marksman silhouette tests.
+- `wpn_a2_striker_sidearm_01`: compact striker-style sidearm direction for fallback weapon tests.
+- `chr_a2_pilot_operator_01`: US soldier plus sci-fi pilot/operator proxy with capsule and hitbox guide meshes.
+- `map_a2_wallrun_panel_01`: teal-accent wall-run panel for movement readability and collision surface tagging.
+- `map_a2_slide_ramp_01`: slide-ramp test module.
+- `map_a2_cover_crate_01`: chest-high cover crate/module.
+- `prop_a2_range_hero_01`: small interactive range/scoring hero prop.
+
+Generated files:
+
+- `.blend` sources: `assets/source/blender/a2_visual_pack`
+- `.glb` exports and metadata: `assets/generated/a2_visual_pack`
+- Pack manifest: `assets/generated/a2_visual_pack/manifest.json`
+- Preview scene: `assets/generated/a2_visual_pack/a2_visual_pack_preview.blend`
+- Preview image: `assets/generated/a2_visual_pack/a2_visual_pack_preview.png`
+
+Automation:
+
+```powershell
+& "F:\Program Files\Blender Foundation\Blender 5.1\blender.exe" --background --python tools\blender\make_a2_visual_pack.py
+& "F:\Program Files\Blender Foundation\Blender 5.1\blender.exe" --background --python tools\blender\render_a2_preview.py
+```
 
 ### A3 - Character And Arms Prototype
 

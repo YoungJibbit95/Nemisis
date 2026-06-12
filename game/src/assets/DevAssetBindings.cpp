@@ -31,6 +31,14 @@ constexpr RequiredDevAssetIds kRequiredDevAssets{
     "wpn_a1_compact_sidearm_01",
     "chr_a1_stylized_operator_01",
     "chr_a1_fp_arms_01",
+    "wpn_a2_blackout_carbine_01",
+    "wpn_a2_modular_rifle_01",
+    "wpn_a2_striker_sidearm_01",
+    "chr_a2_pilot_operator_01",
+    "map_a2_wallrun_panel_01",
+    "map_a2_slide_ramp_01",
+    "map_a2_cover_crate_01",
+    "prop_a2_range_hero_01",
 };
 
 void appendErrors(

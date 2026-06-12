@@ -197,7 +197,8 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
         collisionSample = dev::resolveGreyboxPlayerCollision(
             greyboxWorld_,
             dev::GreyboxCollisionQuery{movementState->position, 0.42F, 1.80F});
-        if (collisionSample.blocked) {
+        const bool wallRunCandidate = collisionSample.nearWallRunSurface && !collisionSample.grounded;
+        if (collisionSample.blocked && !wallRunCandidate) {
             if (std::abs(collisionSample.correction.x) > 0.0001F) {
                 movementState->velocity.x = 0.0F;
             }
@@ -217,6 +218,15 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
             }
         }
         movementState->position = collisionSample.position;
+        *movementState = movement_.applyWallRunContact(
+            *movementState,
+            movementCommand,
+            movement::WallRunContact{
+                wallRunCandidate,
+                collisionSample.wallNormal,
+                collisionSample.wallTangent,
+            },
+            static_cast<float>(context.fixedDeltaSeconds));
         if (auto* transform = world_.getComponent<novacore::ecs::TransformComponent>(localPlayerEntity_);
             transform != nullptr) {
             transform->position = movementState->position;

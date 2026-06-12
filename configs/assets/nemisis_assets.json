@@ -218,6 +218,86 @@
       "priority": 69,
       "estimated_bytes": 29076,
       "tags": ["character", "first_person_arms", "a1_prototype_pack", "animation_test", "visual_blockout", "dev_sandbox"]
+    },
+    {
+      "id": "wpn_a2_blackout_carbine_01",
+      "kind": "mesh",
+      "source": "assets/source/blender/a2_visual_pack/wpn_a2_blackout_carbine_01.blend",
+      "cooked": "assets/generated/a2_visual_pack/wpn_a2_blackout_carbine_01.glb",
+      "streamable": true,
+      "priority": 86,
+      "estimated_bytes": 34632,
+      "tags": ["weapon", "carbine", "blackout", "a2_visual_pack", "first_person", "world_model", "visual_testasset", "dev_sandbox"]
+    },
+    {
+      "id": "wpn_a2_modular_rifle_01",
+      "kind": "mesh",
+      "source": "assets/source/blender/a2_visual_pack/wpn_a2_modular_rifle_01.blend",
+      "cooked": "assets/generated/a2_visual_pack/wpn_a2_modular_rifle_01.glb",
+      "streamable": true,
+      "priority": 85,
+      "estimated_bytes": 46016,
+      "tags": ["weapon", "rifle", "assault_rifle", "modular", "a2_visual_pack", "first_person", "world_model", "visual_testasset", "dev_sandbox"]
+    },
+    {
+      "id": "wpn_a2_striker_sidearm_01",
+      "kind": "mesh",
+      "source": "assets/source/blender/a2_visual_pack/wpn_a2_striker_sidearm_01.blend",
+      "cooked": "assets/generated/a2_visual_pack/wpn_a2_striker_sidearm_01.glb",
+      "streamable": true,
+      "priority": 82,
+      "estimated_bytes": 27700,
+      "tags": ["weapon", "sidearm", "striker", "pistol", "a2_visual_pack", "first_person", "world_model", "visual_testasset", "dev_sandbox"]
+    },
+    {
+      "id": "chr_a2_pilot_operator_01",
+      "kind": "mesh",
+      "source": "assets/source/blender/a2_visual_pack/chr_a2_pilot_operator_01.blend",
+      "cooked": "assets/generated/a2_visual_pack/chr_a2_pilot_operator_01.glb",
+      "streamable": true,
+      "priority": 84,
+      "estimated_bytes": 144940,
+      "tags": ["character", "operator", "pilot", "third_person", "a2_visual_pack", "hitbox_test", "visual_testasset", "dev_sandbox"]
+    },
+    {
+      "id": "map_a2_wallrun_panel_01",
+      "kind": "mesh",
+      "source": "assets/source/blender/a2_visual_pack/map_a2_wallrun_panel_01.blend",
+      "cooked": "assets/generated/a2_visual_pack/map_a2_wallrun_panel_01.glb",
+      "streamable": true,
+      "priority": 78,
+      "estimated_bytes": 22144,
+      "tags": ["environment", "wall", "wall_run", "wallrun", "movement_test", "a2_visual_pack", "visual_testasset", "dev_sandbox"]
+    },
+    {
+      "id": "map_a2_slide_ramp_01",
+      "kind": "mesh",
+      "source": "assets/source/blender/a2_visual_pack/map_a2_slide_ramp_01.blend",
+      "cooked": "assets/generated/a2_visual_pack/map_a2_slide_ramp_01.glb",
+      "streamable": true,
+      "priority": 77,
+      "estimated_bytes": 18652,
+      "tags": ["environment", "ramp", "slide", "slide_ramp", "movement_test", "a2_visual_pack", "visual_testasset", "dev_sandbox"]
+    },
+    {
+      "id": "map_a2_cover_crate_01",
+      "kind": "mesh",
+      "source": "assets/source/blender/a2_visual_pack/map_a2_cover_crate_01.blend",
+      "cooked": "assets/generated/a2_visual_pack/map_a2_cover_crate_01.glb",
+      "streamable": true,
+      "priority": 76,
+      "estimated_bytes": 25032,
+      "tags": ["environment", "cover", "crate", "arena_module", "a2_visual_pack", "visual_testasset", "dev_sandbox"]
+    },
+    {
+      "id": "prop_a2_range_hero_01",
+      "kind": "mesh",
+      "source": "assets/source/blender/a2_visual_pack/prop_a2_range_hero_01.blend",
+      "cooked": "assets/generated/a2_visual_pack/prop_a2_range_hero_01.glb",
+      "streamable": true,
+      "priority": 79,
+      "estimated_bytes": 43940,
+      "tags": ["prop", "range", "hero_prop", "target", "a2_visual_pack", "visual_testasset", "dev_sandbox"]
     }
   ]
 }

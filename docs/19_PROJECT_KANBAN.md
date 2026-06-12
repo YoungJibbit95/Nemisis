@@ -94,13 +94,21 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [x] Add `nemisis_game --menu-flow-smoke-test` through the real game executable for Main Menu, Loading, Dev Range, TDM, and Control screen coverage.
 - [x] Surface NovaCore Vulkan backend frame stats in the Nemisis Assets debug page.
 - [x] Verify Windows MSVC Vulkan build, menu-flow smoke, Dev Range Vulkan smoke, and 32/32 CTest suite.
+- [x] Add NovaCore `PhysicsWorld` bridge for Nemisis greybox collision.
+- [x] Add wall-run panel greybox primitives, wall-run surface metadata, wall normals, and wall tangents.
+- [x] Add first wall-run movement transition and wall-jump replay coverage.
+- [x] Generate A2 Blender visual pack for blackout carbine, modular rifle, striker sidearm, pilot/operator, wall-run panel, slide ramp, cover crate, and range hero prop.
+- [x] Catalog, import, extract, register, and render 28/28 required Dev Sandbox renderables.
+- [x] Add A2 asset preview rendering through `tools/blender/render_a2_preview.py`.
+- [x] Verify NovaCore smoke tests and Nemisis 32/32 CTest suite after the A2/PhysicsWorld block.
 
 ## Doing
 
 - [ ] Expand material fallback controls, validation labels, and renderer resize stress coverage.
 - [ ] Keep UI moving toward a Vulkan-native text/vector backend while `UiCanvas` feeds the current debug primitive bridge.
-- [ ] Start texture/material binding for A1 GLBs so imported assets look less like tinted blockouts.
+- [ ] Start texture/material binding for A1/A2 GLBs so imported assets look less like tinted blockouts.
 - [ ] Grow the multi-target Dev Range into timed drills, TTK panels, and recoil-control scoring.
+- [ ] Deepen KCC physics into capsule sweeps, mantle probes, moving platform contacts, and server replay validation.
 
 ## Next Core
 
@@ -109,6 +117,7 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [ ] Vulkan validation debug labels and resize stress tests.
 - [ ] Renderer texture/material residency and cross-zone reference counting.
 - [ ] Mantle probes, slide validation, and richer slope/step debug visualization.
+- [ ] Wall-run camera feel, wall detach rules, wall-run cooldown, and surface eligibility tuning.
 - [ ] Shared server validation for greybox collision and movement corrections.
 - [ ] Feed camera/weapon telemetry into prediction-safe replay snapshots for future reconciliation debugging.
 

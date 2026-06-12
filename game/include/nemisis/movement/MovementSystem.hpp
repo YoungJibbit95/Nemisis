@@ -19,8 +19,11 @@ enum class MovementMode {
 struct PlayerMovementState final {
     novacore::math::Vec3 position{};
     novacore::math::Vec3 velocity{};
+    novacore::math::Vec3 wallRunNormal{};
+    novacore::math::Vec3 wallRunTangent{};
     MovementMode mode = MovementMode::Grounded;
     bool hasDoubleJump = true;
+    bool hasWallRunContact = false;
     float dashCooldownRemaining = 0.0F;
     float dashTimeRemaining = 0.0F;
     float slideCooldownRemaining = 0.0F;
@@ -30,6 +33,12 @@ struct PlayerMovementState final {
     float airborneTimeSeconds = 0.0F;
     float lastHorizontalSpeed = 0.0F;
     float inputMagnitude = 0.0F;
+};
+
+struct WallRunContact final {
+    bool available = false;
+    novacore::math::Vec3 normal{};
+    novacore::math::Vec3 tangent{};
 };
 
 class MovementSystem final {
@@ -42,6 +51,12 @@ public:
     [[nodiscard]] PlayerMovementState simulate(
         PlayerMovementState state,
         const player::PlayerInputCommand& command,
+        float fixedDeltaSeconds) const;
+
+    [[nodiscard]] PlayerMovementState applyWallRunContact(
+        PlayerMovementState state,
+        const player::PlayerInputCommand& command,
+        WallRunContact contact,
         float fixedDeltaSeconds) const;
 
 private:

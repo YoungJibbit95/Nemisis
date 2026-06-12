@@ -128,6 +128,40 @@ void testSlideDurationAndSlideJumpReplay() {
     expect(state.lastHorizontalSpeed > movement.tuning().sprintSpeed, "slide jump keeps momentum boost");
 }
 
+void testWallRunContactAndWallJumpReplay() {
+    nemisis::movement::MovementSystem movement;
+    nemisis::movement::PlayerMovementState state{};
+    state.position = {0.0F, 1.1F, 0.0F};
+    state.velocity = {0.0F, -1.0F, 4.0F};
+    state.mode = nemisis::movement::MovementMode::Airborne;
+    state.airborneTimeSeconds = 0.25F;
+
+    nemisis::player::PlayerInputCommand command{};
+    command.move = novacore::math::Vec2{0.0F, 1.0F};
+
+    constexpr float dt = 1.0F / 60.0F;
+    state = movement.applyWallRunContact(
+        state,
+        command,
+        nemisis::movement::WallRunContact{
+            true,
+            {1.0F, 0.0F, 0.0F},
+            {0.0F, 0.0F, 1.0F},
+        },
+        dt);
+
+    expect(state.mode == nemisis::movement::MovementMode::WallRunning, "wallrun contact enters wallrunning mode");
+    expect(state.hasWallRunContact, "wallrun contact marks telemetry flag");
+    expect(state.wallRunTimeRemaining > 1.0F, "wallrun contact starts timer");
+    expect(state.velocity.z >= movement.tuning().wallRunSpeed, "wallrun contact aligns speed to wall tangent");
+
+    command.jumpPressed = true;
+    state = movement.simulate(state, command, dt);
+    expect(state.mode == nemisis::movement::MovementMode::Airborne, "jumping from wallrun returns airborne");
+    expect(state.velocity.x > movement.tuning().wallJumpImpulse - 0.1F, "wall jump pushes away from wall normal");
+    expect(state.velocity.y > 4.0F, "wall jump gives upward impulse");
+}
+
 void testMovementTuningConfigReplay() {
     constexpr std::string_view json = R"({
         "sprint_speed": 10.0,
@@ -160,6 +194,7 @@ int main() {
     testJumpDoubleJumpReplay();
     testDashCooldownReplay();
     testSlideDurationAndSlideJumpReplay();
+    testWallRunContactAndWallJumpReplay();
     testMovementTuningConfigReplay();
 
     if (failures > 0) {

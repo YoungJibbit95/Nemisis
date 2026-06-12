@@ -1,0 +1,449 @@
+{
+  "pack_id": "nemisis_a2_visual_pack",
+  "generated_at_utc": "2026-06-12T08:58:57+00:00",
+  "generator": "tools/blender/make_a2_visual_pack.py",
+  "blender_version": "5.1.2",
+  "units": "meters",
+  "source_root": "assets/source/blender/a2_visual_pack",
+  "output_root": "assets/generated/a2_visual_pack",
+  "external_assets": false,
+  "asset_count": 8,
+  "assets": [
+    {
+      "id": "wpn_a2_blackout_carbine_01",
+      "category": "weapon",
+      "tags": [
+        "all",
+        "weapon",
+        "weapons",
+        "carbine",
+        "blackout",
+        "wpn_a2_blackout_carbine_01"
+      ],
+      "source": "assets/source/blender/a2_visual_pack/wpn_a2_blackout_carbine_01.blend",
+      "file": "assets/generated/a2_visual_pack/wpn_a2_blackout_carbine_01.glb",
+      "metadata": "assets/generated/a2_visual_pack/wpn_a2_blackout_carbine_01.metadata.json",
+      "dimensions_m": [
+        0.1865,
+        1.321,
+        0.6178
+      ],
+      "target_dimensions_m": [
+        0.19,
+        1.31,
+        0.55
+      ],
+      "origin": "Origin at approximate right-hand grip/root; Blender forward axis is +Y.",
+      "description": "Compact blackout-style generic carbine blockout with suppressed-looking front mass, micro optic, magazine, and orange/teal inspection marks.",
+      "sockets": [
+        "socket_muzzle",
+        "socket_grip_r",
+        "socket_grip_l",
+        "socket_optic",
+        "socket_mag",
+        "socket_eject",
+        "socket_vfx"
+      ],
+      "notes": [
+        "original_generic_dev_art",
+        "fps_visible_testasset",
+        "orange_teal_accents",
+        "no_brand_or_real_functional_details"
+      ],
+      "collision": "none",
+      "lods": [
+        "wpn_a2_blackout_carbine_01_lod0",
+        "wpn_a2_blackout_carbine_01_lod1"
+      ],
+      "bytes": 34632,
+      "stats": {
+        "mesh_objects": 16,
+        "vertices": 192,
+        "polygons": 128,
+        "triangles_estimate": 320
+      }
+    },
+    {
+      "id": "wpn_a2_modular_rifle_01",
+      "category": "weapon",
+      "tags": [
+        "all",
+        "weapon",
+        "weapons",
+        "rifle",
+        "assault_rifle",
+        "modular",
+        "wpn_a2_modular_rifle_01"
+      ],
+      "source": "assets/source/blender/a2_visual_pack/wpn_a2_modular_rifle_01.blend",
+      "file": "assets/generated/a2_visual_pack/wpn_a2_modular_rifle_01.glb",
+      "metadata": "assets/generated/a2_visual_pack/wpn_a2_modular_rifle_01.metadata.json",
+      "dimensions_m": [
+        0.23,
+        1.6385,
+        0.7092
+      ],
+      "target_dimensions_m": [
+        0.2,
+        1.63,
+        0.64
+      ],
+      "origin": "Origin at approximate right-hand grip/root; Blender forward axis is +Y.",
+      "description": "Generic modular assault-rifle silhouette with long rail, optic mass, side slots, foregrip, and readable attachment sockets.",
+      "sockets": [
+        "socket_muzzle",
+        "socket_grip_r",
+        "socket_grip_l",
+        "socket_optic",
+        "socket_underbarrel",
+        "socket_mag",
+        "socket_eject",
+        "socket_vfx"
+      ],
+      "notes": [
+        "original_generic_dev_art",
+        "fps_visible_testasset",
+        "modular_attachment_language",
+        "orange_teal_accents"
+      ],
+      "collision": "none",
+      "lods": [
+        "wpn_a2_modular_rifle_01_lod0",
+        "wpn_a2_modular_rifle_01_lod1"
+      ],
+      "bytes": 46016,
+      "stats": {
+        "mesh_objects": 23,
+        "vertices": 248,
+        "polygons": 170,
+        "triangles_estimate": 404
+      }
+    },
+    {
+      "id": "wpn_a2_striker_sidearm_01",
+      "category": "weapon",
+      "tags": [
+        "all",
+        "weapon",
+        "weapons",
+        "sidearm",
+        "striker",
+        "pistol",
+        "wpn_a2_striker_sidearm_01"
+      ],
+      "source": "assets/source/blender/a2_visual_pack/wpn_a2_striker_sidearm_01.blend",
+      "file": "assets/generated/a2_visual_pack/wpn_a2_striker_sidearm_01.glb",
+      "metadata": "assets/generated/a2_visual_pack/wpn_a2_striker_sidearm_01.metadata.json",
+      "dimensions_m": [
+        0.128,
+        0.4937,
+        0.399
+      ],
+      "target_dimensions_m": [
+        0.13,
+        0.47,
+        0.38
+      ],
+      "origin": "Origin at approximate right-hand grip/root; Blender forward axis is +Y.",
+      "description": "Compact generic striker-style sidearm blockout with slide/frame separation, underbarrel rail, sights, and color-coded socket marks.",
+      "sockets": [
+        "socket_muzzle",
+        "socket_grip_r",
+        "socket_grip_l",
+        "socket_optic",
+        "socket_rail",
+        "socket_eject",
+        "socket_vfx"
+      ],
+      "notes": [
+        "original_generic_dev_art",
+        "fps_visible_testasset",
+        "compact_sidearm",
+        "orange_teal_accents"
+      ],
+      "collision": "none",
+      "lods": [
+        "wpn_a2_striker_sidearm_01_lod0",
+        "wpn_a2_striker_sidearm_01_lod1"
+      ],
+      "bytes": 27700,
+      "stats": {
+        "mesh_objects": 14,
+        "vertices": 140,
+        "polygons": 98,
+        "triangles_estimate": 224
+      }
+    },
+    {
+      "id": "chr_a2_pilot_operator_01",
+      "category": "character",
+      "tags": [
+        "all",
+        "character",
+        "characters",
+        "operator",
+        "pilot",
+        "proxy",
+        "chr_a2_pilot_operator_01"
+      ],
+      "source": "assets/source/blender/a2_visual_pack/chr_a2_pilot_operator_01.blend",
+      "file": "assets/generated/a2_visual_pack/chr_a2_pilot_operator_01.glb",
+      "metadata": "assets/generated/a2_visual_pack/chr_a2_pilot_operator_01.metadata.json",
+      "dimensions_m": [
+        1.1355,
+        0.8,
+        1.885
+      ],
+      "target_dimensions_m": [
+        1.02,
+        0.61,
+        1.84
+      ],
+      "origin": "Origin at feet/root on the floor.",
+      "description": "Sci-fi pilot/operator proxy with helmet visor, harness marks, mobility pack, humanoid rig, hitbox guides, and gameplay sockets.",
+      "sockets": [
+        "socket_root",
+        "socket_camera",
+        "socket_weapon_root",
+        "socket_hand_r",
+        "socket_hand_l",
+        "socket_head",
+        "socket_backpack",
+        "socket_vfx"
+      ],
+      "notes": [
+        "original_generic_dev_art",
+        "pilot_operator_proxy",
+        "humanoid_rig",
+        "hitbox_guides",
+        "orange_teal_accents"
+      ],
+      "collision": "col_chr_a2_pilot_operator_01_capsule",
+      "lods": [
+        "chr_a2_pilot_operator_01_lod0"
+      ],
+      "bytes": 144940,
+      "stats": {
+        "mesh_objects": 42,
+        "vertices": 856,
+        "polygons": 698,
+        "triangles_estimate": 1544
+      }
+    },
+    {
+      "id": "map_a2_wallrun_panel_01",
+      "category": "map",
+      "tags": [
+        "all",
+        "map",
+        "maps",
+        "environment",
+        "wall",
+        "wall_run",
+        "wallrun",
+        "panel",
+        "map_a2_wallrun_panel_01"
+      ],
+      "source": "assets/source/blender/a2_visual_pack/map_a2_wallrun_panel_01.blend",
+      "file": "assets/generated/a2_visual_pack/map_a2_wallrun_panel_01.glb",
+      "metadata": "assets/generated/a2_visual_pack/map_a2_wallrun_panel_01.metadata.json",
+      "dimensions_m": [
+        4.08,
+        0.292,
+        2.66
+      ],
+      "target_dimensions_m": [
+        4.08,
+        0.22,
+        2.66
+      ],
+      "origin": "Origin at bottom center of the wall footprint; snaps on a 4 m lane module.",
+      "description": "Wallrun panel module with teal runnable lane markers, orange snap marks, and left/right connection sockets.",
+      "sockets": [
+        "socket_snap_left",
+        "socket_snap_right",
+        "socket_wallrun_start",
+        "socket_wallrun_end",
+        "socket_vfx"
+      ],
+      "notes": [
+        "wall_run",
+        "4m_grid_module",
+        "movement_readability",
+        "orange_teal_accents"
+      ],
+      "collision": "visual_only_use_simple_wall_collision",
+      "lods": [
+        "map_a2_wallrun_panel_01_lod0",
+        "map_a2_wallrun_panel_01_lod1"
+      ],
+      "bytes": 22144,
+      "stats": {
+        "mesh_objects": 13,
+        "vertices": 104,
+        "polygons": 78,
+        "triangles_estimate": 156
+      }
+    },
+    {
+      "id": "map_a2_slide_ramp_01",
+      "category": "map",
+      "tags": [
+        "all",
+        "map",
+        "maps",
+        "environment",
+        "ramp",
+        "slide",
+        "slide_ramp",
+        "map_a2_slide_ramp_01"
+      ],
+      "source": "assets/source/blender/a2_visual_pack/map_a2_slide_ramp_01.blend",
+      "file": "assets/generated/a2_visual_pack/map_a2_slide_ramp_01.glb",
+      "metadata": "assets/generated/a2_visual_pack/map_a2_slide_ramp_01.metadata.json",
+      "dimensions_m": [
+        4.0976,
+        2.355,
+        1.0454
+      ],
+      "target_dimensions_m": [
+        4.08,
+        2.35,
+        0.98
+      ],
+      "origin": "Origin centered on the lower ramp footprint; top snap is 0.92 m above floor.",
+      "description": "Slide ramp module with a low readable slope, teal flow strips, orange entry/exit bars, and snap sockets.",
+      "sockets": [
+        "socket_snap_bottom",
+        "socket_snap_top",
+        "socket_slide_entry",
+        "socket_slide_exit",
+        "socket_vfx"
+      ],
+      "notes": [
+        "slide",
+        "movement_readability",
+        "4m_grid_module",
+        "orange_teal_accents"
+      ],
+      "collision": "visual_only_use_simple_ramp_collision",
+      "lods": [
+        "map_a2_slide_ramp_01_lod0",
+        "map_a2_slide_ramp_01_lod1"
+      ],
+      "bytes": 18652,
+      "stats": {
+        "mesh_objects": 11,
+        "vertices": 86,
+        "polygons": 65,
+        "triangles_estimate": 128
+      }
+    },
+    {
+      "id": "map_a2_cover_crate_01",
+      "category": "map",
+      "tags": [
+        "all",
+        "map",
+        "maps",
+        "environment",
+        "cover",
+        "crate",
+        "module",
+        "map_a2_cover_crate_01"
+      ],
+      "source": "assets/source/blender/a2_visual_pack/map_a2_cover_crate_01.blend",
+      "file": "assets/generated/a2_visual_pack/map_a2_cover_crate_01.glb",
+      "metadata": "assets/generated/a2_visual_pack/map_a2_cover_crate_01.metadata.json",
+      "dimensions_m": [
+        1.75,
+        1.3335,
+        1.31
+      ],
+      "target_dimensions_m": [
+        1.7,
+        1.3,
+        1.31
+      ],
+      "origin": "Origin at bottom center; height is chest-cover scale for FPS testing.",
+      "description": "Chest-high cover crate/module with readable cover mark, trim, teal corners, and snap/cover sockets.",
+      "sockets": [
+        "socket_snap_center",
+        "socket_cover_peak",
+        "socket_vfx"
+      ],
+      "notes": [
+        "cover",
+        "chest_high",
+        "arena_module",
+        "orange_teal_accents"
+      ],
+      "collision": "visual_only_use_box_collision",
+      "lods": [
+        "map_a2_cover_crate_01_lod0",
+        "map_a2_cover_crate_01_lod1"
+      ],
+      "bytes": 25032,
+      "stats": {
+        "mesh_objects": 15,
+        "vertices": 120,
+        "polygons": 90,
+        "triangles_estimate": 180
+      }
+    },
+    {
+      "id": "prop_a2_range_hero_01",
+      "category": "prop",
+      "tags": [
+        "all",
+        "map",
+        "maps",
+        "prop",
+        "props",
+        "range",
+        "hero_prop",
+        "target",
+        "prop_a2_range_hero_01"
+      ],
+      "source": "assets/source/blender/a2_visual_pack/prop_a2_range_hero_01.blend",
+      "file": "assets/generated/a2_visual_pack/prop_a2_range_hero_01.glb",
+      "metadata": "assets/generated/a2_visual_pack/prop_a2_range_hero_01.metadata.json",
+      "dimensions_m": [
+        0.76,
+        0.76,
+        1.47
+      ],
+      "target_dimensions_m": [
+        0.78,
+        0.5,
+        1.47
+      ],
+      "origin": "Origin at floor center of the prop footprint.",
+      "description": "Small range hero prop: a generic scoring/target beacon with teal disc, orange control panel, and holographic sight plane.",
+      "sockets": [
+        "socket_interact",
+        "socket_target_center",
+        "socket_vfx",
+        "socket_snap_center"
+      ],
+      "notes": [
+        "range_hero_prop",
+        "target_center",
+        "interactive_test_prop",
+        "orange_teal_accents"
+      ],
+      "collision": "visual_only_use_simple_cylinder_or_box_collision",
+      "lods": [
+        "prop_a2_range_hero_01_lod0",
+        "prop_a2_range_hero_01_lod1"
+      ],
+      "bytes": 43940,
+      "stats": {
+        "mesh_objects": 13,
+        "vertices": 304,
+        "polygons": 178,
+        "triangles_estimate": 556
+      }
+    }
+  ]
+}

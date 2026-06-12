@@ -56,6 +56,14 @@ std::vector<AssetSpec> requiredSpecs() {
         {"wpn_a1_compact_sidearm_01", "mesh", "weapon", "assets/source/blender/weapons/wpn_a1_compact_sidearm_01.blend", "assets/export/gltf/weapons/wpn_a1_compact_sidearm_01.glb"},
         {"chr_a1_stylized_operator_01", "mesh", "character", "assets/source/blender/characters/chr_a1_stylized_operator_01.blend", "assets/export/gltf/characters/chr_a1_stylized_operator_01.glb", "col_chr_a1_stylized_operator_01_capsule"},
         {"chr_a1_fp_arms_01", "mesh", "character", "assets/source/blender/characters/chr_a1_fp_arms_01.blend", "assets/export/gltf/characters/chr_a1_fp_arms_01.glb"},
+        {"wpn_a2_blackout_carbine_01", "mesh", "weapon", "assets/source/blender/a2_visual_pack/wpn_a2_blackout_carbine_01.blend", "assets/generated/a2_visual_pack/wpn_a2_blackout_carbine_01.glb"},
+        {"wpn_a2_modular_rifle_01", "mesh", "weapon", "assets/source/blender/a2_visual_pack/wpn_a2_modular_rifle_01.blend", "assets/generated/a2_visual_pack/wpn_a2_modular_rifle_01.glb"},
+        {"wpn_a2_striker_sidearm_01", "mesh", "weapon", "assets/source/blender/a2_visual_pack/wpn_a2_striker_sidearm_01.blend", "assets/generated/a2_visual_pack/wpn_a2_striker_sidearm_01.glb"},
+        {"chr_a2_pilot_operator_01", "mesh", "character", "assets/source/blender/a2_visual_pack/chr_a2_pilot_operator_01.blend", "assets/generated/a2_visual_pack/chr_a2_pilot_operator_01.glb", "col_chr_a2_pilot_operator_01_capsule"},
+        {"map_a2_wallrun_panel_01", "mesh", "environment", "assets/source/blender/a2_visual_pack/map_a2_wallrun_panel_01.blend", "assets/generated/a2_visual_pack/map_a2_wallrun_panel_01.glb", "visual_only_use_simple_wall_collision"},
+        {"map_a2_slide_ramp_01", "mesh", "environment", "assets/source/blender/a2_visual_pack/map_a2_slide_ramp_01.blend", "assets/generated/a2_visual_pack/map_a2_slide_ramp_01.glb", "visual_only_use_simple_ramp_collision"},
+        {"map_a2_cover_crate_01", "mesh", "environment", "assets/source/blender/a2_visual_pack/map_a2_cover_crate_01.blend", "assets/generated/a2_visual_pack/map_a2_cover_crate_01.glb", "visual_only_use_box_collision"},
+        {"prop_a2_range_hero_01", "mesh", "prop", "assets/source/blender/a2_visual_pack/prop_a2_range_hero_01.blend", "assets/generated/a2_visual_pack/prop_a2_range_hero_01.glb", "visual_only_use_simple_cylinder_or_box_collision"},
     };
 }
 

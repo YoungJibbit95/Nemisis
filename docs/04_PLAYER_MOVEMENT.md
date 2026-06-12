@@ -60,6 +60,7 @@ Runtime placement:
 - Air movement has configurable acceleration, max speed, and drag.
 - Slide has configurable impulse, duration, steering, friction, end speed, cooldown, and slide-jump boost.
 - Dash has configurable impulse, steering, duration, and cooldown.
+- Wall-run contact uses NovaCore `PhysicsWorld` wall-run surface probes, stores wall normal/tangent, carries tangent velocity, preserves double jump, and supports the first wall-jump impulse.
 - Movement state stores slide/dash timers, grounded/airborne time, input magnitude, and last horizontal speed for camera/HUD/debug use.
 - The first `PlayerCameraRig` turns movement state into local visual camera feel: smoothed eye position, head bob, roll, FOV kick, weapon sway, and recoil view offsets.
 
@@ -71,6 +72,7 @@ Replay foundation:
 - Jump -> double-jump replay.
 - Dash cooldown replay.
 - Slide duration and slide-jump momentum replay.
+- Wall-run contact and wall-jump replay.
 - `nemisis_player_command_queue_tests`
 - `nemisis_player_spawn_tests`
 - `nemisis_player_camera_rig_tests`
@@ -90,17 +92,21 @@ State transitions must be deterministic enough for prediction/reconciliation.
 
 ## Movement Features
 
-Planned features:
+Implemented foundation:
 
 - Walk.
 - Sprint / Tactical Sprint (with stamina/cooldown).
-- Crouch.
 - Slide (momentum-based).
 - Jump / Double Jump.
 - Dash (multi-directional, tactical cooldown).
-- Wall Run (geometry-locked, allows Wall Jump).
+- Wall Run contact entry and Wall Jump.
+
+Planned features:
+
+- Crouch.
 - Mantle.
 - Strafing / Air Strafing.
+- Wall-run camera lean, detach rules, cooldowns, eligibility windows, and server replay validation.
 
 Advanced tech requirements:
 
@@ -167,5 +173,4 @@ Movement is acceptable when:
 - Reconciliation is bounded.
 - MKB and controller both feel intentional.
 - Movement tech (Wall Runs, Dashes, Slides) is measurable and consistent.
-
 

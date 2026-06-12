@@ -136,10 +136,15 @@ std::string DevSandbox::latestSummary() const {
            << " blocked=" << (latest_.collision.blocked ? "yes" : "no")
            << " grounded=" << (latest_.collision.grounded ? "yes" : "no")
            << " ramp=" << (latest_.collision.onRamp ? "yes" : "no")
+           << " slideSurface=" << (latest_.collision.nearSlideSurface ? "yes" : "no")
+           << " wallrunSurface=" << (latest_.collision.nearWallRunSurface ? "yes" : "no")
            << " stepped=" << (latest_.collision.stepped ? "yes" : "no")
            << " ground=" << latest_.collision.groundPrimitiveId
+           << " wall=" << latest_.collision.wallPrimitiveId
            << " normal=";
     appendVec3(stream, latest_.collision.groundNormal);
+    stream << " wallNormal=";
+    appendVec3(stream, latest_.collision.wallNormal);
     stream
            << " cmdPackets=" << latest_.netBridge.sentCommandPackets
            << " acks=" << latest_.netBridge.receivedAckPackets
@@ -165,6 +170,9 @@ std::array<float, 4> DevSandbox::clearColor() const {
     }
     if (latest_.movementMode == movement::MovementMode::Sliding) {
         return {0.04F, 0.105F, 0.055F, 1.0F};
+    }
+    if (latest_.movementMode == movement::MovementMode::WallRunning) {
+        return {0.02F, 0.09F, 0.12F, 1.0F};
     }
     if (latest_.movementMode == movement::MovementMode::Airborne) {
         return {0.075F, 0.045F, 0.13F, 1.0F};

@@ -192,6 +192,10 @@ void addMetric(
         return "Ramp";
     case dev::GreyboxPrimitiveKind::Cover:
         return "Cover";
+    case dev::GreyboxPrimitiveKind::Ledge:
+        return "Ledge";
+    case dev::GreyboxPrimitiveKind::WallRunPanel:
+        return "WallRun";
     case dev::GreyboxPrimitiveKind::Spawn:
         return "Spawn";
     case dev::GreyboxPrimitiveKind::RangeMarker:
@@ -748,7 +752,17 @@ void renderDebugOverlay(
         addMetric(frame, 674.0F, 656.0F, "SPREAD", fixedOne(sample.fire.movementSpreadDegrees));
         addMetric(frame, 928.0F, 604.0F, "HP", fixedOne(sample.playerHealth.health) + "/" + fixedOne(sample.playerHealth.maxHealth));
         addMetric(frame, 928.0F, 630.0F, "RANGE", std::to_string(sample.rangeSession.score.targetsEliminated) + " elim " + percent(dev::devRangeAccuracy(sample.rangeSession.score)));
-        addMetric(frame, 928.0F, 656.0F, "KCC", std::to_string(sample.collision.hitCount) + " " + std::string(sample.collision.onRamp ? "Ramp" : sample.collision.stepped ? "Step" : yesNo(sample.collision.blocked)));
+        addMetric(
+            frame,
+            928.0F,
+            656.0F,
+            "KCC",
+            std::to_string(sample.collision.hitCount) + " " +
+                std::string(sample.collision.nearWallRunSurface
+                        ? "WallRun"
+                        : sample.collision.onRamp
+                            ? "Ramp"
+                            : sample.collision.stepped ? "Step" : yesNo(sample.collision.blocked)));
         break;
     case DebugPage::Network:
         addMetric(frame, 48.0F, 604.0F, "CMD TX", std::to_string(sample.netBridge.sentCommandPackets));
