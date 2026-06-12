@@ -91,10 +91,13 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [x] Surface target alive/down counts and active lane state in HUD, topdown map, debug telemetry, and sandbox logs.
 - [x] Add `nemisis_dev_target_range_tests` and expand target/render/sandbox coverage.
 - [x] Verify Windows MSVC Vulkan build, direct smoke runs, and 31/31 CTest suite.
+- [x] Add `nemisis_game --menu-flow-smoke-test` through the real game executable for Main Menu, Loading, Dev Range, TDM, and Control screen coverage.
+- [x] Surface NovaCore Vulkan backend frame stats in the Nemisis Assets debug page.
+- [x] Verify Windows MSVC Vulkan build, menu-flow smoke, Dev Range Vulkan smoke, and 32/32 CTest suite.
 
 ## Doing
 
-- [ ] Expand material fallback controls and resize-safe Vulkan swapchain behavior.
+- [ ] Expand material fallback controls, validation labels, and renderer resize stress coverage.
 - [ ] Keep UI moving toward a Vulkan-native text/vector backend while `UiCanvas` feeds the current debug primitive bridge.
 - [ ] Start texture/material binding for A1 GLBs so imported assets look less like tinted blockouts.
 - [ ] Grow the multi-target Dev Range into timed drills, TTK panels, and recoil-control scoring.
@@ -103,7 +106,7 @@ This file mirrors the active work locally while GitHub Projects also track the l
 
 - [ ] Cursor policy, raw-input options, and richer controller response curves.
 - [ ] Packet simulation for latency, jitter, loss, duplication, and reorder.
-- [ ] Vulkan swapchain resize/recreate and validation debug labels.
+- [ ] Vulkan validation debug labels and resize stress tests.
 - [ ] Renderer texture/material residency and cross-zone reference counting.
 - [ ] Mantle probes, slide validation, and richer slope/step debug visualization.
 - [ ] Shared server validation for greybox collision and movement corrections.

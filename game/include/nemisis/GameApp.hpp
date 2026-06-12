@@ -42,6 +42,7 @@ struct GameAppOptions final {
     bool requireVulkanRenderer = true;
     bool autoEnterDevRange = false;
     bool lockDevRange = false;
+    bool runMenuFlowSmoke = false;
 };
 
 class GameApp final : public novacore::core::IApplicationDelegate {
@@ -67,6 +68,7 @@ private:
     void ensureLocalPlayer();
     void resetDevRangeState();
     void tickRangeSession(float fixedDeltaSeconds);
+    void advanceMenuFlowSmoke(const novacore::core::FrameContext& context);
     void syncRelativeMouseMode();
     void registerDevMeshResources();
     void releaseDevMeshResources();
@@ -108,6 +110,7 @@ private:
     weapons::AttachmentBuildSummary activeAttachmentBuild_;
     std::filesystem::path userSettingsPath_ = settings::defaultUserSettingsPath();
     std::string lastPersistedUserSettings_;
+    std::size_t menuFlowSmokeStage_ = static_cast<std::size_t>(-1);
     bool relativeMouseDesired_ = false;
 };
 

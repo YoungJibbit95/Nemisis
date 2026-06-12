@@ -72,6 +72,7 @@ Current runtime screens:
 - Account tab with K/D, win rate, best weapon, best operator, damage per match, and accuracy.
 - Loading screen for Firing Range and placeholder modes.
 - Dev Shooting Range HUD/debug screen.
+- Menu-flow smoke route inside `nemisis_game` that touches Main Menu tabs, loading screens, Dev Range, TDM placeholder, and Control placeholder.
 
 ## HUD
 
@@ -97,6 +98,7 @@ Current debug/UI implementation:
 - The current bridge flushes `UiCanvas` commands into NovaCore debug primitives until the Vulkan-native vector/text backend exists.
 - SDL debug render primitives remain available only through explicit legacy launch paths.
 - `GameMenu` owns Main Menu tabs, Loading, Dev Shooting Range, Team Deathmatch placeholder, and Control placeholder screens.
+- `GameMenu` exposes explicit screen-driving helpers so runtime code, smoke tests, and future match/session flow use the same UI layers.
 - The Dev Shooting Range HUD now shows weapon/ammo, active range score, accuracy, streaks, target HP, target respawn, player health, and short event feedback.
 - The Gameplay debug page includes player HP and Dev Range score/accuracy in addition to movement and collision telemetry.
 - `Q/E` and controller shoulders switch top-level menu tabs.
@@ -105,7 +107,9 @@ Current debug/UI implementation:
 - `F1` toggles the debug overlay.
 - `Tab` and controller Start/Menu cycle debug overlay pages.
 - Debug pages currently cover Gameplay, Network, and Assets/Render telemetry.
+- The Assets/Render page includes NovaCore backend frame telemetry: swapchain readiness/size, submitted and skipped frames, recreate count, and last world box/mesh/line counts.
 - `nemisis_ui_canvas_tests` protects the command recording and flush path.
+- `nemisis_game_menu_flow_smoke` protects the in-process menu/loading/range/mode flow.
 - This is a temporary development UI bridge until the custom Vulkan NanoVG-style renderer replaces debug text and primitive flushing.
 
 ## Settings
@@ -140,6 +144,7 @@ Current gap:
 
 - Graphics/audio settings still need deeper categories, validation, and per-setting apply/restart policy.
 - The final Vulkan-native text/vector UI backend is still pending; current UI records NanoVG-style commands and flushes through the debug primitive bridge.
+- Menu automation currently uses deterministic smoke stages; final animated transitions and focus graph polish are still pending.
 
 ## Acceptance
 

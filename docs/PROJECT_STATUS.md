@@ -42,9 +42,11 @@
 - Debug UI now has Gameplay, Network, and Assets pages, toggled with Tab or controller Start/Menu.
 - Assets debug UI reports renderer backend plus NovaCore's Vulkan runtime/device summary.
 - Assets debug UI reports renderer mesh-resource CPU/GPU residency, pending uploads, failed uploads, deferred destroys, and indexed primitive/vertex/index totals.
+- Assets debug UI reports NovaCore backend frame stats: swapchain size/readiness, submitted and skipped frames, swapchain recreate count, and last world box/mesh/line submission counts.
 - Plain `nemisis_game` now starts in the Vulkan Main Menu with real 3D/Vulkan UI primitive rendering.
 - `nemisis_game --dev-range` starts directly in the Vulkan Dev Range with real 3D GLB mesh rendering.
 - `nemisis_game --smoke-test` uses the default Vulkan Main Menu profile for short validation.
+- `nemisis_game --menu-flow-smoke-test` now exercises Main Menu, Loadout, Settings, Account, Loading, Dev Range, Team Deathmatch, and Control screens inside the real game executable.
 - `nemisis_game --sdl-debug` is the explicit legacy path for old SDL debug UI testing.
 - The Dev Range now submits imported GLB meshes to NovaCore's Vulkan world mesh path.
 - A1 prototype weapon/operator assets are cataloged, imported, registered, and rendered in the Dev Range path.
@@ -68,6 +70,15 @@
 - Input command, weapon simulation, weapon shot, UI canvas, player camera rig, player view, debug target, dev sandbox, player spawn, command queue, command message, asset binding, render tuning, greybox world/collision, and loopback bridge tests cover the newest gameplay bridge.
 
 ## Added In Latest Block
+
+- Added an in-process `nemisis_game --menu-flow-smoke-test` path that validates the menu stack through the normal game executable instead of a separate runner.
+- Added deterministic menu-flow stages for Play, Loadout, Settings, Account, Dev Range loading, live Dev Range, TDM loading, TDM placeholder, Control loading, and Control placeholder.
+- Exposed NovaCore backend frame stats to the Nemisis UI path and surfaced swapchain readiness, swapchain size, submitted/skipped frames, recreate count, and current frame draw submission counts on the Assets debug page.
+- Updated `GameMenu` with explicit screen-driving helpers so tests, future automation, and gameplay flow can route through the same Main Menu/Loading/Gamemode surface.
+- Added CTest coverage through `nemisis_game_menu_flow_smoke`, raising the suite to 32 passing tests.
+- Verified Debug build, `ctest --test-dir build/windows-msvc-debug -C Debug`, `nemisis_game.exe --menu-flow-smoke-test`, and `nemisis_game.exe --vulkan-dev-range-smoke-test`.
+
+## Previous Multi-Target Block
 
 - Added `DevTargetRange` as the first multi-target range model with four lanes, active lane tracking, nearest-hit selection, per-lane respawn timers, alive/down counts, and full reset support.
 - Split `DebugTarget` tracing from damage application so ray/sphere hit tests can select the correct lane before mutating target health.

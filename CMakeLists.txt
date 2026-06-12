@@ -129,6 +129,7 @@ enable_testing()
 add_test(NAME nemisis_game_smoke COMMAND nemisis_game --smoke-test)
 add_test(NAME nemisis_game_vulkan_smoke COMMAND nemisis_game --vulkan-smoke-test)
 add_test(NAME nemisis_game_vulkan_dev_range_smoke COMMAND nemisis_game --vulkan-dev-range-smoke-test)
+add_test(NAME nemisis_game_menu_flow_smoke COMMAND nemisis_game --menu-flow-smoke-test)
 
 add_executable(nemisis_movement_replay_tests
     game/src/input/InputCommandBuilder.cpp

@@ -42,6 +42,13 @@ int main(int argc, char** argv) {
             gameOptions.requireVulkanRenderer = true;
             gameOptions.autoEnterDevRange = true;
             gameOptions.lockDevRange = true;
+        } else if (argument == "--menu-flow-smoke-test") {
+            smokeTest = true;
+            gameOptions.preferVulkanRenderer = true;
+            gameOptions.requireVulkanRenderer = true;
+            gameOptions.autoEnterDevRange = false;
+            gameOptions.lockDevRange = false;
+            gameOptions.runMenuFlowSmoke = true;
         } else if (argument == "--sdl-debug-smoke-test") {
             smokeTest = true;
             gameOptions.preferVulkanRenderer = false;
@@ -52,7 +59,7 @@ int main(int argc, char** argv) {
     }
 
     if (smokeTest) {
-        desc.maxFrames = 5;
+        desc.maxFrames = gameOptions.runMenuFlowSmoke ? 44 : 5;
     }
 
     nemisis::game::GameApp game(gameOptions);

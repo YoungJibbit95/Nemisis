@@ -384,6 +384,7 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
     if (options_.lockDevRange && !menu_.gameplayActive()) {
         menu_.showDevRange();
     }
+    advanceMenuFlowSmoke(context);
     syncRelativeMouseMode();
     window_.setTitle(menu_.title());
 
@@ -430,6 +431,7 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
         assetStreamer_.pendingCount(),
         devAssetSummary_,
         meshStats,
+        renderer_.backendFrameStats(),
         latestDevRangeRenderStats_,
         settings_,
         activeLoadout_,
@@ -684,6 +686,90 @@ void GameApp::resetDevRangeState() {
 
 void GameApp::tickRangeSession(float fixedDeltaSeconds) {
     dev::tickSessionFeedback(devRangeSession_, fixedDeltaSeconds);
+}
+
+void GameApp::advanceMenuFlowSmoke(const novacore::core::FrameContext& context) {
+    if (!options_.runMenuFlowSmoke) {
+        return;
+    }
+
+    const auto frame = context.frameIndex;
+    std::size_t stage = 0;
+    if (frame < 4U) {
+        stage = 0;
+    } else if (frame < 8U) {
+        stage = 1;
+    } else if (frame < 12U) {
+        stage = 2;
+    } else if (frame < 16U) {
+        stage = 3;
+    } else if (frame < 20U) {
+        stage = 4;
+    } else if (frame < 28U) {
+        stage = 5;
+    } else if (frame < 32U) {
+        stage = 6;
+    } else if (frame < 36U) {
+        stage = 7;
+    } else if (frame < 40U) {
+        stage = 8;
+    } else {
+        stage = 9;
+    }
+
+    if (stage == menuFlowSmokeStage_) {
+        return;
+    }
+    menuFlowSmokeStage_ = stage;
+
+    std::string_view label = "unknown";
+    switch (stage) {
+    case 0:
+        menu_.showMainMenu(ui::MenuTab::Play);
+        label = "main_menu/play";
+        break;
+    case 1:
+        menu_.showMainMenu(ui::MenuTab::Loadout);
+        label = "main_menu/loadout";
+        break;
+    case 2:
+        menu_.showMainMenu(ui::MenuTab::Settings);
+        label = "main_menu/settings";
+        break;
+    case 3:
+        menu_.showMainMenu(ui::MenuTab::Account);
+        label = "main_menu/account";
+        break;
+    case 4:
+        menu_.showLoadingScreen(ui::GameScreen::DevRange, 0.58F);
+        label = "loading/dev_range";
+        break;
+    case 5:
+        menu_.showDevRange();
+        resetDevRangeState();
+        label = "dev_range";
+        break;
+    case 6:
+        menu_.showLoadingScreen(ui::GameScreen::TeamDeathmatch, 0.64F);
+        label = "loading/team_deathmatch";
+        break;
+    case 7:
+        menu_.showTeamDeathmatch();
+        label = "team_deathmatch";
+        break;
+    case 8:
+        menu_.showLoadingScreen(ui::GameScreen::Control, 0.70F);
+        label = "loading/control";
+        break;
+    case 9:
+        menu_.showControl();
+        label = "control";
+        break;
+    default:
+        break;
+    }
+
+    novacore::core::logInfo("game", "Menu flow smoke stage: " + std::string(label));
 }
 
 void GameApp::syncRelativeMouseMode() {

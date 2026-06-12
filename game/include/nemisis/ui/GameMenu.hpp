@@ -50,7 +50,11 @@ public:
         weapons::WeaponLoadout& loadout,
         const weapons::AttachmentRegistry& attachments);
     void updateFrame(double deltaSeconds);
+    void showMainMenu(MenuTab tab = MenuTab::Play);
+    void showLoadingScreen(GameScreen target, float progress = 0.0F);
     void showDevRange();
+    void showTeamDeathmatch();
+    void showControl();
     void appendRenderCommands(
         novacore::render::RenderFrameInfo& frame,
         const nemisis::dev::DevSandboxSample& sample,
@@ -60,6 +64,7 @@ public:
         std::size_t queuedAssets,
         const nemisis::assets::DevAssetBindingSummary& assetSummary,
         const novacore::render::MeshResourceStats& meshStats,
+        const novacore::render::RenderBackendFrameStats& backendFrameStats,
         const nemisis::dev::DevRangeRenderSceneStats& sceneStats,
         const settings::GameSettings& settings,
         const weapons::WeaponLoadout& loadout,

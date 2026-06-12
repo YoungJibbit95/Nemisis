@@ -730,6 +730,7 @@ void renderDebugOverlay(
     std::size_t queuedAssets,
     const assets::DevAssetBindingSummary& assetSummary,
     const novacore::render::MeshResourceStats& meshStats,
+    const novacore::render::RenderBackendFrameStats& backendFrameStats,
     const dev::DevRangeRenderSceneStats& sceneStats) {
     addRect(frame, 30.0F, 558.0F, 1210.0F, 146.0F, {0.015F, 0.025F, 0.030F, 0.92F});
     addText(frame, 48.0F, 574.0F, 2.0F, {0.72F, 0.90F, 0.95F, 1.0F}, "DEBUG " + std::string(debugPageName) + "  TAB/START");
@@ -764,10 +765,10 @@ void renderDebugOverlay(
         addMetric(frame, 48.0F, 630.0F, "VULKAN", std::string(vulkanSummary).substr(0, 34));
         addMetric(frame, 386.0F, 604.0F, "MESH CPU", std::to_string(meshStats.registeredResources) + "/" + std::to_string(assetSummary.requiredAssetCount));
         addMetric(frame, 386.0F, 630.0F, "GPU", std::to_string(meshStats.residentResources) + " RES / " + std::to_string(meshStats.pendingUploadResources) + " PEND");
-        addMetric(frame, 674.0F, 604.0F, "P / V", std::to_string(meshStats.totalPrimitives) + " / " + std::to_string(meshStats.totalVertices));
-        addMetric(frame, 674.0F, 630.0F, "I / Q", std::to_string(meshStats.totalIndices) + " / " + std::to_string(meshStats.uploadQueueLength + queuedAssets));
-        addMetric(frame, 928.0F, 604.0F, "FAILED", std::to_string(meshStats.failedResources));
-        addMetric(frame, 928.0F, 630.0F, "DEFER", std::to_string(meshStats.deferredDestroyCount));
+        addMetric(frame, 674.0F, 604.0F, "SWAP", std::to_string(backendFrameStats.swapchainWidth) + "x" + std::to_string(backendFrameStats.swapchainHeight));
+        addMetric(frame, 674.0F, 630.0F, "FRAME", std::to_string(backendFrameStats.submittedFrames) + " / q " + std::to_string(meshStats.uploadQueueLength + queuedAssets));
+        addMetric(frame, 928.0F, 604.0F, "RECREATE", std::to_string(backendFrameStats.swapchainRecreateCount) + " / skip " + std::to_string(backendFrameStats.skippedFrames));
+        addMetric(frame, 928.0F, 630.0F, "DRAW", std::to_string(backendFrameStats.lastWorldBoxCount) + "B " + std::to_string(backendFrameStats.lastWorldMeshCount) + "M " + std::to_string(backendFrameStats.lastWorldLineCount) + "L");
         break;
     }
 }
@@ -867,8 +868,27 @@ void GameMenu::updateFrame(double deltaSeconds) {
     }
 }
 
+void GameMenu::showMainMenu(MenuTab tab) {
+    setTab(tab);
+    setScreen(GameScreen::MainMenu);
+}
+
+void GameMenu::showLoadingScreen(GameScreen target, float progress) {
+    loadingTarget_ = target;
+    loadingProgress_ = std::clamp(progress, 0.0F, 1.0F);
+    screen_ = GameScreen::Loading;
+}
+
 void GameMenu::showDevRange() {
     setScreen(GameScreen::DevRange);
+}
+
+void GameMenu::showTeamDeathmatch() {
+    setScreen(GameScreen::TeamDeathmatch);
+}
+
+void GameMenu::showControl() {
+    setScreen(GameScreen::Control);
 }
 
 void GameMenu::appendRenderCommands(
@@ -880,6 +900,7 @@ void GameMenu::appendRenderCommands(
     std::size_t queuedAssets,
     const nemisis::assets::DevAssetBindingSummary& assetSummary,
     const novacore::render::MeshResourceStats& meshStats,
+    const novacore::render::RenderBackendFrameStats& backendFrameStats,
     const nemisis::dev::DevRangeRenderSceneStats& sceneStats,
     const settings::GameSettings& settings,
     const weapons::WeaponLoadout& loadout,
@@ -911,6 +932,7 @@ void GameMenu::appendRenderCommands(
             queuedAssets,
             assetSummary,
             meshStats,
+            backendFrameStats,
             sceneStats);
     }
 }
