@@ -279,17 +279,22 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
     }
 
     dev::DebugTargetHitResult targetHit{};
+    dev::DevTargetRangeHitResult targetRangeHit{};
     if (hasShotTrace) {
-        targetHit = dev::applyShotToDebugTarget(debugTarget_, shotTrace);
+        targetRangeHit = dev::applyShotToDevTargetRange(targetRange_, shotTrace);
+        targetHit = targetRangeHit.targetHit;
     }
     dev::recordShotResult(devRangeSession_, fireResult, targetHit, devRangeTuning_);
+    if (targetRangeHit.hit && !targetRangeHit.laneName.empty() && !devRangeSession_.eventText.empty()) {
+        devRangeSession_.eventText += "  " + targetRangeHit.laneName;
+    }
     if (targetHit.eliminated) {
         dev::beginTargetRespawn(devRangeSession_, devRangeTuning_);
+        dev::beginTargetLaneRespawn(targetRange_, targetRangeHit.laneIndex, devRangeTuning_.targetRespawnDelaySeconds);
     }
 
-    if (dev::tickTargetRespawn(devRangeSession_, static_cast<float>(context.fixedDeltaSeconds))) {
-        dev::resetDebugTarget(debugTarget_);
-    }
+    (void)dev::tickDevTargetRangeRespawns(targetRange_, static_cast<float>(context.fixedDeltaSeconds));
+    devRangeSession_.targetRespawnSeconds = dev::nextTargetRespawnSeconds(targetRange_);
 
     player::PlayerHealthComponent healthSample{};
     if (auto* health = world_.getComponent<player::PlayerHealthComponent>(localPlayerEntity_);
@@ -356,7 +361,8 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
         hasShotTrace,
         healthSample,
         devRangeSession_,
-        debugTarget_,
+        targetRange_,
+        dev::activeTarget(targetRange_) != nullptr ? *dev::activeTarget(targetRange_) : dev::DebugTargetState{},
         targetHit,
         networkSample,
         loopbackBridge_.stats(),
@@ -402,7 +408,7 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
             frameInfo,
             dev::DevRangeRenderSceneDesc{
                 &greyboxWorld_,
-                &debugTarget_,
+                &targetRange_,
                 &devSandbox_.latestSample().collision,
                 &devMeshResources_,
                 currentPlayerRenderState(),
@@ -642,7 +648,7 @@ void GameApp::ensureLocalPlayer() {
 void GameApp::resetDevRangeState() {
     ensureLocalPlayer();
     rebuildActiveAttachmentSummary();
-    dev::resetDebugTarget(debugTarget_);
+    dev::resetDevTargetRange(targetRange_);
     dev::recordRangeReset(devRangeSession_, devRangeTuning_);
 
     if (auto* movementState = world_.getComponent<movement::PlayerMovementState>(localPlayerEntity_);

@@ -12,12 +12,38 @@ Current ownership:
 
 - `GameApp` orchestrates startup, config load, user settings load, fixed tick simulation, frame UI updates, and runtime persistence.
 - `DevRangeSession` owns range-specific scoring and timers.
+- `DevTargetRange` owns multi-lane target state, hit selection, active lane state, and lane respawns.
 - `PlayerHealthComponent` remains the player health authority for the local sample.
-- `DebugTargetState` remains the target dummy health and hit-state authority.
+- `DebugTargetState` remains the per-target health and hit-state primitive inside each target lane.
 - `GameMenu` renders the current HUD/debug view from a `DevSandboxSample`.
 - `UserSettingsPersistence` serializes/deserializes player-facing settings and loadout choices.
 
-The important boundary is that `DevRangeSession` does not own world, renderer, input, or weapon state. It only tracks the session outcome and transient feedback. That keeps it small enough to replace or mirror on a server later.
+The important boundary is that `DevRangeSession` does not own world, renderer, input, weapon state, or the target lane container. It only tracks the session outcome and transient feedback. That keeps it small enough to replace or mirror on a server later.
+
+## Dev Target Range Data
+
+`DevTargetRangeState` currently tracks:
+
+- Four target lanes.
+- Active lane index.
+- Per-lane display names.
+- Per-lane `DebugTargetState`.
+- Per-lane respawn timers.
+
+Default lanes:
+
+- `left_15m`
+- `center_20m`
+- `right_25m`
+- `upper_22m`
+
+Hit selection:
+
+- Weapon shot traces are tested against every alive lane.
+- The nearest valid ray/sphere hit wins.
+- Only the winning lane mutates health.
+- The winning lane becomes the active lane for HUD/debug display.
+- Eliminated lanes continue counting as down until their lane respawn timer completes.
 
 ## Dev Range Session Data
 
@@ -64,9 +90,9 @@ Fixed tick:
 1. Local input builds a command.
 2. Movement, camera view, weapon runtime, and command queue update.
 3. Hitscan runs when the weapon fires.
-4. Target hit result updates `DebugTargetState`.
+4. Target range hit result selects and updates the nearest hit lane.
 5. `DevRangeSession` records fired/hit/elimination/damage telemetry.
-6. Target respawn timer restores the dummy when complete.
+6. Target lane respawn timers restore individual targets when complete.
 7. Player health regen/respawn timers tick from the health component.
 8. `DevSandboxSample` collects all telemetry for HUD/debug rendering.
 
@@ -85,6 +111,7 @@ Keyboard `P` and controller `Y` reset the current Dev Shooting Range.
 Reset currently restores:
 
 - Target health and hit state.
+- All target lanes and lane respawn timers.
 - Session event feedback.
 - Player movement state and spawn position.
 - Player transform.
@@ -134,6 +161,8 @@ The Dev Range HUD currently shows:
 - Player health bar.
 - Target health.
 - Target respawn timer.
+- Active lane name.
+- Target lanes alive/down count.
 - Eliminations.
 - Accuracy.
 - Current streak.
@@ -153,6 +182,7 @@ The Gameplay debug page currently shows:
 - Eliminations.
 - Accuracy.
 - Current streak.
+- Target lanes alive/down count in sandbox telemetry.
 
 ## Test Coverage
 
@@ -160,6 +190,7 @@ Current focused tests:
 
 - `nemisis_user_settings_persistence_tests`
 - `nemisis_dev_range_session_tests`
+- `nemisis_dev_target_range_tests`
 - `nemisis_game_menu_tests`
 - `nemisis_dev_sandbox_tests`
 - `nemisis_player_health_tests`
@@ -176,7 +207,7 @@ ctest --test-dir build/windows-msvc-debug -C Debug --output-on-failure
 Result:
 
 ```text
-30/30 tests passed
+31/31 tests passed
 ```
 
 Latest direct runtime checks:
@@ -186,12 +217,12 @@ Latest direct runtime checks:
 .\build\windows-msvc-debug\Debug\nemisis_game.exe --vulkan-dev-range-smoke-test
 ```
 
-Both detect Vulkan 1.4.350 on the local RTX 3070 Ti path and register 20/20 required Dev Sandbox mesh resources.
+Both detect Vulkan 1.4.350 on the local RTX 3070 Ti path and register 20/20 required Dev Sandbox mesh resources. The Dev Range smoke currently submits 29 world boxes, 19 mesh instances, and at least one world debug line.
 
 ## Next Upgrades
 
-- Add several target dummies with per-lane score tracking.
 - Add timed range drills for accuracy, TTK, recoil control, and movement shooting.
+- Add per-lane score breakdowns.
 - Feed enemy/target damage sources into player health so down-state and respawn can be tested.
 - Mirror range session state through server-authored events.
 - Add packet loss/jitter overlays beside session score once network simulation is active.

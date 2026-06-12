@@ -25,7 +25,16 @@ struct DebugTargetHitResult final {
     float healthRemaining = 0.0F;
 };
 
+struct DebugTargetTraceResult final {
+    bool hit = false;
+    float distanceMeters = 0.0F;
+};
+
 void resetDebugTarget(DebugTargetState& target);
+
+[[nodiscard]] DebugTargetTraceResult traceShotToDebugTarget(
+    const DebugTargetState& target,
+    const weapons::ShotTraceResult& shot);
 
 [[nodiscard]] DebugTargetHitResult applyShotToDebugTarget(
     DebugTargetState& target,

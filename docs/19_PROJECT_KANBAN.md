@@ -86,13 +86,18 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [x] Add keyboard `P` and controller `Y` Dev Range reset action.
 - [x] Add `nemisis_user_settings_persistence_tests` and `nemisis_dev_range_session_tests`.
 - [x] Verify Windows MSVC Vulkan build, direct smoke runs, and 30/30 CTest suite.
+- [x] Add four-lane `DevTargetRange` with nearest-hit selection, active lane tracking, per-lane respawn, and full reset.
+- [x] Render multi-lane Dev Range targets and stands through the Vulkan mesh path.
+- [x] Surface target alive/down counts and active lane state in HUD, topdown map, debug telemetry, and sandbox logs.
+- [x] Add `nemisis_dev_target_range_tests` and expand target/render/sandbox coverage.
+- [x] Verify Windows MSVC Vulkan build, direct smoke runs, and 31/31 CTest suite.
 
 ## Doing
 
 - [ ] Expand material fallback controls and resize-safe Vulkan swapchain behavior.
 - [ ] Keep UI moving toward a Vulkan-native text/vector backend while `UiCanvas` feeds the current debug primitive bridge.
 - [ ] Start texture/material binding for A1 GLBs so imported assets look less like tinted blockouts.
-- [ ] Grow the Dev Range from one dummy lane into a proper greybox weapon-test loop.
+- [ ] Grow the multi-target Dev Range into timed drills, TTK panels, and recoil-control scoring.
 
 ## Next Core
 
@@ -108,7 +113,7 @@ This file mirrors the active work locally while GitHub Projects also track the l
 
 - [ ] TDM placeholder match lifecycle.
 - [ ] Control placeholder objective lifecycle.
-- [ ] More target dummies and range markers.
+- [ ] Timed range drills, lane score breakdowns, and measured TTK panels.
 - [ ] Player damage sources, down-state, respawn flow, and future server validation.
 - [ ] Recoil/ADS/range-score HUD widgets fed from runtime telemetry.
 

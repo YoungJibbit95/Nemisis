@@ -1,6 +1,7 @@
 #pragma once
 
 #include "nemisis/dev/DebugTarget.hpp"
+#include "nemisis/dev/DevTargetRange.hpp"
 #include "nemisis/dev/GreyboxCollision.hpp"
 #include "nemisis/dev/GreyboxWorld.hpp"
 #include "nemisis/movement/MovementSystem.hpp"
@@ -47,11 +48,12 @@ struct DevRangeRenderSceneStats final {
     std::size_t skippedMeshInstanceCount = 0;
     std::size_t firstPersonMeshCount = 0;
     std::size_t aimMarkerBoxCount = 0;
+    std::size_t targetMeshCount = 0;
 };
 
 struct DevRangeRenderSceneDesc final {
     const GreyboxWorld* greyboxWorld = nullptr;
-    const DebugTargetState* debugTarget = nullptr;
+    const DevTargetRangeState* targetRange = nullptr;
     const GreyboxCollisionResult* collision = nullptr;
     const MeshResourceLookup* meshResources = nullptr;
     DevRangePlayerRenderState player{};
@@ -89,6 +91,11 @@ private:
         DevRangeRenderSceneStats& stats) const;
 
     void appendStaticShowcaseMeshes(
+        novacore::render::RenderFrameInfo& frame,
+        const DevRangeRenderSceneDesc& desc,
+        DevRangeRenderSceneStats& stats) const;
+
+    void appendTargetLaneMeshes(
         novacore::render::RenderFrameInfo& frame,
         const DevRangeRenderSceneDesc& desc,
         DevRangeRenderSceneStats& stats) const;

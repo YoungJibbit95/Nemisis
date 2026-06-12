@@ -2,10 +2,10 @@
 
 #include "nemisis/assets/DevAssetBindings.hpp"
 #include "nemisis/assets/GameAssetCatalog.hpp"
-#include "nemisis/dev/DebugTarget.hpp"
 #include "nemisis/dev/DevRangeSession.hpp"
 #include "nemisis/dev/DevRangeRenderScene.hpp"
 #include "nemisis/dev/DevSandbox.hpp"
+#include "nemisis/dev/DevTargetRange.hpp"
 #include "nemisis/dev/GreyboxWorld.hpp"
 #include "nemisis/movement/MovementConfig.hpp"
 #include "nemisis/movement/MovementSystem.hpp"
@@ -86,7 +86,7 @@ private:
     nemisis::assets::DevAssetBindingSummary devAssetSummary_;
     std::unordered_map<std::string, novacore::render::MeshResourceHandle> devMeshResources_;
     novacore::ecs::EntityId cameraEntity_;
-    dev::DebugTargetState debugTarget_;
+    dev::DevTargetRangeState targetRange_ = dev::makeDefaultDevTargetRange();
     dev::DevRangeSessionState devRangeSession_;
     dev::DevRangeSessionTuning devRangeTuning_;
     dev::DevSandbox devSandbox_;

@@ -72,7 +72,7 @@ void DevSandbox::onFrame(double deltaSeconds) {
     if (!printedControls_) {
         novacore::core::logInfo(
             "dev",
-            "Playable dev sandbox controls: WASD/LeftStick move, Mouse/RightStick look, Space/A jump, LeftAlt/B dash, C/B slide, Shift/LeftStick sprint, MouseLeft/RT fire, MouseRight/LT ADS, R/X reload; target dummy is straight ahead");
+            "Playable dev sandbox controls: WASD/LeftStick move, Mouse/RightStick look, Space/A jump, LeftAlt/B dash, C/B slide, Shift/LeftStick sprint, MouseLeft/RT fire, MouseRight/LT ADS, R/X reload, P/Y reset; multi-lane targets are downrange");
         printedControls_ = true;
     }
 
@@ -117,6 +117,9 @@ std::string DevSandbox::latestSummary() const {
            << " score=" << latest_.rangeSession.score.targetsEliminated
            << " accuracy=" << devRangeAccuracy(latest_.rangeSession.score)
            << " streak=" << latest_.rangeSession.score.currentStreak
+           << " targetsAlive=" << aliveTargetCount(latest_.targetRange)
+           << "/" << totalTargetCount(latest_.targetRange)
+           << " targetsDown=" << eliminatedTargetCount(latest_.targetRange)
            << " pending=" << latest_.network.pendingCommandCount;
     if (latest_.hasShot) {
         stream << " traceSeed=" << latest_.shot.seed

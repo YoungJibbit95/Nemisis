@@ -32,6 +32,7 @@ void testSummaryIncludesPlayableTelemetry() {
     sample.weapon.shotIndex = 1;
     sample.fire.fired = true;
     sample.network.pendingCommandCount = 3;
+    sample.targetRange = nemisis::dev::makeDefaultDevTargetRange();
     sample.target.health = 122.0F;
     sample.target.hitsTaken = 2;
     sample.targetHit.hit = true;
@@ -44,6 +45,7 @@ void testSummaryIncludesPlayableTelemetry() {
     expect(summary.find("ammo=29") != std::string::npos, "summary includes ammo");
     expect(summary.find("fire=yes") != std::string::npos, "summary includes fire result");
     expect(summary.find("pending=3") != std::string::npos, "summary includes pending commands");
+    expect(summary.find("targetsAlive=4/4") != std::string::npos, "summary includes target lane count");
     expect(summary.find("targetHp=122.0") != std::string::npos, "summary includes target health");
     expect(summary.find("hit=yes") != std::string::npos, "summary includes target hit");
 }

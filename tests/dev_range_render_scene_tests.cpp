@@ -82,8 +82,7 @@ void testDevRangeRenderSceneBuildsExpectedSubmissions() {
     novacore::render::Renderer renderer;
     auto lookup = registerSceneMeshes(renderer);
     const auto world = nemisis::dev::createDevRangeGreyboxWorld();
-    nemisis::dev::DebugTargetState target{};
-    target.eliminated = false;
+    auto targetRange = nemisis::dev::makeDefaultDevTargetRange();
 
     nemisis::dev::DevRangePlayerRenderState player{};
     player.position = {1.0F, 0.0F, 2.0F};
@@ -100,7 +99,7 @@ void testDevRangeRenderSceneBuildsExpectedSubmissions() {
         frame,
         nemisis::dev::DevRangeRenderSceneDesc{
             &world,
-            &target,
+            &targetRange,
             &collision,
             &lookup,
             player,
@@ -117,12 +116,13 @@ void testDevRangeRenderSceneBuildsExpectedSubmissions() {
     expect(frame.lighting.sunDirection.y > 0.80F, "dev range lighting points from above");
 
     expect(!world.primitives.empty(), "greybox world fixture has primitives");
-    expect(stats.worldBoxCount == world.primitives.size() + 9U, "dev range render scene emits world, weapon, hands, muzzle, and aim boxes");
+    expect(stats.worldBoxCount == (world.primitives.size() - 1U) + targetRange.lanes.size() + 9U, "dev range render scene emits world, lane, weapon, hands, muzzle, and aim boxes");
     expect(frame.worldBoxes.size() == stats.worldBoxCount, "world box count matches frame");
-    expect(stats.meshInstanceCount == 14, "dev range render scene emits static and first-person mesh instances");
-    expect(frame.worldMeshes.size() == 14, "frame receives all mesh instances");
+    expect(stats.meshInstanceCount == 19, "dev range render scene emits static, target lane, and first-person mesh instances");
+    expect(frame.worldMeshes.size() == 19, "frame receives all mesh instances");
     expect(stats.skippedMeshInstanceCount == 0, "dev range render scene skips no mesh when lookup is complete");
     expect(stats.firstPersonMeshCount == 2, "dev range render scene emits weapon and arms first-person mesh anchors");
+    expect(stats.targetMeshCount == targetRange.lanes.size(), "dev range render scene emits one actor mesh per target lane");
     expect(stats.aimMarkerBoxCount == 5, "dev range render scene emits five aim marker boxes");
     expect(stats.worldLineCount == 2, "dev range render scene emits aim and ground-normal lines");
     expect(frame.worldLines.size() == 2, "frame receives world debug lines");
@@ -141,8 +141,8 @@ void testDevRangeRenderSceneCountsMissingMeshHandles() {
     lookup.erase("chr_dev_arms_a");
 
     const auto world = nemisis::dev::createDevRangeGreyboxWorld();
-    nemisis::dev::DebugTargetState target{};
-    target.eliminated = true;
+    auto targetRange = nemisis::dev::makeDefaultDevTargetRange();
+    targetRange.lanes[1].target.eliminated = true;
 
     nemisis::dev::DevRangePlayerRenderState player{};
     player.position = world.playerSpawn;
@@ -153,14 +153,14 @@ void testDevRangeRenderSceneCountsMissingMeshHandles() {
         frame,
         nemisis::dev::DevRangeRenderSceneDesc{
             &world,
-            &target,
+            &targetRange,
             nullptr,
             &lookup,
             player,
         });
 
-    expect(stats.meshInstanceCount == 12, "dev range render scene still emits available static meshes");
-    expect(frame.worldMeshes.size() == 12, "frame mesh count drops missing handles");
+    expect(stats.meshInstanceCount == 17, "dev range render scene still emits available static and target lane meshes");
+    expect(frame.worldMeshes.size() == 17, "frame mesh count drops missing handles");
     expect(stats.skippedMeshInstanceCount == 4, "dev range render scene counts missing primary and fallback handles");
     expect(stats.firstPersonMeshCount == 0, "first-person mesh stats reflect missing weapon/arms handles");
     expect(stats.worldLineCount == 1, "dev range render scene still emits aim line without collision sample");
@@ -181,7 +181,7 @@ void testDevRangeRenderSceneCanDisableDebugLines() {
     novacore::render::Renderer renderer;
     auto lookup = registerSceneMeshes(renderer);
     const auto world = nemisis::dev::createDevRangeGreyboxWorld();
-    nemisis::dev::DebugTargetState target{};
+    auto targetRange = nemisis::dev::makeDefaultDevTargetRange();
     nemisis::dev::GreyboxCollisionResult collision{};
     collision.grounded = true;
     collision.groundNormal = {0.0F, 1.0F, 0.0F};
@@ -191,7 +191,7 @@ void testDevRangeRenderSceneCanDisableDebugLines() {
         frame,
         nemisis::dev::DevRangeRenderSceneDesc{
             &world,
-            &target,
+            &targetRange,
             &collision,
             &lookup,
             {},

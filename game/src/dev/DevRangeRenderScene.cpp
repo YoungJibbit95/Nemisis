@@ -35,7 +35,12 @@ struct StaticMeshPlacement final {
 };
 
 [[nodiscard]] bool targetEliminated(const DevRangeRenderSceneDesc& desc) {
-    return desc.debugTarget != nullptr && desc.debugTarget->eliminated;
+    const auto* lane = desc.targetRange == nullptr ? nullptr : activeTargetLane(*desc.targetRange);
+    return lane != nullptr && lane->target.eliminated;
+}
+
+[[nodiscard]] bool hasTargetRange(const DevRangeRenderSceneDesc& desc) {
+    return desc.targetRange != nullptr && !desc.targetRange->lanes.empty();
 }
 
 [[nodiscard]] novacore::math::Vec3 playerEyePosition(const DevRangeRenderSceneDesc& desc) {
@@ -86,7 +91,7 @@ struct StaticMeshPlacement final {
     return kWeaponMeshTint;
 }
 
-[[nodiscard]] std::array<StaticMeshPlacement, 12> staticShowcaseMeshes(bool eliminated) {
+[[nodiscard]] std::array<StaticMeshPlacement, 9> staticShowcaseMeshes() {
     return {
         StaticMeshPlacement{
             "env_test_arena_kit_01",
@@ -94,27 +99,6 @@ struct StaticMeshPlacement final {
             {1.0F, 1.0F, 1.0F},
             0.0F,
             kArenaTint,
-        },
-        StaticMeshPlacement{
-            eliminated ? std::string_view("prop_target_dummy_01") : std::string_view("chr_dev_soldier_a"),
-            {0.0F, 0.0F, 15.0F},
-            {1.0F, 1.0F, 1.0F},
-            180.0F,
-            eliminated ? kEliminatedTargetTint : kActiveTargetTint,
-        },
-        StaticMeshPlacement{
-            "prop_target_dummy_01",
-            {-5.5F, 0.0F, 18.0F},
-            {0.85F, 0.85F, 0.85F},
-            180.0F,
-            kDummyTargetTint,
-        },
-        StaticMeshPlacement{
-            "prop_target_dummy_01",
-            {5.5F, 0.0F, 18.0F},
-            {0.85F, 0.85F, 0.85F},
-            180.0F,
-            kDummyTargetTint,
         },
         StaticMeshPlacement{
             "chr_a1_stylized_operator_01",
@@ -211,11 +195,13 @@ DevRangeRenderSceneStats DevRangeRenderSceneBuilder::append(
     frame.camera3D.nearPlane = desc.nearPlane;
     frame.camera3D.farPlane = desc.farPlane;
 
-    frame.worldBoxes.reserve(frame.worldBoxes.size() + desc.greyboxWorld->primitives.size() + 8U);
-    frame.worldMeshes.reserve(frame.worldMeshes.size() + 16U);
+    const auto targetLaneCount = desc.targetRange == nullptr ? 0U : desc.targetRange->lanes.size();
+    frame.worldBoxes.reserve(frame.worldBoxes.size() + desc.greyboxWorld->primitives.size() + targetLaneCount + 8U);
+    frame.worldMeshes.reserve(frame.worldMeshes.size() + 12U + (targetLaneCount * 2U));
 
     appendWorldGeometry(frame, desc, stats);
     appendStaticShowcaseMeshes(frame, desc, stats);
+    appendTargetLaneMeshes(frame, desc, stats);
     appendFirstPersonMeshes(frame, desc, stats);
     appendAimMarker(frame, desc, stats);
     if (desc.showWorldDebugLines) {
@@ -274,6 +260,9 @@ void DevRangeRenderSceneBuilder::appendWorldGeometry(
     }
 
     for (const auto& primitive : desc.greyboxWorld->primitives) {
+        if (primitive.kind == GreyboxPrimitiveKind::Target && hasTargetRange(desc)) {
+            continue;
+        }
         auto color = primitive.color;
         if (primitive.kind == GreyboxPrimitiveKind::Target && targetEliminated(desc)) {
             color = {0.10F, 0.10F, 0.10F, 1.0F};
@@ -286,7 +275,7 @@ void DevRangeRenderSceneBuilder::appendStaticShowcaseMeshes(
     novacore::render::RenderFrameInfo& frame,
     const DevRangeRenderSceneDesc& desc,
     DevRangeRenderSceneStats& stats) const {
-    for (const auto& placement : staticShowcaseMeshes(targetEliminated(desc))) {
+    for (const auto& placement : staticShowcaseMeshes()) {
         (void)appendMesh(
             frame,
             desc,
@@ -295,6 +284,56 @@ void DevRangeRenderSceneBuilder::appendStaticShowcaseMeshes(
             placement.scale,
             placement.yawDegrees,
             placement.color,
+            stats);
+    }
+}
+
+void DevRangeRenderSceneBuilder::appendTargetLaneMeshes(
+    novacore::render::RenderFrameInfo& frame,
+    const DevRangeRenderSceneDesc& desc,
+    DevRangeRenderSceneStats& stats) const {
+    if (desc.targetRange == nullptr) {
+        return;
+    }
+
+    for (std::size_t index = 0; index < desc.targetRange->lanes.size(); ++index) {
+        const auto& lane = desc.targetRange->lanes[index];
+        const bool active = index == desc.targetRange->activeLaneIndex;
+        const bool eliminated = lane.target.eliminated;
+        const auto color = eliminated
+            ? kEliminatedTargetTint
+            : active
+                ? kActiveTargetTint
+                : kDummyTargetTint;
+
+        appendBox(
+            frame,
+            lane.target.position,
+            {lane.target.radiusMeters, 0.95F, lane.target.radiusMeters},
+            {color[0] * 0.55F, color[1] * 0.55F, color[2] * 0.55F, 0.75F},
+            stats);
+
+        const auto actorAsset = eliminated ? std::string_view("prop_target_dummy_01") : std::string_view("chr_dev_soldier_a");
+        if (appendMesh(
+                frame,
+                desc,
+                actorAsset,
+                {lane.target.position.x, 0.0F, lane.target.position.z},
+                eliminated ? novacore::math::Vec3{0.82F, 0.82F, 0.82F} : novacore::math::Vec3{0.92F, 0.92F, 0.92F},
+                180.0F,
+                color,
+                stats)) {
+            ++stats.targetMeshCount;
+        }
+
+        (void)appendMesh(
+            frame,
+            desc,
+            "map_target_stand_01",
+            {lane.target.position.x, 0.0F, lane.target.position.z - 0.18F},
+            {0.72F, 0.72F, 0.72F},
+            180.0F,
+            {0.24F, 0.28F, 0.28F, 1.0F},
             stats);
     }
 }

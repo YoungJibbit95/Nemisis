@@ -19,12 +19,10 @@ void resetDebugTarget(DebugTargetState& target) {
     target.eliminated = false;
 }
 
-DebugTargetHitResult applyShotToDebugTarget(
-    DebugTargetState& target,
+DebugTargetTraceResult traceShotToDebugTarget(
+    const DebugTargetState& target,
     const weapons::ShotTraceResult& shot) {
-    DebugTargetHitResult result{};
-    result.healthRemaining = target.health;
-
+    DebugTargetTraceResult result{};
     if (target.eliminated) {
         return result;
     }
@@ -46,13 +44,29 @@ DebugTargetHitResult applyShotToDebugTarget(
         return result;
     }
 
+    result.hit = true;
+    result.distanceMeters = distance;
+    return result;
+}
+
+DebugTargetHitResult applyShotToDebugTarget(
+    DebugTargetState& target,
+    const weapons::ShotTraceResult& shot) {
+    DebugTargetHitResult result{};
+    result.healthRemaining = target.health;
+
+    const auto trace = traceShotToDebugTarget(target, shot);
+    if (!trace.hit) {
+        return result;
+    }
+
     target.health = std::max(0.0F, target.health - shot.damage);
     ++target.hitsTaken;
     target.eliminated = target.health <= 0.0F;
 
     result.hit = true;
     result.eliminated = target.eliminated;
-    result.distanceMeters = distance;
+    result.distanceMeters = trace.distanceMeters;
     result.damageApplied = shot.damage;
     result.healthRemaining = target.health;
     return result;

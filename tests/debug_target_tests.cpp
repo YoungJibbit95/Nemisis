@@ -29,6 +29,11 @@ nemisis::weapons::ShotTraceResult forwardShot(float damage = 50.0F) {
 void testForwardShotHitsDebugTarget() {
     nemisis::dev::DebugTargetState target{};
 
+    const auto trace = nemisis::dev::traceShotToDebugTarget(target, forwardShot());
+    expect(trace.hit, "forward trace hits target ahead");
+    expect(trace.distanceMeters > 16.0F && trace.distanceMeters < 18.0F, "trace reports entry distance");
+    expect(target.health == target.maxHealth, "trace does not mutate target health");
+
     const auto result = nemisis::dev::applyShotToDebugTarget(target, forwardShot());
 
     expect(result.hit, "forward shot hits target ahead");

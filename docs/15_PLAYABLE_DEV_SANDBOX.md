@@ -33,6 +33,7 @@ It is not a vertical slice yet. It is a developer playground for validating:
 - Visible in-world Vulkan 3D range with player spawn, target lane, cover, ramps, walls, GLB props, and weapon proxies.
 - Active first-person weapon and arms rendering driven by camera/view, ADS, weapon sway, recoil, and current loadout.
 - Dev Range session scoring for shots fired, hits, eliminations, damage dealt, accuracy, current streak, best streak, range resets, target respawn, and session event text.
+- Four-lane Dev Target Range with nearest-target hit selection, active lane tracking, per-lane respawn timers, and alive/down counts.
 - HUD health panel backed by `PlayerHealthComponent`.
 - Configurable Dev Range render tuning for lighting, FOV, clip planes, and world debug line visibility.
 - World-space Vulkan debug lines for aim rays and KCC ground normals.
@@ -134,6 +135,7 @@ The sandbox logs every 0.5 seconds through NovaCore logging:
 - Shot trace seed, range, and direction when a shot fires.
 - Player health and down-state sample.
 - Dev Range score, accuracy, streak, best streak, damage dealt, and reset count.
+- Dev Target Range alive/down counts and active lane.
 - Debug target health.
 - Debug target hit count.
 - Hit/elimination result.
@@ -156,6 +158,7 @@ The Dev Shooting Range HUD currently shows:
 - Weapon/ammo state and active attachment build.
 - Player health progress and current HP.
 - Range eliminations, accuracy, current streak, and best streak.
+- Target lane alive/down count and active lane name.
 - Target HP and target respawn timer.
 - Short session event text for hits, eliminations, reloads, and resets.
 - `P / Y` reset hint.
@@ -185,10 +188,11 @@ The renderer clear color also changes by state for early visual feedback:
 - The world is represented by deterministic greybox data, Vulkan world boxes, uploaded GLB meshes, first-person proxy meshes, and a 3D aim marker.
 - First-person weapon rendering now uses the active loadout asset instead of a fixed independent debug weapon.
 - Settings and loadout edits are persisted through the user settings snapshot after live menu changes.
-- Dev Range reset restores player movement, transform, camera view, health, weapon runtime, command queue, target state, and session feedback.
+- Dev Range reset restores player movement, transform, camera view, health, weapon runtime, command queue, all target lanes, and session feedback.
 - Dev Range render composition is isolated in `DevRangeRenderSceneBuilder`, with `GameApp` only collecting player state and orchestrating frame flow.
 - Current collision supports floor grounding, bounds, AABB blockers, walkable ramp height sampling, low-step handling, ground normals, and ledges that block until mantle exists.
 - Asset ids, preload requests, generated `.glb` exports, metadata, GLB scene-info imports, CPU mesh extraction, renderer-owned mesh handles, Vulkan upload queues, and indexed draw submission exist for the current dev assets.
+- Vulkan Dev Range smoke currently submits 29 world boxes, 19 mesh instances, and at least one debug line.
 - Relative mouse mode is requested for the dev range; mouse/controller sensitivity is data-driven, while cursor policy persistence and raw-input options are still pending.
 - Debug target hit resolution is a focused sphere test, not full scene collision.
 - The command bridge is loopback only; real UDP transport, prediction/reconciliation, and remote snapshots are not implemented yet.
@@ -197,7 +201,7 @@ The renderer clear color also changes by state for early visual feedback:
 ## Next Dev Sandbox Upgrades
 
 - Recoil/ADS debug HUD widgets fed from `WeaponRuntimeState` and `PlayerCameraRig`.
-- More debug targets and measured TTK tests.
+- Timed range drills, measured TTK panels, recoil-control scoring, and lane-specific score breakdowns.
 - Player damage sources, down-state, and respawn flow driven by authoritative hit events.
 - Full KCC collision against greybox floors, walls, cover, ramps, and ledges.
 - Renderer-owned resource handles, upload queues, and deferred destruction for current GLB meshes.

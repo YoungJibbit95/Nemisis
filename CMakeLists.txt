@@ -62,6 +62,7 @@ add_executable(nemisis_game
     game/src/dev/DevRangeRenderScene.cpp
     game/src/dev/DevRangeSession.cpp
     game/src/dev/DevSandbox.cpp
+    game/src/dev/DevTargetRange.cpp
     game/src/dev/GreyboxCollision.cpp
     game/src/dev/GreyboxWorld.cpp
     game/src/input/InputBindings.cpp
@@ -161,7 +162,9 @@ target_link_libraries(nemisis_input_command_tests PRIVATE Novacore::Engine)
 add_test(NAME nemisis_input_command_tests COMMAND nemisis_input_command_tests)
 
 add_executable(nemisis_game_menu_tests
+    game/src/dev/DebugTarget.cpp
     game/src/dev/DevRangeSession.cpp
+    game/src/dev/DevTargetRange.cpp
     game/src/input/InputBindings.cpp
     game/src/player/PlayerHealth.cpp
     game/src/player/PlayerProfile.cpp
@@ -194,7 +197,9 @@ target_link_libraries(nemisis_ui_canvas_tests PRIVATE Novacore::Engine)
 add_test(NAME nemisis_ui_canvas_tests COMMAND nemisis_ui_canvas_tests)
 
 add_executable(nemisis_dev_range_render_scene_tests
+    game/src/dev/DebugTarget.cpp
     game/src/dev/DevRangeRenderScene.cpp
+    game/src/dev/DevTargetRange.cpp
     game/src/dev/GreyboxWorld.cpp
     game/src/player/PlayerView.cpp
     tests/dev_range_render_scene_tests.cpp
@@ -329,8 +334,10 @@ target_link_libraries(nemisis_player_spawn_tests PRIVATE Novacore::Engine)
 add_test(NAME nemisis_player_spawn_tests COMMAND nemisis_player_spawn_tests)
 
 add_executable(nemisis_dev_sandbox_tests
+    game/src/dev/DebugTarget.cpp
     game/src/dev/DevRangeSession.cpp
     game/src/dev/DevSandbox.cpp
+    game/src/dev/DevTargetRange.cpp
     game/src/player/PlayerHealth.cpp
     tests/dev_sandbox_tests.cpp
 )
@@ -451,6 +458,20 @@ target_include_directories(nemisis_dev_range_session_tests
 target_link_libraries(nemisis_dev_range_session_tests PRIVATE Novacore::Engine)
 add_test(NAME nemisis_dev_range_session_tests COMMAND nemisis_dev_range_session_tests)
 
+add_executable(nemisis_dev_target_range_tests
+    game/src/dev/DebugTarget.cpp
+    game/src/dev/DevTargetRange.cpp
+    tests/dev_target_range_tests.cpp
+)
+
+target_include_directories(nemisis_dev_target_range_tests
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/game/include
+)
+
+target_link_libraries(nemisis_dev_target_range_tests PRIVATE Novacore::Engine)
+add_test(NAME nemisis_dev_target_range_tests COMMAND nemisis_dev_target_range_tests)
+
 add_executable(nemisis_player_profile_tests
     game/src/player/PlayerProfile.cpp
     tests/player_profile_tests.cpp
@@ -526,6 +547,7 @@ foreach(nemisis_runtime_target IN ITEMS
     nemisis_game_settings_tests
     nemisis_user_settings_persistence_tests
     nemisis_dev_range_session_tests
+    nemisis_dev_target_range_tests
     nemisis_player_profile_tests
     nemisis_player_view_tests
     nemisis_player_camera_rig_tests

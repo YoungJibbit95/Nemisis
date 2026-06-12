@@ -330,6 +330,9 @@ void addDevRangeMap(
         if (primitive.kind == dev::GreyboxPrimitiveKind::Floor) {
             continue;
         }
+        if (primitive.kind == dev::GreyboxPrimitiveKind::Target && dev::totalTargetCount(sample.targetRange) > 0U) {
+            continue;
+        }
         addMapBox(frame, world, primitive, mapX, mapY, mapWidth, mapHeight);
     }
 
@@ -346,12 +349,30 @@ void addDevRangeMap(
         mapHeight);
     addLine(frame, player.x, player.y, lookEnd.x, lookEnd.y, {0.72F, 0.95F, 1.0F, 1.0F});
 
-    const auto target = projectTopDown(world, sample.target.position, mapX, mapY, mapWidth, mapHeight);
-    const auto targetColor = sample.target.eliminated
-        ? std::array<float, 4>{0.18F, 0.18F, 0.18F, 1.0F}
-        : palette::Danger;
-    addRect(frame, target.x - 8.0F, target.y - 8.0F, 16.0F, 16.0F, targetColor);
-    addLine(frame, player.x, player.y, target.x, target.y, {0.42F, 0.19F, 0.16F, 0.75F});
+    if (dev::totalTargetCount(sample.targetRange) > 0U) {
+        for (std::size_t index = 0; index < sample.targetRange.lanes.size(); ++index) {
+            const auto& lane = sample.targetRange.lanes[index];
+            const bool active = index == sample.targetRange.activeLaneIndex;
+            const auto target = projectTopDown(world, lane.target.position, mapX, mapY, mapWidth, mapHeight);
+            const auto targetColor = lane.target.eliminated
+                ? std::array<float, 4>{0.18F, 0.18F, 0.18F, 1.0F}
+                : active
+                    ? palette::Danger
+                    : std::array<float, 4>{0.86F, 0.45F, 0.18F, 1.0F};
+            const float size = active ? 18.0F : 13.0F;
+            addRect(frame, target.x - (size * 0.5F), target.y - (size * 0.5F), size, size, targetColor);
+            if (active) {
+                addLine(frame, player.x, player.y, target.x, target.y, {0.42F, 0.19F, 0.16F, 0.75F});
+            }
+        }
+    } else {
+        const auto target = projectTopDown(world, sample.target.position, mapX, mapY, mapWidth, mapHeight);
+        const auto targetColor = sample.target.eliminated
+            ? std::array<float, 4>{0.18F, 0.18F, 0.18F, 1.0F}
+            : palette::Danger;
+        addRect(frame, target.x - 8.0F, target.y - 8.0F, 16.0F, 16.0F, targetColor);
+        addLine(frame, player.x, player.y, target.x, target.y, {0.42F, 0.19F, 0.16F, 0.75F});
+    }
 }
 
 void addTopTabs(novacore::render::RenderFrameInfo& frame, MenuTab selectedTab) {
@@ -625,6 +646,15 @@ void renderDevRangeHud(
     addMetric(frame, 436.0F, 122.0F, "ACC", percent(dev::devRangeAccuracy(sample.rangeSession.score)));
     addMetric(frame, 610.0F, 92.0F, "STREAK", std::to_string(sample.rangeSession.score.currentStreak));
     addMetric(frame, 610.0F, 122.0F, "BEST", std::to_string(sample.rangeSession.score.bestStreak));
+    addText(
+        frame,
+        436.0F,
+        146.0F,
+        1.0F,
+        palette::TextSecondary,
+        "TARGETS " + std::to_string(dev::aliveTargetCount(sample.targetRange)) + "/" +
+            std::to_string(dev::totalTargetCount(sample.targetRange)) + "  DOWN " +
+            std::to_string(dev::eliminatedTargetCount(sample.targetRange)));
 
     if (sample.fire.fired) {
         addText(
@@ -659,9 +689,25 @@ void renderDevRangePanels(
     addLine(frame, 864.0F, 498.0F, 1052.0F, 498.0F, {0.16F, 0.24F, 0.25F, 1.0F});
     addRect(frame, 934.0F, 304.0F, 82.0F, 138.0F, {0.40F, 0.08F, 0.06F, 0.9F});
     addRect(frame, 952.0F, 270.0F, 46.0F, 46.0F, {0.82F, 0.18F, 0.14F, 0.95F});
+    const auto* activeLane = dev::activeTargetLane(sample.targetRange);
+    addText(
+        frame,
+        858.0F,
+        260.0F,
+        1.0F,
+        palette::TextSecondary,
+        activeLane != nullptr ? activeLane->displayName : "SINGLE TARGET");
+    addText(
+        frame,
+        858.0F,
+        282.0F,
+        1.0F,
+        palette::TextSecondary,
+        "ALIVE " + std::to_string(dev::aliveTargetCount(sample.targetRange)) + "/" +
+            std::to_string(dev::totalTargetCount(sample.targetRange)));
     const float hpRatio = std::clamp(sample.target.health / sample.target.maxHealth, 0.0F, 1.0F);
     addProgress(frame, {820.0F, 552.0F, 260.0F, 18.0F}, hpRatio, {0.16F, 0.06F, 0.05F, 1.0F}, palette::Danger);
-    addText(frame, 820.0F, 530.0F, 2.0F, palette::TextPrimary, "TARGET HP " + fixedOne(sample.target.health));
+    addText(frame, 820.0F, 530.0F, 2.0F, palette::TextPrimary, "ACTIVE TARGET HP " + fixedOne(sample.target.health));
 }
 
 void renderPlaceholderMode(novacore::render::RenderFrameInfo& frame, GameScreen screen) {
