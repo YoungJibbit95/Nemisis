@@ -1,5 +1,6 @@
 #include "nemisis/dev/GreyboxCollision.hpp"
 
+#include <algorithm>
 #include <cstdlib>
 #include <iostream>
 #include <string_view>
@@ -35,6 +36,14 @@ void testBoundsClamp() {
     expect(result.blocked, "out-of-bounds player is corrected");
     expect(result.position.x <= world.boundsHalfExtents.x - 0.42F + 0.001F, "bounds correction clamps x");
     expect(!result.lastPrimitiveId.empty(), "bounds correction reports a source");
+    expect(
+        std::any_of(
+            result.contacts.begin(),
+            result.contacts.end(),
+            [](const nemisis::dev::GreyboxContact& contact) {
+                return contact.role == nemisis::dev::GreyboxContactRole::Bounds && contact.blocking;
+            }),
+        "bounds correction appears in greybox contact list");
 }
 
 void testCoverPushout() {
@@ -60,6 +69,9 @@ void testOpenLaneStaysFree() {
     expect(result.groundPrimitiveId == "floor_main", "open lane reports floor as ground");
     expect(!result.onRamp, "open lane is not on a ramp");
     expect(!result.stepped, "open lane is not a step");
+    expect(result.contacts.size() == 1, "open lane exposes one greybox contact");
+    expect(result.contacts.front().role == nemisis::dev::GreyboxContactRole::Ground, "open lane contact is ground");
+    expect(result.contacts.front().walkable, "open lane contact is walkable");
 }
 
 void testRampSurfaceGroundsPlayer() {
@@ -88,6 +100,15 @@ void testLowStepIsWalkable() {
     expect(!result.blocked, "low step does not block movement");
     expect(result.groundPrimitiveId == "step_training_low", "step collision reports primitive id");
     expect(result.position.y > 0.34F && result.position.y < 0.38F, "step collision resolves top height");
+    expect(
+        std::any_of(
+            result.contacts.begin(),
+            result.contacts.end(),
+            [](const nemisis::dev::GreyboxContact& contact) {
+                return contact.role == nemisis::dev::GreyboxContactRole::Step &&
+                    contact.primitiveId == "step_training_low";
+            }),
+        "low step appears as explicit contact role");
 }
 
 void testRisingJumpDoesNotSnapBackToGround() {
@@ -148,6 +169,16 @@ void testSweepStopsFastLedgeTunneling() {
     expect(result.sweepPrimitiveId == "ledge_training_mid", "greybox sweep reports ledge primitive");
     expect(result.position.z < -7.75F, "greybox sweep stops before ledge face");
     expect(result.blocked, "greybox sweep marks blocked movement");
+    expect(!result.sweepContacts.empty(), "greybox sweep exposes sweep contacts");
+    expect(
+        std::any_of(
+            result.contacts.begin(),
+            result.contacts.end(),
+            [](const nemisis::dev::GreyboxContact& contact) {
+                return contact.role == nemisis::dev::GreyboxContactRole::Sweep &&
+                    contact.primitiveId == "ledge_training_mid";
+            }),
+        "greybox sweep contact is merged into final contact list");
 }
 
 void testSweepAllowsValidLowStep() {
@@ -235,6 +266,9 @@ void testSweepReportsWallRunPanelContact() {
     expect(result.nearWallRunSurface, "greybox sweep preserves wallrun surface telemetry");
     expect(result.sweepNormal.x > 0.5F, "greybox sweep reports wall normal");
     expect(result.appliedDisplacement.z > 0.8F, "greybox sweep keeps tangential movement");
+    expect(
+        std::string_view(nemisis::dev::greyboxContactRoleName(nemisis::dev::GreyboxContactRole::Wall)) == "wall",
+        "greybox contact role names are stable");
 }
 
 } // namespace

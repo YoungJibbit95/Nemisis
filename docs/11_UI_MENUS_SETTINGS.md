@@ -94,11 +94,13 @@ Current debug/UI implementation:
 
 - `UiCanvas` is now the game-owned NanoVG-style command layer for UI/HUD primitives.
 - `UiCanvas` records semantic commands for rects, rounded rects, lines, text, progress bars, and crosshairs.
+- `UiCanvas` now provides reusable immediate UI primitives for text metrics, fit-to-width text scaling, shadow/outline text, panels, selectable buttons, status pills, and dividers.
 - `UiCanvas` records image placeholder commands so committed UI art paths can be wired before the final texture backend exists.
 - The current bridge flushes `UiCanvas` commands into NovaCore debug primitives until the Vulkan-native vector/text backend exists.
 - SDL debug render primitives remain available only through explicit legacy launch paths.
 - `GameMenu` owns Main Menu tabs, Loading, Dev Shooting Range, Team Deathmatch placeholder, and Control placeholder screens.
 - `GameMenu` exposes explicit screen-driving helpers so runtime code, smoke tests, and future match/session flow use the same UI layers.
+- Main Menu tabs, selectable rows, HUD panels, loading panels, and debug panels now use the shared UI primitive style layer rather than one-off debug rectangles.
 - The Dev Shooting Range HUD now shows weapon/ammo, active range score, accuracy, streaks, target HP, target respawn, player health, and short event feedback.
 - The Gameplay debug page includes player HP and Dev Range score/accuracy in addition to movement and collision telemetry.
 - `Q/E` and controller shoulders switch top-level menu tabs.

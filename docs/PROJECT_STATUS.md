@@ -1,5 +1,14 @@
 # Nemisis Project Status
 
+## Latest Block - UI Backbone And Physics Contacts
+
+- Fixed the Vulkan UI/text orientation at the NovaCore shader layer, so `nemisis_game` now gets the corrected top-left screen-space UI path through the normal Vulkan renderer.
+- Expanded game-side UI infrastructure with `UiCanvas` text metrics, fit-to-width scaling, shadow/outline text, panels, buttons, pills, and dividers; Main Menu tabs, selectable rows, HUD panels, and debug panels now use the upgraded primitives.
+- Reworked mantle from an instant position snap into a deterministic fixed-tick climb curve with start position, target position, progress, target normal, and grounded handoff at completion.
+- Propagated NovaCore KCC contact manifolds into `GreyboxCollisionResult`, Dev Sandbox logs, Gameplay debug HUD, and Dev Range world debug lines.
+- Added contact-role coverage for ground, step, wall, bounds, and sweep diagnostics so physics bugs can be debugged from live HUD/log output instead of guessing from the last collider id.
+- Verified `cmake --build --preset windows-msvc-debug --config Debug`, `ctest --test-dir build\windows-msvc-debug -C Debug --output-on-failure` with 32/32 passing tests, and `nemisis_game.exe --vulkan-dev-range-smoke-test`.
+
 ## Current Foundation
 
 - Game repository consumes NovaCore through `Novacore::Engine`.
@@ -42,6 +51,7 @@
 - Account/profile stats now feed the Account tab with K/D, win rate, best weapon, and best operator values.
 - Menus/debug HUD now route their primitive output through a game-owned `UiCanvas` command layer that mirrors the planned NanoVG-style API before the final Vulkan text/vector backend lands.
 - `UiCanvas` rounded-rectangle commands now emit segmented fallback primitives so menu shell, tabs, and selectable rows can move toward the intended modern visual language before the final vector backend.
+- `UiCanvas` now has reusable UI backbone primitives for text metrics, fit-to-width text scaling, shadow/outline text, reusable panels, menu buttons, pills, and dividers.
 - SDL debug UI remains available only through explicit legacy launch flags.
 - Debug UI now has Gameplay, Network, and Assets pages, toggled with Tab or controller Start/Menu.
 - Assets debug UI reports renderer backend plus NovaCore's Vulkan runtime/device summary.
@@ -68,6 +78,7 @@
 - The Dev Shooting Range now applies greybox collision resolution for bounds, blocking cover/walls, floor grounding, walkable ramps, low steps, ledge blocking, and first mantle candidates.
 - Greybox collision is now backed by NovaCore's `novacore::physics::PhysicsWorld` foundation instead of a game-only collision path.
 - Dev Range player collision now uses NovaCore swept character movement for fixed-tick displacement before final ground/ramp/wall/mantle resolution.
+- Greybox collision now carries explicit contact lists for ground, step, wall, bounds, and sweep contacts, and surfaces those roles in HUD/debug logs/world debug lines.
 - The Dev Shooting Range now includes wall-run panels, wall-run surface classification, wall normal/tangent debug data, and first wall-run movement transitions.
 - The SDL debug UI draws the greybox as a top-down range map with player position, view direction, target marker, and range helpers.
 - Normal dev builds now use NovaCore's SDL3 FetchContent fallback when no installed SDL3 package is present.

@@ -1,6 +1,7 @@
 #include "nemisis/ui/UiCanvas.hpp"
 
 #include <algorithm>
+#include <string_view>
 #include <utility>
 
 namespace nemisis::ui {
@@ -9,6 +10,44 @@ namespace {
 
 [[nodiscard]] float clampedProgress(float value) {
     return std::clamp(value, 0.0F, 1.0F);
+}
+
+[[nodiscard]] UiColor faded(UiColor color, float alphaScale) {
+    color[3] = std::clamp(color[3] * alphaScale, 0.0F, 1.0F);
+    return color;
+}
+
+[[nodiscard]] UiRect inset(UiRect rect, float amount) {
+    return UiRect{
+        rect.x + amount,
+        rect.y + amount,
+        std::max(0.0F, rect.width - (amount * 2.0F)),
+        std::max(0.0F, rect.height - (amount * 2.0F)),
+    };
+}
+
+[[nodiscard]] float textWidth(std::string_view text, float scale) {
+    float longest = 0.0F;
+    float current = 0.0F;
+    for (const char c : text) {
+        if (c == '\n') {
+            longest = std::max(longest, current);
+            current = 0.0F;
+            continue;
+        }
+        current += std::max(1.0F, scale) * 6.0F;
+    }
+    return std::max(longest, current);
+}
+
+[[nodiscard]] float textLineCount(std::string_view text) {
+    float lines = 1.0F;
+    for (const char c : text) {
+        if (c == '\n') {
+            lines += 1.0F;
+        }
+    }
+    return lines;
 }
 
 void appendRectPrimitive(novacore::render::RenderFrameInfo& frame, UiRect rect, UiColor color) {
@@ -187,6 +226,102 @@ void UiCanvas::image(UiRect rect, std::string assetId, UiColor tint) {
     commands_.push_back(std::move(command));
 }
 
+void UiCanvas::shadowedText(
+    float x,
+    float y,
+    float scale,
+    UiColor color,
+    std::string textValue,
+    UiColor shadow,
+    float offset) {
+    const float safeOffset = std::max(0.0F, offset);
+    text(x + safeOffset, y + safeOffset, scale, shadow, textValue);
+    text(x, y, scale, color, std::move(textValue));
+}
+
+void UiCanvas::outlinedText(float x, float y, float scale, UiColor color, std::string textValue, UiColor outline) {
+    const float offset = std::max(1.0F, scale * 0.45F);
+    text(x - offset, y, scale, outline, textValue);
+    text(x + offset, y, scale, outline, textValue);
+    text(x, y - offset, scale, outline, textValue);
+    text(x, y + offset, scale, outline, textValue);
+    text(x, y, scale, color, std::move(textValue));
+}
+
+void UiCanvas::panel(UiRect rect, UiPanelStyle style) {
+    const float radius = std::max(0.0F, style.radius);
+    roundedRect(rect, radius, style.fill);
+    if (style.showBorder && style.borderWidth > 0.0F) {
+        const float width = std::max(1.0F, style.borderWidth);
+        const auto topLeft = inset(rect, width * 0.5F);
+        line(topLeft.x + radius, topLeft.y, topLeft.x + topLeft.width - radius, topLeft.y, style.border);
+        line(topLeft.x + radius, topLeft.y + topLeft.height, topLeft.x + topLeft.width - radius, topLeft.y + topLeft.height, style.border);
+        line(topLeft.x, topLeft.y + radius, topLeft.x, topLeft.y + topLeft.height - radius, style.border);
+        line(topLeft.x + topLeft.width, topLeft.y + radius, topLeft.x + topLeft.width, topLeft.y + topLeft.height - radius, style.border);
+    }
+    if (style.showAccent) {
+        roundedRect(
+            UiRect{rect.x, rect.y + style.radius, 4.0F, std::max(0.0F, rect.height - (style.radius * 2.0F))},
+            2.0F,
+            style.accent);
+    }
+}
+
+void UiCanvas::button(UiRect rect, std::string label, std::string value, bool selected, UiButtonStyle style) {
+    UiPanelStyle panelStyle{};
+    panelStyle.fill = selected ? style.selectedFill : style.fill;
+    panelStyle.border = selected ? style.accent : style.border;
+    panelStyle.accent = style.accent;
+    panelStyle.radius = style.radius;
+    panelStyle.borderWidth = selected ? 2.0F : 1.0F;
+    panelStyle.showAccent = selected;
+    panel(rect, panelStyle);
+
+    const float labelScale = fitTextScale(label, std::max(80.0F, rect.width * 0.52F), 2.0F, 1.0F);
+    shadowedText(
+        rect.x + 18.0F,
+        rect.y + std::max(8.0F, (rect.height - (labelScale * 7.0F)) * 0.5F),
+        labelScale,
+        selected ? style.text : style.mutedText,
+        std::move(label),
+        {0.0F, 0.0F, 0.0F, selected ? 0.78F : 0.55F},
+        selected ? 2.0F : 1.0F);
+
+    if (!value.empty()) {
+        const float valueScale = fitTextScale(value, std::max(72.0F, rect.width * 0.36F), 2.0F, 0.85F);
+        const auto metrics = measureText(value, valueScale);
+        shadowedText(
+            rect.x + rect.width - metrics.width - 18.0F,
+            rect.y + std::max(8.0F, (rect.height - metrics.height) * 0.5F),
+            valueScale,
+            style.text,
+            std::move(value),
+            {0.0F, 0.0F, 0.0F, 0.65F},
+            1.0F);
+    }
+}
+
+void UiCanvas::pill(UiRect rect, std::string label, UiColor fill, UiColor textColor) {
+    UiPanelStyle style{};
+    style.fill = fill;
+    style.border = faded(textColor, 0.35F);
+    style.radius = rect.height * 0.5F;
+    style.borderWidth = 1.0F;
+    panel(rect, style);
+    const float scale = fitTextScale(label, rect.width - 18.0F, 1.0F, 0.65F);
+    const auto metrics = measureText(label, scale);
+    text(
+        rect.x + ((rect.width - metrics.width) * 0.5F),
+        rect.y + ((rect.height - metrics.height) * 0.5F),
+        scale,
+        textColor,
+        std::move(label));
+}
+
+void UiCanvas::divider(float x0, float y0, float x1, float y1, UiColor color) {
+    line(x0, y0, x1, y1, color);
+}
+
 void UiCanvas::appendToRenderFrame(novacore::render::RenderFrameInfo& frame) const {
     for (const auto& command : commands_) {
         appendCommandToFrame(command, frame);
@@ -203,6 +338,25 @@ std::size_t UiCanvas::commandCount() const {
 
 UiFrameDesc UiCanvas::frameDesc() const {
     return frame_;
+}
+
+UiTextMetrics UiCanvas::measureText(std::string_view textValue, float scale) {
+    const float safeScale = std::max(0.1F, scale);
+    return UiTextMetrics{
+        textWidth(textValue, safeScale),
+        textLineCount(textValue) * safeScale * 7.0F,
+        safeScale * 8.0F,
+    };
+}
+
+float UiCanvas::fitTextScale(std::string_view textValue, float maxWidth, float preferredScale, float minScale) {
+    const float safePreferred = std::max(0.1F, preferredScale);
+    const float width = measureText(textValue, safePreferred).width;
+    if (width <= std::max(1.0F, maxWidth)) {
+        return safePreferred;
+    }
+    const float scaled = safePreferred * (std::max(1.0F, maxWidth) / std::max(1.0F, width));
+    return std::clamp(scaled, std::max(0.1F, minScale), safePreferred);
 }
 
 void appendUiRect(novacore::render::RenderFrameInfo& frame, UiRect rect, UiColor color) {

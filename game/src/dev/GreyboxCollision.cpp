@@ -102,6 +102,39 @@ namespace {
     return fallbackKindForPhysics(fallback);
 }
 
+[[nodiscard]] GreyboxContactRole toGreyboxContactRole(novacore::physics::CharacterContactRole role) {
+    switch (role) {
+    case novacore::physics::CharacterContactRole::Ground:
+        return GreyboxContactRole::Ground;
+    case novacore::physics::CharacterContactRole::Step:
+        return GreyboxContactRole::Step;
+    case novacore::physics::CharacterContactRole::Wall:
+        return GreyboxContactRole::Wall;
+    case novacore::physics::CharacterContactRole::Bounds:
+        return GreyboxContactRole::Bounds;
+    case novacore::physics::CharacterContactRole::Sweep:
+        return GreyboxContactRole::Sweep;
+    }
+    return GreyboxContactRole::Wall;
+}
+
+[[nodiscard]] GreyboxContact toGreyboxContact(
+    const GreyboxWorld& world,
+    const novacore::physics::CharacterContact& contact) {
+    return GreyboxContact{
+        contact.colliderId,
+        kindForPrimitiveId(world, contact.colliderId, contact.surfaceKind),
+        toGreyboxContactRole(contact.role),
+        contact.point,
+        contact.normal,
+        contact.distance,
+        contact.fraction,
+        contact.penetrationDepth,
+        contact.blocking,
+        contact.walkable,
+    };
+}
+
 } // namespace
 
 GreyboxCollisionResult resolveGreyboxPlayerCollision(
@@ -170,6 +203,14 @@ GreyboxCollisionResult resolveGreyboxPlayerCollision(
     result.appliedDisplacement = query.useSweep ? swept.appliedDisplacement : novacore::math::Vec3{};
     result.remainingDisplacement = query.useSweep ? swept.remainingDisplacement : novacore::math::Vec3{};
     result.sweepNormal = swept.hitNormal;
+    result.contacts.reserve(resolved.contacts.size());
+    for (const auto& contact : resolved.contacts) {
+        result.contacts.push_back(toGreyboxContact(world, contact));
+    }
+    result.sweepContacts.reserve(swept.sweepContacts.size());
+    for (const auto& contact : swept.sweepContacts) {
+        result.sweepContacts.push_back(toGreyboxContact(world, contact));
+    }
 
     const auto mantle = physicsWorld.probeMantle(novacore::physics::MantleProbe{
         result.position,
@@ -190,6 +231,22 @@ GreyboxCollisionResult resolveGreyboxPlayerCollision(
     result.mantlePrimitiveId = mantle.colliderId;
     result.mantleKind = kindForPrimitiveId(world, mantle.colliderId, mantle.kind);
     return result;
+}
+
+const char* greyboxContactRoleName(GreyboxContactRole role) {
+    switch (role) {
+    case GreyboxContactRole::Ground:
+        return "ground";
+    case GreyboxContactRole::Step:
+        return "step";
+    case GreyboxContactRole::Wall:
+        return "wall";
+    case GreyboxContactRole::Bounds:
+        return "bounds";
+    case GreyboxContactRole::Sweep:
+        return "sweep";
+    }
+    return "unknown";
 }
 
 } // namespace nemisis::dev

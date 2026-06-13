@@ -113,6 +113,18 @@ void testDevRangeRenderSceneBuildsExpectedSubmissions() {
     collision.grounded = true;
     collision.groundPrimitiveId = "floor_main";
     collision.groundNormal = {0.0F, 1.0F, 0.0F};
+    collision.contacts.push_back(nemisis::dev::GreyboxContact{
+        "floor_main",
+        nemisis::dev::GreyboxPrimitiveKind::Floor,
+        nemisis::dev::GreyboxContactRole::Ground,
+        {1.0F, 0.0F, 2.0F},
+        {0.0F, 1.0F, 0.0F},
+        0.0F,
+        1.0F,
+        0.0F,
+        false,
+        true,
+    });
 
     novacore::render::RenderFrameInfo frame{};
     const auto stats = nemisis::dev::DevRangeRenderSceneBuilder{}.append(
@@ -144,8 +156,8 @@ void testDevRangeRenderSceneBuildsExpectedSubmissions() {
     expect(stats.firstPersonMeshCount == 2, "dev range render scene emits weapon and arms first-person mesh anchors");
     expect(stats.targetMeshCount == targetRange.lanes.size(), "dev range render scene emits one actor mesh per target lane");
     expect(stats.aimMarkerBoxCount == 5, "dev range render scene emits five aim marker boxes");
-    expect(stats.worldLineCount == 2, "dev range render scene emits aim and ground-normal lines");
-    expect(frame.worldLines.size() == 2, "frame receives world debug lines");
+    expect(stats.worldLineCount == 3, "dev range render scene emits aim, ground-normal, and contact lines");
+    expect(frame.worldLines.size() == 3, "frame receives world debug lines");
 
     const auto firstMesh = frame.worldMeshes.front();
     expect(firstMesh.assetId == "env_test_arena_kit_01", "first dev mesh is the arena kit");
@@ -316,6 +328,18 @@ void testDevRangeRenderSceneDrawsSweepDebugLines() {
     collision.appliedDisplacement = {0.0F, 0.0F, 2.05F};
     collision.sweepNormal = {0.0F, 0.0F, -1.0F};
     collision.sweepPrimitiveId = "ledge_training_mid";
+    collision.contacts.push_back(nemisis::dev::GreyboxContact{
+        "ledge_training_mid",
+        nemisis::dev::GreyboxPrimitiveKind::Ledge,
+        nemisis::dev::GreyboxContactRole::Sweep,
+        {3.8F, 0.16F, -7.95F},
+        {0.0F, 0.0F, -1.0F},
+        0.0F,
+        0.42F,
+        0.0F,
+        true,
+        false,
+    });
 
     novacore::render::RenderFrameInfo frame{};
     const auto stats = nemisis::dev::DevRangeRenderSceneBuilder{}.append(
@@ -328,8 +352,54 @@ void testDevRangeRenderSceneDrawsSweepDebugLines() {
             {},
         });
 
-    expect(stats.worldLineCount == 4, "dev range render scene emits aim and sweep debug lines");
-    expect(frame.worldLines.size() == 4, "frame receives sweep debug world lines");
+    expect(stats.worldLineCount == 5, "dev range render scene emits aim, sweep, and contact debug lines");
+    expect(frame.worldLines.size() == 5, "frame receives sweep debug world lines");
+}
+
+void testDevRangeRenderSceneDrawsContactDebugLines() {
+    novacore::render::Renderer renderer;
+    auto lookup = registerSceneMeshes(renderer);
+    const auto world = nemisis::dev::createDevRangeGreyboxWorld();
+    auto targetRange = nemisis::dev::makeDefaultDevTargetRange();
+    nemisis::dev::GreyboxCollisionResult collision{};
+    collision.contacts.push_back(nemisis::dev::GreyboxContact{
+        "step_training_low",
+        nemisis::dev::GreyboxPrimitiveKind::Cover,
+        nemisis::dev::GreyboxContactRole::Step,
+        {-3.5F, 0.36F, -7.0F},
+        {0.0F, 1.0F, 0.0F},
+        0.0F,
+        1.0F,
+        0.0F,
+        false,
+        true,
+    });
+    collision.contacts.push_back(nemisis::dev::GreyboxContact{
+        "wallrun_left_panel_a",
+        nemisis::dev::GreyboxPrimitiveKind::WallRunPanel,
+        nemisis::dev::GreyboxContactRole::Wall,
+        {-18.0F, 1.0F, -5.5F},
+        {1.0F, 0.0F, 0.0F},
+        0.0F,
+        1.0F,
+        0.0F,
+        true,
+        false,
+    });
+
+    novacore::render::RenderFrameInfo frame{};
+    const auto stats = nemisis::dev::DevRangeRenderSceneBuilder{}.append(
+        frame,
+        nemisis::dev::DevRangeRenderSceneDesc{
+            &world,
+            &targetRange,
+            &collision,
+            &lookup,
+            {},
+        });
+
+    expect(stats.worldLineCount == 3, "dev range render scene emits aim plus two contact lines");
+    expect(frame.worldLines.size() == 3, "frame receives contact debug world lines");
 }
 
 } // namespace
@@ -342,6 +412,7 @@ int main() {
     testDevRangeRenderSceneCanDisableDebugLines();
     testDevRangeRenderSceneDrawsMantleCandidateDebugLines();
     testDevRangeRenderSceneDrawsSweepDebugLines();
+    testDevRangeRenderSceneDrawsContactDebugLines();
 
     if (failures > 0) {
         std::cerr << failures << " dev range render scene test(s) failed\n";

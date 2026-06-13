@@ -6,6 +6,7 @@
 
 #include <cstddef>
 #include <string>
+#include <vector>
 
 namespace nemisis::dev {
 
@@ -26,6 +27,27 @@ struct GreyboxCollisionQuery final {
     float mantleMaxDistance = 1.25F;
     float mantleMinHeight = 0.44F;
     float mantleMaxHeight = 1.45F;
+};
+
+enum class GreyboxContactRole {
+    Ground,
+    Step,
+    Wall,
+    Bounds,
+    Sweep,
+};
+
+struct GreyboxContact final {
+    std::string primitiveId;
+    GreyboxPrimitiveKind kind = GreyboxPrimitiveKind::Wall;
+    GreyboxContactRole role = GreyboxContactRole::Wall;
+    novacore::math::Vec3 point{};
+    novacore::math::Vec3 normal{};
+    float distance = 0.0F;
+    float fraction = 1.0F;
+    float penetrationDepth = 0.0F;
+    bool blocking = false;
+    bool walkable = false;
 };
 
 struct GreyboxCollisionResult final {
@@ -67,10 +89,13 @@ struct GreyboxCollisionResult final {
     novacore::math::Vec3 mantleObstaclePoint{};
     novacore::math::Vec3 mantleTargetPosition{};
     novacore::math::Vec3 mantleNormal{};
+    std::vector<GreyboxContact> contacts;
+    std::vector<GreyboxContact> sweepContacts;
 };
 
 [[nodiscard]] GreyboxCollisionResult resolveGreyboxPlayerCollision(
     const GreyboxWorld& world,
     GreyboxCollisionQuery query);
+[[nodiscard]] const char* greyboxContactRoleName(GreyboxContactRole role);
 
 } // namespace nemisis::dev

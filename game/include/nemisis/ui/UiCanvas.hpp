@@ -29,6 +29,18 @@ enum class UiCommandKind {
     Image
 };
 
+enum class UiTextAlign {
+    Left,
+    Center,
+    Right,
+};
+
+struct UiTextMetrics final {
+    float width = 0.0F;
+    float height = 0.0F;
+    float lineHeight = 0.0F;
+};
+
 struct UiCommand final {
     UiCommandKind kind = UiCommandKind::Rect;
     UiRect rect{};
@@ -51,6 +63,26 @@ struct UiFrameDesc final {
     float dpiScale = 1.0F;
 };
 
+struct UiPanelStyle final {
+    UiColor fill{0.020F, 0.032F, 0.038F, 0.94F};
+    UiColor border{0.10F, 0.18F, 0.20F, 0.65F};
+    UiColor accent{0.05F, 0.82F, 0.95F, 1.0F};
+    float radius = 8.0F;
+    float borderWidth = 1.0F;
+    bool showBorder = true;
+    bool showAccent = false;
+};
+
+struct UiButtonStyle final {
+    UiColor fill{0.035F, 0.050F, 0.057F, 0.88F};
+    UiColor selectedFill{0.0F, 0.35F, 0.48F, 0.95F};
+    UiColor border{0.14F, 0.27F, 0.30F, 0.78F};
+    UiColor accent{0.05F, 0.82F, 0.95F, 1.0F};
+    UiColor text{0.90F, 0.96F, 0.98F, 1.0F};
+    UiColor mutedText{0.52F, 0.64F, 0.70F, 1.0F};
+    float radius = 8.0F;
+};
+
 class UiCanvas final {
 public:
     void beginFrame(UiFrameDesc desc = {});
@@ -63,12 +95,27 @@ public:
     void progressBar(UiRect rect, float value, UiColor background, UiColor foreground);
     void crosshair(float centerX, float centerY, float gap, float length, UiColor color);
     void image(UiRect rect, std::string assetId, UiColor tint = {1.0F, 1.0F, 1.0F, 1.0F});
+    void shadowedText(
+        float x,
+        float y,
+        float scale,
+        UiColor color,
+        std::string text,
+        UiColor shadow = {0.0F, 0.0F, 0.0F, 0.72F},
+        float offset = 2.0F);
+    void outlinedText(float x, float y, float scale, UiColor color, std::string text, UiColor outline = {0.0F, 0.0F, 0.0F, 0.80F});
+    void panel(UiRect rect, UiPanelStyle style);
+    void button(UiRect rect, std::string label, std::string value, bool selected, UiButtonStyle style = {});
+    void pill(UiRect rect, std::string label, UiColor fill, UiColor textColor);
+    void divider(float x0, float y0, float x1, float y1, UiColor color = {0.12F, 0.20F, 0.22F, 0.85F});
 
     void appendToRenderFrame(novacore::render::RenderFrameInfo& frame) const;
 
     [[nodiscard]] const std::vector<UiCommand>& commands() const;
     [[nodiscard]] std::size_t commandCount() const;
     [[nodiscard]] UiFrameDesc frameDesc() const;
+    [[nodiscard]] static UiTextMetrics measureText(std::string_view text, float scale);
+    [[nodiscard]] static float fitTextScale(std::string_view text, float maxWidth, float preferredScale, float minScale = 0.7F);
 
 private:
     UiFrameDesc frame_{};

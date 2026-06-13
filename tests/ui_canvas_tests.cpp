@@ -51,11 +51,41 @@ void testImmediateHelpersAppendToFrame() {
     expect(frame.debugTexts.size() == 1, "appendUiText writes one text");
 }
 
+void testCanvasBackbonePrimitives() {
+    nemisis::ui::UiCanvas canvas;
+    canvas.beginFrame();
+    canvas.panel(
+        {16.0F, 20.0F, 320.0F, 160.0F},
+        nemisis::ui::UiPanelStyle{
+            nemisis::ui::palette::Panel,
+            {0.16F, 0.32F, 0.36F, 0.80F},
+            nemisis::ui::palette::Accent,
+            10.0F,
+            2.0F,
+            true,
+            true,
+        });
+    canvas.button({32.0F, 42.0F, 280.0F, 44.0F}, "Firing Range", "Ready", true);
+    canvas.pill({32.0F, 104.0F, 108.0F, 24.0F}, "VULKAN", nemisis::ui::palette::AccentSoft, nemisis::ui::palette::TextPrimary);
+    canvas.outlinedText(32.0F, 142.0F, 2.0F, nemisis::ui::palette::TextPrimary, "READABLE");
+
+    const auto metrics = nemisis::ui::UiCanvas::measureText("READABLE", 2.0F);
+    expect(metrics.width > 80.0F, "text metrics measure bitmap text width");
+    expect(nemisis::ui::UiCanvas::fitTextScale("VERY LONG LOADOUT ROW LABEL", 80.0F, 2.0F) < 2.0F, "fitTextScale reduces oversized labels");
+
+    novacore::render::RenderFrameInfo frame{};
+    canvas.appendToRenderFrame(frame);
+    expect(frame.debugRects.size() >= 6, "panel/button/pill backbone emits reusable rect primitives");
+    expect(frame.debugLines.size() >= 5, "panel/button backbone emits border line primitives");
+    expect(frame.debugTexts.size() >= 8, "shadowed and outlined text emit layered text primitives");
+}
+
 } // namespace
 
 int main() {
     testCanvasRecordsAndFlushesCommands();
     testImmediateHelpersAppendToFrame();
+    testCanvasBackbonePrimitives();
 
     if (failures > 0) {
         std::cerr << failures << " UI canvas test(s) failed\n";

@@ -68,8 +68,8 @@ Implemented foundation:
 Still planned:
 
 - Add basic material fallback selection, texture/material binding, and stronger light/debug controls.
-- Replace the current swept expanded-AABB KCC layer with true capsule sweeps, richer depenetration/contact manifolds, timed mantle attach/climb curves, and moving-platform contacts.
-- Add debug overlays for entity count, physics time, contact manifold count, wall-run eligibility, and server replay validation.
+- Replace the current swept expanded-AABB KCC layer with true capsule sweeps, richer depenetration, moving-platform contacts, slide validation, and server replay validation.
+- Add debug overlays for entity count, physics time, wall-run eligibility, frame timings, packet simulation, and reconciliation error.
 
 Acceptance:
 
@@ -120,4 +120,4 @@ Acceptance:
 
 We are in Greybox Phase 0 now.
 
-Phase 1 has crossed the first in-world asset threshold. Metadata, mesh handles, A0/A1/A2 scene-info import, CPU mesh extraction, Vulkan runtime probe, compiled Vulkan 3D primitive path, renderer-owned GLB resource upload/draw, first-person mesh proxies, world debug lines, configurable lighting/FOV tuning, NovaCore-backed ramp/step/ledge/wall-run/mantle surface queries, state-aware KCC snap/step control, swept KCC displacement, coyote/jump-buffer movement timing, timed mantle exit, rounded UI fallback, and A2 visual assets are in. The remaining Phase 1 pressure is true capsule sweeps/contact manifolds, richer mantle climb curves, slide validation, richer material fallback, swapchain resilience, and keeping visual assets aligned with collision truth.
+Phase 1 has crossed the first in-world asset threshold. Metadata, mesh handles, A0/A1/A2 scene-info import, CPU mesh extraction, Vulkan runtime probe, compiled Vulkan 3D primitive path, renderer-owned GLB resource upload/draw, first-person mesh proxies, world debug lines, configurable lighting/FOV tuning, NovaCore-backed ramp/step/ledge/wall-run/mantle surface queries, state-aware KCC snap/step control, swept KCC displacement, contact role telemetry, coyote/jump-buffer movement timing, deterministic mantle climb curves, upgraded UI primitives, Vulkan UI orientation fixes, and A2 visual assets are in. The remaining Phase 1 pressure is true capsule sweeps, moving-platform contacts, slide validation, richer material fallback, swapchain resilience, and keeping visual assets aligned with collision truth.

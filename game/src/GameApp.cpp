@@ -225,12 +225,13 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
         collisionQuery.wallProbeDistance = movement_.tuning().wallRunProbeDistance;
         collisionQuery.useSweep = movementState->mode != movement::MovementMode::Mantling;
         collisionQuery.maxSweepIterations = 4;
-        collisionQuery.enableGroundSnap = !shouldDisableGroundSnapForJumpArc(*movementState, movementCommand);
+        collisionQuery.enableGroundSnap =
+            movementState->mode != movement::MovementMode::Mantling &&
+            !shouldDisableGroundSnapForJumpArc(*movementState, movementCommand);
         collisionQuery.enableStepUp =
             movementState->mode == movement::MovementMode::Grounded ||
             movementState->mode == movement::MovementMode::Sliding ||
-            movementState->mode == movement::MovementMode::Dashing ||
-            movementState->mode == movement::MovementMode::Mantling;
+            movementState->mode == movement::MovementMode::Dashing;
         collisionSample = dev::resolveGreyboxPlayerCollision(
             greyboxWorld_,
             collisionQuery);
@@ -250,8 +251,8 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
             collisionQuery.position = movementState->position;
             collisionQuery.previousPosition = movementState->position;
             collisionQuery.useSweep = false;
-            collisionQuery.enableGroundSnap = true;
-            collisionQuery.enableStepUp = true;
+            collisionQuery.enableGroundSnap = false;
+            collisionQuery.enableStepUp = false;
             collisionSample = dev::resolveGreyboxPlayerCollision(greyboxWorld_, collisionQuery);
         }
         const bool wallRunCandidate = collisionSample.nearWallRunSurface &&

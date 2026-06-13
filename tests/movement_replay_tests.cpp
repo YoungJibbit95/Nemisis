@@ -231,9 +231,11 @@ void testMantleCandidateReplay() {
         1.0F / 60.0F);
 
     expect(state.mode == nemisis::movement::MovementMode::Mantling, "mantle candidate enters mantling mode");
-    expect(state.position.y > 1.25F && state.position.y < 1.35F, "mantle candidate snaps to target top height");
+    expect(state.mantleTargetPosition.y > 1.25F && state.mantleTargetPosition.y < 1.35F, "mantle candidate stores target top height");
+    expect(state.position.y > 0.70F && state.position.y < 0.74F, "mantle candidate keeps current position until fixed tick interpolation");
     expect(state.velocity.lengthSquared() <= 0.0001F, "mantle candidate clears movement velocity");
     expect(state.mantleTimeRemaining > 0.0F, "mantle candidate starts exit timer");
+    expect(state.mantleProgressSeconds <= 0.0001F, "mantle candidate starts interpolation progress at zero");
     expect(state.hasDoubleJump, "mantle candidate refreshes double jump on ledge");
     expect(state.tech.mantleClimbTriggered, "mantle candidate triggers climb cue");
     expect(nemisis::movement::dominantMovementTechCue(state.tech) == nemisis::movement::MovementTechCue::MantleClimb,
@@ -243,8 +245,9 @@ void testMantleCandidateReplay() {
     for (int i = 0; i < 20; ++i) {
         state = movement.simulate(state, command, 1.0F / 60.0F);
     }
-    expect(state.mode != nemisis::movement::MovementMode::Mantling, "mantle exits after timer");
-    expect(state.velocity.y < 0.0F || state.position.y <= 0.001F, "mantle exit hands control back to gravity");
+    expect(state.mode == nemisis::movement::MovementMode::Grounded, "mantle exits to grounded after timer");
+    expect(state.position.y > 1.25F && state.position.y < 1.35F, "mantle exit lands exactly on target top height");
+    expect(state.velocity.lengthSquared() <= 0.0001F, "mantle exit clears interpolation velocity");
 }
 
 void testMovementTuningConfigReplay() {

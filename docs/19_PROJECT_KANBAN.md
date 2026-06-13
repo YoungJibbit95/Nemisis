@@ -119,14 +119,19 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [x] Add NovaCore `PhysicsWorld::sweepCharacter` with first-hit fraction, normal, collider id, applied displacement, remaining displacement, and iteration telemetry.
 - [x] Integrate swept KCC movement into Nemisis Dev Range player collision before final ground/ramp/wall/mantle resolution.
 - [x] Add Vulkan world debug lines and HUD/log diagnostics for requested/applied sweep movement and sweep hit normals.
+- [x] Fix Vulkan UI/text screen-space orientation and glyph bit order through NovaCore shaders/backend.
+- [x] Add NovaCore character contact manifolds for ground, step, wall, bounds, and sweep contacts.
+- [x] Surface contact roles through Nemisis GreyboxCollision, Dev Sandbox logs, Gameplay debug HUD, and Dev Range world debug lines.
+- [x] Expand `UiCanvas` with text metrics, fit scaling, shadow/outline text, panels, buttons, pills, and dividers.
+- [x] Convert mantle from instant snap to a deterministic fixed-tick climb curve with grounded completion handoff.
 
 ## Doing
 
 - [ ] Expand material fallback controls, validation labels, and renderer resize stress coverage.
-- [ ] Keep UI moving from the new Vulkan primitive path toward a richer text/vector backend.
+- [ ] Keep UI moving from the new Vulkan primitive path toward SDF/MSDF text, clipping, batching, and richer vector drawing.
 - [ ] Start texture/material binding for A1/A2 GLBs so imported assets look less like tinted blockouts.
 - [ ] Grow the multi-target Dev Range into timed drills, TTK panels, and recoil-control scoring.
-- [ ] Deepen KCC physics beyond the current swept AABB pass into true capsule sweeps, contact manifolds, moving platform contacts, timed mantle climb curves, and server replay validation.
+- [ ] Deepen KCC physics beyond the current swept AABB/contact-manifold pass into true capsule sweeps, moving platform contacts, slide validation, and server replay validation.
 
 ## Next Core
 

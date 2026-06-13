@@ -16,6 +16,15 @@ struct HorizontalInput final {
     return std::clamp(value, 0.0F, 1.0F);
 }
 
+[[nodiscard]] float smoothstep01(float value) {
+    value = clamp01(value);
+    return value * value * (3.0F - (2.0F * value));
+}
+
+[[nodiscard]] novacore::math::Vec3 lerp(novacore::math::Vec3 a, novacore::math::Vec3 b, float t) {
+    return a + ((b - a) * t);
+}
+
 [[nodiscard]] float horizontalSpeed(novacore::math::Vec3 velocity) {
     return std::sqrt((velocity.x * velocity.x) + (velocity.z * velocity.z));
 }
@@ -190,9 +199,23 @@ PlayerMovementState MovementSystem::simulate(
         state.mode = MovementMode::Airborne;
     }
     if (state.mode == MovementMode::Mantling) {
-        state.velocity = {};
+        const float duration = std::max(0.001F, tuning_.mantleDurationSeconds);
+        state.mantleProgressSeconds = std::min(duration, state.mantleProgressSeconds + fixedDeltaSeconds);
+        const float t = smoothstep01(state.mantleProgressSeconds / duration);
+        const auto previousPosition = state.position;
+        const float arc = std::sin(t * 3.1415926535F) * 0.16F;
+        state.position = lerp(state.mantleStartPosition, state.mantleTargetPosition, t) +
+            novacore::math::Vec3{0.0F, arc, 0.0F};
+        state.velocity = fixedDeltaSeconds > 0.0F
+            ? (state.position - previousPosition) * (1.0F / fixedDeltaSeconds)
+            : novacore::math::Vec3{};
         if (state.mantleTimeRemaining <= 0.0F) {
-            state.mode = state.position.y <= 0.001F ? MovementMode::Grounded : MovementMode::Airborne;
+            state.position = state.mantleTargetPosition;
+            state.velocity = {};
+            state.mode = MovementMode::Grounded;
+            state.coyoteTimeRemaining = tuning_.coyoteTimeSeconds;
+            state.groundedTimeSeconds = std::max(state.groundedTimeSeconds, fixedDeltaSeconds);
+            state.airborneTimeSeconds = 0.0F;
         } else {
             state.lastHorizontalSpeed = 0.0F;
             return state;
@@ -408,13 +431,16 @@ PlayerMovementState MovementSystem::applyMantleCandidate(
         return state;
     }
 
-    state.position = candidate.targetPosition;
+    state.mantleStartPosition = state.position;
+    state.mantleTargetPosition = candidate.targetPosition;
+    state.mantleNormal = normalizedOrZero(candidate.normal);
     state.velocity = {};
     state.mode = MovementMode::Mantling;
     state.hasDoubleJump = true;
     state.hasWallRunContact = false;
     state.wallRunTimeRemaining = 0.0F;
     state.mantleTimeRemaining = tuning_.mantleDurationSeconds;
+    state.mantleProgressSeconds = 0.0F;
     state.coyoteTimeRemaining = tuning_.coyoteTimeSeconds;
     state.jumpBufferRemaining = 0.0F;
     state.airborneTimeSeconds = 0.0F;

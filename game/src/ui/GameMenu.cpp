@@ -67,6 +67,31 @@ void addRoundedRect(
     canvas.appendToRenderFrame(frame);
 }
 
+void addPanel(
+    novacore::render::RenderFrameInfo& frame,
+    float x,
+    float y,
+    float width,
+    float height,
+    float radius = 8.0F,
+    std::array<float, 4> accent = palette::Accent,
+    bool showAccent = false) {
+    UiCanvas canvas;
+    canvas.beginFrame();
+    canvas.panel(
+        {x, y, width, height},
+        UiPanelStyle{
+            palette::Panel,
+            {0.08F, 0.18F, 0.20F, 0.72F},
+            accent,
+            radius,
+            1.0F,
+            true,
+            showAccent,
+        });
+    canvas.appendToRenderFrame(frame);
+}
+
 void addLine(
     novacore::render::RenderFrameInfo& frame,
     float x0,
@@ -84,7 +109,14 @@ void addText(
     float scale,
     std::array<float, 4> color,
     std::string text) {
-    appendUiText(frame, x, y, scale, color, std::move(text));
+    UiCanvas canvas;
+    canvas.beginFrame();
+    if (scale >= 4.0F) {
+        canvas.outlinedText(x, y, scale, color, std::move(text), {0.0F, 0.0F, 0.0F, 0.85F});
+    } else {
+        canvas.shadowedText(x, y, scale, color, std::move(text), {0.0F, 0.0F, 0.0F, 0.68F}, std::max(1.0F, scale * 0.55F));
+    }
+    canvas.appendToRenderFrame(frame);
 }
 
 void addImage(
@@ -124,8 +156,21 @@ void addCrosshair(
 }
 
 void addHeader(novacore::render::RenderFrameInfo& frame, std::string_view title, std::string_view subtitle) {
-    addRoundedRect(frame, 42.0F, 30.0F, 430.0F, 108.0F, 12.0F, {0.014F, 0.026F, 0.032F, 0.88F});
-    addRect(frame, 42.0F, 30.0F, 4.0F, 108.0F, palette::Accent);
+    UiCanvas canvas;
+    canvas.beginFrame();
+    canvas.panel(
+        {42.0F, 30.0F, 430.0F, 108.0F},
+        UiPanelStyle{
+            {0.014F, 0.026F, 0.032F, 0.90F},
+            {0.08F, 0.22F, 0.25F, 0.76F},
+            palette::Accent,
+            12.0F,
+            2.0F,
+            true,
+            true,
+        });
+    canvas.divider(58.0F, 82.0F, 442.0F, 82.0F, {0.10F, 0.32F, 0.36F, 0.76F});
+    canvas.appendToRenderFrame(frame);
     addText(frame, 54.0F, 42.0F, 5.0F, palette::TextPrimary, "NEMISIS");
     addText(frame, 58.0F, 90.0F, 2.0F, {0.62F, 0.78F, 0.86F, 1.0F}, std::string(title));
     addText(frame, 58.0F, 116.0F, 2.0F, {0.46F, 0.56F, 0.62F, 1.0F}, std::string(subtitle));
@@ -196,6 +241,37 @@ void addMetric(
 
 [[nodiscard]] std::string_view yesNo(bool value) {
     return value ? "Yes" : "No";
+}
+
+[[nodiscard]] std::string contactRoleSummary(const dev::GreyboxCollisionResult& collision) {
+    std::size_t ground = 0;
+    std::size_t step = 0;
+    std::size_t wall = 0;
+    std::size_t bounds = 0;
+    std::size_t sweep = 0;
+    for (const auto& contact : collision.contacts) {
+        switch (contact.role) {
+        case dev::GreyboxContactRole::Ground:
+            ++ground;
+            break;
+        case dev::GreyboxContactRole::Step:
+            ++step;
+            break;
+        case dev::GreyboxContactRole::Wall:
+            ++wall;
+            break;
+        case dev::GreyboxContactRole::Bounds:
+            ++bounds;
+            break;
+        case dev::GreyboxContactRole::Sweep:
+            ++sweep;
+            break;
+        }
+    }
+
+    std::ostringstream stream;
+    stream << "G" << ground << " S" << step << " W" << wall << " B" << bounds << " X" << sweep;
+    return stream.str();
 }
 
 [[nodiscard]] std::string shortId(std::string value, std::size_t maxChars = 17) {
@@ -380,40 +456,35 @@ void addTopTabs(novacore::render::RenderFrameInfo& frame, MenuTab selectedTab) {
         const auto tab = kTabs[index];
         const bool selected = tab == selectedTab;
         const float x = startX + static_cast<float>(index) * (tabWidth + 8.0F);
-        addRoundedRect(
-            frame,
-            x,
-            y,
-            tabWidth,
-            tabHeight,
-            8.0F,
-            selected ? palette::AccentSoft : std::array<float, 4>{0.035F, 0.052F, 0.060F, 0.92F});
-        if (selected) {
-            addRect(frame, x + 12.0F, y + tabHeight - 4.0F, tabWidth - 24.0F, 2.0F, palette::Accent);
-        }
-        addText(
-            frame,
-            x + 13.0F,
-            y + 11.0F,
-            2.0F,
-            selected ? palette::TextPrimary : palette::TextSecondary,
-            std::string(selected ? "> " : "") + std::string([tab]() -> std::string_view {
-                switch (tab) {
-                case MenuTab::Play:
-                    return "PLAY";
-                case MenuTab::Gamemodes:
-                    return "MODES";
-                case MenuTab::Loadout:
-                    return "LOADOUT";
-                case MenuTab::Character:
-                    return "OPERATOR";
-                case MenuTab::Settings:
-                    return "SETTINGS";
-                case MenuTab::Account:
-                    return "ACCOUNT";
-                }
-                return "TAB";
-            }()));
+        UiCanvas canvas;
+        canvas.beginFrame();
+        UiButtonStyle style{};
+        style.radius = 8.0F;
+        style.accent = selected ? palette::Accent : std::array<float, 4>{0.18F, 0.42F, 0.46F, 0.85F};
+        style.selectedFill = palette::AccentSoft;
+        canvas.button(
+            {x, y, tabWidth, tabHeight},
+            std::string([tab]() -> std::string_view {
+            switch (tab) {
+            case MenuTab::Play:
+                return "PLAY";
+            case MenuTab::Gamemodes:
+                return "MODES";
+            case MenuTab::Loadout:
+                return "LOADOUT";
+            case MenuTab::Character:
+                return "OPERATOR";
+            case MenuTab::Settings:
+                return "SETTINGS";
+            case MenuTab::Account:
+                return "ACCOUNT";
+            }
+            return "TAB";
+        }()),
+            {},
+            selected,
+            style);
+        canvas.appendToRenderFrame(frame);
     }
 }
 
@@ -426,20 +497,14 @@ void addSelectableRow(
     std::string value,
     bool selected,
     std::array<float, 4> accent = palette::Accent) {
-    addRoundedRect(
-        frame,
-        x,
-        y,
-        width,
-        44.0F,
-        8.0F,
-        selected ? std::array<float, 4>{accent[0] * 0.42F, accent[1] * 0.42F, accent[2] * 0.42F, 0.95F}
-                 : std::array<float, 4>{0.035F, 0.050F, 0.057F, 0.88F});
-    if (selected) {
-        addRect(frame, x, y + 7.0F, 4.0F, 30.0F, accent);
-    }
-    addText(frame, x + 16.0F, y + 13.0F, 2.0F, selected ? palette::TextPrimary : palette::TextSecondary, std::move(title));
-    addText(frame, x + width - 270.0F, y + 13.0F, 2.0F, palette::TextPrimary, std::move(value));
+    UiCanvas canvas;
+    canvas.beginFrame();
+    UiButtonStyle style{};
+    style.accent = accent;
+    style.selectedFill = {accent[0] * 0.36F, accent[1] * 0.36F, accent[2] * 0.36F, 0.95F};
+    style.border = {accent[0] * 0.42F, accent[1] * 0.42F, accent[2] * 0.42F, 0.55F};
+    canvas.button({x, y, width, 44.0F}, std::move(title), std::move(value), selected, style);
+    canvas.appendToRenderFrame(frame);
 }
 
 void addStatBar(
@@ -462,7 +527,7 @@ void renderPlayTab(
     addSelectableRow(frame, 416.0F, 272.0F, 520.0F, "Gamemode Browser", "TDM / Control prototypes", selectedIndex == 1U);
     addSelectableRow(frame, 416.0F, 328.0F, 520.0F, "Loadout Editor", "Attachments and weapon tuning", selectedIndex == 2U);
 
-    addRect(frame, 66.0F, 430.0F, 870.0F, 126.0F, palette::Panel);
+    addPanel(frame, 66.0F, 430.0F, 870.0F, 126.0F, 10.0F, palette::Accent, true);
     addText(frame, 88.0F, 452.0F, 2.0F, palette::Accent, "CURRENT READY CHECK");
     addMetric(frame, 88.0F, 486.0F, "EFFECTIVE MAG", std::to_string(buildSummary.effectiveMagazineSize));
     addMetric(frame, 402.0F, 486.0F, "ADS", fixedTwo(buildSummary.effectiveWeapon.adsTimeSeconds) + "s");
@@ -474,7 +539,7 @@ void renderGamemodesTab(novacore::render::RenderFrameInfo& frame, std::size_t se
     addSelectableRow(frame, 66.0F, 222.0F, 500.0F, "Team Deathmatch", "6v6 sandbox shell", selectedIndex == 0U, {0.95F, 0.45F, 0.25F, 1.0F});
     addSelectableRow(frame, 66.0F, 282.0F, 500.0F, "Control", "3-zone objective shell", selectedIndex == 1U, {0.35F, 0.72F, 1.0F, 1.0F});
 
-    addRect(frame, 610.0F, 222.0F, 430.0F, 210.0F, palette::Panel);
+    addPanel(frame, 610.0F, 222.0F, 430.0F, 210.0F, 10.0F, selectedIndex == 0U ? std::array<float, 4>{0.95F, 0.45F, 0.25F, 1.0F} : palette::Accent, true);
     addText(frame, 632.0F, 246.0F, 3.0F, palette::TextPrimary, selectedIndex == 0U ? "TEAM DEATHMATCH" : "CONTROL");
     addText(frame, 634.0F, 300.0F, 2.0F, palette::TextSecondary, "Match lifecycle, score events and spawn rules are next.");
     addText(frame, 634.0F, 334.0F, 2.0F, palette::TextSecondary, "This tab already routes through the same loading flow as the range.");
@@ -503,7 +568,7 @@ void renderLoadoutTab(
             palette::Accent);
     }
 
-    addRect(frame, 66.0F, 402.0F, 268.0F, 148.0F, palette::Panel);
+    addPanel(frame, 66.0F, 402.0F, 268.0F, 148.0F, 10.0F, palette::Accent, true);
     const auto selectedSlot = selectedIndex == 0U
         ? weapons::AttachmentSlot::Optic
         : static_cast<weapons::AttachmentSlot>(std::min<std::size_t>(selectedIndex - 1U, weapons::kAttachmentSlotCount - 1U));
@@ -511,7 +576,7 @@ void renderLoadoutTab(
     addText(frame, 86.0F, 462.0F, 2.0F, palette::TextPrimary, selectedAttachmentName(loadout, selectedSlot, attachments));
     addText(frame, 86.0F, 498.0F, 1.0F, palette::TextSecondary, shortId(selectedAttachmentDesc(loadout, selectedSlot, attachments), 34));
 
-    addRect(frame, 970.0F, 216.0F, 230.0F, 294.0F, palette::Panel);
+    addPanel(frame, 970.0F, 216.0F, 230.0F, 294.0F, 10.0F, palette::Warning, true);
     addText(frame, 990.0F, 240.0F, 2.0F, palette::TextPrimary, "EFFECTIVE BUILD");
     addStatBar(frame, 990.0F, 286.0F, "Range", std::clamp(buildSummary.effectiveWeapon.maxRangeMeters / 100.0F, 0.0F, 1.0F));
     addStatBar(frame, 990.0F, 326.0F, "Control", std::clamp(1.0F - buildSummary.effectiveWeapon.recoilPitchPerShotDegrees * 4.0F, 0.0F, 1.0F), palette::Success);
@@ -526,7 +591,7 @@ void renderCharacterTab(novacore::render::RenderFrameInfo& frame, std::size_t se
     addSelectableRow(frame, 370.0F, 274.0F, 600.0F, "Helmet", "Pilot visor / US tactical shell", selectedIndex == 1U, palette::Accent);
     addSelectableRow(frame, 370.0F, 332.0F, 600.0F, "Armor", "Sci-fi plate carrier", selectedIndex == 2U, palette::Accent);
     addSelectableRow(frame, 370.0F, 390.0F, 600.0F, "Rig", "First-person arms socket pass", selectedIndex == 3U, palette::Accent);
-    addRect(frame, 370.0F, 466.0F, 600.0F, 76.0F, palette::Panel);
+    addPanel(frame, 370.0F, 466.0F, 600.0F, 76.0F, 10.0F, palette::Accent, true);
     addText(frame, 390.0F, 490.0F, 2.0F, palette::TextSecondary, "Asset worker is building the first A1 soldier/pilot hybrid blockout in parallel.");
 }
 
@@ -540,7 +605,7 @@ void renderSettingsTab(
     addSelectableRow(frame, 340.0F, 328.0F, 620.0F, "HUD Scale", fixedTwo(settings.video.hudScale), selectedIndex == 2U, palette::Accent);
     addSelectableRow(frame, 340.0F, 384.0F, 620.0F, "Aim Assist", std::string(yesNo(settings.controller.aimAssistEnabled)), selectedIndex == 3U, palette::Warning);
     addSelectableRow(frame, 340.0F, 440.0F, 620.0F, "Damage Numbers", std::string(yesNo(settings.gameplay.showDamageNumbers)), selectedIndex == 4U, palette::Warning);
-    addRect(frame, 72.0F, 400.0F, 220.0F, 96.0F, palette::Panel);
+    addPanel(frame, 72.0F, 400.0F, 220.0F, 96.0F, 10.0F, palette::Accent, true);
     addText(frame, 90.0F, 424.0F, 2.0F, palette::TextPrimary, "LEFT/RIGHT");
     addText(frame, 90.0F, 456.0F, 1.0F, palette::TextSecondary, "Adjusts values live.");
 }
@@ -550,14 +615,14 @@ void renderAccountTab(
     std::size_t selectedIndex,
     const player::AccountStats& accountStats) {
     (void)selectedIndex;
-    addRect(frame, 72.0F, 218.0F, 460.0F, 238.0F, palette::Panel);
+    addPanel(frame, 72.0F, 218.0F, 460.0F, 238.0F, 10.0F, palette::Accent, true);
     addText(frame, 94.0F, 244.0F, 3.0F, palette::TextPrimary, accountStats.accountName);
     addMetric(frame, 96.0F, 304.0F, "LEVEL", std::to_string(accountStats.level));
     addMetric(frame, 96.0F, 338.0F, "K/D", fixedTwo(player::killDeathRatio(accountStats)));
     addMetric(frame, 96.0F, 372.0F, "WIN RATE", percent(player::winRate(accountStats)));
     addMetric(frame, 96.0F, 406.0F, "DAMAGE/MATCH", fixedOne(accountStats.damagePerMatch));
 
-    addRect(frame, 574.0F, 218.0F, 470.0F, 238.0F, palette::Panel);
+    addPanel(frame, 574.0F, 218.0F, 470.0F, 238.0F, 10.0F, palette::Warning, true);
     addText(frame, 596.0F, 244.0F, 2.0F, palette::Accent, "BEST WEAPON");
     addMetric(frame, 596.0F, 290.0F, "NAME", accountStats.bestWeapon.displayName);
     addMetric(frame, 596.0F, 324.0F, "ELIMS", std::to_string(accountStats.bestWeapon.eliminations));
@@ -632,7 +697,7 @@ void renderDevRangeHud(
         12.0F,
         sample.targetHit.hit ? palette::Danger : palette::TextPrimary);
 
-    addRect(frame, 814.0F, 34.0F, 390.0F, 116.0F, palette::Panel);
+    addPanel(frame, 814.0F, 34.0F, 390.0F, 116.0F, 10.0F, palette::Warning, true);
     addText(frame, 836.0F, 58.0F, 2.0F, palette::Accent, attachmentSummary.effectiveWeapon.displayName);
     addMetric(frame, 836.0F, 92.0F, "AMMO", std::to_string(sample.weapon.ammoInMagazine) + " / " + std::to_string(attachmentSummary.effectiveMagazineSize));
     addMetric(frame, 836.0F, 122.0F, "ADS", fixedOne(sample.weapon.adsAlpha) + "  recoil " + fixedOne(sample.weapon.recoilPitchOffsetDegrees));
@@ -642,12 +707,12 @@ void renderDevRangeHud(
     const float healthRatio = sample.playerHealth.maxHealth > 0.0F
         ? std::clamp(sample.playerHealth.health / sample.playerHealth.maxHealth, 0.0F, 1.0F)
         : 0.0F;
-    addRect(frame, 58.0F, 34.0F, 330.0F, 116.0F, palette::Panel);
+    addPanel(frame, 58.0F, 34.0F, 330.0F, 116.0F, 10.0F, palette::Accent, true);
     addText(frame, 80.0F, 58.0F, 2.0F, palette::TextPrimary, "PLAYER");
     addProgress(frame, {80.0F, 94.0F, 210.0F, 14.0F}, healthRatio, {0.11F, 0.05F, 0.05F, 1.0F}, healthRatio > 0.35F ? palette::Success : palette::Danger);
     addMetric(frame, 80.0F, 122.0F, "HP", fixedOne(sample.playerHealth.health) + " / " + fixedOne(sample.playerHealth.maxHealth));
 
-    addRect(frame, 414.0F, 34.0F, 360.0F, 116.0F, palette::Panel);
+    addPanel(frame, 414.0F, 34.0F, 360.0F, 116.0F, 10.0F, palette::Success, true);
     addText(frame, 436.0F, 58.0F, 2.0F, palette::Accent, "RANGE SESSION");
     addMetric(frame, 436.0F, 92.0F, "ELIMS", std::to_string(sample.rangeSession.score.targetsEliminated));
     addMetric(frame, 436.0F, 122.0F, "ACC", percent(dev::devRangeAccuracy(sample.rangeSession.score)));
@@ -720,7 +785,7 @@ void renderDevRangePanels(
 void renderPlaceholderMode(novacore::render::RenderFrameInfo& frame, GameScreen screen) {
     const bool tdm = screen == GameScreen::TeamDeathmatch;
     addHeader(frame, tdm ? "TEAM DEATHMATCH" : "CONTROL", "PLACEHOLDER MODE  -  ESC BACK");
-    addRect(frame, 76.0F, 236.0F, 640.0F, 148.0F, palette::Panel);
+    addPanel(frame, 76.0F, 236.0F, 640.0F, 148.0F, 10.0F, palette::Accent, true);
     addText(frame, 98.0F, 272.0F, 3.0F, palette::TextPrimary, tdm ? "MATCH FLOW NEXT" : "OBJECTIVES NEXT");
     addText(frame, 100.0F, 322.0F, 2.0F, palette::TextSecondary, "SPAWNS TEAMS SCOREBOARD SERVER AUTH");
     addText(frame, 100.0F, 352.0F, 2.0F, palette::Accent, "This screen already uses loading, tab shell, and gamepad menu navigation.");
@@ -760,7 +825,8 @@ void renderDebugOverlay(
             928.0F,
             656.0F,
             "KCC",
-            std::to_string(sample.collision.hitCount) + " " +
+            std::to_string(sample.collision.hitCount) + "h " +
+                std::to_string(sample.collision.contacts.size()) + "c " +
                 std::string(sample.collision.nearWallRunSurface
                         ? "WallRun"
                         : sample.collision.mantleCandidate
@@ -778,7 +844,7 @@ void renderDebugOverlay(
             "SWEEP",
             sample.collision.sweepHit
                 ? shortId(sample.collision.sweepPrimitiveId, 12) + " " + fixedTwo(sample.collision.sweepFraction)
-                : sample.collision.swept ? "clear" : "off");
+                : sample.collision.swept ? contactRoleSummary(sample.collision) : "off");
         break;
     case DebugPage::Network:
         addMetric(frame, 48.0F, 604.0F, "CMD TX", std::to_string(sample.netBridge.sentCommandPackets));

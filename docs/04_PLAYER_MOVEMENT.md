@@ -65,7 +65,7 @@ Runtime placement:
 - Wall-run contact uses NovaCore `PhysicsWorld` wall-run surface probes, stores wall normal/tangent, carries tangent velocity, preserves double jump, and supports the first wall-jump impulse.
 - Wall-run entry now emits a movement-tech cue for the operator arm-button animation and gravity-inverter boot glow.
 - Double-jump now emits a movement-tech cue for the left-hand energy-platform throw/step visual.
-- Mantle input now checks NovaCore mantle probes against cover/ledge tops, snaps to a deterministic target foot position, and emits mantle-reach/mantle-climb animation/VFX cues.
+- Mantle input now checks NovaCore mantle probes against cover/ledge tops, stores a deterministic target foot position, moves along a fixed-tick climb curve, and emits mantle-reach/mantle-climb animation/VFX cues.
 - Movement state stores slide/dash timers, grounded/airborne time, input magnitude, and last horizontal speed for camera/HUD/debug use.
 - The first `PlayerCameraRig` turns movement state into local visual camera feel: smoothed eye position, head bob, roll, FOV kick, weapon sway, and recoil view offsets.
 
@@ -106,7 +106,7 @@ Implemented foundation:
 - Dash (multi-directional, tactical cooldown).
 - Wall Run contact entry and Wall Jump.
 - Wall Run and Double Jump movement-tech visual cues.
-- First mantle/climb foundation with engine-backed ledge probe, deterministic target snap, debug lines, and `mantle-climb` cue.
+- First mantle/climb foundation with engine-backed ledge probe, deterministic fixed-tick climb curve, debug lines, and `mantle-climb` cue.
 
 Planned features:
 
@@ -121,7 +121,7 @@ Wall-running is not a hero ability or limited tactical power. In the Nemisis uni
 
 Double-jumping uses a different piece of operator kit. The operator throws or projects a compact energy platform with the left hand, plants one mid-air step on it, then pushes off. Gameplay still treats this as a deterministic second jump with one available charge, but animation/VFX must represent the energy step instead of a generic booster jump.
 
-Mantle and climb tech should read as physical operator traversal rather than magic. The current implementation uses NovaCore mantle probes to find cover/ledge tops in front of the player, validates a landing position, snaps the KCC to the target top as a first deterministic foundation, and emits mantle-reach/mantle-climb cues for first-person arms and future third-person animation.
+Mantle and climb tech should read as physical operator traversal rather than magic. The current implementation uses NovaCore mantle probes to find cover/ledge tops in front of the player, validates a landing position, stores start/target/normal data on the movement state, follows a short deterministic fixed-tick climb curve, completes grounded on the target, and emits mantle-reach/mantle-climb cues for first-person arms and future third-person animation.
 
 Current code hooks:
 

@@ -36,6 +36,22 @@ struct StaticMeshPlacement final {
     std::array<float, 4> color;
 };
 
+[[nodiscard]] std::array<float, 4> contactColor(GreyboxContactRole role) {
+    switch (role) {
+    case GreyboxContactRole::Ground:
+        return {0.58F, 0.95F, 1.0F, 1.0F};
+    case GreyboxContactRole::Step:
+        return {0.98F, 0.86F, 0.26F, 1.0F};
+    case GreyboxContactRole::Wall:
+        return {0.22F, 0.80F, 1.0F, 1.0F};
+    case GreyboxContactRole::Bounds:
+        return {1.0F, 0.24F, 0.20F, 1.0F};
+    case GreyboxContactRole::Sweep:
+        return {1.0F, 0.64F, 0.18F, 1.0F};
+    }
+    return {0.80F, 0.80F, 0.80F, 1.0F};
+}
+
 [[nodiscard]] bool targetEliminated(const DevRangeRenderSceneDesc& desc) {
     const auto* lane = desc.targetRange == nullptr ? nullptr : activeTargetLane(*desc.targetRange);
     return lane != nullptr && lane->target.eliminated;
@@ -702,6 +718,28 @@ void DevRangeRenderSceneBuilder::appendWorldDebugLines(
                 {1.0F, 0.70F, 0.16F, 1.0F},
             });
             ++stats.worldLineCount;
+        }
+    }
+
+    if (desc.collision != nullptr && !desc.collision->contacts.empty()) {
+        std::size_t emittedContacts = 0;
+        for (const auto& contact : desc.collision->contacts) {
+            if (contact.normal.lengthSquared() <= 0.0001F) {
+                continue;
+            }
+            const auto point = contact.point.lengthSquared() > 0.0001F
+                ? contact.point
+                : desc.player.position + novacore::math::Vec3{0.0F, 0.16F, 0.0F};
+            frame.worldLines.push_back(novacore::render::RenderLine3D{
+                point + novacore::math::Vec3{0.0F, 0.06F, 0.0F},
+                point + novacore::math::Vec3{0.0F, 0.06F, 0.0F} + (contact.normal * (contact.role == GreyboxContactRole::Sweep ? 1.15F : 0.72F)),
+                contactColor(contact.role),
+            });
+            ++stats.worldLineCount;
+            ++emittedContacts;
+            if (emittedContacts >= 8U) {
+                break;
+            }
         }
     }
 

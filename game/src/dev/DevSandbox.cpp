@@ -49,6 +49,35 @@ void appendVec3(std::ostringstream& stream, novacore::math::Vec3 value) {
            << value.z << ')';
 }
 
+void appendContactRoles(std::ostringstream& stream, const GreyboxCollisionResult& collision) {
+    std::size_t ground = 0;
+    std::size_t step = 0;
+    std::size_t wall = 0;
+    std::size_t bounds = 0;
+    std::size_t sweep = 0;
+    for (const auto& contact : collision.contacts) {
+        switch (contact.role) {
+        case GreyboxContactRole::Ground:
+            ++ground;
+            break;
+        case GreyboxContactRole::Step:
+            ++step;
+            break;
+        case GreyboxContactRole::Wall:
+            ++wall;
+            break;
+        case GreyboxContactRole::Bounds:
+            ++bounds;
+            break;
+        case GreyboxContactRole::Sweep:
+            ++sweep;
+            break;
+        }
+    }
+
+    stream << "G" << ground << "/S" << step << "/W" << wall << "/B" << bounds << "/X" << sweep;
+}
+
 } // namespace
 
 void DevSandbox::setEnabled(bool enabled) {
@@ -138,6 +167,10 @@ std::string DevSandbox::latestSummary() const {
            << " hit=" << (latest_.targetHit.hit ? "yes" : "no")
            << " eliminated=" << (latest_.targetHit.eliminated ? "yes" : "no")
            << " collisionHits=" << latest_.collision.hitCount
+           << " contacts=" << latest_.collision.contacts.size()
+           << " contactRoles=";
+    appendContactRoles(stream, latest_.collision);
+    stream
            << " blocked=" << (latest_.collision.blocked ? "yes" : "no")
            << " grounded=" << (latest_.collision.grounded ? "yes" : "no")
            << " ramp=" << (latest_.collision.onRamp ? "yes" : "no")

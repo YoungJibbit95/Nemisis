@@ -22,6 +22,9 @@ struct PlayerMovementState final {
     novacore::math::Vec3 velocity{};
     novacore::math::Vec3 wallRunNormal{};
     novacore::math::Vec3 wallRunTangent{};
+    novacore::math::Vec3 mantleStartPosition{};
+    novacore::math::Vec3 mantleTargetPosition{};
+    novacore::math::Vec3 mantleNormal{};
     MovementTechState tech{};
     MovementMode mode = MovementMode::Grounded;
     bool hasDoubleJump = true;
@@ -32,6 +35,7 @@ struct PlayerMovementState final {
     float slideTimeRemaining = 0.0F;
     float wallRunTimeRemaining = 0.0F;
     float mantleTimeRemaining = 0.0F;
+    float mantleProgressSeconds = 0.0F;
     float coyoteTimeRemaining = 0.0F;
     float jumpBufferRemaining = 0.0F;
     float groundedTimeSeconds = 0.0F;

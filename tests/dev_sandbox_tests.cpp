@@ -48,6 +48,30 @@ void testSummaryIncludesPlayableTelemetry() {
     sample.collision.sweepPrimitiveId = "cover_left_mid";
     sample.collision.sweepFraction = 0.42F;
     sample.collision.sweepIterations = 2;
+    sample.collision.contacts.push_back(nemisis::dev::GreyboxContact{
+        "floor_main",
+        nemisis::dev::GreyboxPrimitiveKind::Floor,
+        nemisis::dev::GreyboxContactRole::Ground,
+        {},
+        {0.0F, 1.0F, 0.0F},
+        0.0F,
+        1.0F,
+        0.0F,
+        false,
+        true,
+    });
+    sample.collision.contacts.push_back(nemisis::dev::GreyboxContact{
+        "wallrun_left_panel_a",
+        nemisis::dev::GreyboxPrimitiveKind::WallRunPanel,
+        nemisis::dev::GreyboxContactRole::Wall,
+        {},
+        {1.0F, 0.0F, 0.0F},
+        0.12F,
+        1.0F,
+        0.0F,
+        true,
+        false,
+    });
 
     sandbox.recordTick(sample);
     const auto summary = sandbox.latestSummary();
@@ -64,6 +88,8 @@ void testSummaryIncludesPlayableTelemetry() {
     expect(summary.find("wallrunSurface=yes") != std::string::npos, "summary includes wallrun surface state");
     expect(summary.find("mantle=ledge_training_mid") != std::string::npos, "summary includes mantle candidate id");
     expect(summary.find("wall=wallrun_left_panel_a") != std::string::npos, "summary includes wall contact id");
+    expect(summary.find("contacts=2") != std::string::npos, "summary includes contact count");
+    expect(summary.find("contactRoles=G1/S0/W1/B0/X0") != std::string::npos, "summary includes contact role breakdown");
     expect(summary.find("swept=yes") != std::string::npos, "summary includes sweep enabled state");
     expect(summary.find("sweepHit=cover_left_mid") != std::string::npos, "summary includes sweep hit id");
     expect(summary.find("sweepIterations=2") != std::string::npos, "summary includes sweep iteration count");
