@@ -10,6 +10,8 @@ Nemisis is the game layer for a custom commercial-ready FPS project built on the
 - Custom C++23 NovaCore engine with Vulkan-first rendering.
 - No Source, Unity, Unreal, Godot, or other game engine base.
 
+The long-term bar is an AAA-quality FPS in graphics, technical reliability, performance, movement feel, gunplay, UI, and multiplayer foundations. This roadmap should therefore favor durable engine/game architecture over throwaway prototypes while still keeping the game runnable and testable at every stage.
+
 The first milestone is not a polished shooter. It is a game spine where Nemisis consumes NovaCore cleanly, boots a sandbox client, creates game-owned systems around engine APIs, and keeps game data separate from engine/server runtime defaults.
 
 ## Non-Negotiable Criteria
@@ -24,6 +26,9 @@ The first milestone is not a polished shooter. It is a game spine where Nemisis 
 - Large-map streaming is architected early, but first playable map remains controlled.
 - Hot-reload data drives tuning.
 - MKB and controller support are first-class.
+- Rendering, material, lighting, animation, physics, movement, networking, UI, audio, asset, and scene-management decisions must be made with production-scale FPS requirements in mind.
+- Visible gameplay features should use real engine/game systems rather than isolated proof-of-concept code.
+- UI and text rendering must evolve toward a production-grade font/layout/rendering path, not remain a debug overlay.
 
 ## Product Shape
 

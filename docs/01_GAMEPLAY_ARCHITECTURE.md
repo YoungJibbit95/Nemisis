@@ -2,6 +2,15 @@
 
 Nemisis game code is split by gameplay responsibility and consumes NovaCore through public `novacore/...` headers only.
 
+## Architecture Goal
+
+Nemisis is built as the first real product on NovaCore, not as a disposable demo. Gameplay systems should prove and shape the engine while remaining clean game-side code. The long-term target is an AAA-quality FPS feel, so implementation choices must support high-end rendering, polished UI, deterministic movement, weapon feel, animation, networking, assets, audio, and performance without forcing a later foundation rewrite.
+
+Every visible game feature should answer two questions:
+
+- Does this make the game more playable, testable, or production-ready?
+- Does this use or improve the correct NovaCore foundation instead of bypassing it?
+
 ## Current Game Modules
 
 - `nemisis::game`: app bootstrap and high-level game lifetime.
@@ -33,6 +42,8 @@ Nemisis game code is split by gameplay responsibility and consumes NovaCore thro
 - Movement and weapon systems now consume NovaCore parsed config documents.
 - Config reloads reapply tuning at runtime through `ConfigRegistry`.
 - Game code may create NovaCore entities, but must not reach into NovaCore internals.
+- Production UI, font rendering, material/lighting presentation, animation-driven first-person/third-person representation, audio feedback, and multiplayer validation are first-class roadmap systems, not optional polish.
+- Movement mechanics such as wallrunning, sliding, mantling, and double jump must stay deterministic, debug-visible, and server-validation-ready from the start.
 
 ## First Acceptance
 
