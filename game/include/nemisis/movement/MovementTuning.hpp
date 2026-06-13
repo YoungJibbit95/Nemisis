@@ -11,7 +11,7 @@ struct MovementTuning final {
     float groundDeceleration = 34.0F;
     float groundFriction = 10.0F;
     float groundStopSpeed = 1.25F;
-    float jumpVelocity = 7.6F;
+    float jumpVelocity = 7.35F;
     float coyoteTimeSeconds = 0.10F;
     float jumpBufferSeconds = 0.12F;
     float doubleJumpImpulse = 7.15F;

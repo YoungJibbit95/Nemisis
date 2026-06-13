@@ -10,7 +10,7 @@
     "friction": 10.0,
     "stop_speed": 1.25
   },
-  "jump_velocity": 7.6,
+  "jump_velocity": 7.35,
   "jump": {
     "coyote_time": 0.1,
     "buffer_time": 0.12
@@ -59,7 +59,6 @@
     "max_position_error": 0.35
   }
 }
-
 
 
 
