@@ -6,6 +6,7 @@
 #include <array>
 #include <cstdlib>
 #include <iostream>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -86,6 +87,17 @@ nemisis::dev::MeshResourceLookup registerSceneMeshes(novacore::render::Renderer&
     return lookup;
 }
 
+std::optional<novacore::render::RenderMesh3D> findMesh(
+    const novacore::render::RenderFrameInfo& frame,
+    std::string_view assetId) {
+    for (const auto& mesh : frame.worldMeshes) {
+        if (mesh.assetId == assetId) {
+            return mesh;
+        }
+    }
+    return std::nullopt;
+}
+
 void testDevRangeRenderSceneBuildsExpectedSubmissions() {
     novacore::render::Renderer renderer;
     auto lookup = registerSceneMeshes(renderer);
@@ -124,7 +136,7 @@ void testDevRangeRenderSceneBuildsExpectedSubmissions() {
     expect(frame.lighting.sunDirection.y > 0.80F, "dev range lighting points from above");
 
     expect(!world.primitives.empty(), "greybox world fixture has primitives");
-    expect(stats.worldBoxCount == (world.primitives.size() - 1U) + targetRange.lanes.size() + 9U, "dev range render scene emits world, lane, weapon, hands, muzzle, and aim boxes");
+    expect(stats.worldBoxCount == (world.primitives.size() - 1U) + targetRange.lanes.size() + 14U, "dev range render scene emits world, lane, asset stage, weapon, hands, muzzle, and aim boxes");
     expect(frame.worldBoxes.size() == stats.worldBoxCount, "world box count matches frame");
     expect(stats.meshInstanceCount == 27, "dev range render scene emits static, target lane, A2 showcase, and first-person mesh instances");
     expect(frame.worldMeshes.size() == 27, "frame receives all mesh instances");
@@ -138,6 +150,59 @@ void testDevRangeRenderSceneBuildsExpectedSubmissions() {
     const auto firstMesh = frame.worldMeshes.front();
     expect(firstMesh.assetId == "env_test_arena_kit_01", "first dev mesh is the arena kit");
     expect(firstMesh.mesh.isValid(), "first dev mesh has a valid renderer resource handle");
+}
+
+void testDevRangeRenderScenePlacesA2AssetsInSpawnView() {
+    novacore::render::Renderer renderer;
+    auto lookup = registerSceneMeshes(renderer);
+    const auto world = nemisis::dev::createDevRangeGreyboxWorld();
+    auto targetRange = nemisis::dev::makeDefaultDevTargetRange();
+
+    nemisis::dev::DevRangePlayerRenderState player{};
+    player.position = world.playerSpawn;
+    player.view.yawDegrees = 0.0F;
+    player.view.pitchDegrees = 0.0F;
+
+    novacore::render::RenderFrameInfo frame{};
+    const auto stats = nemisis::dev::DevRangeRenderSceneBuilder{}.append(
+        frame,
+        nemisis::dev::DevRangeRenderSceneDesc{
+            &world,
+            &targetRange,
+            nullptr,
+            &lookup,
+            player,
+        });
+
+    expect(stats.meshInstanceCount == 27, "spawn view scene emits every expected mesh");
+    expect(stats.skippedMeshInstanceCount == 0, "spawn view scene has no skipped A2 meshes");
+
+    const auto operatorMesh = findMesh(frame, "chr_a2_pilot_operator_01");
+    const auto carbineMesh = findMesh(frame, "wpn_a2_blackout_carbine_01");
+    const auto rifleMesh = findMesh(frame, "wpn_a2_modular_rifle_01");
+    const auto sidearmMesh = findMesh(frame, "wpn_a2_striker_sidearm_01");
+    const auto heroMesh = findMesh(frame, "prop_a2_range_hero_01");
+
+    expect(operatorMesh.has_value(), "A2 operator mesh is submitted");
+    expect(carbineMesh.has_value(), "A2 carbine mesh is submitted");
+    expect(rifleMesh.has_value(), "A2 rifle mesh is submitted");
+    expect(sidearmMesh.has_value(), "A2 sidearm mesh is submitted");
+    expect(heroMesh.has_value(), "A2 hero prop mesh is submitted");
+
+    if (operatorMesh.has_value()) {
+        expect(operatorMesh->position.z > world.playerSpawn.z + 5.0F && operatorMesh->position.z < world.playerSpawn.z + 8.5F, "A2 operator starts in front of spawn");
+        expect(operatorMesh->position.x > -4.0F && operatorMesh->position.x < -1.0F, "A2 operator is inside initial horizontal view");
+        expect(operatorMesh->scale.y > 1.0F, "A2 operator is scaled for visible review");
+    }
+    if (carbineMesh.has_value() && rifleMesh.has_value() && sidearmMesh.has_value()) {
+        expect(carbineMesh->position.y > 1.0F, "A2 carbine is raised on the review rack");
+        expect(rifleMesh->position.y > 1.0F, "A2 rifle is raised on the review rack");
+        expect(sidearmMesh->position.y > 1.0F, "A2 sidearm is raised on the review rack");
+        expect(carbineMesh->position.z > world.playerSpawn.z + 4.5F && sidearmMesh->position.z > world.playerSpawn.z + 4.5F, "A2 weapons start in front of spawn");
+    }
+    if (heroMesh.has_value()) {
+        expect(heroMesh->position.z > world.playerSpawn.z + 7.5F, "A2 hero prop anchors the visible asset stage");
+    }
 }
 
 void testDevRangeRenderSceneCountsMissingMeshHandles() {
@@ -242,6 +307,7 @@ void testDevRangeRenderSceneDrawsMantleCandidateDebugLines() {
 
 int main() {
     testDevRangeRenderSceneBuildsExpectedSubmissions();
+    testDevRangeRenderScenePlacesA2AssetsInSpawnView();
     testDevRangeRenderSceneCountsMissingMeshHandles();
     testDevRangeRenderSceneHandlesMissingInputs();
     testDevRangeRenderSceneCanDisableDebugLines();

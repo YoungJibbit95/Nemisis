@@ -78,6 +78,15 @@
 
 ## Added In Latest Block
 
+- Fixed the in-game invisible/incorrectly collapsed asset issue at the game layer by consuming NovaCore's node-transform-aware GLB mesh extraction.
+- Retuned the Dev Range A2 asset showcase into an obvious spawn-facing review stage with a backboard, plinths, brighter first-person weapon tints, and A2 operator/weapon/map/hero props placed directly in the default Vulkan view.
+- Kept the first-person A2 weapon path active while making the static A2 weapon rack visible enough for immediate visual checks.
+- Added `testDevRangeRenderScenePlacesA2AssetsInSpawnView` to verify A2 operator, carbine, rifle, sidearm, and hero prop submissions land in the spawn-facing view volume.
+- Verified direct Vulkan window captures after the fix: the A2 stage meshes are visible in the Dev Range and the Vulkan bitmap text orientation is corrected at the engine glyph path.
+- Verified `cmake --build --preset windows-msvc-debug --config Debug`, `ctest --test-dir build/windows-msvc-debug -C Debug --output-on-failure`, and direct `nemisis_game.exe --vulkan-dev-range-smoke-test`.
+
+## Previous Mantle Block
+
 - Added NovaCore `PhysicsWorld::probeMantle`, `MantleProbe`, and `MantleProbeResult` for deterministic cover/ledge top detection with obstacle point, target foot position, approach normal, height, distance, surface kind, and collider id.
 - Updated NovaCore ledge top resolution so successful mantle target snaps ground cleanly instead of side-blocking the player.
 - Added Nemisis `GreyboxCollisionResult` mantle telemetry and wired `GameApp` to query mantle candidates from the current view direction.
