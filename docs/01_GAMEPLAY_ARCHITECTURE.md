@@ -32,6 +32,7 @@ Every visible game feature should answer two questions:
 - `PlayerCommandQueue` keeps local commands pending until future server acknowledgement.
 - The local player is represented as a NovaCore entity with identity, ownership, network, loadout, movement, and weapon runtime components.
 - Movement consumes commands and fixed delta time.
+- Dev Range player collision passes previous/current movement positions through NovaCore's swept KCC API before applying final ground, ramp, wall-run, and mantle resolution.
 - Weapons consume commands through `FireRequest` and advance fixed-tick runtime state.
 - Weapon shots produce deterministic trace data from tick seed, shot index, spread, recoil, and movement speed.
 - Debug target hits apply first hitscan damage against a target sphere.

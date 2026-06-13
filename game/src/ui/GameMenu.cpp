@@ -198,30 +198,6 @@ void addMetric(
     return value ? "Yes" : "No";
 }
 
-[[nodiscard]] std::string_view groundKindName(dev::GreyboxPrimitiveKind kind) {
-    switch (kind) {
-    case dev::GreyboxPrimitiveKind::Floor:
-        return "Floor";
-    case dev::GreyboxPrimitiveKind::Wall:
-        return "Wall";
-    case dev::GreyboxPrimitiveKind::Ramp:
-        return "Ramp";
-    case dev::GreyboxPrimitiveKind::Cover:
-        return "Cover";
-    case dev::GreyboxPrimitiveKind::Ledge:
-        return "Ledge";
-    case dev::GreyboxPrimitiveKind::WallRunPanel:
-        return "WallRun";
-    case dev::GreyboxPrimitiveKind::Spawn:
-        return "Spawn";
-    case dev::GreyboxPrimitiveKind::RangeMarker:
-        return "Marker";
-    case dev::GreyboxPrimitiveKind::Target:
-        return "Target";
-    }
-    return "Unknown";
-}
-
 [[nodiscard]] std::string shortId(std::string value, std::size_t maxChars = 17) {
     if (value.size() <= maxChars) {
         return value;
@@ -795,7 +771,14 @@ void renderDebugOverlay(
         addMetric(frame, 48.0F, 682.0F, "JUMP", "coy " + fixedTwo(sample.coyoteTimeRemaining) + " buf " + fixedTwo(sample.jumpBufferRemaining));
         addMetric(frame, 386.0F, 682.0F, "MANTLE", fixedTwo(sample.mantleTimeRemaining));
         addMetric(frame, 674.0F, 682.0F, "WALL", fixedTwo(sample.wallRunTimeRemaining));
-        addMetric(frame, 928.0F, 682.0F, "GROUND", std::string(groundKindName(sample.collision.groundKind)));
+        addMetric(
+            frame,
+            928.0F,
+            682.0F,
+            "SWEEP",
+            sample.collision.sweepHit
+                ? shortId(sample.collision.sweepPrimitiveId, 12) + " " + fixedTwo(sample.collision.sweepFraction)
+                : sample.collision.swept ? "clear" : "off");
         break;
     case DebugPage::Network:
         addMetric(frame, 48.0F, 604.0F, "CMD TX", std::to_string(sample.netBridge.sentCommandPackets));

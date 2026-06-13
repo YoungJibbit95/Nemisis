@@ -208,12 +208,14 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
     auto* movementState = world_.getComponent<movement::PlayerMovementState>(localPlayerEntity_);
     dev::GreyboxCollisionResult collisionSample{};
     if (movementState != nullptr) {
+        const auto previousMovementPosition = movementState->position;
         *movementState = movement_.simulate(*movementState, movementCommand, static_cast<float>(context.fixedDeltaSeconds));
         const auto mantleForward = view != nullptr
             ? player::viewVectors(*view).forward
             : novacore::math::Vec3{0.0F, 0.0F, 1.0F};
         dev::GreyboxCollisionQuery collisionQuery{};
         collisionQuery.position = movementState->position;
+        collisionQuery.previousPosition = previousMovementPosition;
         collisionQuery.radius = 0.42F;
         collisionQuery.height = 1.80F;
         collisionQuery.mantleForward = mantleForward;
@@ -221,6 +223,8 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
         collisionQuery.mantleMinHeight = collisionQuery.maxStepHeight + 0.02F;
         collisionQuery.mantleMaxHeight = movement_.tuning().mantleMaxHeight;
         collisionQuery.wallProbeDistance = movement_.tuning().wallRunProbeDistance;
+        collisionQuery.useSweep = movementState->mode != movement::MovementMode::Mantling;
+        collisionQuery.maxSweepIterations = 4;
         collisionQuery.enableGroundSnap = !shouldDisableGroundSnapForJumpArc(*movementState, movementCommand);
         collisionQuery.enableStepUp =
             movementState->mode == movement::MovementMode::Grounded ||
@@ -244,6 +248,8 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
                 },
                 static_cast<float>(context.fixedDeltaSeconds));
             collisionQuery.position = movementState->position;
+            collisionQuery.previousPosition = movementState->position;
+            collisionQuery.useSweep = false;
             collisionQuery.enableGroundSnap = true;
             collisionQuery.enableStepUp = true;
             collisionSample = dev::resolveGreyboxPlayerCollision(greyboxWorld_, collisionQuery);
@@ -257,6 +263,14 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
             }
             if (std::abs(collisionSample.correction.z) > 0.0001F) {
                 movementState->velocity.z = 0.0F;
+            }
+            if (collisionSample.sweepHit) {
+                if (std::abs(collisionSample.sweepNormal.x) > 0.50F) {
+                    movementState->velocity.x = 0.0F;
+                }
+                if (std::abs(collisionSample.sweepNormal.z) > 0.50F) {
+                    movementState->velocity.z = 0.0F;
+                }
             }
         }
         if (collisionSample.grounded && movementState->velocity.y < 0.0F) {

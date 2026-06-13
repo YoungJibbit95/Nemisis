@@ -37,6 +37,7 @@ Implemented:
 - Wall-run panel primitives are in the map and feed wall normal/tangent debug data into movement and UI.
 - A2 visual-pack assets are visible in-world and include first serious weapon, operator, and map-piece proxies.
 - KCC snap/step behavior is now state-aware: rising jump arcs disable ground snap, airborne frames can disable step-up, off-support ledges/steps become Airborne, and wall-run probes use movement tuning.
+- KCC movement now uses NovaCore's first swept displacement API before final position resolution, preventing fast horizontal tunneling through ledges/walls while preserving low-step traversal and wall tangent movement.
 - Movement now has coyote time, jump buffering, timed mantle exit, and debug-visible movement timers for faster in-range tuning.
 - The Main Menu shell, tabs, and rows use the first segmented rounded-rectangle UI fallback through the shared `UiCanvas` path.
 
@@ -67,7 +68,7 @@ Implemented foundation:
 Still planned:
 
 - Add basic material fallback selection, texture/material binding, and stronger light/debug controls.
-- Replace the current state-aware static-collider KCC layer with capsule sweeps, richer depenetration ordering, timed mantle attach/climb curves, and moving-platform contacts.
+- Replace the current swept expanded-AABB KCC layer with true capsule sweeps, richer depenetration/contact manifolds, timed mantle attach/climb curves, and moving-platform contacts.
 - Add debug overlays for entity count, physics time, contact manifold count, wall-run eligibility, and server replay validation.
 
 Acceptance:
@@ -119,4 +120,4 @@ Acceptance:
 
 We are in Greybox Phase 0 now.
 
-Phase 1 has crossed the first in-world asset threshold. Metadata, mesh handles, A0/A1/A2 scene-info import, CPU mesh extraction, Vulkan runtime probe, compiled Vulkan 3D primitive path, renderer-owned GLB resource upload/draw, first-person mesh proxies, world debug lines, configurable lighting/FOV tuning, NovaCore-backed ramp/step/ledge/wall-run/mantle surface queries, state-aware KCC snap/step control, coyote/jump-buffer movement timing, timed mantle exit, rounded UI fallback, and A2 visual assets are in. The remaining Phase 1 pressure is capsule sweeps, richer mantle climb curves, slide validation, richer material fallback, swapchain resilience, and keeping visual assets aligned with collision truth.
+Phase 1 has crossed the first in-world asset threshold. Metadata, mesh handles, A0/A1/A2 scene-info import, CPU mesh extraction, Vulkan runtime probe, compiled Vulkan 3D primitive path, renderer-owned GLB resource upload/draw, first-person mesh proxies, world debug lines, configurable lighting/FOV tuning, NovaCore-backed ramp/step/ledge/wall-run/mantle surface queries, state-aware KCC snap/step control, swept KCC displacement, coyote/jump-buffer movement timing, timed mantle exit, rounded UI fallback, and A2 visual assets are in. The remaining Phase 1 pressure is true capsule sweeps/contact manifolds, richer mantle climb curves, slide validation, richer material fallback, swapchain resilience, and keeping visual assets aligned with collision truth.

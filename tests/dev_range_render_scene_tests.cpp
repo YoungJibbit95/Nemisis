@@ -303,6 +303,35 @@ void testDevRangeRenderSceneDrawsMantleCandidateDebugLines() {
     expect(frame.worldLines.size() == 3, "frame receives mantle candidate world lines");
 }
 
+void testDevRangeRenderSceneDrawsSweepDebugLines() {
+    novacore::render::Renderer renderer;
+    auto lookup = registerSceneMeshes(renderer);
+    const auto world = nemisis::dev::createDevRangeGreyboxWorld();
+    auto targetRange = nemisis::dev::makeDefaultDevTargetRange();
+    nemisis::dev::GreyboxCollisionResult collision{};
+    collision.swept = true;
+    collision.sweepHit = true;
+    collision.sweepStartPosition = {3.8F, 0.0F, -10.0F};
+    collision.requestedDisplacement = {0.0F, 0.0F, 7.0F};
+    collision.appliedDisplacement = {0.0F, 0.0F, 2.05F};
+    collision.sweepNormal = {0.0F, 0.0F, -1.0F};
+    collision.sweepPrimitiveId = "ledge_training_mid";
+
+    novacore::render::RenderFrameInfo frame{};
+    const auto stats = nemisis::dev::DevRangeRenderSceneBuilder{}.append(
+        frame,
+        nemisis::dev::DevRangeRenderSceneDesc{
+            &world,
+            &targetRange,
+            &collision,
+            &lookup,
+            {},
+        });
+
+    expect(stats.worldLineCount == 4, "dev range render scene emits aim and sweep debug lines");
+    expect(frame.worldLines.size() == 4, "frame receives sweep debug world lines");
+}
+
 } // namespace
 
 int main() {
@@ -312,6 +341,7 @@ int main() {
     testDevRangeRenderSceneHandlesMissingInputs();
     testDevRangeRenderSceneCanDisableDebugLines();
     testDevRangeRenderSceneDrawsMantleCandidateDebugLines();
+    testDevRangeRenderSceneDrawsSweepDebugLines();
 
     if (failures > 0) {
         std::cerr << failures << " dev range render scene test(s) failed\n";

@@ -108,18 +108,36 @@ GreyboxCollisionResult resolveGreyboxPlayerCollision(
     const GreyboxWorld& world,
     GreyboxCollisionQuery query) {
     const auto physicsWorld = buildPhysicsWorld(world);
-    novacore::physics::CharacterQuery physicsQuery{};
-    physicsQuery.position = query.position;
-    physicsQuery.radius = query.radius;
-    physicsQuery.height = query.height;
-    physicsQuery.maxStepHeight = query.maxStepHeight;
-    physicsQuery.snapDownDistance = query.snapDownDistance;
-    physicsQuery.walkableSlopeCosine = query.walkableSlopeCosine;
-    physicsQuery.wallProbeDistance = query.wallProbeDistance;
-    physicsQuery.enableGroundSnap = query.enableGroundSnap;
-    physicsQuery.enableStepUp = query.enableStepUp;
-
-    const auto resolved = physicsWorld.resolveCharacter(physicsQuery);
+    novacore::physics::CharacterResolveResult resolved{};
+    novacore::physics::CharacterSweepResult swept{};
+    if (query.useSweep) {
+        novacore::physics::CharacterSweepQuery sweepQuery{};
+        sweepQuery.startPosition = query.previousPosition;
+        sweepQuery.desiredDisplacement = query.position - query.previousPosition;
+        sweepQuery.radius = query.radius;
+        sweepQuery.height = query.height;
+        sweepQuery.maxStepHeight = query.maxStepHeight;
+        sweepQuery.snapDownDistance = query.snapDownDistance;
+        sweepQuery.walkableSlopeCosine = query.walkableSlopeCosine;
+        sweepQuery.wallProbeDistance = query.wallProbeDistance;
+        sweepQuery.maxIterations = query.maxSweepIterations;
+        sweepQuery.enableGroundSnap = query.enableGroundSnap;
+        sweepQuery.enableStepUp = query.enableStepUp;
+        swept = physicsWorld.sweepCharacter(sweepQuery);
+        resolved = swept.resolve;
+    } else {
+        novacore::physics::CharacterQuery physicsQuery{};
+        physicsQuery.position = query.position;
+        physicsQuery.radius = query.radius;
+        physicsQuery.height = query.height;
+        physicsQuery.maxStepHeight = query.maxStepHeight;
+        physicsQuery.snapDownDistance = query.snapDownDistance;
+        physicsQuery.walkableSlopeCosine = query.walkableSlopeCosine;
+        physicsQuery.wallProbeDistance = query.wallProbeDistance;
+        physicsQuery.enableGroundSnap = query.enableGroundSnap;
+        physicsQuery.enableStepUp = query.enableStepUp;
+        resolved = physicsWorld.resolveCharacter(physicsQuery);
+    }
 
     GreyboxCollisionResult result{};
     result.position = resolved.position;
@@ -130,6 +148,8 @@ GreyboxCollisionResult resolveGreyboxPlayerCollision(
     result.groundHeight = resolved.groundHeight;
     result.wallDistance = resolved.wallDistance;
     result.hitCount = resolved.hitCount;
+    result.sweepFraction = swept.firstHitFraction;
+    result.sweepIterations = swept.iterationCount;
     result.grounded = resolved.grounded;
     result.blocked = resolved.blocked;
     result.stepped = resolved.stepped;
@@ -139,11 +159,20 @@ GreyboxCollisionResult resolveGreyboxPlayerCollision(
     result.lastPrimitiveId = resolved.lastColliderId;
     result.groundPrimitiveId = resolved.groundColliderId;
     result.wallPrimitiveId = resolved.wallColliderId;
+    result.swept = query.useSweep;
+    result.sweepHit = swept.hit;
+    result.sweepPrimitiveId = swept.hitColliderId;
     result.groundKind = kindForPrimitiveId(world, resolved.groundColliderId, resolved.groundKind);
     result.wallKind = kindForPrimitiveId(world, resolved.wallColliderId, resolved.wallKind);
+    result.sweepKind = kindForPrimitiveId(world, swept.hitColliderId, swept.hitKind);
+    result.sweepStartPosition = swept.startPosition;
+    result.requestedDisplacement = query.useSweep ? swept.desiredDisplacement : novacore::math::Vec3{};
+    result.appliedDisplacement = query.useSweep ? swept.appliedDisplacement : novacore::math::Vec3{};
+    result.remainingDisplacement = query.useSweep ? swept.remainingDisplacement : novacore::math::Vec3{};
+    result.sweepNormal = swept.hitNormal;
 
     const auto mantle = physicsWorld.probeMantle(novacore::physics::MantleProbe{
-        query.position,
+        result.position,
         query.mantleForward,
         query.radius,
         query.height,

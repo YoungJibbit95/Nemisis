@@ -677,6 +677,34 @@ void DevRangeRenderSceneBuilder::appendWorldDebugLines(
         ++stats.worldLineCount;
     }
 
+    if (desc.collision != nullptr && desc.collision->swept) {
+        const auto sweepBase = desc.collision->sweepStartPosition + novacore::math::Vec3{0.0F, 0.18F, 0.0F};
+        frame.worldLines.push_back(novacore::render::RenderLine3D{
+            sweepBase,
+            sweepBase + desc.collision->requestedDisplacement,
+            {0.38F, 0.42F, 0.46F, 0.65F},
+        });
+        ++stats.worldLineCount;
+        frame.worldLines.push_back(novacore::render::RenderLine3D{
+            sweepBase,
+            sweepBase + desc.collision->appliedDisplacement,
+            desc.collision->sweepHit
+                ? std::array<float, 4>{1.0F, 0.28F, 0.16F, 1.0F}
+                : std::array<float, 4>{0.35F, 1.0F, 0.62F, 1.0F},
+        });
+        ++stats.worldLineCount;
+
+        if (desc.collision->sweepHit) {
+            const auto hitBase = sweepBase + desc.collision->appliedDisplacement;
+            frame.worldLines.push_back(novacore::render::RenderLine3D{
+                hitBase,
+                hitBase + (desc.collision->sweepNormal * 1.25F),
+                {1.0F, 0.70F, 0.16F, 1.0F},
+            });
+            ++stats.worldLineCount;
+        }
+    }
+
     if (desc.collision != nullptr && desc.collision->mantleCandidate) {
         const auto start = eye - novacore::math::Vec3{0.0F, 0.25F, 0.0F};
         frame.worldLines.push_back(novacore::render::RenderLine3D{

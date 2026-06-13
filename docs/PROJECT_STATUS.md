@@ -67,6 +67,7 @@
 - The Dev Shooting Range now owns a deterministic `GreyboxWorld` with floor, walls, cover, ramps, spawns, range markers, and a target lane.
 - The Dev Shooting Range now applies greybox collision resolution for bounds, blocking cover/walls, floor grounding, walkable ramps, low steps, ledge blocking, and first mantle candidates.
 - Greybox collision is now backed by NovaCore's `novacore::physics::PhysicsWorld` foundation instead of a game-only collision path.
+- Dev Range player collision now uses NovaCore swept character movement for fixed-tick displacement before final ground/ramp/wall/mantle resolution.
 - The Dev Shooting Range now includes wall-run panels, wall-run surface classification, wall normal/tangent debug data, and first wall-run movement transitions.
 - The SDL debug UI draws the greybox as a top-down range map with player position, view direction, target marker, and range helpers.
 - Normal dev builds now use NovaCore's SDL3 FetchContent fallback when no installed SDL3 package is present.
@@ -79,6 +80,16 @@
 - Input command, weapon simulation, weapon shot, UI canvas, player camera rig, player view, debug target, dev sandbox, player spawn, command queue, command message, asset binding, render tuning, greybox world/collision, and loopback bridge tests cover the newest gameplay bridge.
 
 ## Added In Latest Block
+
+- Integrated NovaCore's first swept character movement into the Dev Range player controller path so fixed-tick movement no longer resolves only at the final position.
+- Extended `GreyboxCollisionQuery` and `GreyboxCollisionResult` with previous position, sweep enable, max iterations, sweep hit id/kind/normal/fraction, requested/applied/remaining displacement, and iteration count.
+- Updated `GameApp` to pass previous player position into the KCC sweep, keep mantle snap as an explicit non-swept resolve, and use sweep normals when cancelling blocked velocity.
+- Added in-world Vulkan debug lines for requested KCC movement, applied KCC movement, and sweep hit normals.
+- Added Gameplay debug HUD and sandbox-log sweep diagnostics for sweep hit id, hit fraction, and iteration count.
+- Added NovaCore and Nemisis regression coverage for high-speed ledge tunneling prevention, low-step traversal through sweeps, wallrun-panel sweep contact, sweep debug lines, and sandbox summary output.
+- Verified NovaCore Debug build + CTest, Nemisis Debug build + 32/32 CTest, and direct `nemisis_game.exe --vulkan-dev-range-smoke-test`.
+
+## Previous KCC Stability Block
 
 - Stabilized the Dev Range KCC bridge for the current jump/mantle/wall-run bugs: rising jump arcs now disable ground snap, airborne movement can disable step-up, off-support ledges/steps transition back to Airborne, and wall-run probes use movement tuning.
 - Added movement-side coyote time, jump buffering, configurable wall-run minimum height/probe distance, and a real mantle timer so `Mantling` cannot become an infinite gravity-disabled state.

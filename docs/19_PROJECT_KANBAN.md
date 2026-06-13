@@ -116,6 +116,9 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [x] Add Gameplay debug telemetry for coyote, jump buffer, mantle timer, and wall-run timer.
 - [x] Upgrade `UiCanvas` rounded-rectangle commands and apply the first modernized main-menu shell/tabs/rows.
 - [x] Remove accidental untracked Node artifacts from the Nemisis checkout.
+- [x] Add NovaCore `PhysicsWorld::sweepCharacter` with first-hit fraction, normal, collider id, applied displacement, remaining displacement, and iteration telemetry.
+- [x] Integrate swept KCC movement into Nemisis Dev Range player collision before final ground/ramp/wall/mantle resolution.
+- [x] Add Vulkan world debug lines and HUD/log diagnostics for requested/applied sweep movement and sweep hit normals.
 
 ## Doing
 
@@ -123,7 +126,7 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [ ] Keep UI moving from the new Vulkan primitive path toward a richer text/vector backend.
 - [ ] Start texture/material binding for A1/A2 GLBs so imported assets look less like tinted blockouts.
 - [ ] Grow the multi-target Dev Range into timed drills, TTK panels, and recoil-control scoring.
-- [ ] Deepen KCC physics beyond the current snap/step stability pass into capsule sweeps, timed mantle climb curves, moving platform contacts, and server replay validation.
+- [ ] Deepen KCC physics beyond the current swept AABB pass into true capsule sweeps, contact manifolds, moving platform contacts, timed mantle climb curves, and server replay validation.
 
 ## Next Core
 
@@ -131,7 +134,7 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [ ] Packet simulation for latency, jitter, loss, duplication, and reorder.
 - [ ] Vulkan validation debug labels and resize stress tests.
 - [ ] Renderer texture/material residency and cross-zone reference counting.
-- [ ] Timed mantle attach/climb curves, slide validation, and richer slope/step debug visualization.
+- [ ] Timed mantle attach/climb curves, slide validation, richer slope/step debug visualization, and capsule-vs-world contact manifolds.
 - [ ] Wall-run camera feel, wall detach rules, wall-run cooldown, and surface eligibility tuning.
 - [ ] Convert movement-tech debug visuals into authored first-person and third-person animation clips.
 - [ ] Shared server validation for greybox collision and movement corrections.

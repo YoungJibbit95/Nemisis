@@ -143,6 +143,10 @@ std::string DevSandbox::latestSummary() const {
            << " ramp=" << (latest_.collision.onRamp ? "yes" : "no")
            << " slideSurface=" << (latest_.collision.nearSlideSurface ? "yes" : "no")
            << " wallrunSurface=" << (latest_.collision.nearWallRunSurface ? "yes" : "no")
+           << " swept=" << (latest_.collision.swept ? "yes" : "no")
+           << " sweepHit=" << (latest_.collision.sweepHit ? latest_.collision.sweepPrimitiveId : "none")
+           << " sweepFraction=" << latest_.collision.sweepFraction
+           << " sweepIterations=" << latest_.collision.sweepIterations
            << " mantle=" << (latest_.collision.mantleCandidate ? latest_.collision.mantlePrimitiveId : "none")
            << " mantleHeight=" << latest_.collision.mantleHeight
            << " stepped=" << (latest_.collision.stepped ? "yes" : "no")

@@ -17,11 +17,20 @@ void expect(bool condition, std::string_view message) {
     std::cerr << "[fail] " << message << '\n';
 }
 
+nemisis::dev::GreyboxCollisionQuery queryAt(novacore::math::Vec3 position) {
+    nemisis::dev::GreyboxCollisionQuery query{};
+    query.position = position;
+    query.previousPosition = position;
+    query.radius = 0.42F;
+    query.height = 1.80F;
+    return query;
+}
+
 void testBoundsClamp() {
     const auto world = nemisis::dev::createDevRangeGreyboxWorld();
     const auto result = nemisis::dev::resolveGreyboxPlayerCollision(
         world,
-        nemisis::dev::GreyboxCollisionQuery{{40.0F, 0.0F, -12.0F}, 0.42F, 1.80F});
+        queryAt({40.0F, 0.0F, -12.0F}));
 
     expect(result.blocked, "out-of-bounds player is corrected");
     expect(result.position.x <= world.boundsHalfExtents.x - 0.42F + 0.001F, "bounds correction clamps x");
@@ -32,7 +41,7 @@ void testCoverPushout() {
     const auto world = nemisis::dev::createDevRangeGreyboxWorld();
     const auto result = nemisis::dev::resolveGreyboxPlayerCollision(
         world,
-        nemisis::dev::GreyboxCollisionQuery{{-8.0F, 0.0F, 4.0F}, 0.42F, 1.80F});
+        queryAt({-8.0F, 0.0F, 4.0F}));
 
     expect(result.blocked, "player inside cover is pushed out");
     expect(result.hitCount >= 1, "cover collision increments hit count");
@@ -43,7 +52,7 @@ void testOpenLaneStaysFree() {
     const auto world = nemisis::dev::createDevRangeGreyboxWorld();
     const auto result = nemisis::dev::resolveGreyboxPlayerCollision(
         world,
-        nemisis::dev::GreyboxCollisionQuery{world.playerSpawn, 0.42F, 1.80F});
+        queryAt(world.playerSpawn));
 
     expect(!result.blocked, "player spawn is not blocked");
     expect(result.hitCount == 0, "open lane has no blocking collision");
@@ -57,7 +66,7 @@ void testRampSurfaceGroundsPlayer() {
     const auto world = nemisis::dev::createDevRangeGreyboxWorld();
     const auto result = nemisis::dev::resolveGreyboxPlayerCollision(
         world,
-        nemisis::dev::GreyboxCollisionQuery{{-13.5F, 0.28F, -1.0F}, 0.42F, 1.80F});
+        queryAt({-13.5F, 0.28F, -1.0F}));
 
     expect(result.grounded, "player snaps to ramp surface");
     expect(result.onRamp, "ramp collision reports ramp state");
@@ -72,7 +81,7 @@ void testLowStepIsWalkable() {
     const auto world = nemisis::dev::createDevRangeGreyboxWorld();
     const auto result = nemisis::dev::resolveGreyboxPlayerCollision(
         world,
-        nemisis::dev::GreyboxCollisionQuery{{-3.5F, 0.0F, -7.0F}, 0.42F, 1.80F});
+        queryAt({-3.5F, 0.0F, -7.0F}));
 
     expect(result.grounded, "player remains grounded on low step");
     expect(result.stepped, "low step reports stepped state");
@@ -126,11 +135,41 @@ void testLeavingRaisedSupportBecomesAirborne() {
     expect(result.groundPrimitiveId.empty(), "off-support collision does not report stale ground");
 }
 
+void testSweepStopsFastLedgeTunneling() {
+    const auto world = nemisis::dev::createDevRangeGreyboxWorld();
+    auto query = queryAt({3.8F, 0.0F, -3.0F});
+    query.previousPosition = {3.8F, 0.0F, -10.0F};
+    query.useSweep = true;
+
+    const auto result = nemisis::dev::resolveGreyboxPlayerCollision(world, query);
+
+    expect(result.swept, "greybox collision reports sweep path");
+    expect(result.sweepHit, "greybox sweep catches high-speed ledge hit");
+    expect(result.sweepPrimitiveId == "ledge_training_mid", "greybox sweep reports ledge primitive");
+    expect(result.position.z < -7.75F, "greybox sweep stops before ledge face");
+    expect(result.blocked, "greybox sweep marks blocked movement");
+}
+
+void testSweepAllowsValidLowStep() {
+    const auto world = nemisis::dev::createDevRangeGreyboxWorld();
+    auto query = queryAt({-3.5F, 0.0F, -6.8F});
+    query.previousPosition = {-3.5F, 0.0F, -9.0F};
+    query.useSweep = true;
+
+    const auto result = nemisis::dev::resolveGreyboxPlayerCollision(world, query);
+
+    expect(result.swept, "low-step query uses sweep");
+    expect(!result.sweepHit, "valid low-step movement is not side-blocked by sweep");
+    expect(result.grounded, "swept low-step movement resolves as grounded");
+    expect(result.stepped, "swept low-step movement preserves step telemetry");
+    expect(result.groundPrimitiveId == "step_training_low", "swept low-step movement grounds on step primitive");
+}
+
 void testMidLedgeStillBlocksWithoutMantle() {
     const auto world = nemisis::dev::createDevRangeGreyboxWorld();
     const auto result = nemisis::dev::resolveGreyboxPlayerCollision(
         world,
-        nemisis::dev::GreyboxCollisionQuery{{3.8F, 0.0F, -6.5F}, 0.42F, 1.80F});
+        queryAt({3.8F, 0.0F, -6.5F}));
 
     expect(result.blocked, "mid ledge blocks until mantle exists");
     expect(!result.stepped, "mid ledge is above step height");
@@ -181,6 +220,23 @@ void testWallRunPanelReportsSurfaceContact() {
     expect(result.wallTangent.lengthSquared() > 0.5F, "wallrun contact provides tangent direction");
 }
 
+void testSweepReportsWallRunPanelContact() {
+    const auto world = nemisis::dev::createDevRangeGreyboxWorld();
+    auto query = queryAt({-19.5F, 0.72F, -4.0F});
+    query.previousPosition = {-16.5F, 0.72F, -5.5F};
+    query.useSweep = true;
+    query.enableGroundSnap = false;
+    query.wallProbeDistance = 0.55F;
+
+    const auto result = nemisis::dev::resolveGreyboxPlayerCollision(world, query);
+
+    expect(result.sweepHit, "greybox sweep hits wallrun panel");
+    expect(result.sweepPrimitiveId == "wallrun_left_panel_a", "greybox sweep reports wallrun panel id");
+    expect(result.nearWallRunSurface, "greybox sweep preserves wallrun surface telemetry");
+    expect(result.sweepNormal.x > 0.5F, "greybox sweep reports wall normal");
+    expect(result.appliedDisplacement.z > 0.8F, "greybox sweep keeps tangential movement");
+}
+
 } // namespace
 
 int main() {
@@ -192,9 +248,12 @@ int main() {
     testRisingJumpDoesNotSnapBackToGround();
     testAirborneStepUpCanBeDisabled();
     testLeavingRaisedSupportBecomesAirborne();
+    testSweepStopsFastLedgeTunneling();
+    testSweepAllowsValidLowStep();
     testMidLedgeStillBlocksWithoutMantle();
     testMidLedgeReportsMantleCandidate();
     testWallRunPanelReportsSurfaceContact();
+    testSweepReportsWallRunPanelContact();
 
     if (failures > 0) {
         std::cerr << failures << " greybox collision test(s) failed\n";
