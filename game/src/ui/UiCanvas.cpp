@@ -11,11 +11,49 @@ namespace {
     return std::clamp(value, 0.0F, 1.0F);
 }
 
+void appendRectPrimitive(novacore::render::RenderFrameInfo& frame, UiRect rect, UiColor color) {
+    if (rect.width <= 0.0F || rect.height <= 0.0F || color[3] <= 0.0F) {
+        return;
+    }
+
+    frame.debugRects.push_back(novacore::render::DebugRect{
+        rect.x,
+        rect.y,
+        rect.width,
+        rect.height,
+        color,
+    });
+}
+
+void appendRoundedRectPrimitive(novacore::render::RenderFrameInfo& frame, UiRect rect, float radius, UiColor color) {
+    const float maxRadius = std::min(rect.width, rect.height) * 0.5F;
+    radius = std::clamp(radius, 0.0F, maxRadius);
+    if (radius <= 0.5F) {
+        appendRectPrimitive(frame, rect, color);
+        return;
+    }
+
+    appendRectPrimitive(
+        frame,
+        UiRect{rect.x + radius, rect.y, std::max(0.0F, rect.width - (radius * 2.0F)), rect.height},
+        color);
+    appendRectPrimitive(
+        frame,
+        UiRect{rect.x, rect.y + radius, radius, std::max(0.0F, rect.height - (radius * 2.0F))},
+        color);
+    appendRectPrimitive(
+        frame,
+        UiRect{rect.x + rect.width - radius, rect.y + radius, radius, std::max(0.0F, rect.height - (radius * 2.0F))},
+        color);
+}
+
 void appendCommandToFrame(const UiCommand& command, novacore::render::RenderFrameInfo& frame) {
     switch (command.kind) {
     case UiCommandKind::Rect:
-    case UiCommandKind::RoundedRect:
         appendUiRect(frame, command.rect, command.color);
+        break;
+    case UiCommandKind::RoundedRect:
+        appendRoundedRectPrimitive(frame, command.rect, command.radius, command.color);
         break;
     case UiCommandKind::Line:
         appendUiLine(frame, command.x0, command.y0, command.x1, command.y1, command.color);
@@ -168,13 +206,7 @@ UiFrameDesc UiCanvas::frameDesc() const {
 }
 
 void appendUiRect(novacore::render::RenderFrameInfo& frame, UiRect rect, UiColor color) {
-    frame.debugRects.push_back(novacore::render::DebugRect{
-        rect.x,
-        rect.y,
-        rect.width,
-        rect.height,
-        color,
-    });
+    appendRectPrimitive(frame, rect, color);
 }
 
 void appendUiLine(

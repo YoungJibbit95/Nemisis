@@ -20,6 +20,8 @@ MovementTuning movementTuningFromConfig(const novacore::core::ConfigDocument& do
     fallback.groundFriction = numberOr(document, "ground.friction", fallback.groundFriction);
     fallback.groundStopSpeed = numberOr(document, "ground.stop_speed", fallback.groundStopSpeed);
     fallback.jumpVelocity = numberOr(document, "jump_velocity", fallback.jumpVelocity);
+    fallback.coyoteTimeSeconds = numberOr(document, "jump.coyote_time", fallback.coyoteTimeSeconds);
+    fallback.jumpBufferSeconds = numberOr(document, "jump.buffer_time", fallback.jumpBufferSeconds);
     fallback.doubleJumpImpulse = numberOr(document, "double_jump_impulse", fallback.doubleJumpImpulse);
     fallback.gravity = numberOr(document, "gravity", fallback.gravity);
     fallback.airAcceleration = numberOr(document, "air_acceleration", fallback.airAcceleration);
@@ -42,6 +44,8 @@ MovementTuning movementTuningFromConfig(const novacore::core::ConfigDocument& do
     fallback.wallRunSpeed = numberOr(document, "wall_run.speed", fallback.wallRunSpeed);
     fallback.wallRunMaxDurationSeconds = numberOr(document, "wall_run.max_duration", fallback.wallRunMaxDurationSeconds);
     fallback.wallJumpImpulse = numberOr(document, "wall_run.wall_jump_impulse", fallback.wallJumpImpulse);
+    fallback.wallRunMinHeight = numberOr(document, "wall_run.min_height", fallback.wallRunMinHeight);
+    fallback.wallRunProbeDistance = numberOr(document, "wall_run.probe_distance", fallback.wallRunProbeDistance);
 
     fallback.mantleMaxRange = numberOr(document, "mantle.max_range", fallback.mantleMaxRange);
     fallback.mantleMaxHeight = numberOr(document, "mantle.max_height", fallback.mantleMaxHeight);

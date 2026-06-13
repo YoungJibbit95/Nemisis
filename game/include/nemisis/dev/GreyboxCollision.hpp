@@ -16,6 +16,9 @@ struct GreyboxCollisionQuery final {
     float maxStepHeight = 0.42F;
     float snapDownDistance = 0.35F;
     float walkableSlopeCosine = 0.68F;
+    float wallProbeDistance = 0.48F;
+    bool enableGroundSnap = true;
+    bool enableStepUp = true;
     novacore::math::Vec3 mantleForward{};
     float mantleMaxDistance = 1.25F;
     float mantleMinHeight = 0.44F;

@@ -53,6 +53,20 @@ void addRect(
     appendUiRect(frame, UiRect{x, y, width, height}, color);
 }
 
+void addRoundedRect(
+    novacore::render::RenderFrameInfo& frame,
+    float x,
+    float y,
+    float width,
+    float height,
+    float radius,
+    std::array<float, 4> color) {
+    UiCanvas canvas;
+    canvas.beginFrame();
+    canvas.roundedRect({x, y, width, height}, radius, color);
+    canvas.appendToRenderFrame(frame);
+}
+
 void addLine(
     novacore::render::RenderFrameInfo& frame,
     float x0,
@@ -110,6 +124,8 @@ void addCrosshair(
 }
 
 void addHeader(novacore::render::RenderFrameInfo& frame, std::string_view title, std::string_view subtitle) {
+    addRoundedRect(frame, 42.0F, 30.0F, 430.0F, 108.0F, 12.0F, {0.014F, 0.026F, 0.032F, 0.88F});
+    addRect(frame, 42.0F, 30.0F, 4.0F, 108.0F, palette::Accent);
     addText(frame, 54.0F, 42.0F, 5.0F, palette::TextPrimary, "NEMISIS");
     addText(frame, 58.0F, 90.0F, 2.0F, {0.62F, 0.78F, 0.86F, 1.0F}, std::string(title));
     addText(frame, 58.0F, 116.0F, 2.0F, {0.46F, 0.56F, 0.62F, 1.0F}, std::string(subtitle));
@@ -388,13 +404,17 @@ void addTopTabs(novacore::render::RenderFrameInfo& frame, MenuTab selectedTab) {
         const auto tab = kTabs[index];
         const bool selected = tab == selectedTab;
         const float x = startX + static_cast<float>(index) * (tabWidth + 8.0F);
-        addRect(
+        addRoundedRect(
             frame,
             x,
             y,
             tabWidth,
             tabHeight,
+            8.0F,
             selected ? palette::AccentSoft : std::array<float, 4>{0.035F, 0.052F, 0.060F, 0.92F});
+        if (selected) {
+            addRect(frame, x + 12.0F, y + tabHeight - 4.0F, tabWidth - 24.0F, 2.0F, palette::Accent);
+        }
         addText(
             frame,
             x + 13.0F,
@@ -430,14 +450,18 @@ void addSelectableRow(
     std::string value,
     bool selected,
     std::array<float, 4> accent = palette::Accent) {
-    addRect(
+    addRoundedRect(
         frame,
         x,
         y,
         width,
         44.0F,
+        8.0F,
         selected ? std::array<float, 4>{accent[0] * 0.42F, accent[1] * 0.42F, accent[2] * 0.42F, 0.95F}
                  : std::array<float, 4>{0.035F, 0.050F, 0.057F, 0.88F});
+    if (selected) {
+        addRect(frame, x, y + 7.0F, 4.0F, 30.0F, accent);
+    }
     addText(frame, x + 16.0F, y + 13.0F, 2.0F, selected ? palette::TextPrimary : palette::TextSecondary, std::move(title));
     addText(frame, x + width - 270.0F, y + 13.0F, 2.0F, palette::TextPrimary, std::move(value));
 }
@@ -574,6 +598,9 @@ void renderMainMenuShell(
     const weapons::AttachmentRegistry& attachments,
     const weapons::AttachmentBuildSummary& attachmentSummary,
     const player::AccountStats& accountStats) {
+    addRoundedRect(frame, 28.0F, 24.0F, 1218.0F, 650.0F, 16.0F, {0.010F, 0.017F, 0.021F, 0.76F});
+    addRoundedRect(frame, 46.0F, 196.0F, 1180.0F, 392.0F, 14.0F, {0.018F, 0.030F, 0.036F, 0.82F});
+    addLine(frame, 66.0F, 198.0F, 1206.0F, 198.0F, {0.05F, 0.28F, 0.34F, 0.95F});
     addHeader(frame, "MAIN MENU", "Q/E OR LB/RB TABS  -  LEFT/RIGHT ADJUST  -  ENTER/A CONFIRM  -  1 RANGE");
     addTopTabs(frame, tab);
 
@@ -765,6 +792,10 @@ void renderDebugOverlay(
                         : sample.collision.onRamp
                             ? "Ramp"
                             : sample.collision.stepped ? "Step" : yesNo(sample.collision.blocked)));
+        addMetric(frame, 48.0F, 682.0F, "JUMP", "coy " + fixedTwo(sample.coyoteTimeRemaining) + " buf " + fixedTwo(sample.jumpBufferRemaining));
+        addMetric(frame, 386.0F, 682.0F, "MANTLE", fixedTwo(sample.mantleTimeRemaining));
+        addMetric(frame, 674.0F, 682.0F, "WALL", fixedTwo(sample.wallRunTimeRemaining));
+        addMetric(frame, 928.0F, 682.0F, "GROUND", std::string(groundKindName(sample.collision.groundKind)));
         break;
     case DebugPage::Network:
         addMetric(frame, 48.0F, 604.0F, "CMD TX", std::to_string(sample.netBridge.sentCommandPackets));

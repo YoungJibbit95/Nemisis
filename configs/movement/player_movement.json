@@ -11,6 +11,10 @@
     "stop_speed": 1.25
   },
   "jump_velocity": 5.8,
+  "jump": {
+    "coyote_time": 0.1,
+    "buffer_time": 0.1
+  },
   "double_jump_impulse": 5.1,
   "gravity": -24.0,
   "air_acceleration": 18.0,
@@ -36,7 +40,9 @@
   "wall_run": {
     "speed": 8.2,
     "max_duration": 1.35,
-    "wall_jump_impulse": 6.2
+    "wall_jump_impulse": 6.2,
+    "min_height": 0.55,
+    "probe_distance": 0.5
   },
   "mantle": {
     "max_range": 1.25,

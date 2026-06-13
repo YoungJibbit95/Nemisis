@@ -28,6 +28,10 @@ struct DevSandboxSample final {
     novacore::math::Vec3 velocity{};
     movement::MovementMode movementMode = movement::MovementMode::Grounded;
     movement::MovementTechState movementTech{};
+    float coyoteTimeRemaining = 0.0F;
+    float jumpBufferRemaining = 0.0F;
+    float mantleTimeRemaining = 0.0F;
+    float wallRunTimeRemaining = 0.0F;
     weapons::WeaponRuntimeState weapon{};
     weapons::FireResult fire{};
     weapons::ShotTraceResult shot{};

@@ -35,7 +35,7 @@ void testCanvasRecordsAndFlushesCommands() {
 
     novacore::render::RenderFrameInfo frame{};
     canvas.appendToRenderFrame(frame);
-    expect(frame.debugRects.size() == 5, "rounded rect, image placeholder, and progress bar flush to debug rects");
+    expect(frame.debugRects.size() == 7, "rounded rect segments, image placeholder, and progress bar flush to debug rects");
     expect(frame.debugTexts.size() == 2, "text and image asset label flush to debug text");
     expect(frame.debugLines.size() == 4, "crosshair flushes to four lines");
 }

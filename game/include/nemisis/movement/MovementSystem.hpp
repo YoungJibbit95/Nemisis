@@ -31,6 +31,9 @@ struct PlayerMovementState final {
     float slideCooldownRemaining = 0.0F;
     float slideTimeRemaining = 0.0F;
     float wallRunTimeRemaining = 0.0F;
+    float mantleTimeRemaining = 0.0F;
+    float coyoteTimeRemaining = 0.0F;
+    float jumpBufferRemaining = 0.0F;
     float groundedTimeSeconds = 0.0F;
     float airborneTimeSeconds = 0.0F;
     float lastHorizontalSpeed = 0.0F;

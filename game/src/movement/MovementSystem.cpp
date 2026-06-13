@@ -153,12 +153,20 @@ PlayerMovementState MovementSystem::simulate(
     state.slideCooldownRemaining = consumeCooldown(state.slideCooldownRemaining, fixedDeltaSeconds);
     state.slideTimeRemaining = consumeCooldown(state.slideTimeRemaining, fixedDeltaSeconds);
     state.wallRunTimeRemaining = consumeCooldown(state.wallRunTimeRemaining, fixedDeltaSeconds);
+    state.mantleTimeRemaining = consumeCooldown(state.mantleTimeRemaining, fixedDeltaSeconds);
+    state.jumpBufferRemaining = command.jumpPressed
+        ? tuning_.jumpBufferSeconds
+        : consumeCooldown(state.jumpBufferRemaining, fixedDeltaSeconds);
+    state.coyoteTimeRemaining = isGroundedLike(state.mode)
+        ? tuning_.coyoteTimeSeconds
+        : consumeCooldown(state.coyoteTimeRemaining, fixedDeltaSeconds);
     state.hasWallRunContact = false;
 
     const auto input = horizontalInput(command.move);
     const auto direction = input.direction;
     const bool hasMoveInput = input.magnitude > 0.001F;
     state.inputMagnitude = input.magnitude;
+    const bool bufferedJump = state.jumpBufferRemaining > 0.0F;
 
     float targetSpeed = tuning_.walkSpeed;
     if (command.crouchHeld) {
@@ -180,6 +188,15 @@ PlayerMovementState MovementSystem::simulate(
     if (state.mode == MovementMode::WallRunning && state.wallRunTimeRemaining <= 0.0F) {
         stopGravityBoots(state.tech);
         state.mode = MovementMode::Airborne;
+    }
+    if (state.mode == MovementMode::Mantling) {
+        state.velocity = {};
+        if (state.mantleTimeRemaining <= 0.0F) {
+            state.mode = state.position.y <= 0.001F ? MovementMode::Grounded : MovementMode::Airborne;
+        } else {
+            state.lastHorizontalSpeed = 0.0F;
+            return state;
+        }
     }
 
     if (state.mode == MovementMode::Grounded) {
@@ -263,6 +280,7 @@ PlayerMovementState MovementSystem::simulate(
         state.mode = MovementMode::Dashing;
     }
 
+    const bool canUseGroundJump = isGroundedLike(state.mode) || state.coyoteTimeRemaining > 0.0F;
     if (command.jumpPressed && state.mode == MovementMode::WallRunning) {
         const auto tangent = chooseWallRunTangent(state.wallRunTangent, state.velocity, direction);
         const auto normal = normalizedOrZero(state.wallRunNormal);
@@ -271,22 +289,30 @@ PlayerMovementState MovementSystem::simulate(
             (normal * tuning_.wallJumpImpulse) +
             novacore::math::Vec3{0.0F, tuning_.doubleJumpImpulse, 0.0F};
         state.wallRunTimeRemaining = 0.0F;
+        state.jumpBufferRemaining = 0.0F;
+        state.coyoteTimeRemaining = 0.0F;
         state.hasDoubleJump = true;
         triggerWallJumpDetach(state.tech);
         state.mode = MovementMode::Airborne;
-    } else if (command.jumpPressed && isGroundedLike(state.mode)) {
+    } else if (bufferedJump && canUseGroundJump) {
         state.velocity.y = tuning_.jumpVelocity;
         if (state.mode == MovementMode::Sliding) {
             const auto slideDirection = normalizedOrZero(horizontalVelocity(state.velocity));
             state.velocity = state.velocity + (slideDirection * tuning_.slideJumpBoost);
             state.slideTimeRemaining = 0.0F;
         }
+        state.jumpBufferRemaining = 0.0F;
+        state.coyoteTimeRemaining = 0.0F;
         state.hasDoubleJump = true;
         state.mode = MovementMode::Airborne;
-    } else if ((command.doubleJumpPressed || command.jumpPressed) && state.mode == MovementMode::Airborne && state.hasDoubleJump) {
+    } else if ((command.doubleJumpPressed || command.jumpPressed) &&
+        state.mode == MovementMode::Airborne &&
+        state.hasDoubleJump &&
+        state.coyoteTimeRemaining <= 0.0F) {
         triggerDoubleJumpPlatform(state.tech, state.position);
         state.velocity.y = tuning_.doubleJumpImpulse;
         state.hasDoubleJump = false;
+        state.jumpBufferRemaining = 0.0F;
     } else if (command.mantlePressed && state.mode == MovementMode::Airborne) {
         triggerMantleReach(state.tech);
     }
@@ -303,6 +329,9 @@ PlayerMovementState MovementSystem::simulate(
         state.position.y = 0.0F;
         state.velocity.y = 0.0F;
         state.hasDoubleJump = true;
+        state.coyoteTimeRemaining = tuning_.coyoteTimeSeconds;
+        state.jumpBufferRemaining = 0.0F;
+        state.mantleTimeRemaining = 0.0F;
         stopGravityBoots(state.tech);
         if (state.mode == MovementMode::Airborne || state.mode == MovementMode::Dashing) {
             state.mode = MovementMode::Grounded;
@@ -328,7 +357,7 @@ PlayerMovementState MovementSystem::applyWallRunContact(
     const auto input = horizontalInput(command.move);
     const bool wantsWallRun = contact.available &&
         input.magnitude > 0.20F &&
-        state.position.y > 0.20F &&
+        state.position.y >= tuning_.wallRunMinHeight &&
         state.mode != MovementMode::Grounded &&
         state.mode != MovementMode::Sliding &&
         state.mode != MovementMode::Mantling;
@@ -385,6 +414,11 @@ PlayerMovementState MovementSystem::applyMantleCandidate(
     state.hasDoubleJump = true;
     state.hasWallRunContact = false;
     state.wallRunTimeRemaining = 0.0F;
+    state.mantleTimeRemaining = tuning_.mantleDurationSeconds;
+    state.coyoteTimeRemaining = tuning_.coyoteTimeSeconds;
+    state.jumpBufferRemaining = 0.0F;
+    state.airborneTimeSeconds = 0.0F;
+    state.groundedTimeSeconds = 0.0F;
     state.lastHorizontalSpeed = 0.0F;
     stopGravityBoots(state.tech);
     triggerMantleClimb(state.tech, candidate.targetPosition, candidate.normal);

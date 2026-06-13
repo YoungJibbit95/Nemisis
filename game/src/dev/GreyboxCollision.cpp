@@ -108,14 +108,18 @@ GreyboxCollisionResult resolveGreyboxPlayerCollision(
     const GreyboxWorld& world,
     GreyboxCollisionQuery query) {
     const auto physicsWorld = buildPhysicsWorld(world);
-    const auto resolved = physicsWorld.resolveCharacter(novacore::physics::CharacterQuery{
-        query.position,
-        query.radius,
-        query.height,
-        query.maxStepHeight,
-        query.snapDownDistance,
-        query.walkableSlopeCosine,
-    });
+    novacore::physics::CharacterQuery physicsQuery{};
+    physicsQuery.position = query.position;
+    physicsQuery.radius = query.radius;
+    physicsQuery.height = query.height;
+    physicsQuery.maxStepHeight = query.maxStepHeight;
+    physicsQuery.snapDownDistance = query.snapDownDistance;
+    physicsQuery.walkableSlopeCosine = query.walkableSlopeCosine;
+    physicsQuery.wallProbeDistance = query.wallProbeDistance;
+    physicsQuery.enableGroundSnap = query.enableGroundSnap;
+    physicsQuery.enableStepUp = query.enableStepUp;
+
+    const auto resolved = physicsWorld.resolveCharacter(physicsQuery);
 
     GreyboxCollisionResult result{};
     result.position = resolved.position;

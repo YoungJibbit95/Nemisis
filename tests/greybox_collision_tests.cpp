@@ -81,6 +81,51 @@ void testLowStepIsWalkable() {
     expect(result.position.y > 0.34F && result.position.y < 0.38F, "step collision resolves top height");
 }
 
+void testRisingJumpDoesNotSnapBackToGround() {
+    const auto world = nemisis::dev::createDevRangeGreyboxWorld();
+    nemisis::dev::GreyboxCollisionQuery query{};
+    query.position = {0.0F, 0.10F, -12.0F};
+    query.radius = 0.42F;
+    query.height = 1.80F;
+    query.snapDownDistance = 0.35F;
+    query.enableGroundSnap = false;
+
+    const auto result = nemisis::dev::resolveGreyboxPlayerCollision(world, query);
+
+    expect(!result.grounded, "rising player does not snap back to floor");
+    expect(result.position.y > 0.09F, "rising collision preserves upward clearance");
+    expect(result.groundPrimitiveId.empty(), "rising collision does not keep stale ground id");
+}
+
+void testAirborneStepUpCanBeDisabled() {
+    const auto world = nemisis::dev::createDevRangeGreyboxWorld();
+    nemisis::dev::GreyboxCollisionQuery query{};
+    query.position = {-3.5F, 0.12F, -7.0F};
+    query.radius = 0.42F;
+    query.height = 1.80F;
+    query.enableGroundSnap = false;
+    query.enableStepUp = false;
+
+    const auto result = nemisis::dev::resolveGreyboxPlayerCollision(world, query);
+
+    expect(!result.grounded, "airborne player does not step onto low cover when step-up is disabled");
+    expect(!result.stepped, "disabled step-up does not emit step telemetry");
+}
+
+void testLeavingRaisedSupportBecomesAirborne() {
+    const auto world = nemisis::dev::createDevRangeGreyboxWorld();
+    nemisis::dev::GreyboxCollisionQuery query{};
+    query.position = {-3.5F, 0.36F, -5.35F};
+    query.radius = 0.42F;
+    query.height = 1.80F;
+    query.snapDownDistance = 0.20F;
+
+    const auto result = nemisis::dev::resolveGreyboxPlayerCollision(world, query);
+
+    expect(!result.grounded, "player past low-step support becomes airborne");
+    expect(result.groundPrimitiveId.empty(), "off-support collision does not report stale ground");
+}
+
 void testMidLedgeStillBlocksWithoutMantle() {
     const auto world = nemisis::dev::createDevRangeGreyboxWorld();
     const auto result = nemisis::dev::resolveGreyboxPlayerCollision(
@@ -119,9 +164,14 @@ void testMidLedgeReportsMantleCandidate() {
 
 void testWallRunPanelReportsSurfaceContact() {
     const auto world = nemisis::dev::createDevRangeGreyboxWorld();
-    const auto result = nemisis::dev::resolveGreyboxPlayerCollision(
-        world,
-        nemisis::dev::GreyboxCollisionQuery{{-18.1F, 0.72F, -5.5F}, 0.42F, 1.80F});
+    nemisis::dev::GreyboxCollisionQuery query{};
+    query.position = {-18.1F, 0.72F, -5.5F};
+    query.radius = 0.42F;
+    query.height = 1.80F;
+    query.wallProbeDistance = 0.55F;
+    query.enableGroundSnap = false;
+
+    const auto result = nemisis::dev::resolveGreyboxPlayerCollision(world, query);
 
     expect(result.blocked, "wallrun panel still blocks capsule penetration");
     expect(!result.grounded, "airborne wallrun probe does not snap to floor");
@@ -139,6 +189,9 @@ int main() {
     testOpenLaneStaysFree();
     testRampSurfaceGroundsPlayer();
     testLowStepIsWalkable();
+    testRisingJumpDoesNotSnapBackToGround();
+    testAirborneStepUpCanBeDisabled();
+    testLeavingRaisedSupportBecomesAirborne();
     testMidLedgeStillBlocksWithoutMantle();
     testMidLedgeReportsMantleCandidate();
     testWallRunPanelReportsSurfaceContact();

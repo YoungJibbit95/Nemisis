@@ -6,6 +6,7 @@
 - `main.cpp` is thin and delegates to `nemisis::game::GameApp`.
 - Game modules exist for input, player commands, movement, and weapons.
 - Movement supports sprint, tactical sprint tuning, jump, double jump, dash, slide, and the first wall-run contact/wall-jump flow.
+- Movement includes coyote time, jump buffering, configurable wall-run probe/min-height tuning, and timed mantle exit state for the playable Dev Range KCC loop.
 - Movement now carries presentation-facing tech cues for wall-run gravity activation, boot glow, double-jump energy platform, wall-jump detach, and mantle reach.
 - Movement now supports the first engine-backed mantle/climb foundation: NovaCore mantle probe, ledge-top target snap, `mantle-climb` tech cue, and debug visualization.
 - Weapon registry supports AR, SMG, shotgun, and sidearm definitions.
@@ -40,6 +41,7 @@
 - Attachment builds produce an effective weapon definition for ADS, reload, spread, recoil, range, view kick, magazine size, and mobility.
 - Account/profile stats now feed the Account tab with K/D, win rate, best weapon, and best operator values.
 - Menus/debug HUD now route their primitive output through a game-owned `UiCanvas` command layer that mirrors the planned NanoVG-style API before the final Vulkan text/vector backend lands.
+- `UiCanvas` rounded-rectangle commands now emit segmented fallback primitives so menu shell, tabs, and selectable rows can move toward the intended modern visual language before the final vector backend.
 - SDL debug UI remains available only through explicit legacy launch flags.
 - Debug UI now has Gameplay, Network, and Assets pages, toggled with Tab or controller Start/Menu.
 - Assets debug UI reports renderer backend plus NovaCore's Vulkan runtime/device summary.
@@ -77,6 +79,17 @@
 - Input command, weapon simulation, weapon shot, UI canvas, player camera rig, player view, debug target, dev sandbox, player spawn, command queue, command message, asset binding, render tuning, greybox world/collision, and loopback bridge tests cover the newest gameplay bridge.
 
 ## Added In Latest Block
+
+- Stabilized the Dev Range KCC bridge for the current jump/mantle/wall-run bugs: rising jump arcs now disable ground snap, airborne movement can disable step-up, off-support ledges/steps transition back to Airborne, and wall-run probes use movement tuning.
+- Added movement-side coyote time, jump buffering, configurable wall-run minimum height/probe distance, and a real mantle timer so `Mantling` cannot become an infinite gravity-disabled state.
+- Tightened GameApp collision handoff so collision grounding, coyote reset, wall-run candidates, mantle activation, and Airborne transitions are owned in one predictable path.
+- Extended Gameplay debug telemetry and sandbox logs with coyote, jump-buffer, mantle, and wall-run timers for faster in-game movement diagnosis.
+- Upgraded the UI canvas rounded-rectangle command from a no-op rectangle alias to a simple segmented fallback and applied it to the main menu shell, tabs, and selectable rows.
+- Removed the accidental untracked Node project artifacts (`node_modules`, `package.json`, and `package-lock.json`) from the Nemisis checkout.
+- Added movement and greybox regression tests for rising jump snap prevention, airborne step-up disabling, off-support falling, coyote jump, jump buffer, mantle exit, and wall-run probe tuning.
+- Verified NovaCore Debug build + CTest, Nemisis Debug build + 32/32 CTest, and direct `nemisis_game.exe --vulkan-dev-range-smoke-test` on Vulkan 1.4.350 / RTX 3070 Ti with 28/28 dev meshes resident.
+
+## Previous Asset Visibility Block
 
 - Fixed the in-game invisible/incorrectly collapsed asset issue at the game layer by consuming NovaCore's node-transform-aware GLB mesh extraction.
 - Retuned the Dev Range A2 asset showcase into an obvious spawn-facing review stage with a backboard, plinths, brighter first-person weapon tints, and A2 operator/weapon/map/hero props placed directly in the default Vulkan view.

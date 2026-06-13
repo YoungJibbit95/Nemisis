@@ -85,6 +85,21 @@ void addPreviewLine(
     return actions.stateOrDefault(action).pressed;
 }
 
+[[nodiscard]] bool canReceiveGroundCollision(movement::MovementMode mode) {
+    return mode == movement::MovementMode::Airborne ||
+        mode == movement::MovementMode::Dashing ||
+        mode == movement::MovementMode::WallRunning ||
+        mode == movement::MovementMode::Mantling;
+}
+
+[[nodiscard]] bool shouldDisableGroundSnapForJumpArc(
+    const movement::PlayerMovementState& state,
+    const player::PlayerInputCommand& command) {
+    return state.velocity.y > 0.05F ||
+        command.jumpPressed ||
+        state.mode == movement::MovementMode::WallRunning;
+}
+
 } // namespace
 
 GameApp::GameApp(GameAppOptions options)
@@ -205,10 +220,20 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
         collisionQuery.mantleMaxDistance = movement_.tuning().mantleMaxRange;
         collisionQuery.mantleMinHeight = collisionQuery.maxStepHeight + 0.02F;
         collisionQuery.mantleMaxHeight = movement_.tuning().mantleMaxHeight;
+        collisionQuery.wallProbeDistance = movement_.tuning().wallRunProbeDistance;
+        collisionQuery.enableGroundSnap = !shouldDisableGroundSnapForJumpArc(*movementState, movementCommand);
+        collisionQuery.enableStepUp =
+            movementState->mode == movement::MovementMode::Grounded ||
+            movementState->mode == movement::MovementMode::Sliding ||
+            movementState->mode == movement::MovementMode::Dashing ||
+            movementState->mode == movement::MovementMode::Mantling;
         collisionSample = dev::resolveGreyboxPlayerCollision(
             greyboxWorld_,
             collisionQuery);
-        if (movementCommand.mantlePressed && collisionSample.mantleCandidate) {
+        const bool mantleActivationWindow =
+            movementState->mode == movement::MovementMode::Airborne &&
+            movementState->velocity.y <= movement_.tuning().jumpVelocity * 0.50F;
+        if (movementCommand.mantlePressed && collisionSample.mantleCandidate && mantleActivationWindow) {
             *movementState = movement_.applyMantleCandidate(
                 *movementState,
                 movementCommand,
@@ -219,9 +244,13 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
                 },
                 static_cast<float>(context.fixedDeltaSeconds));
             collisionQuery.position = movementState->position;
+            collisionQuery.enableGroundSnap = true;
+            collisionQuery.enableStepUp = true;
             collisionSample = dev::resolveGreyboxPlayerCollision(greyboxWorld_, collisionQuery);
         }
-        const bool wallRunCandidate = collisionSample.nearWallRunSurface && !collisionSample.grounded;
+        const bool wallRunCandidate = collisionSample.nearWallRunSurface &&
+            !collisionSample.grounded &&
+            movementState->position.y >= movement_.tuning().wallRunMinHeight;
         if (collisionSample.blocked && !wallRunCandidate) {
             if (std::abs(collisionSample.correction.x) > 0.0001F) {
                 movementState->velocity.x = 0.0F;
@@ -235,11 +264,21 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
         }
         if (collisionSample.grounded) {
             movementState->hasDoubleJump = true;
-            if (movementState->mode == movement::MovementMode::Airborne ||
-                movementState->mode == movement::MovementMode::Dashing ||
-                movementState->mode == movement::MovementMode::Mantling) {
+            movementState->coyoteTimeRemaining = movement_.tuning().coyoteTimeSeconds;
+            movementState->airborneTimeSeconds = 0.0F;
+            if (canReceiveGroundCollision(movementState->mode) &&
+                (movementState->mode != movement::MovementMode::Mantling ||
+                    movementState->mantleTimeRemaining <= 0.0F)) {
                 movementState->mode = movement::MovementMode::Grounded;
+                movementState->wallRunTimeRemaining = 0.0F;
+                movementState->hasWallRunContact = false;
             }
+        } else if (!wallRunCandidate &&
+            (movementState->mode == movement::MovementMode::Grounded ||
+                movementState->mode == movement::MovementMode::Sliding ||
+                movementState->mode == movement::MovementMode::Dashing)) {
+            movementState->mode = movement::MovementMode::Airborne;
+            movementState->groundedTimeSeconds = 0.0F;
         }
         movementState->position = collisionSample.position;
         *movementState = movement_.applyWallRunContact(
@@ -390,6 +429,10 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
         movementSample.velocity,
         movementSample.mode,
         movementState != nullptr ? movementState->tech : movement::MovementTechState{},
+        movementState != nullptr ? movementState->coyoteTimeRemaining : 0.0F,
+        movementState != nullptr ? movementState->jumpBufferRemaining : 0.0F,
+        movementState != nullptr ? movementState->mantleTimeRemaining : 0.0F,
+        movementState != nullptr ? movementState->wallRunTimeRemaining : 0.0F,
         weaponSample,
         fireResult,
         shotTrace,

@@ -110,6 +110,12 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [x] Add NovaCore mantle probes for reachable cover/ledge tops and ledge-top standing resolution.
 - [x] Wire Nemisis mantle candidates through GreyboxCollision, GameApp, MovementSystem, HUD/debug telemetry, and Dev Range debug lines.
 - [x] Add `mantle-climb` movement-tech cue and replay/debug/render tests for the first mantle foundation.
+- [x] Add NovaCore KCC snap controls for rising jump arcs, airborne step-up gating, configurable wall-run probes, and off-support ledge falling.
+- [x] Add Nemisis movement coyote time, jump buffering, wall-run probe tuning, and timed mantle exit.
+- [x] Fix Dev Range collision handoff so jump, mantle, wall-run, grounded, and airborne transitions no longer fight each other.
+- [x] Add Gameplay debug telemetry for coyote, jump buffer, mantle timer, and wall-run timer.
+- [x] Upgrade `UiCanvas` rounded-rectangle commands and apply the first modernized main-menu shell/tabs/rows.
+- [x] Remove accidental untracked Node artifacts from the Nemisis checkout.
 
 ## Doing
 
@@ -117,7 +123,7 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [ ] Keep UI moving from the new Vulkan primitive path toward a richer text/vector backend.
 - [ ] Start texture/material binding for A1/A2 GLBs so imported assets look less like tinted blockouts.
 - [ ] Grow the multi-target Dev Range into timed drills, TTK panels, and recoil-control scoring.
-- [ ] Deepen KCC physics into capsule sweeps, timed mantle climb curves, moving platform contacts, and server replay validation.
+- [ ] Deepen KCC physics beyond the current snap/step stability pass into capsule sweeps, timed mantle climb curves, moving platform contacts, and server replay validation.
 
 ## Next Core
 
