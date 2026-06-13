@@ -2,6 +2,13 @@
 
 A 6v6 competitive arena shooter built on the **NovaCore Engine**. Fast-paced gameplay with advanced movement mechanics, precise gunplay, and skill-based combat.
 
+<p align="center">
+  <img src="https://img.shields.io/github/last-commit/YoungJibbit95/Nemisis?style=for-the-badge&color=8b5cf6" />
+  <img src="https://img.shields.io/github/repo-size/YoungJibbit95/Nemisis?style=for-the-badge&color=6366f1" />
+  <img src="https://img.shields.io/github/issues/YoungJibbit95/Nemisis?style=for-the-badge&color=ec4899" />
+  <img src="https://komarev.com/ghpvc/?username=YoungJibbit95-Nemisis&label=repo%20views&color=8b5cf6&style=for-the-badge" />
+</p>
+
 ## Overview
 
 Nemisis is a ground-up game project targeting a commercial-ready competitive FPS experience with:
