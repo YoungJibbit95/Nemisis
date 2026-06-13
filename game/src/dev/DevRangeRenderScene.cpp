@@ -44,6 +44,45 @@ struct WeaponPickupPlacement final {
     std::array<float, 4> color;
 };
 
+struct FirstPersonWeaponMount final {
+    std::string_view assetId;
+    std::string_view fallbackAssetId;
+    novacore::math::Vec3 hipOffset;
+    novacore::math::Vec3 adsOffset;
+    novacore::math::Vec3 muzzleOffset;
+    novacore::math::Vec3 scale;
+    float yawCorrectionDegrees = 0.0F;
+    float pitchCorrectionDegrees = 0.0F;
+    float rollCorrectionDegrees = 0.0F;
+    float hipPitchFollow = 0.42F;
+    float adsPitchFollow = 0.82F;
+    float recoilYawScale = 0.50F;
+    float recoilPitchScale = 0.38F;
+    float reloadPitchDegrees = 8.0F;
+    float reloadRollDegrees = 8.0F;
+    std::array<float, 4> color;
+};
+
+struct FirstPersonArmMount final {
+    std::string_view assetId;
+    novacore::math::Vec3 hipOffset;
+    novacore::math::Vec3 adsOffset;
+    novacore::math::Vec3 scale;
+    float yawCorrectionDegrees = 0.0F;
+    float pitchCorrectionDegrees = 0.0F;
+    float rollCorrectionDegrees = 0.0F;
+    std::array<float, 4> color;
+};
+
+struct FirstPersonBodyMount final {
+    std::string_view assetId;
+    std::string_view fallbackAssetId;
+    novacore::math::Vec3 hipOffset;
+    novacore::math::Vec3 adsOffset;
+    novacore::math::Vec3 scale;
+    std::array<float, 4> color;
+};
+
 [[nodiscard]] float clamp01(float value) {
     return std::clamp(value, 0.0F, 1.0F);
 }
@@ -93,37 +132,141 @@ struct WeaponPickupPlacement final {
     return weaponClass == weapons::WeaponClass::Sidearm;
 }
 
-[[nodiscard]] std::string_view firstPersonWeaponAssetId(std::string_view weaponId) {
+[[nodiscard]] const FirstPersonWeaponMount& firstPersonWeaponMount(std::string_view weaponId) {
+    static constexpr FirstPersonWeaponMount kPrimary{
+        "wpn_project_rifle_m4a1",
+        "wpn_a2_modular_rifle_01",
+        {0.26F, -0.30F, 0.90F},
+        {0.035F, -0.165F, 0.72F},
+        {-0.03F, 0.045F, 0.62F},
+        {1.95F, 1.95F, 1.95F},
+        180.0F,
+        0.0F,
+        -90.0F,
+        0.38F,
+        0.78F,
+        0.46F,
+        0.34F,
+        9.5F,
+        9.0F,
+        kWeaponMeshTint,
+    };
+    static constexpr FirstPersonWeaponMount kSmg{
+        "wpn_project_smg_fr17",
+        "wpn_a2_blackout_carbine_01",
+        {0.22F, -0.285F, 0.82F},
+        {0.028F, -0.155F, 0.66F},
+        {-0.025F, 0.035F, 0.50F},
+        {1.70F, 1.70F, 1.70F},
+        0.0F,
+        0.0F,
+        -90.0F,
+        0.38F,
+        0.78F,
+        0.50F,
+        0.36F,
+        8.0F,
+        8.0F,
+        kSmgMeshTint,
+    };
+    static constexpr FirstPersonWeaponMount kShotgun{
+        "wpn_project_rifle_ncar",
+        "wpn_a2_modular_rifle_01",
+        {0.27F, -0.315F, 0.94F},
+        {0.04F, -0.18F, 0.75F},
+        {-0.035F, 0.055F, 0.68F},
+        {1.25F, 1.25F, 1.25F},
+        0.0F,
+        0.0F,
+        -90.0F,
+        0.36F,
+        0.78F,
+        0.44F,
+        0.32F,
+        10.0F,
+        10.0F,
+        kWeaponMeshTint,
+    };
+    static constexpr FirstPersonWeaponMount kSidearm{
+        "wpn_project_sidearm_glock19",
+        "wpn_a2_striker_sidearm_01",
+        {0.18F, -0.245F, 0.68F},
+        {0.020F, -0.125F, 0.54F},
+        {-0.015F, 0.020F, 0.34F},
+        {1.65F, 1.65F, 1.65F},
+        0.0F,
+        0.0F,
+        90.0F,
+        0.48F,
+        0.88F,
+        0.58F,
+        0.42F,
+        6.5F,
+        5.5F,
+        kSidearmMeshTint,
+    };
+
     if (weaponId == "sidearm_01") {
-        return "wpn_project_sidearm_glock19";
+        return kSidearm;
     }
     if (weaponId == "smg_01") {
-        return "wpn_project_smg_fr17";
+        return kSmg;
     }
     if (weaponId == "shotgun_01") {
-        return "wpn_project_rifle_ncar";
+        return kShotgun;
     }
-    return "wpn_project_rifle_m4a1";
+    return kPrimary;
 }
 
-[[nodiscard]] std::string_view fallbackWeaponAssetId(std::string_view weaponId) {
-    if (weaponId == "sidearm_01") {
-        return "wpn_a2_striker_sidearm_01";
-    }
-    if (weaponId == "smg_01") {
-        return "wpn_a2_blackout_carbine_01";
-    }
-    return "wpn_a2_modular_rifle_01";
+[[nodiscard]] const FirstPersonArmMount& firstPersonArmMount(bool adsAligned) {
+    static constexpr FirstPersonArmMount kA1Arms{
+        "chr_a1_fp_arms_01",
+        {0.07F, -0.47F, 0.72F},
+        {0.015F, -0.40F, 0.58F},
+        {0.72F, 0.72F, 0.72F},
+        0.0F,
+        0.0F,
+        0.0F,
+        kArmsTint,
+    };
+    static constexpr FirstPersonArmMount kCharacterProxyArms{
+        "chr_a1_fp_arms_01",
+        {0.10F, -0.49F, 0.76F},
+        {0.030F, -0.42F, 0.62F},
+        {0.76F, 0.76F, 0.76F},
+        0.0F,
+        0.0F,
+        0.0F,
+        {0.52F, 0.58F, 0.54F, 0.88F},
+    };
+    return adsAligned ? kA1Arms : kCharacterProxyArms;
 }
 
-[[nodiscard]] std::array<float, 4> firstPersonWeaponTint(weapons::WeaponClass weaponClass) {
-    if (weaponClass == weapons::WeaponClass::Sidearm) {
-        return kSidearmMeshTint;
-    }
-    if (weaponClass == weapons::WeaponClass::Smg) {
-        return kSmgMeshTint;
-    }
-    return kWeaponMeshTint;
+[[nodiscard]] const FirstPersonBodyMount& firstPersonBodyMount() {
+    static constexpr FirstPersonBodyMount kBody{
+        "chr_project_male1",
+        "chr_a2_pilot_operator_01",
+        {0.0F, -1.42F, 0.30F},
+        {0.0F, -1.46F, 0.24F},
+        {0.42F, 0.42F, 0.42F},
+        {0.46F, 0.54F, 0.50F, 0.44F},
+    };
+    return kBody;
+}
+
+[[nodiscard]] novacore::math::Vec3 viewLocalOffset(
+    const player::PlayerViewVectors& vectors,
+    novacore::math::Vec3 offset) {
+    return (vectors.horizontalRight * offset.x) +
+        novacore::math::Vec3{0.0F, offset.y, 0.0F} +
+        (vectors.horizontalForward * offset.z);
+}
+
+[[nodiscard]] novacore::math::Vec3 lerpVec3(
+    novacore::math::Vec3 a,
+    novacore::math::Vec3 b,
+    float t) {
+    return a + ((b - a) * t);
 }
 
 [[nodiscard]] std::array<StaticMeshPlacement, 24> staticShowcaseMeshes() {
@@ -258,43 +401,55 @@ struct WeaponPickupPlacement final {
             "wpn_project_rifle_m4a1",
             {-4.95F, 1.02F, -7.78F},
             {2.05F, 2.05F, 2.05F},
-            92.0F,
+            180.0F,
             {0.62F, 0.64F, 0.58F, 1.0F},
+            0.0F,
+            -90.0F,
         },
         StaticMeshPlacement{
             "wpn_project_rifle_afr120",
             {-2.75F, 1.05F, -7.88F},
             {0.78F, 0.78F, 0.78F},
-            88.0F,
+            0.0F,
             {0.54F, 0.64F, 0.72F, 1.0F},
+            0.0F,
+            -90.0F,
         },
         StaticMeshPlacement{
             "wpn_project_rifle_ncar",
             {-0.55F, 1.04F, -7.86F},
             {1.10F, 1.10F, 1.10F},
-            88.0F,
+            0.0F,
             {0.56F, 0.60F, 0.66F, 1.0F},
+            0.0F,
+            -90.0F,
         },
         StaticMeshPlacement{
             "wpn_project_smg_fr17",
             {1.45F, 1.00F, -7.82F},
             {1.55F, 1.55F, 1.55F},
-            90.0F,
+            0.0F,
             {0.46F, 0.62F, 0.68F, 1.0F},
+            0.0F,
+            -90.0F,
         },
         StaticMeshPlacement{
             "wpn_project_sidearm_glock19",
             {3.15F, 0.92F, -7.86F},
             {2.00F, 2.00F, 2.00F},
-            92.0F,
+            0.0F,
             {0.66F, 0.61F, 0.54F, 1.0F},
+            0.0F,
+            90.0F,
         },
         StaticMeshPlacement{
             "wpn_project_sidearm_p320",
             {4.55F, 0.92F, -7.86F},
             {2.05F, 2.05F, 2.05F},
-            92.0F,
+            0.0F,
             {0.68F, 0.60F, 0.52F, 1.0F},
+            0.0F,
+            90.0F,
         },
     };
 }
@@ -598,6 +753,7 @@ void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
     const auto view = renderView(desc);
     const auto vectors = player::viewVectors(view);
     const auto eye = playerEyePosition(desc);
+    const auto& mount = firstPersonWeaponMount(desc.player.activeWeaponId);
     const bool sidearm = isSidearm(desc.player.activeWeaponClass);
     const float ads = desc.player.adsAlpha;
     const float recoilLift = desc.player.weapon.recoilPitchOffsetDegrees * 0.010F;
@@ -606,88 +762,131 @@ void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
     const float reloadArc = std::sin(reloadProgress * 3.1415926535F);
     const float mantleLift = easeOut01(desc.player.mantleProgress01) * 0.13F;
     const float wallRunRoll = desc.player.hasWallRunContact ? desc.player.cameraRollDegrees * 0.32F : 0.0F;
-    const float forwardDistance = sidearm ? 0.78F : 0.92F;
-    const float rightOffset = sidearm ? 0.20F : 0.24F;
-    const float lowReady = sidearm ? -0.25F : -0.29F;
+    const auto weaponOffset = lerpVec3(mount.hipOffset, mount.adsOffset, ads);
+    const auto sway = desc.player.weaponSwayOffset * (sidearm ? 0.52F : 0.82F) * (1.0F - (ads * 0.70F));
     const auto weaponCenter =
         eye +
-        (vectors.forward * (forwardDistance - (ads * 0.18F))) +
-        (vectors.horizontalRight * ((rightOffset * (1.0F - (ads * 0.74F))) + recoilSide)) +
-        novacore::math::Vec3{0.0F, lowReady + (ads * 0.16F) + recoilLift - (reloadArc * 0.12F) + mantleLift, 0.0F} +
-        (desc.player.weaponSwayOffset * (sidearm ? 0.68F : 1.0F));
+        viewLocalOffset(vectors, weaponOffset) +
+        (vectors.horizontalRight * recoilSide) +
+        novacore::math::Vec3{0.0F, recoilLift - (reloadArc * 0.12F) + mantleLift, 0.0F} +
+        sway;
 
-    const auto activeAsset = firstPersonWeaponAssetId(desc.player.activeWeaponId);
-    const auto weaponScale = sidearm
-        ? novacore::math::Vec3{1.44F - (ads * 0.12F), 1.44F - (ads * 0.12F), 1.44F - (ads * 0.12F)}
-        : novacore::math::Vec3{1.78F - (ads * 0.18F), 1.78F - (ads * 0.18F), 1.78F - (ads * 0.18F)};
+    const auto weaponScale = mount.scale * (1.0F - (ads * 0.055F));
+    const float weaponPitchFollow = mount.hipPitchFollow +
+        ((mount.adsPitchFollow - mount.hipPitchFollow) * ads);
+    const float weaponYaw =
+        view.yawDegrees +
+        mount.yawCorrectionDegrees +
+        (desc.player.weapon.recoilYawOffsetDegrees * mount.recoilYawScale);
+    const float weaponPitch =
+        (view.pitchDegrees * weaponPitchFollow) +
+        mount.pitchCorrectionDegrees +
+        (desc.player.weapon.recoilPitchOffsetDegrees * mount.recoilPitchScale) +
+        (reloadArc * mount.reloadPitchDegrees);
+    const float weaponRoll =
+        mount.rollCorrectionDegrees +
+        wallRunRoll -
+        (reloadArc * mount.reloadRollDegrees);
     bool weaponMeshAppended = appendMesh(
         frame,
         desc,
-        activeAsset,
+        mount.assetId,
         weaponCenter,
         weaponScale,
-        view.yawDegrees + (sidearm ? -4.0F : 0.0F) + (desc.player.weapon.recoilYawOffsetDegrees * 0.55F),
-        firstPersonWeaponTint(desc.player.activeWeaponClass),
+        weaponYaw,
+        mount.color,
         stats,
-        view.pitchDegrees + (desc.player.weapon.recoilPitchOffsetDegrees * 0.42F) + (reloadArc * (sidearm ? 7.0F : 10.0F)),
-        wallRunRoll - (reloadArc * (sidearm ? 6.0F : 10.0F)));
+        weaponPitch,
+        weaponRoll);
     if (!weaponMeshAppended) {
         weaponMeshAppended = appendMesh(
             frame,
             desc,
-            fallbackWeaponAssetId(desc.player.activeWeaponId),
+            mount.fallbackAssetId,
             weaponCenter,
             weaponScale,
-            view.yawDegrees,
-            firstPersonWeaponTint(desc.player.activeWeaponClass),
+            view.yawDegrees + mount.yawCorrectionDegrees,
+            mount.color,
             stats,
-            view.pitchDegrees,
-            wallRunRoll);
+            (view.pitchDegrees * weaponPitchFollow) + mount.pitchCorrectionDegrees,
+            mount.rollCorrectionDegrees + wallRunRoll);
     }
     if (weaponMeshAppended) {
         ++stats.firstPersonMeshCount;
     }
 
+    const auto& bodyMount = firstPersonBodyMount();
+    const auto bodyOffset = lerpVec3(bodyMount.hipOffset, bodyMount.adsOffset, ads);
+    bool bodyMeshAppended = appendMesh(
+        frame,
+        desc,
+        bodyMount.assetId,
+        eye +
+            viewLocalOffset(vectors, bodyOffset) +
+            (desc.player.headBobOffset * 0.22F),
+        bodyMount.scale,
+        view.yawDegrees,
+        bodyMount.color,
+        stats,
+        0.0F,
+        desc.player.cameraRollDegrees * 0.10F);
+    if (!bodyMeshAppended) {
+        bodyMeshAppended = appendMesh(
+            frame,
+            desc,
+            bodyMount.fallbackAssetId,
+            eye +
+                viewLocalOffset(vectors, {0.0F, -1.34F, 0.26F}) +
+                (desc.player.headBobOffset * 0.20F),
+            {0.42F, 0.42F, 0.42F},
+            view.yawDegrees,
+            bodyMount.color,
+            stats,
+            0.0F,
+            desc.player.cameraRollDegrees * 0.10F);
+    }
+    if (bodyMeshAppended) {
+        ++stats.firstPersonMeshCount;
+    }
+
     const auto muzzleCenter =
         weaponCenter +
-        (vectors.forward * (sidearm ? 0.35F : 0.62F)) +
-        (vectors.horizontalRight * (sidearm ? -0.02F : -0.05F)) +
-        novacore::math::Vec3{0.0F, sidearm ? 0.02F : 0.03F, 0.0F};
+        viewLocalOffset(vectors, mount.muzzleOffset);
     appendBox(frame, muzzleCenter, sidearm ? novacore::math::Vec3{0.035F, 0.035F, 0.035F} : novacore::math::Vec3{0.045F, 0.045F, 0.045F}, kAimCoreTint, stats);
     if (desc.player.weapon.timeSinceLastShotSeconds < 0.075F && desc.player.weapon.shotIndex > 0U) {
         appendBox(frame, muzzleCenter + (vectors.forward * 0.16F), {0.06F, 0.04F, 0.06F}, kMuzzleTint, stats);
     }
 
+    const auto& armsMount = firstPersonArmMount(ads > 0.35F);
+    const auto armsOffset = lerpVec3(armsMount.hipOffset, armsMount.adsOffset, ads);
     bool armsMeshAppended = appendMesh(
         frame,
         desc,
-        "chr_a1_fp_arms_01",
+        armsMount.assetId,
         eye +
-            (vectors.forward * (sidearm ? 0.64F : 0.78F)) +
-            (vectors.horizontalRight * ((sidearm ? 0.04F : 0.08F) - (reloadArc * 0.05F))) +
-            novacore::math::Vec3{0.0F, (sidearm ? -0.44F : -0.48F) - (reloadArc * 0.11F) + mantleLift, 0.0F} +
-            (desc.player.weaponSwayOffset * 0.55F),
-        {0.62F, 0.62F, 0.62F},
-        view.yawDegrees,
-        kArmsTint,
+            viewLocalOffset(vectors, armsOffset) +
+            (vectors.horizontalRight * (-reloadArc * 0.05F)) +
+            novacore::math::Vec3{0.0F, (-reloadArc * 0.11F) + mantleLift, 0.0F} +
+            (desc.player.weaponSwayOffset * 0.36F * (1.0F - (ads * 0.60F))),
+        armsMount.scale,
+        view.yawDegrees + armsMount.yawCorrectionDegrees,
+        armsMount.color,
         stats,
-        view.pitchDegrees + (reloadArc * 8.0F),
-        wallRunRoll - (reloadArc * 12.0F));
+        (view.pitchDegrees * 0.46F) + armsMount.pitchCorrectionDegrees + (reloadArc * 8.0F),
+        armsMount.rollCorrectionDegrees + wallRunRoll - (reloadArc * 12.0F));
     if (!armsMeshAppended) {
         armsMeshAppended = appendMesh(
             frame,
             desc,
-            "chr_dev_arms_a",
+            "chr_a1_fp_arms_01",
             eye +
-                (vectors.forward * 0.68F) +
-                (vectors.horizontalRight * 0.05F) +
-                novacore::math::Vec3{0.0F, -0.50F, 0.0F} +
-                (desc.player.weaponSwayOffset * 0.55F),
-            {0.44F, 0.44F, 0.44F},
+                viewLocalOffset(vectors, {0.06F, -0.48F, 0.70F}) +
+                (desc.player.weaponSwayOffset * 0.30F),
+            {0.62F, 0.62F, 0.62F},
             view.yawDegrees,
             kArmsTint,
             stats,
-            view.pitchDegrees,
+            view.pitchDegrees * 0.46F,
             wallRunRoll);
     }
     if (armsMeshAppended) {
@@ -713,12 +912,30 @@ void DevRangeRenderSceneBuilder::appendMovementTechVisuals(
         appendBox(frame, bootBase - (right * 0.18F), {0.09F, 0.035F, 0.14F}, glowColor, stats);
 
         if (tech.wallRunArmTriggerPressed || tech.wallRunArmTriggerSeconds > 0.0F) {
-            appendBox(
+            const auto armCenter =
+                eye +
+                (vectors.forward * 0.52F) -
+                (right * 0.24F) +
+                novacore::math::Vec3{0.0F, -0.34F, 0.0F};
+            const bool armMeshAppended = appendMesh(
                 frame,
-                eye + (vectors.forward * 0.48F) - (right * 0.26F) + novacore::math::Vec3{0.0F, -0.36F, 0.0F},
-                {0.045F, 0.028F, 0.035F},
-                {0.98F, 0.42F, 0.14F, 1.0F},
-                stats);
+                desc,
+                "chr_a1_fp_arms_01",
+                armCenter,
+                {0.54F, 0.54F, 0.54F},
+                renderView(desc).yawDegrees - 10.0F,
+                {0.58F, 0.78F, 0.72F, 0.92F},
+                stats,
+                (renderView(desc).pitchDegrees * 0.28F) - 8.0F,
+                desc.player.cameraRollDegrees * 0.42F);
+            if (!armMeshAppended) {
+                appendBox(
+                    frame,
+                    armCenter,
+                    {0.045F, 0.028F, 0.035F},
+                    {0.98F, 0.42F, 0.14F, 1.0F},
+                    stats);
+            }
         }
     }
 
@@ -738,6 +955,23 @@ void DevRangeRenderSceneBuilder::appendMovementTechVisuals(
             {0.32F, 0.012F, 0.18F},
             {0.88F, 0.98F, 1.0F, 1.0F},
             stats);
+
+        const auto throwArmCenter =
+            eye +
+            (vectors.forward * 0.56F) -
+            (vectors.horizontalRight * 0.28F) +
+            novacore::math::Vec3{0.0F, -0.40F, 0.0F};
+        (void)appendMesh(
+            frame,
+            desc,
+            "chr_a1_fp_arms_01",
+            throwArmCenter,
+            {0.50F, 0.50F, 0.50F},
+            renderView(desc).yawDegrees - 16.0F,
+            {0.58F, 0.84F, 0.92F, 0.90F},
+            stats,
+            (renderView(desc).pitchDegrees * 0.30F) - 12.0F,
+            desc.player.cameraRollDegrees * 0.25F);
     }
 
     if (tech.mantleReachTriggered || tech.mantleReachSeconds > 0.0F) {
@@ -747,18 +981,31 @@ void DevRangeRenderSceneBuilder::appendMovementTechVisuals(
             (vectors.forward * (0.62F + (progress * 0.34F))) -
             (vectors.horizontalRight * (0.24F - (progress * 0.10F))) +
             novacore::math::Vec3{0.0F, -0.30F + (progress * 0.22F), 0.0F};
-        appendBox(
+        const bool mantleArmMeshAppended = appendMesh(
             frame,
+            desc,
+            "chr_a1_fp_arms_01",
             handCenter,
-            {0.035F, 0.035F, 0.16F},
-            {0.72F, 0.94F, 1.0F, 1.0F},
-            stats);
-        appendBox(
-            frame,
-            handCenter - (vectors.forward * 0.18F) + novacore::math::Vec3{0.0F, -0.04F, 0.0F},
-            {0.045F, 0.032F, 0.14F},
-            {0.48F, 0.64F, 0.70F, 1.0F},
-            stats);
+            {0.50F, 0.50F, 0.50F},
+            renderView(desc).yawDegrees - 8.0F,
+            {0.68F, 0.88F, 0.92F, 0.94F},
+            stats,
+            (renderView(desc).pitchDegrees * 0.24F) - (progress * 10.0F),
+            desc.player.cameraRollDegrees * 0.20F);
+        if (!mantleArmMeshAppended) {
+            appendBox(
+                frame,
+                handCenter,
+                {0.035F, 0.035F, 0.16F},
+                {0.72F, 0.94F, 1.0F, 1.0F},
+                stats);
+            appendBox(
+                frame,
+                handCenter - (vectors.forward * 0.18F) + novacore::math::Vec3{0.0F, -0.04F, 0.0F},
+                {0.045F, 0.032F, 0.14F},
+                {0.48F, 0.64F, 0.70F, 1.0F},
+                stats);
+        }
     }
 
     if (tech.mantleClimbTriggered || tech.mantleClimbSeconds > 0.0F) {

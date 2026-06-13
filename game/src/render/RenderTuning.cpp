@@ -47,10 +47,33 @@ DevRenderTuning devRenderTuningFromConfig(
     fallback.lighting.sunDirection = normalizedOr(
         vectorOr(document, "lighting.sun_direction", fallback.lighting.sunDirection),
         fallback.lighting.sunDirection);
+    fallback.lighting.fillDirection = normalizedOr(
+        vectorOr(document, "lighting.fill_direction", fallback.lighting.fillDirection),
+        fallback.lighting.fillDirection);
     fallback.lighting.ambientIntensity = std::clamp(
         numberOr(document, "lighting.ambient_intensity", fallback.lighting.ambientIntensity),
         0.02F,
         0.95F);
+    fallback.lighting.fillIntensity = std::clamp(
+        numberOr(document, "lighting.fill_intensity", fallback.lighting.fillIntensity),
+        0.0F,
+        1.0F);
+    fallback.lighting.rimIntensity = std::clamp(
+        numberOr(document, "lighting.rim_intensity", fallback.lighting.rimIntensity),
+        0.0F,
+        1.0F);
+    fallback.lighting.specularIntensity = std::clamp(
+        numberOr(document, "lighting.specular_intensity", fallback.lighting.specularIntensity),
+        0.0F,
+        1.0F);
+    fallback.lighting.contrast = std::clamp(
+        numberOr(document, "lighting.contrast", fallback.lighting.contrast),
+        0.5F,
+        1.8F);
+    fallback.lighting.saturation = std::clamp(
+        numberOr(document, "lighting.saturation", fallback.lighting.saturation),
+        0.0F,
+        2.0F);
 
     fallback.verticalFovDegrees = std::clamp(
         numberOr(document, "camera.vertical_fov_degrees", fallback.verticalFovDegrees),

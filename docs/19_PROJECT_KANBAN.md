@@ -141,6 +141,14 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [x] Add Dev Range weapon pickup pads, pickup input, direct weapon switching, and command protocol v3 coverage.
 - [x] Improve wall-run entry gates, wider probes, double-jump ordering, wall-run camera lean, and ADS FOV feedback.
 - [x] Verify Nemisis 32/32 CTest and NovaCore 1/1 CTest after Project asset integration.
+- [x] Add `GameplayInputBuffer` fixed-tick latching for jump, double-jump, slide, reload, pickup, and weapon-switch edges.
+- [x] Raise base jump height/airtime tuning and add explicit double-jump buffering for coyote/collision timing windows.
+- [x] Split ground-jump and double-jump availability so repeated Space presses do not reopen a ground jump while airborne.
+- [x] Replace generic Project weapon transform with per-weapon AR/SMG/shotgun/sidearm import-axis corrections and ADS mount offsets.
+- [x] Add camera-linked first-person body plus arms mesh anchors for the weapon presentation layer.
+- [x] Replace wall-run/mantle/double-jump arm debug-box cues with first-person arms mesh cue submissions.
+- [x] Add NovaCore mesh fill/rim/specular/contrast/saturation lighting controls and Nemisis render tuning coverage.
+- [x] Verify Nemisis 32/32 CTest and NovaCore 1/1 CTest after fixed-tick input, movement, first-person, and lighting block.
 
 ## Doing
 
@@ -150,7 +158,7 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [ ] Grow the multi-target Dev Range into timed drills, TTK panels, and recoil-control scoring.
 - [ ] Deepen KCC physics beyond the current swept AABB/contact-manifold pass into true capsule sweeps, moving platform contacts, slide validation, and server replay validation.
 - [ ] Author or generate Project-asset sockets (`socket_muzzle`, `socket_weapon_root`, `socket_camera`, hands) so the runtime can stop using placement heuristics.
-- [ ] Replace first-person mesh offsets with authored first-person arm/weapon animation clips once Blender-ready rigs exist.
+- [ ] Replace first-person mesh offsets and mesh-cue poses with authored first-person arm/weapon animation clips once Blender-ready rigs exist.
 
 ## Next Core
 
@@ -161,6 +169,7 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [ ] Timed mantle attach/climb curves, slide validation, richer slope/step debug visualization, and capsule-vs-world contact manifolds.
 - [ ] Wall-run camera feel, wall detach rules, wall-run cooldown, and surface eligibility tuning.
 - [ ] Convert movement-tech debug visuals into authored first-person and third-person animation clips.
+- [ ] Promote Project asset import-axis data from hard-coded dev mounts into asset metadata/cooker outputs with socket validation.
 - [ ] Add a dedicated NovaCore skybox/cubemap pass instead of rendering sky as a large regular GLB mesh.
 - [ ] Shared server validation for greybox collision and movement corrections.
 - [ ] Feed camera/weapon telemetry into prediction-safe replay snapshots for future reconciliation debugging.

@@ -62,7 +62,16 @@ struct DevRangeRenderSceneDesc final {
     const GreyboxCollisionResult* collision = nullptr;
     const MeshResourceLookup* meshResources = nullptr;
     DevRangePlayerRenderState player{};
-    novacore::render::RenderWorldLighting lighting{{0.30F, 0.88F, 0.34F}, 0.38F};
+    novacore::render::RenderWorldLighting lighting{
+        {0.30F, 0.88F, 0.34F},
+        0.34F,
+        {-0.52F, 0.36F, -0.68F},
+        0.22F,
+        0.22F,
+        0.16F,
+        1.12F,
+        1.08F,
+    };
     bool showWorldDebugLines = true;
     float verticalFovDegrees = 74.0F;
     float nearPlane = 0.03F;

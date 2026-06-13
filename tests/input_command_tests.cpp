@@ -1,5 +1,6 @@
 #include "nemisis/input/InputBindings.hpp"
 #include "nemisis/input/InputCommandBuilder.hpp"
+#include "nemisis/input/GameplayInputBuffer.hpp"
 #include "nemisis/settings/GameSettings.hpp"
 
 #include <cstdlib>
@@ -227,6 +228,48 @@ void testWeaponInteractionActionsBuildCommand() {
     expect(command.switchWeaponSidearmPressed, "sidearm weapon switch maps to input command");
 }
 
+void testGameplayInputBufferCarriesEdgesAcrossFrameBeforeFixedTick() {
+    auto actionMap = nemisis::input::createDefaultActionMap();
+    nemisis::input::GameplayInputBuffer buffer;
+    novacore::platform::InputSnapshot snapshot;
+    snapshot.setButton(
+        {novacore::platform::InputControlKind::KeyboardKey, nemisis::input::key_codes::Space},
+        true,
+        novacore::platform::InputDeviceKind::KeyboardMouse);
+    snapshot.setButton(
+        {novacore::platform::InputControlKind::KeyboardKey, nemisis::input::key_codes::R},
+        true,
+        novacore::platform::InputDeviceKind::KeyboardMouse);
+
+    actionMap.update(snapshot);
+    buffer.captureFrameEdges(actionMap);
+    expect(buffer.hasPendingEdges(), "gameplay input buffer captures jump/reload frame edges");
+
+    snapshot.beginFrame();
+    snapshot.setButton(
+        {novacore::platform::InputControlKind::KeyboardKey, nemisis::input::key_codes::Space},
+        false,
+        novacore::platform::InputDeviceKind::KeyboardMouse);
+    snapshot.setButton(
+        {novacore::platform::InputControlKind::KeyboardKey, nemisis::input::key_codes::R},
+        false,
+        novacore::platform::InputDeviceKind::KeyboardMouse);
+    actionMap.update(snapshot);
+
+    auto command = nemisis::input::buildPlayerInputCommand(actionMap, 19);
+    expect(!command.jumpPressed && !command.reloadPressed, "base command no longer sees one-frame edge after release");
+
+    buffer.consumeInto(command);
+    expect(command.jumpPressed, "buffer restores jump edge for the next fixed tick");
+    expect(command.doubleJumpPressed, "buffer restores shared double-jump edge for the next fixed tick");
+    expect(command.reloadPressed, "buffer restores reload edge for the next fixed tick");
+    expect(!buffer.hasPendingEdges(), "gameplay input buffer consumes latched edges exactly once");
+
+    auto secondCommand = nemisis::input::buildPlayerInputCommand(actionMap, 20);
+    buffer.consumeInto(secondCommand);
+    expect(!secondCommand.jumpPressed && !secondCommand.reloadPressed, "consumed input buffer does not repeat edges");
+}
+
 } // namespace
 
 int main() {
@@ -239,6 +282,7 @@ int main() {
     testControllerLookBuildsCommand();
     testLookSensitivitySettingsScaleCommand();
     testWeaponInteractionActionsBuildCommand();
+    testGameplayInputBufferCarriesEdgesAcrossFrameBeforeFixedTick();
 
     if (failures > 0) {
         std::cerr << failures << " input command test(s) failed\n";

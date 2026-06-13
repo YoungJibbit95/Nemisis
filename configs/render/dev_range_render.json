@@ -6,7 +6,17 @@
       "y": 0.88,
       "z": 0.34
     },
-    "ambient_intensity": 0.38
+    "fill_direction": {
+      "x": -0.52,
+      "y": 0.36,
+      "z": -0.68
+    },
+    "ambient_intensity": 0.34,
+    "fill_intensity": 0.22,
+    "rim_intensity": 0.22,
+    "specular_intensity": 0.16,
+    "contrast": 1.12,
+    "saturation": 1.08
   },
   "camera": {
     "vertical_fov_degrees": 74.0,

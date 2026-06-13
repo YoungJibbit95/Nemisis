@@ -67,6 +67,7 @@ add_executable(nemisis_game
     game/src/dev/GreyboxWorld.cpp
     game/src/input/InputBindings.cpp
     game/src/input/InputCommandBuilder.cpp
+    game/src/input/GameplayInputBuffer.cpp
     game/src/main.cpp
     game/src/movement/MovementConfig.cpp
     game/src/movement/MovementSystem.cpp
@@ -150,6 +151,7 @@ add_test(NAME nemisis_movement_replay_tests COMMAND nemisis_movement_replay_test
 add_executable(nemisis_input_command_tests
     game/src/input/InputBindings.cpp
     game/src/input/InputCommandBuilder.cpp
+    game/src/input/GameplayInputBuffer.cpp
     game/src/settings/GameSettings.cpp
     tests/input_command_tests.cpp
 )

@@ -29,6 +29,7 @@ struct PlayerMovementState final {
     MovementMode mode = MovementMode::Grounded;
     bool hasDoubleJump = true;
     bool hasWallRunContact = false;
+    bool groundJumpAvailable = true;
     float dashCooldownRemaining = 0.0F;
     float dashTimeRemaining = 0.0F;
     float slideCooldownRemaining = 0.0F;
@@ -39,6 +40,7 @@ struct PlayerMovementState final {
     float mantleProgressSeconds = 0.0F;
     float coyoteTimeRemaining = 0.0F;
     float jumpBufferRemaining = 0.0F;
+    float doubleJumpBufferRemaining = 0.0F;
     float groundedTimeSeconds = 0.0F;
     float airborneTimeSeconds = 0.0F;
     float lastHorizontalSpeed = 0.0F;

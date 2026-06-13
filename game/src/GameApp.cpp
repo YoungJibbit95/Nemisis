@@ -134,7 +134,27 @@ void addPreviewLine(
     const player::PlayerInputCommand& command) {
     return state.velocity.y > 0.05F ||
         command.jumpPressed ||
+        command.doubleJumpPressed ||
         state.mode == movement::MovementMode::WallRunning;
+}
+
+[[nodiscard]] bool acceptsStableGroundContact(
+    const movement::PlayerMovementState& state,
+    const player::PlayerInputCommand& command,
+    const dev::GreyboxCollisionResult& collision) {
+    if (!collision.grounded) {
+        return false;
+    }
+    if (state.mode == movement::MovementMode::Mantling) {
+        return false;
+    }
+    if (state.mode == movement::MovementMode::WallRunning) {
+        return false;
+    }
+    if ((command.jumpPressed || command.doubleJumpPressed) && state.velocity.y > -0.25F) {
+        return false;
+    }
+    return state.velocity.y <= 0.08F;
 }
 
 [[nodiscard]] ui::MenuPointerState buildMenuPointerState(
@@ -248,7 +268,8 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
 
     syncRuntimeLoadout();
 
-    const auto command = input::buildPlayerInputCommand(actions_, context.tickIndex, settings_);
+    auto command = input::buildPlayerInputCommand(actions_, context.tickIndex, settings_);
+    gameplayInputBuffer_.consumeInto(command);
     (void)localCommandQueue_.push(command);
 
     player::PlayerId playerId = 1;
@@ -300,7 +321,10 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
         const bool mantleActivationWindow =
             movementState->mode == movement::MovementMode::Airborne &&
             movementState->velocity.y <= movement_.tuning().jumpVelocity * 0.50F;
-        if ((movementCommand.mantlePressed || movementCommand.mantleHeld || movementCommand.jumpHeld) &&
+        if ((movementCommand.mantlePressed ||
+                movementCommand.mantleHeld ||
+                movementCommand.jumpPressed ||
+                movementCommand.jumpHeld) &&
             collisionSample.mantleCandidate &&
             mantleActivationWindow) {
             *movementState = movement_.applyMantleCandidate(
@@ -346,10 +370,15 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
                 }
             }
         }
-        if (collisionSample.grounded && movementState->velocity.y < 0.0F && !activeMantleInterpolation) {
+        const bool stableGroundContact = acceptsStableGroundContact(
+            *movementState,
+            movementCommand,
+            collisionSample);
+        if (stableGroundContact && movementState->velocity.y < 0.0F && !activeMantleInterpolation) {
             movementState->velocity.y = 0.0F;
         }
-        if (collisionSample.grounded && !wallRunCandidate && !activeMantleInterpolation) {
+        if (stableGroundContact && !wallRunCandidate && !activeMantleInterpolation) {
+            movementState->groundJumpAvailable = true;
             movementState->hasDoubleJump = true;
             movementState->coyoteTimeRemaining = movement_.tuning().coyoteTimeSeconds;
             movementState->airborneTimeSeconds = 0.0F;
@@ -547,6 +576,11 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
     actions_.update(window_.inputSnapshot());
     menu_.update(actions_, settings_, activeLoadout_, attachmentRegistry_, buildMenuPointerState(window_, actions_));
     menu_.updateFrame(context.deltaSeconds);
+    if (menu_.gameplayActive()) {
+        gameplayInputBuffer_.captureFrameEdges(actions_);
+    } else {
+        gameplayInputBuffer_.clear();
+    }
     syncRuntimeLoadout();
     persistUserSettingsIfChanged();
     if (menu_.gameplayActive() && actionPressed(actions_, input::actions::ResetRange)) {
@@ -865,6 +899,7 @@ void GameApp::ensureLocalPlayer() {
     localPlayerEntity_ = player::spawnLocalPlayer(world_, spawnDesc, &activeAttachmentBuild_.effectiveWeapon);
     localCommandQueue_.clear();
     player::resetCameraRig(cameraRig_);
+    gameplayInputBuffer_.clear();
     novacore::core::logInfo("game", "Local player entity spawned");
 }
 
@@ -903,6 +938,7 @@ void GameApp::resetDevRangeState() {
 
     localCommandQueue_.clear();
     player::resetCameraRig(cameraRig_);
+    gameplayInputBuffer_.clear();
 }
 
 void GameApp::tickRangeSession(float fixedDeltaSeconds) {

@@ -75,6 +75,12 @@ void testJumpDoubleJumpReplay() {
     command.jumpPressed = true;
     state = movement.simulate(state, command, dt);
     expect(state.mode == nemisis::movement::MovementMode::Airborne, "jump enters airborne mode");
+    expectNear(
+        state.velocity.y,
+        movement.tuning().jumpVelocity + (movement.tuning().gravity * dt),
+        0.01F,
+        "ground jump applies tuned 1.75x-height launch velocity before gravity integration");
+    expect(!state.groundJumpAvailable, "ground jump is consumed after first jump");
     expect(state.hasDoubleJump, "double jump is available after first jump");
     expect(state.jumpBufferRemaining <= 0.0001F, "ground jump consumes jump buffer");
     expect(state.coyoteTimeRemaining <= 0.0001F, "ground jump consumes coyote time");
@@ -83,9 +89,67 @@ void testJumpDoubleJumpReplay() {
     command.doubleJumpPressed = true;
     state = movement.simulate(state, command, dt);
     expect(!state.hasDoubleJump, "double jump is consumed");
-    expect(state.velocity.y > 0.0F, "double jump refreshes upward velocity");
+    expect(!state.groundJumpAvailable, "double jump does not refresh ground jump");
+    expect(state.velocity.y > 6.5F, "double jump strongly refreshes upward velocity");
     expect(state.tech.doubleJumpPlatformThrown, "double jump throws energy platform cue");
     expect(state.tech.energyPlatformSeconds > 0.0F, "double jump platform cue starts timer");
+}
+
+void testSecondSpacePressUsesAirJumpNotCoyoteGroundJump() {
+    nemisis::movement::MovementSystem movement;
+    nemisis::movement::PlayerMovementState state{};
+    nemisis::player::PlayerInputCommand command{};
+    constexpr float dt = 1.0F / 60.0F;
+
+    command.jumpPressed = true;
+    command.doubleJumpPressed = true;
+    state = movement.simulate(state, command, dt);
+    expect(!state.groundJumpAvailable, "first space press consumes ground jump even when double-jump action shares the key");
+
+    command = {};
+    for (int i = 0; i < 4; ++i) {
+        state = movement.simulate(state, command, dt);
+    }
+
+    const float upwardVelocityBeforeSecondPress = state.velocity.y;
+    command.jumpPressed = true;
+    command.doubleJumpPressed = true;
+    state = movement.simulate(state, command, dt);
+
+    expect(!state.hasDoubleJump, "second space press consumes air jump");
+    expect(!state.groundJumpAvailable, "second space press does not reopen ground jump while airborne");
+    expect(state.velocity.y > upwardVelocityBeforeSecondPress + 0.5F, "second space press strongly refreshes upward velocity");
+    expect(state.tech.doubleJumpPlatformThrown, "second space press triggers energy platform cue");
+}
+
+void testBufferedDoubleJumpSurvivesCoyoteWindow() {
+    nemisis::movement::MovementSystem movement;
+    nemisis::movement::PlayerMovementState state{};
+    state.position = {0.0F, 1.2F, 0.0F};
+    state.velocity = {0.0F, 1.0F, 0.0F};
+    state.mode = nemisis::movement::MovementMode::Airborne;
+    state.hasDoubleJump = true;
+    state.groundJumpAvailable = false;
+    state.coyoteTimeRemaining = 0.04F;
+
+    nemisis::player::PlayerInputCommand command{};
+    command.jumpPressed = true;
+    command.doubleJumpPressed = true;
+
+    constexpr float dt = 1.0F / 60.0F;
+    state = movement.simulate(state, command, dt);
+    expect(state.hasDoubleJump, "air jump is not consumed while coyote timer blocks it");
+    expect(state.doubleJumpBufferRemaining > 0.0F, "double jump press is buffered through coyote window");
+
+    command = {};
+    for (int i = 0; i < 4; ++i) {
+        state = movement.simulate(state, command, dt);
+    }
+
+    expect(!state.hasDoubleJump, "buffered double jump fires once coyote window expires");
+    expect(state.doubleJumpBufferRemaining <= 0.0001F, "buffered double jump is consumed after firing");
+    expect(state.velocity.y > 6.0F, "buffered double jump applies tuned upward impulse");
+    expect(state.tech.energyPlatformSeconds > 0.0F, "buffered double jump still emits energy platform cue");
 }
 
 void testCoyoteJumpReplay() {
@@ -286,7 +350,7 @@ void testMovementTuningConfigReplay() {
         "slide": { "max_duration": 1.1, "steering_acceleration": 9.0, "jump_boost": 3.0, "buffer_time": 0.18 },
         "dash": { "impulse": 12.0, "cooldown": 1.25 },
         "air": { "max_speed": 8.75, "drag": 0.2 },
-        "double_jump": { "min_airborne_time": 0.04 },
+        "double_jump": { "min_airborne_time": 0.04, "buffer_time": 0.19 },
         "jump": { "coyote_time": 0.12, "buffer_time": 0.14 },
         "wall_run": { "speed": 9.0, "max_duration": 1.5, "wall_jump_impulse": 7.0, "min_height": 0.7, "probe_distance": 0.6 }
     })";
@@ -307,6 +371,7 @@ void testMovementTuningConfigReplay() {
     expectNear(tuning.coyoteTimeSeconds, 0.12F, 0.001F, "coyote time loads from config");
     expectNear(tuning.jumpBufferSeconds, 0.14F, 0.001F, "jump buffer loads from config");
     expectNear(tuning.doubleJumpMinAirborneSeconds, 0.04F, 0.001F, "double jump min airborne time loads from config");
+    expectNear(tuning.doubleJumpBufferSeconds, 0.19F, 0.001F, "double jump buffer loads from config");
     expectNear(tuning.wallRunMinHeight, 0.7F, 0.001F, "wall run min height loads from config");
     expectNear(tuning.wallRunProbeDistance, 0.6F, 0.001F, "wall run probe distance loads from config");
 }
@@ -317,6 +382,8 @@ int main() {
     testSprintReplay();
     testGroundAccelerationAndFrictionReplay();
     testJumpDoubleJumpReplay();
+    testSecondSpacePressUsesAirJumpNotCoyoteGroundJump();
+    testBufferedDoubleJumpSurvivesCoyoteWindow();
     testCoyoteJumpReplay();
     testJumpBufferReplay();
     testDashCooldownReplay();

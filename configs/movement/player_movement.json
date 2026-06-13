@@ -10,16 +10,17 @@
     "friction": 10.0,
     "stop_speed": 1.25
   },
-  "jump_velocity": 5.8,
+  "jump_velocity": 7.6,
   "jump": {
     "coyote_time": 0.1,
-    "buffer_time": 0.1
+    "buffer_time": 0.12
   },
-  "double_jump_impulse": 5.1,
+  "double_jump_impulse": 7.15,
   "double_jump": {
-    "min_airborne_time": 0.0
+    "min_airborne_time": 0.0,
+    "buffer_time": 0.16
   },
-  "gravity": -24.0,
+  "gravity": -22.0,
   "air_acceleration": 18.0,
   "air": {
     "max_speed": 8.2,

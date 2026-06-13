@@ -107,6 +107,17 @@ std::optional<novacore::render::RenderMesh3D> findMesh(
     return std::nullopt;
 }
 
+std::optional<novacore::render::RenderMesh3D> findLastMesh(
+    const novacore::render::RenderFrameInfo& frame,
+    std::string_view assetId) {
+    for (auto it = frame.worldMeshes.rbegin(); it != frame.worldMeshes.rend(); ++it) {
+        if (it->assetId == assetId) {
+            return *it;
+        }
+    }
+    return std::nullopt;
+}
+
 void testDevRangeRenderSceneBuildsExpectedSubmissions() {
     novacore::render::Renderer renderer;
     auto lookup = registerSceneMeshes(renderer);
@@ -153,16 +164,18 @@ void testDevRangeRenderSceneBuildsExpectedSubmissions() {
     expect(frame.camera3D.yawDegrees == 32.0F, "dev range render scene copies yaw");
     expect(frame.camera3D.pitchDegrees == -7.0F, "dev range render scene copies pitch");
     expect(frame.camera3D.verticalFovDegrees == 74.0F, "dev range render scene uses default FOV");
-    expect(frame.lighting.ambientIntensity > 0.37F && frame.lighting.ambientIntensity < 0.39F, "dev range render scene applies lighting profile");
+    expect(frame.lighting.ambientIntensity > 0.33F && frame.lighting.ambientIntensity < 0.35F, "dev range render scene applies lighting profile");
     expect(frame.lighting.sunDirection.y > 0.80F, "dev range lighting points from above");
+    expect(frame.lighting.fillIntensity > 0.20F, "dev range lighting applies fill light for imported meshes");
+    expect(frame.lighting.rimIntensity > 0.20F, "dev range lighting applies rim light for mesh readability");
 
     expect(!world.primitives.empty(), "greybox world fixture has primitives");
     expect(stats.worldBoxCount == (world.primitives.size() - 1U) + targetRange.lanes.size() + 19U, "dev range render scene emits world, lane, asset stage, pickup pads, muzzle, mantle/tech, and aim boxes");
     expect(frame.worldBoxes.size() == stats.worldBoxCount, "world box count matches frame");
-    expect(stats.meshInstanceCount == 36, "dev range render scene emits skybox, static, player body, target lane, imported Project asset, A2 showcase, and first-person mesh instances");
-    expect(frame.worldMeshes.size() == 36, "frame receives all mesh instances");
+    expect(stats.meshInstanceCount == 37, "dev range render scene emits skybox, static, player body, target lane, imported Project asset, A2 showcase, and first-person mesh instances");
+    expect(frame.worldMeshes.size() == 37, "frame receives all mesh instances");
     expect(stats.skippedMeshInstanceCount == 0, "dev range render scene skips no mesh when lookup is complete");
-    expect(stats.firstPersonMeshCount == 2, "dev range render scene emits weapon and arms first-person mesh anchors");
+    expect(stats.firstPersonMeshCount == 3, "dev range render scene emits weapon, camera-linked body, and arms first-person mesh anchors");
     expect(stats.targetMeshCount == targetRange.lanes.size(), "dev range render scene emits one actor mesh per target lane");
     expect(stats.aimMarkerBoxCount == 5, "dev range render scene emits five aim marker boxes");
     expect(stats.worldLineCount == 3, "dev range render scene emits aim, ground-normal, and contact lines");
@@ -172,6 +185,94 @@ void testDevRangeRenderSceneBuildsExpectedSubmissions() {
     expect(firstMesh.assetId == "env_project_skybox1", "first dev mesh is the project skybox background");
     expect(firstMesh.mesh.isValid(), "first dev mesh has a valid renderer resource handle");
     expect(findMesh(frame, "env_test_arena_kit_01").has_value(), "dev range render scene still submits the arena kit");
+
+    const auto firstPersonRifle = findLastMesh(frame, "wpn_project_rifle_m4a1");
+    expect(firstPersonRifle.has_value(), "first-person Project rifle mesh is submitted");
+    if (firstPersonRifle.has_value()) {
+        expect(firstPersonRifle->position.z > player.position.z + 0.45F, "first-person rifle sits in front of the camera");
+        expect(firstPersonRifle->yawDegrees > 205.0F && firstPersonRifle->yawDegrees < 215.0F, "first-person rifle applies 180-degree imported-asset yaw correction");
+        expect(firstPersonRifle->rollDegrees < -85.0F && firstPersonRifle->rollDegrees > -95.0F, "first-person rifle applies imported-asset roll correction");
+        expect(firstPersonRifle->scale.x > 1.8F, "first-person rifle uses a visible weapon scale");
+    }
+}
+
+void testDevRangeRenderSceneMovesWeaponTowardSightlineInAds() {
+    novacore::render::Renderer renderer;
+    auto lookup = registerSceneMeshes(renderer);
+    const auto world = nemisis::dev::createDevRangeGreyboxWorld();
+    auto targetRange = nemisis::dev::makeDefaultDevTargetRange();
+
+    nemisis::dev::DevRangePlayerRenderState hipPlayer{};
+    hipPlayer.position = world.playerSpawn;
+    hipPlayer.view.yawDegrees = 0.0F;
+    hipPlayer.view.pitchDegrees = 0.0F;
+    hipPlayer.hasMovementState = true;
+    hipPlayer.activeWeaponId = "ar_01";
+    hipPlayer.activeWeaponClass = nemisis::weapons::WeaponClass::AssaultRifle;
+
+    auto adsPlayer = hipPlayer;
+    adsPlayer.adsAlpha = 1.0F;
+
+    novacore::render::RenderFrameInfo hipFrame{};
+    (void)nemisis::dev::DevRangeRenderSceneBuilder{}.append(
+        hipFrame,
+        nemisis::dev::DevRangeRenderSceneDesc{&world, &targetRange, nullptr, &lookup, hipPlayer});
+
+    novacore::render::RenderFrameInfo adsFrame{};
+    (void)nemisis::dev::DevRangeRenderSceneBuilder{}.append(
+        adsFrame,
+        nemisis::dev::DevRangeRenderSceneDesc{&world, &targetRange, nullptr, &lookup, adsPlayer});
+
+    const auto hipRifle = findLastMesh(hipFrame, "wpn_project_rifle_m4a1");
+    const auto adsRifle = findLastMesh(adsFrame, "wpn_project_rifle_m4a1");
+    expect(hipRifle.has_value() && adsRifle.has_value(), "hip and ADS frames submit first-person rifle");
+    if (hipRifle.has_value() && adsRifle.has_value()) {
+        expect(std::abs(adsRifle->position.x) < std::abs(hipRifle->position.x), "ADS pulls rifle closer to camera centerline");
+        expect(adsRifle->position.z < hipRifle->position.z, "ADS pulls rifle slightly closer to the player");
+        expect(adsRifle->position.y > hipRifle->position.y, "ADS raises rifle toward eye line");
+    }
+}
+
+void testDevRangeRenderSceneUsesPerWeaponImportAxisCorrections() {
+    novacore::render::Renderer renderer;
+    auto lookup = registerSceneMeshes(renderer);
+    const auto world = nemisis::dev::createDevRangeGreyboxWorld();
+    auto targetRange = nemisis::dev::makeDefaultDevTargetRange();
+
+    nemisis::dev::DevRangePlayerRenderState smgPlayer{};
+    smgPlayer.position = world.playerSpawn;
+    smgPlayer.view.yawDegrees = 0.0F;
+    smgPlayer.view.pitchDegrees = 0.0F;
+    smgPlayer.activeWeaponId = "smg_01";
+    smgPlayer.activeWeaponClass = nemisis::weapons::WeaponClass::Smg;
+
+    novacore::render::RenderFrameInfo smgFrame{};
+    (void)nemisis::dev::DevRangeRenderSceneBuilder{}.append(
+        smgFrame,
+        nemisis::dev::DevRangeRenderSceneDesc{&world, &targetRange, nullptr, &lookup, smgPlayer});
+
+    const auto smgMesh = findLastMesh(smgFrame, "wpn_project_smg_fr17");
+    expect(smgMesh.has_value(), "SMG first-person Project mesh is submitted");
+    if (smgMesh.has_value()) {
+        expect(smgMesh->yawDegrees > -1.0F && smgMesh->yawDegrees < 1.0F, "SMG uses its own forward-axis correction instead of AR yaw");
+        expect(smgMesh->rollDegrees < -85.0F && smgMesh->rollDegrees > -95.0F, "SMG uses long-weapon upright roll correction");
+    }
+
+    auto sidearmPlayer = smgPlayer;
+    sidearmPlayer.activeWeaponId = "sidearm_01";
+    sidearmPlayer.activeWeaponClass = nemisis::weapons::WeaponClass::Sidearm;
+
+    novacore::render::RenderFrameInfo sidearmFrame{};
+    (void)nemisis::dev::DevRangeRenderSceneBuilder{}.append(
+        sidearmFrame,
+        nemisis::dev::DevRangeRenderSceneDesc{&world, &targetRange, nullptr, &lookup, sidearmPlayer});
+
+    const auto sidearmMesh = findLastMesh(sidearmFrame, "wpn_project_sidearm_glock19");
+    expect(sidearmMesh.has_value(), "sidearm first-person Project mesh is submitted");
+    if (sidearmMesh.has_value()) {
+        expect(sidearmMesh->yawDegrees > -1.0F && sidearmMesh->yawDegrees < 1.0F, "sidearm uses non-AR forward-axis correction");
+        expect(sidearmMesh->rollDegrees > 85.0F && sidearmMesh->rollDegrees < 95.0F, "sidearm keeps pistol upright roll correction");
+    }
 }
 
 void testDevRangeRenderScenePlacesA2AssetsInSpawnView() {
@@ -196,7 +297,7 @@ void testDevRangeRenderScenePlacesA2AssetsInSpawnView() {
             player,
         });
 
-    expect(stats.meshInstanceCount == 35, "spawn view scene emits every expected mesh without local body");
+    expect(stats.meshInstanceCount == 36, "spawn view scene emits every expected mesh without local body");
     expect(stats.skippedMeshInstanceCount == 0, "spawn view scene has no skipped A2 meshes");
 
     const auto operatorMesh = findMesh(frame, "chr_a2_pilot_operator_01");
@@ -282,10 +383,10 @@ void testDevRangeRenderSceneCountsMissingMeshHandles() {
             player,
         });
 
-    expect(stats.meshInstanceCount == 31, "dev range render scene still emits available skybox, static, A2, Project, and target lane meshes");
-    expect(frame.worldMeshes.size() == 31, "frame mesh count drops missing handles");
-    expect(stats.skippedMeshInstanceCount == 6, "dev range render scene counts missing showcase, primary, fallback, and arms handles");
-    expect(stats.firstPersonMeshCount == 0, "first-person mesh stats reflect missing weapon/arms handles");
+    expect(stats.meshInstanceCount == 32, "dev range render scene still emits available skybox, static, A2, Project, target lane, and character-proxy arms meshes");
+    expect(frame.worldMeshes.size() == 32, "frame mesh count drops missing weapon handles but keeps character-proxy arms");
+    expect(stats.skippedMeshInstanceCount == 6, "dev range render scene counts missing showcase, primary, fallback, and first-person arm handles");
+    expect(stats.firstPersonMeshCount == 1, "first-person mesh stats keep character-proxy arms when weapon handles are missing");
     expect(stats.worldLineCount == 1, "dev range render scene still emits aim line without collision sample");
 }
 
@@ -443,6 +544,8 @@ void testDevRangeRenderSceneDrawsContactDebugLines() {
 
 int main() {
     testDevRangeRenderSceneBuildsExpectedSubmissions();
+    testDevRangeRenderSceneMovesWeaponTowardSightlineInAds();
+    testDevRangeRenderSceneUsesPerWeaponImportAxisCorrections();
     testDevRangeRenderScenePlacesA2AssetsInSpawnView();
     testDevRangeRenderSceneCountsMissingMeshHandles();
     testDevRangeRenderSceneHandlesMissingInputs();

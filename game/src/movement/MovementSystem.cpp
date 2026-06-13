@@ -167,9 +167,16 @@ PlayerMovementState MovementSystem::simulate(
     state.jumpBufferRemaining = command.jumpPressed
         ? tuning_.jumpBufferSeconds
         : consumeCooldown(state.jumpBufferRemaining, fixedDeltaSeconds);
+    state.doubleJumpBufferRemaining = command.doubleJumpPressed
+        ? tuning_.doubleJumpBufferSeconds
+        : consumeCooldown(state.doubleJumpBufferRemaining, fixedDeltaSeconds);
     state.coyoteTimeRemaining = isGroundedLike(state.mode)
         ? tuning_.coyoteTimeSeconds
         : consumeCooldown(state.coyoteTimeRemaining, fixedDeltaSeconds);
+    if (state.mode == MovementMode::Grounded && state.position.y <= 0.001F && state.velocity.y <= 0.001F) {
+        state.groundJumpAvailable = true;
+        state.hasDoubleJump = true;
+    }
     state.hasWallRunContact = false;
     if (!command.slideHeld) {
         state.slideHeldConsumed = false;
@@ -224,7 +231,10 @@ PlayerMovementState MovementSystem::simulate(
             state.position = state.mantleTargetPosition;
             state.velocity = {};
             state.mode = MovementMode::Grounded;
+            state.groundJumpAvailable = true;
+            state.hasDoubleJump = true;
             state.coyoteTimeRemaining = tuning_.coyoteTimeSeconds;
+            state.doubleJumpBufferRemaining = 0.0F;
             state.groundedTimeSeconds = std::max(state.groundedTimeSeconds, fixedDeltaSeconds);
             state.airborneTimeSeconds = 0.0F;
         } else {
@@ -318,12 +328,25 @@ PlayerMovementState MovementSystem::simulate(
         state.mode = MovementMode::Dashing;
     }
 
-    const bool canUseGroundJump = isGroundedLike(state.mode) || state.coyoteTimeRemaining > 0.0F;
+    const bool canUseGroundJump = state.groundJumpAvailable &&
+        (isGroundedLike(state.mode) || state.coyoteTimeRemaining > 0.0F);
     const bool canUseAirJump = state.mode == MovementMode::Airborne &&
         state.hasDoubleJump &&
         state.airborneTimeSeconds >= tuning_.doubleJumpMinAirborneSeconds &&
         state.coyoteTimeRemaining <= 0.0F;
-    const bool wantsAirJump = command.doubleJumpPressed || (command.jumpPressed && canUseAirJump);
+    if (command.jumpPressed &&
+        state.mode == MovementMode::Airborne &&
+        !canUseGroundJump &&
+        state.hasDoubleJump) {
+        state.doubleJumpBufferRemaining = std::max(
+            state.doubleJumpBufferRemaining,
+            tuning_.doubleJumpBufferSeconds);
+    }
+
+    const bool wantsAirJump =
+        state.doubleJumpBufferRemaining > 0.0F ||
+        command.doubleJumpPressed ||
+        (command.jumpPressed && canUseAirJump);
     if (command.jumpPressed && state.mode == MovementMode::WallRunning) {
         const auto tangent = chooseWallRunTangent(state.wallRunTangent, state.velocity, direction);
         const auto normal = normalizedOrZero(state.wallRunNormal);
@@ -333,7 +356,9 @@ PlayerMovementState MovementSystem::simulate(
             novacore::math::Vec3{0.0F, tuning_.doubleJumpImpulse, 0.0F};
         state.wallRunTimeRemaining = 0.0F;
         state.jumpBufferRemaining = 0.0F;
+        state.doubleJumpBufferRemaining = 0.0F;
         state.coyoteTimeRemaining = 0.0F;
+        state.groundJumpAvailable = false;
         state.hasDoubleJump = true;
         triggerWallJumpDetach(state.tech);
         state.mode = MovementMode::Airborne;
@@ -341,7 +366,9 @@ PlayerMovementState MovementSystem::simulate(
         triggerDoubleJumpPlatform(state.tech, state.position);
         state.velocity.y = tuning_.doubleJumpImpulse;
         state.hasDoubleJump = false;
+        state.groundJumpAvailable = false;
         state.jumpBufferRemaining = 0.0F;
+        state.doubleJumpBufferRemaining = 0.0F;
     } else if (bufferedJump && canUseGroundJump) {
         state.velocity.y = tuning_.jumpVelocity;
         if (state.mode == MovementMode::Sliding) {
@@ -350,7 +377,9 @@ PlayerMovementState MovementSystem::simulate(
             state.slideTimeRemaining = 0.0F;
         }
         state.jumpBufferRemaining = 0.0F;
+        state.doubleJumpBufferRemaining = 0.0F;
         state.coyoteTimeRemaining = 0.0F;
+        state.groundJumpAvailable = false;
         state.hasDoubleJump = true;
         state.mode = MovementMode::Airborne;
     } else if ((command.mantlePressed || command.mantleHeld) && state.mode == MovementMode::Airborne) {
@@ -368,9 +397,11 @@ PlayerMovementState MovementSystem::simulate(
     if (state.position.y <= 0.0F) {
         state.position.y = 0.0F;
         state.velocity.y = 0.0F;
+        state.groundJumpAvailable = true;
         state.hasDoubleJump = true;
         state.coyoteTimeRemaining = tuning_.coyoteTimeSeconds;
         state.jumpBufferRemaining = 0.0F;
+        state.doubleJumpBufferRemaining = 0.0F;
         state.mantleTimeRemaining = 0.0F;
         stopGravityBoots(state.tech);
         if (state.mode == MovementMode::Airborne || state.mode == MovementMode::Dashing) {
@@ -436,6 +467,7 @@ PlayerMovementState MovementSystem::applyWallRunContact(
     state.velocity.z = tangent.z * speed;
     state.velocity.y = std::clamp(std::max(state.velocity.y, -0.45F) + (1.65F * fixedDeltaSeconds), -0.45F, 1.55F);
     state.hasDoubleJump = true;
+    state.groundJumpAvailable = false;
     state.lastHorizontalSpeed = horizontalSpeed(state.velocity);
     return state;
 }
@@ -446,7 +478,7 @@ PlayerMovementState MovementSystem::applyMantleCandidate(
     MantleCandidate candidate,
     float fixedDeltaSeconds) const {
     (void)fixedDeltaSeconds;
-    if (!(command.mantlePressed || command.mantleHeld || command.jumpHeld) || !candidate.available) {
+    if (!(command.mantlePressed || command.mantleHeld || command.jumpPressed || command.jumpHeld) || !candidate.available) {
         return state;
     }
 
@@ -456,12 +488,14 @@ PlayerMovementState MovementSystem::applyMantleCandidate(
     state.velocity = {};
     state.mode = MovementMode::Mantling;
     state.hasDoubleJump = true;
+    state.groundJumpAvailable = true;
     state.hasWallRunContact = false;
     state.wallRunTimeRemaining = 0.0F;
     state.mantleTimeRemaining = tuning_.mantleDurationSeconds;
     state.mantleProgressSeconds = 0.0F;
     state.coyoteTimeRemaining = tuning_.coyoteTimeSeconds;
     state.jumpBufferRemaining = 0.0F;
+    state.doubleJumpBufferRemaining = 0.0F;
     state.airborneTimeSeconds = 0.0F;
     state.groundedTimeSeconds = 0.0F;
     state.lastHorizontalSpeed = 0.0F;

@@ -1,5 +1,18 @@
 # Nemisis Project Status
 
+## Latest Block - Fixed-Tick Input, Higher Movement, Weapon Mounts, And Mesh Lighting
+
+- Added `GameplayInputBuffer` so one-frame jump, slide, reload, pickup, and weapon-switch edges captured during render frames survive until the next fixed gameplay tick.
+- Raised the base jump profile toward the requested 1.75x jump-height target with `jump_velocity` 7.6, lighter gravity at -22.0, longer jump buffering, stronger double-jump impulse, and explicit `double_jump.buffer_time`.
+- Split ground-jump availability from double-jump availability and added a buffered air-jump handoff so the second Space press can survive coyote/collision timing instead of being lost unless the key is spammed.
+- Tightened collision handoff after jump/double-jump commands so unstable ground contacts do not immediately cancel rising jump arcs.
+- Rebuilt first-person weapon presentation with per-weapon Project asset mounts: AR keeps its own imported forward correction, SMG/shotgun/sidearm no longer inherit AR yaw, long weapons use the corrected upright roll, and ADS pulls weapon placement toward the sightline.
+- Added a camera-linked first-person body layer and upgraded arms placement so the view submits weapon, body, and arms mesh anchors instead of relying on standalone debug hand boxes.
+- Replaced the most visible wall-run, mantle, and double-jump arm placeholder boxes with first-person arms mesh cues while retaining small VFX boxes for boots, muzzle, and energy platform feedback.
+- Expanded NovaCore/Nemisis mesh lighting controls with fill, rim, specular, contrast, and saturation so imported GLBs read better while the renderer waits for full texture/material descriptor binding.
+- Added regression coverage for fixed-tick input buffering, buffered double-jump reliability, per-weapon Project asset rotations, ADS sightline movement, and expanded render tuning.
+- Verified `cmake --build --preset windows-msvc-debug`, Nemisis `ctest` 32/32, NovaCore build, and NovaCore smoke test 1/1.
+
 ## Latest Block - Project Asset Integration, First-Person Cleanup, And Movement Reliability
 
 - Moved the user-provided character and weapon GLBs from `Project/Assets` into `Nemisis/assets/project_assets` and updated their metadata/catalog paths to repo-local runtime paths.

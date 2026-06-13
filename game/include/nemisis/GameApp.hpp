@@ -7,6 +7,7 @@
 #include "nemisis/dev/DevSandbox.hpp"
 #include "nemisis/dev/DevTargetRange.hpp"
 #include "nemisis/dev/GreyboxWorld.hpp"
+#include "nemisis/input/GameplayInputBuffer.hpp"
 #include "nemisis/movement/MovementConfig.hpp"
 #include "nemisis/movement/MovementSystem.hpp"
 #include "nemisis/net/LoopbackCommandBridge.hpp"
@@ -79,6 +80,7 @@ private:
     GameAppOptions options_;
     novacore::platform::InputSystem input_;
     novacore::platform::InputActionMap actions_;
+    input::GameplayInputBuffer gameplayInputBuffer_;
     novacore::core::ConfigRegistry configRegistry_;
     novacore::platform::Window window_;
     novacore::render::Renderer renderer_;
