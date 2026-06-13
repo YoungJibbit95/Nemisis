@@ -10,7 +10,7 @@ namespace {
 
 constexpr std::uint32_t kCommandMagic = 0x4E434D44U;
 constexpr std::uint32_t kAckMagic = 0x4E41434BU;
-constexpr std::uint16_t kProtocolVersion = 2;
+constexpr std::uint16_t kProtocolVersion = 3;
 
 void writeCommand(novacore::net::PacketWriter& writer, const player::PlayerInputCommand& command) {
     writer.writeU64(command.tick);
@@ -33,6 +33,10 @@ void writeCommand(novacore::net::PacketWriter& writer, const player::PlayerInput
     writer.writeU8(command.adsHeld ? 1U : 0U);
     writer.writeU8(command.reloadPressed ? 1U : 0U);
     writer.writeU8(command.reloadHeld ? 1U : 0U);
+    writer.writeU8(command.pickupWeaponPressed ? 1U : 0U);
+    writer.writeU8(command.switchWeaponPrimaryPressed ? 1U : 0U);
+    writer.writeU8(command.switchWeaponSmgPressed ? 1U : 0U);
+    writer.writeU8(command.switchWeaponSidearmPressed ? 1U : 0U);
     writer.writeU8(static_cast<std::uint8_t>(command.device));
 }
 
@@ -67,6 +71,10 @@ void writeCommand(novacore::net::PacketWriter& writer, const player::PlayerInput
         !readBool(reader, command.adsHeld) ||
         !readBool(reader, command.reloadPressed) ||
         !readBool(reader, command.reloadHeld) ||
+        !readBool(reader, command.pickupWeaponPressed) ||
+        !readBool(reader, command.switchWeaponPrimaryPressed) ||
+        !readBool(reader, command.switchWeaponSmgPressed) ||
+        !readBool(reader, command.switchWeaponSidearmPressed) ||
         !reader.readU8(device)) {
         return false;
     }

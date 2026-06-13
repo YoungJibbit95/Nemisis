@@ -1,0 +1,18 @@
+{
+  "id": "env_project_skybox1",
+  "source": "assets/project_assets/skybox1.glb",
+  "export": "assets/project_assets/skybox1.glb",
+  "category": "environment",
+  "scale_meters": true,
+  "runtime_up_axis": "Y",
+  "gameplay_forward_axis": "+Z",
+  "blender_up_axis": "+Y",
+  "blender_forward_axis": "+Z",
+  "origin": "Imported Project/Assets skybox GLB; rendered as a large first-pass environment mesh until NovaCore gains a dedicated cubemap sky pass.",
+  "sockets": [],
+  "collision": "none",
+  "lods": ["env_project_skybox1_lod0"],
+  "license": "original_project_asset",
+  "external_assets": false,
+  "generated_by": "manual_project_assets_import"
+}

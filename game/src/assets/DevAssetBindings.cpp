@@ -47,6 +47,7 @@ constexpr RequiredDevAssetIds kRequiredDevAssets{
     "wpn_project_smg_fr17",
     "wpn_project_sidearm_glock19",
     "wpn_project_sidearm_p320",
+    "env_project_skybox1",
 };
 
 [[nodiscard]] std::filesystem::path resolveRuntimeAssetPath(

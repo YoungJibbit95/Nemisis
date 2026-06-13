@@ -15,6 +15,7 @@ struct MovementTuning final {
     float coyoteTimeSeconds = 0.10F;
     float jumpBufferSeconds = 0.10F;
     float doubleJumpImpulse = 5.1F;
+    float doubleJumpMinAirborneSeconds = 0.0F;
     float gravity = -24.0F;
     float airAcceleration = 18.0F;
     float airMaxSpeed = 8.2F;
@@ -37,8 +38,8 @@ struct MovementTuning final {
     float wallRunSpeed = 8.2F;
     float wallRunMaxDurationSeconds = 1.35F;
     float wallJumpImpulse = 6.2F;
-    float wallRunMinHeight = 0.55F;
-    float wallRunProbeDistance = 0.50F;
+    float wallRunMinHeight = 0.35F;
+    float wallRunProbeDistance = 0.82F;
 
     float mantleMaxRange = 1.25F;
     float mantleMaxHeight = 1.4F;

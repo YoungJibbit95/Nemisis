@@ -38,6 +38,10 @@ nemisis::player::PlayerInputCommand sampleCommand(std::uint64_t tick) {
     command.fireHeld = true;
     command.adsHeld = true;
     command.reloadHeld = true;
+    command.pickupWeaponPressed = true;
+    command.switchWeaponPrimaryPressed = true;
+    command.switchWeaponSmgPressed = true;
+    command.switchWeaponSidearmPressed = true;
     command.device = novacore::platform::InputDeviceKind::Controller;
     return command;
 }
@@ -65,6 +69,10 @@ void testCommandPacketRoundTrip() {
     expect(command.mantleHeld, "command packet keeps mantle held");
     expect(command.fireHeld, "command packet keeps fire");
     expect(command.reloadHeld, "command packet keeps reload held");
+    expect(command.pickupWeaponPressed, "command packet keeps pickup weapon");
+    expect(command.switchWeaponPrimaryPressed, "command packet keeps primary weapon switch");
+    expect(command.switchWeaponSmgPressed, "command packet keeps smg weapon switch");
+    expect(command.switchWeaponSidearmPressed, "command packet keeps sidearm weapon switch");
     expect(command.device == novacore::platform::InputDeviceKind::Controller, "command packet keeps device");
 }
 

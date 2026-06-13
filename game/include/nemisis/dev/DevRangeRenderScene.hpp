@@ -30,16 +30,20 @@ struct DevRangePlayerRenderState final {
     novacore::math::Vec3 headBobOffset{};
     novacore::math::Vec3 weaponSwayOffset{};
     movement::MovementTechState movementTech{};
+    movement::MovementMode movementMode = movement::MovementMode::Grounded;
     float cameraRollDegrees = 0.0F;
     float verticalFovDegrees = 74.0F;
     float speed01 = 0.0F;
     float adsAlpha = 0.0F;
+    float mantleProgress01 = 0.0F;
+    float wallRunTimeRemaining = 0.0F;
     std::string activeWeaponId = "ar_01";
     weapons::WeaponClass activeWeaponClass = weapons::WeaponClass::AssaultRifle;
     weapons::WeaponRuntimeState weapon{};
     std::uint16_t effectiveMagazineSize = 0;
     bool hasMovementState = false;
     bool hasCameraRig = false;
+    bool hasWallRunContact = false;
 };
 
 struct DevRangeRenderSceneStats final {
@@ -84,9 +88,16 @@ private:
         novacore::math::Vec3 scale,
         float yawDegrees,
         std::array<float, 4> color,
-        DevRangeRenderSceneStats& stats) const;
+        DevRangeRenderSceneStats& stats,
+        float pitchDegrees = 0.0F,
+        float rollDegrees = 0.0F) const;
 
     void appendWorldGeometry(
+        novacore::render::RenderFrameInfo& frame,
+        const DevRangeRenderSceneDesc& desc,
+        DevRangeRenderSceneStats& stats) const;
+
+    void appendSkyboxMesh(
         novacore::render::RenderFrameInfo& frame,
         const DevRangeRenderSceneDesc& desc,
         DevRangeRenderSceneStats& stats) const;
@@ -97,6 +108,11 @@ private:
         DevRangeRenderSceneStats& stats) const;
 
     void appendTargetLaneMeshes(
+        novacore::render::RenderFrameInfo& frame,
+        const DevRangeRenderSceneDesc& desc,
+        DevRangeRenderSceneStats& stats) const;
+
+    void appendLocalPlayerBodyMesh(
         novacore::render::RenderFrameInfo& frame,
         const DevRangeRenderSceneDesc& desc,
         DevRangeRenderSceneStats& stats) const;

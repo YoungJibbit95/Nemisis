@@ -19,6 +19,7 @@ struct CameraRigTuning final {
     float tacticalSprintFovKickDegrees = 7.0F;
     float slideFovKickDegrees = 3.5F;
     float dashFovKickDegrees = 4.0F;
+    float wallRunFovKickDegrees = 3.0F;
     float airborneFovKickDegrees = 1.25F;
     float recoilPitchVisualScale = 0.72F;
     float recoilYawVisualScale = 0.55F;
@@ -31,6 +32,7 @@ struct CameraRigTuning final {
     float bobSprintFrequency = 10.5F;
     float slideRollDegrees = -4.5F;
     float dashRollDegrees = 2.5F;
+    float wallRunRollDegrees = 8.0F;
     float maxVisualPitchDegrees = 89.0F;
 };
 

@@ -1,0 +1,19 @@
+{
+  "id": "wpn_project_rifle_m4a1",
+  "source": "assets/project_assets/weapon_rifle_m4a1.glb",
+  "export": "assets/project_assets/weapon_rifle_m4a1.glb",
+  "category": "weapon",
+  "scale_meters": true,
+  "runtime_up_axis": "Y",
+  "gameplay_forward_axis": "+Z",
+  "blender_up_axis": "+Y",
+  "blender_forward_axis": "+Z",
+  "dimensions_m": [0.2390, 0.0618, 0.4362],
+  "origin": "Imported Project/Assets weapon GLB; first-person placement is handled by DevRangeRenderScene.",
+  "sockets": [],
+  "collision": "none",
+  "lods": ["wpn_project_rifle_m4a1_lod0"],
+  "license": "original_project_asset",
+  "external_assets": false,
+  "generated_by": "manual_project_assets_import"
+}

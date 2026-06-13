@@ -302,8 +302,8 @@
     {
       "id": "chr_project_male1",
       "kind": "mesh",
-      "source": "../Assets/character_male1.glb",
-      "cooked": "../Assets/character_male1.glb",
+      "source": "assets/project_assets/character_male1.glb",
+      "cooked": "assets/project_assets/character_male1.glb",
       "streamable": true,
       "priority": 89,
       "estimated_bytes": 76643628,
@@ -312,8 +312,8 @@
     {
       "id": "wpn_project_rifle_m4a1",
       "kind": "mesh",
-      "source": "../Assets/weapon_rifle_m4a1.glb",
-      "cooked": "../Assets/weapon_rifle_m4a1.glb",
+      "source": "assets/project_assets/weapon_rifle_m4a1.glb",
+      "cooked": "assets/project_assets/weapon_rifle_m4a1.glb",
       "streamable": true,
       "priority": 91,
       "estimated_bytes": 5074452,
@@ -322,8 +322,8 @@
     {
       "id": "wpn_project_rifle_afr120",
       "kind": "mesh",
-      "source": "../Assets/weapon_rifle_afr120.glb",
-      "cooked": "../Assets/weapon_rifle_afr120.glb",
+      "source": "assets/project_assets/weapon_rifle_afr120.glb",
+      "cooked": "assets/project_assets/weapon_rifle_afr120.glb",
       "streamable": true,
       "priority": 90,
       "estimated_bytes": 8445728,
@@ -332,8 +332,8 @@
     {
       "id": "wpn_project_rifle_ncar",
       "kind": "mesh",
-      "source": "../Assets/weapon_rifle_ncar.glb",
-      "cooked": "../Assets/weapon_rifle_ncar.glb",
+      "source": "assets/project_assets/weapon_rifle_ncar.glb",
+      "cooked": "assets/project_assets/weapon_rifle_ncar.glb",
       "streamable": true,
       "priority": 88,
       "estimated_bytes": 66224088,
@@ -342,8 +342,8 @@
     {
       "id": "wpn_project_smg_fr17",
       "kind": "mesh",
-      "source": "../Assets/weapon_smg_fr17.glb",
-      "cooked": "../Assets/weapon_smg_fr17.glb",
+      "source": "assets/project_assets/weapon_smg_fr17.glb",
+      "cooked": "assets/project_assets/weapon_smg_fr17.glb",
       "streamable": true,
       "priority": 87,
       "estimated_bytes": 33217932,
@@ -352,8 +352,8 @@
     {
       "id": "wpn_project_sidearm_glock19",
       "kind": "mesh",
-      "source": "../Assets/weapon_sidearm_glock19.glb",
-      "cooked": "../Assets/weapon_sidearm_glock19.glb",
+      "source": "assets/project_assets/weapon_sidearm_glock19.glb",
+      "cooked": "assets/project_assets/weapon_sidearm_glock19.glb",
       "streamable": true,
       "priority": 86,
       "estimated_bytes": 4181416,
@@ -362,12 +362,22 @@
     {
       "id": "wpn_project_sidearm_p320",
       "kind": "mesh",
-      "source": "../Assets/weapon_sidearm_p320.glb",
-      "cooked": "../Assets/weapon_sidearm_p320.glb",
+      "source": "assets/project_assets/weapon_sidearm_p320.glb",
+      "cooked": "assets/project_assets/weapon_sidearm_p320.glb",
       "streamable": true,
       "priority": 85,
       "estimated_bytes": 2186252,
       "tags": ["weapon", "sidearm", "first_person", "world_model", "project_assets", "imported_glb", "dev_sandbox"]
+    },
+    {
+      "id": "env_project_skybox1",
+      "kind": "mesh",
+      "source": "assets/project_assets/skybox1.glb",
+      "cooked": "assets/project_assets/skybox1.glb",
+      "streamable": true,
+      "priority": 84,
+      "estimated_bytes": 10546648,
+      "tags": ["environment", "skybox", "sky_dome", "project_assets", "imported_glb", "dev_sandbox"]
     }
   ]
 }

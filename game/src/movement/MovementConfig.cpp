@@ -23,6 +23,8 @@ MovementTuning movementTuningFromConfig(const novacore::core::ConfigDocument& do
     fallback.coyoteTimeSeconds = numberOr(document, "jump.coyote_time", fallback.coyoteTimeSeconds);
     fallback.jumpBufferSeconds = numberOr(document, "jump.buffer_time", fallback.jumpBufferSeconds);
     fallback.doubleJumpImpulse = numberOr(document, "double_jump_impulse", fallback.doubleJumpImpulse);
+    fallback.doubleJumpMinAirborneSeconds =
+        numberOr(document, "double_jump.min_airborne_time", fallback.doubleJumpMinAirborneSeconds);
     fallback.gravity = numberOr(document, "gravity", fallback.gravity);
     fallback.airAcceleration = numberOr(document, "air_acceleration", fallback.airAcceleration);
     fallback.airMaxSpeed = numberOr(document, "air.max_speed", fallback.airMaxSpeed);

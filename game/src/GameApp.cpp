@@ -47,6 +47,43 @@ struct MeshPreviewBounds final {
     }
 };
 
+struct DevRangeWeaponPickup final {
+    std::string_view weaponId;
+    std::string_view label;
+    novacore::math::Vec3 position;
+    float radiusMeters = 1.7F;
+};
+
+[[nodiscard]] const std::array<DevRangeWeaponPickup, 4>& devRangeWeaponPickups() {
+    static const std::array<DevRangeWeaponPickup, 4> kPickups{
+        DevRangeWeaponPickup{"ar_01", "MODULAR RIFLE", {-4.95F, 0.0F, -7.78F}, 2.0F},
+        DevRangeWeaponPickup{"shotgun_01", "BREACH RIFLE", {-0.55F, 0.0F, -7.86F}, 2.0F},
+        DevRangeWeaponPickup{"smg_01", "FR-17 SMG", {1.45F, 0.0F, -7.82F}, 1.8F},
+        DevRangeWeaponPickup{"sidearm_01", "COMPACT SIDEARM", {3.15F, 0.0F, -7.86F}, 1.65F},
+    };
+    return kPickups;
+}
+
+[[nodiscard]] float horizontalDistanceSquared(novacore::math::Vec3 a, novacore::math::Vec3 b) {
+    const float dx = a.x - b.x;
+    const float dz = a.z - b.z;
+    return (dx * dx) + (dz * dz);
+}
+
+[[nodiscard]] const DevRangeWeaponPickup* nearestWeaponPickup(novacore::math::Vec3 playerPosition) {
+    const DevRangeWeaponPickup* nearest = nullptr;
+    float nearestDistanceSquared = std::numeric_limits<float>::max();
+    for (const auto& pickup : devRangeWeaponPickups()) {
+        const float distanceSquared = horizontalDistanceSquared(playerPosition, pickup.position);
+        const float radiusSquared = pickup.radiusMeters * pickup.radiusMeters;
+        if (distanceSquared <= radiusSquared && distanceSquared < nearestDistanceSquared) {
+            nearest = &pickup;
+            nearestDistanceSquared = distanceSquared;
+        }
+    }
+    return nearest;
+}
+
 [[nodiscard]] std::array<float, 2> projectMeshPreview(
     const MeshPreviewBounds& bounds,
     novacore::math::Vec3 position) {
@@ -286,8 +323,12 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
         const bool activeMantleInterpolation =
             movementState->mode == movement::MovementMode::Mantling &&
             movementState->mantleTimeRemaining > 0.0F;
+        const bool wallRunStateReady =
+            movementState->mode == movement::MovementMode::Airborne ||
+            movementState->mode == movement::MovementMode::WallRunning ||
+            movementState->mode == movement::MovementMode::Dashing;
         const bool wallRunCandidate = collisionSample.nearWallRunSurface &&
-            !collisionSample.grounded &&
+            wallRunStateReady &&
             movementState->position.y >= movement_.tuning().wallRunMinHeight;
         if (collisionSample.blocked && !wallRunCandidate && !activeMantleInterpolation) {
             if (std::abs(collisionSample.correction.x) > 0.0001F) {
@@ -308,7 +349,7 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
         if (collisionSample.grounded && movementState->velocity.y < 0.0F && !activeMantleInterpolation) {
             movementState->velocity.y = 0.0F;
         }
-        if (collisionSample.grounded && !activeMantleInterpolation) {
+        if (collisionSample.grounded && !wallRunCandidate && !activeMantleInterpolation) {
             movementState->hasDoubleJump = true;
             movementState->coyoteTimeRemaining = movement_.tuning().coyoteTimeSeconds;
             movementState->airborneTimeSeconds = 0.0F;
@@ -349,6 +390,8 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
             cameraTransform->position = movementState->position + novacore::math::Vec3{0.0F, 1.65F, 0.0F};
         }
     }
+
+    processGameplayWeaponInteractions(command);
 
     auto* weaponState = world_.getComponent<weapons::WeaponRuntimeState>(localPlayerEntity_);
     if (weaponState != nullptr) {
@@ -740,6 +783,56 @@ void GameApp::syncRuntimeLoadout() {
     }
 }
 
+void GameApp::processGameplayWeaponInteractions(const player::PlayerInputCommand& command) {
+    std::string_view requestedWeaponId;
+    std::string_view requestedLabel;
+
+    if (command.switchWeaponPrimaryPressed) {
+        requestedWeaponId = "ar_01";
+        requestedLabel = "MODULAR RIFLE";
+    } else if (command.switchWeaponSmgPressed) {
+        requestedWeaponId = "smg_01";
+        requestedLabel = "FR-17 SMG";
+    } else if (command.switchWeaponSidearmPressed) {
+        requestedWeaponId = "sidearm_01";
+        requestedLabel = "COMPACT SIDEARM";
+    } else if (command.pickupWeaponPressed) {
+        novacore::math::Vec3 playerPosition = greyboxWorld_.playerSpawn;
+        if (const auto* movementState = world_.getComponent<movement::PlayerMovementState>(localPlayerEntity_);
+            movementState != nullptr) {
+            playerPosition = movementState->position;
+        }
+
+        if (const auto* pickup = nearestWeaponPickup(playerPosition); pickup != nullptr) {
+            requestedWeaponId = pickup->weaponId;
+            requestedLabel = pickup->label;
+        } else {
+            devRangeSession_.eventText = "NO WEAPON IN REACH";
+            devRangeSession_.eventTextSeconds = devRangeTuning_.eventTextSeconds;
+            return;
+        }
+    }
+
+    if (requestedWeaponId.empty()) {
+        return;
+    }
+
+    const auto* definition = weapons_.findWeapon(requestedWeaponId);
+    if (definition == nullptr) {
+        devRangeSession_.eventText = "WEAPON DATA MISSING";
+        devRangeSession_.eventTextSeconds = devRangeTuning_.eventTextSeconds;
+        return;
+    }
+
+    activeLoadout_.weaponId = std::string(requestedWeaponId);
+    syncRuntimeLoadout();
+    const auto displayName = requestedLabel.empty()
+        ? std::string_view(definition->displayName)
+        : requestedLabel;
+    devRangeSession_.eventText = "EQUIPPED " + std::string(displayName);
+    devRangeSession_.eventTextSeconds = devRangeTuning_.eventTextSeconds;
+}
+
 void GameApp::ensureActiveWeapon(
     weapons::WeaponRuntimeState& weaponState,
     const weapons::WeaponDefinition& effectiveWeapon) {
@@ -1013,6 +1106,13 @@ dev::DevRangePlayerRenderState GameApp::currentPlayerRenderState() const {
         movementState != nullptr) {
         state.position = movementState->position;
         state.movementTech = movementState->tech;
+        state.movementMode = movementState->mode;
+        if (movementState->mantleTimeRemaining > 0.0F || movementState->mantleProgressSeconds > 0.0F) {
+            const float duration = std::max(0.001F, movement_.tuning().mantleDurationSeconds);
+            state.mantleProgress01 = std::clamp(movementState->mantleProgressSeconds / duration, 0.0F, 1.0F);
+        }
+        state.wallRunTimeRemaining = movementState->wallRunTimeRemaining;
+        state.hasWallRunContact = movementState->hasWallRunContact;
         state.hasMovementState = true;
     } else if (const auto* transform = world_.getComponent<novacore::ecs::TransformComponent>(localPlayerEntity_);
         transform != nullptr) {
@@ -1042,6 +1142,9 @@ dev::DevRangePlayerRenderState GameApp::currentPlayerRenderState() const {
     if (const auto* weapon = world_.getComponent<weapons::WeaponRuntimeState>(localPlayerEntity_);
         weapon != nullptr) {
         state.weapon = *weapon;
+        if (!state.hasCameraRig) {
+            state.adsAlpha = weapon->adsAlpha;
+        }
     }
 
     return state;

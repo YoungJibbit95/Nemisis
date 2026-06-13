@@ -35,7 +35,7 @@ namespace {
 
 [[nodiscard]] novacore::platform::InputDeviceKind dominantDevice(
     const novacore::platform::InputActionMap& actions) {
-    const std::array<std::string_view, 16> actionNames{
+    const std::array<std::string_view, 20> actionNames{
         actions::MoveForward,
         actions::MoveBackward,
         actions::MoveLeft,
@@ -52,6 +52,10 @@ namespace {
         actions::Ads,
         actions::Reload,
         actions::DoubleJump,
+        actions::PickupWeapon,
+        actions::SwitchWeaponPrimary,
+        actions::SwitchWeaponSmg,
+        actions::SwitchWeaponSidearm,
     };
 
     for (const auto action : actionNames) {
@@ -102,6 +106,10 @@ player::PlayerInputCommand buildPlayerInputCommand(
     command.adsHeld = down(actions, actions::Ads);
     command.reloadPressed = pressed(actions, actions::Reload);
     command.reloadHeld = down(actions, actions::Reload);
+    command.pickupWeaponPressed = pressed(actions, actions::PickupWeapon);
+    command.switchWeaponPrimaryPressed = pressed(actions, actions::SwitchWeaponPrimary);
+    command.switchWeaponSmgPressed = pressed(actions, actions::SwitchWeaponSmg);
+    command.switchWeaponSidearmPressed = pressed(actions, actions::SwitchWeaponSidearm);
     command.device = dominantDevice(actions);
 
     const bool controller = command.device == novacore::platform::InputDeviceKind::Controller;

@@ -68,12 +68,31 @@ void testWeaponRecoilAffectsVisualView() {
     expect(frame.view.yawDegrees > 0.0F, "recoil nudges visual yaw");
 }
 
+void testAdsNarrowsVisualFov() {
+    nemisis::player::CameraRigState state{};
+    nemisis::player::CameraRigInput input{};
+    input.fixedDeltaSeconds = 1.0F / 60.0F;
+
+    auto frame = nemisis::player::updateCameraRig(state, input);
+    const float baseFov = frame.verticalFovDegrees;
+
+    input.adsHeld = true;
+    input.weapon.adsAlpha = 1.0F;
+    for (int i = 0; i < 30; ++i) {
+        frame = nemisis::player::updateCameraRig(state, input);
+    }
+
+    expect(frame.verticalFovDegrees < baseFov - 4.0F, "ADS narrows visual FOV clearly");
+    expect(frame.adsAlpha > 0.90F, "camera rig exposes ADS alpha");
+}
+
 } // namespace
 
 int main() {
     testCameraInitializesAtEyeHeight();
     testSprintExpandsFovAndBob();
     testWeaponRecoilAffectsVisualView();
+    testAdsNarrowsVisualFov();
 
     if (failures > 0) {
         std::cerr << failures << " player camera rig test(s) failed\n";

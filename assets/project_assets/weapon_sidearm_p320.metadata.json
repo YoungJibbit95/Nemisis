@@ -1,0 +1,19 @@
+{
+  "id": "wpn_project_sidearm_p320",
+  "source": "assets/project_assets/weapon_sidearm_p320.glb",
+  "export": "assets/project_assets/weapon_sidearm_p320.glb",
+  "category": "weapon",
+  "scale_meters": true,
+  "runtime_up_axis": "Y",
+  "gameplay_forward_axis": "+Z",
+  "blender_up_axis": "+Y",
+  "blender_forward_axis": "+Z",
+  "dimensions_m": [0.1973, 0.0382, 0.2693],
+  "origin": "Imported Project/Assets sidearm GLB; first-person placement is handled by DevRangeRenderScene.",
+  "sockets": [],
+  "collision": "none",
+  "lods": ["wpn_project_sidearm_p320_lod0"],
+  "license": "original_project_asset",
+  "external_assets": false,
+  "generated_by": "manual_project_assets_import"
+}

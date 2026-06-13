@@ -1,0 +1,19 @@
+{
+  "id": "chr_project_male1",
+  "source": "assets/project_assets/character_male1.glb",
+  "export": "assets/project_assets/character_male1.glb",
+  "category": "character",
+  "scale_meters": true,
+  "runtime_up_axis": "Y",
+  "gameplay_forward_axis": "+Z",
+  "blender_up_axis": "+Y",
+  "blender_forward_axis": "+Z",
+  "dimensions_m": [1.8975, 1.8124, 0.3942],
+  "origin": "Imported Project/Assets character GLB; no authored Nemisis sockets or collision proxies.",
+  "sockets": [],
+  "collision": "none",
+  "lods": ["chr_project_male1_lod0"],
+  "license": "original_project_asset",
+  "external_assets": false,
+  "generated_by": "manual_project_assets_import"
+}

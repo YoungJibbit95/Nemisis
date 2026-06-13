@@ -198,6 +198,35 @@ void testLookSensitivitySettingsScaleCommand() {
     expect(command.look.y > 0.74F && command.look.y < 0.76F, "mouse y is scaled by sensitivity and ADS multiplier");
 }
 
+void testWeaponInteractionActionsBuildCommand() {
+    auto actionMap = nemisis::input::createDefaultActionMap();
+    novacore::platform::InputSnapshot snapshot;
+    snapshot.setButton(
+        {novacore::platform::InputControlKind::KeyboardKey, nemisis::input::key_codes::F},
+        true,
+        novacore::platform::InputDeviceKind::KeyboardMouse);
+    snapshot.setButton(
+        {novacore::platform::InputControlKind::KeyboardKey, nemisis::input::key_codes::Digit4},
+        true,
+        novacore::platform::InputDeviceKind::KeyboardMouse);
+    snapshot.setButton(
+        {novacore::platform::InputControlKind::KeyboardKey, nemisis::input::key_codes::Digit5},
+        true,
+        novacore::platform::InputDeviceKind::KeyboardMouse);
+    snapshot.setButton(
+        {novacore::platform::InputControlKind::KeyboardKey, nemisis::input::key_codes::Digit6},
+        true,
+        novacore::platform::InputDeviceKind::KeyboardMouse);
+
+    actionMap.update(snapshot);
+    const auto command = nemisis::input::buildPlayerInputCommand(actionMap, 18);
+
+    expect(command.pickupWeaponPressed, "pickup weapon maps to input command");
+    expect(command.switchWeaponPrimaryPressed, "primary weapon switch maps to input command");
+    expect(command.switchWeaponSmgPressed, "smg weapon switch maps to input command");
+    expect(command.switchWeaponSidearmPressed, "sidearm weapon switch maps to input command");
+}
+
 } // namespace
 
 int main() {
@@ -209,6 +238,7 @@ int main() {
     testMouseLookBuildsCommand();
     testControllerLookBuildsCommand();
     testLookSensitivitySettingsScaleCommand();
+    testWeaponInteractionActionsBuildCommand();
 
     if (failures > 0) {
         std::cerr << failures << " input command test(s) failed\n";

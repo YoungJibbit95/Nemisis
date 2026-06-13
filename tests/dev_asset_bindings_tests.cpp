@@ -71,6 +71,7 @@ std::vector<AssetSpec> requiredSpecs() {
         {"wpn_project_smg_fr17", "mesh", "weapon", "assets/project_assets/weapon_smg_fr17.glb", "assets/project_assets/weapon_smg_fr17.glb"},
         {"wpn_project_sidearm_glock19", "mesh", "weapon", "assets/project_assets/weapon_sidearm_glock19.glb", "assets/project_assets/weapon_sidearm_glock19.glb"},
         {"wpn_project_sidearm_p320", "mesh", "weapon", "assets/project_assets/weapon_sidearm_p320.glb", "assets/project_assets/weapon_sidearm_p320.glb"},
+        {"env_project_skybox1", "mesh", "environment", "assets/project_assets/skybox1.glb", "assets/project_assets/skybox1.glb"},
     };
 }
 

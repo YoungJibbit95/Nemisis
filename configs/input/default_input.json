@@ -16,6 +16,10 @@
     "fire": "MouseLeft",
     "ads": "MouseRight",
     "reload": "R",
+    "pickup_weapon": "F",
+    "switch_weapon_primary": "4",
+    "switch_weapon_smg": "5",
+    "switch_weapon_sidearm": "6",
     "look": "MouseDelta"
   },
   "controller": {
@@ -35,6 +39,10 @@
       "fire": "RightTrigger",
       "ads": "LeftTrigger",
       "reload": "X",
+      "pickup_weapon": "Y",
+      "switch_weapon_primary": "DPadUp",
+      "switch_weapon_smg": "DPadLeft",
+      "switch_weapon_sidearm": "DPadRight",
       "look": "RightStick"
     },
     "aim_assist": {

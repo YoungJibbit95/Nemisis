@@ -15,7 +15,7 @@
 
 namespace nemisis::assets {
 
-using RequiredDevAssetIds = std::array<std::string_view, 35>;
+using RequiredDevAssetIds = std::array<std::string_view, 36>;
 
 struct DevAssetBindingSummary final {
     std::size_t requiredAssetCount = 0;

@@ -5,23 +5,23 @@ Generated: 2026-06-13
 Scan command:
 
 ```powershell
-python tools\assets\asset_readiness_check.py --repo-root . --with-blender --output assets\processed\readiness\asset_readiness_scan.json
+python tools\assets\asset_readiness_check.py --repo-root . --output assets\processed\readiness\asset_readiness_scan.json
 ```
 
 ## Scope
 
-- Checked `assets/source/blender`, `assets/export/gltf`, `assets/generated`, `F:\Coding\Project\Assets`, `configs/assets/nemisis_assets.json`, and existing Blender tooling.
-- No `assets/asset` or `Assets/asset` drop folder exists in this checkout. The imported GLB drop is the sibling folder `F:\Coding\Project\Assets`.
-- Original `.blend` and `.glb` assets were not rewritten. Sidecar metadata was added next to the imported Project GLBs, and the audit output is `assets/processed/readiness/asset_readiness_scan.json`.
-- Blender CLI was available at `F:\Program Files\Blender Foundation\Blender 5.1\blender.EXE` and reported `Blender 5.1.2`.
+- Checked `assets/source/blender`, `assets/export/gltf`, `assets/generated`, `assets/project_assets`, `configs/assets/nemisis_assets.json`, and existing asset tooling.
+- The imported Project GLB drop is now repo-local under `assets/project_assets`; `F:\Coding\Project\Assets` is only a staging location for newly dropped files.
+- Original `.blend` assets were not rewritten. Sidecar metadata was added next to the imported Project GLBs and skybox, and the audit output is `assets/processed/readiness/asset_readiness_scan.json`.
+- This scan did not request Blender validation. Run the same command with `--with-blender` when Blender transform checks are needed.
 
 ## Summary
 
-- Catalog entries: 37 total, 35 runtime mesh/scene GLBs plus 2 material IDs.
-- GLB inventory: 28 repo-local runtime GLBs plus 7 sibling `Project/Assets` GLBs, 0 orphan repo GLBs, 0 uncataloged runtime `.blend` sources.
+- Catalog entries: 38 total, 36 runtime mesh/scene GLBs plus 2 material IDs.
+- GLB inventory: 36 repo-local runtime GLBs under `assets/`, including the imported Project character/weapons plus `skybox1.glb`; 0 orphan repo GLBs, 0 uncataloged runtime `.blend` sources.
 - Format: every scanned cataloged GLB is binary glTF 2.0 with an embedded BIN chunk.
 - Texture/material references: no scanned GLB uses external buffer or image URIs. Imported Project GLBs carry embedded image data.
-- Blender source scan: 21 cataloged `.blend` files opened headless; unit scale is meters/1.0 and no mesh object has unapplied scale or rotation.
+- Blender source scan: not requested in this pass. The previous Blender-enabled audit opened 21 cataloged `.blend` files headless with meter scale and no unapplied mesh transforms.
 - Root/pivot note: A1/A2 sources include root empties named after the asset at origin. Older A0 dev primitives do not, but their sockets/collision nodes are present and transforms are applied.
 
 ## Game-Ready Now
@@ -50,17 +50,18 @@ Recommended first import IDs for runtime smoke tests:
 
 ## Runtime-Active Project Assets
 
-These sibling-folder GLBs are now cataloged, bound by `DevAssetBindings`, registered as renderer mesh resources, and submitted by the Dev Range render scene. They are not yet full production-ready imports because the source GLBs do not contain authored Nemisis `socket_*` empties, exported `col_` proxies, or filename stems matching their runtime IDs.
+These Project GLBs have been moved into `assets/project_assets`, cataloged, bound by `DevAssetBindings`, registered as renderer mesh resources, and submitted by the Dev Range render scene. They are not yet full production-ready imports because the source GLBs do not contain authored Nemisis `socket_*` empties, exported `col_` proxies, or filename stems matching their runtime IDs.
 
 | Import ID | File | Ingame use |
 | --- | --- | --- |
-| `chr_project_male1` | `F:\Coding\Project\Assets\character_male1.glb` | Target-lane actor fallback/showcase character |
-| `wpn_project_rifle_m4a1` | `F:\Coding\Project\Assets\weapon_rifle_m4a1.glb` | Default first-person rifle and showcase rack |
-| `wpn_project_rifle_afr120` | `F:\Coding\Project\Assets\weapon_rifle_afr120.glb` | Showcase rack rifle |
-| `wpn_project_rifle_ncar` | `F:\Coding\Project\Assets\weapon_rifle_ncar.glb` | Shotgun-slot first-person placeholder and showcase rack |
-| `wpn_project_smg_fr17` | `F:\Coding\Project\Assets\weapon_smg_fr17.glb` | SMG first-person placeholder and showcase rack |
-| `wpn_project_sidearm_glock19` | `F:\Coding\Project\Assets\weapon_sidearm_glock19.glb` | Sidearm first-person placeholder and showcase rack |
-| `wpn_project_sidearm_p320` | `F:\Coding\Project\Assets\weapon_sidearm_p320.glb` | Showcase rack sidearm |
+| `chr_project_male1` | `assets/project_assets/character_male1.glb` | Target-lane actor fallback/showcase character and local first-person body presentation |
+| `wpn_project_rifle_m4a1` | `assets/project_assets/weapon_rifle_m4a1.glb` | Default first-person rifle, direct-switch AR, pickup rack |
+| `wpn_project_rifle_afr120` | `assets/project_assets/weapon_rifle_afr120.glb` | Showcase rack rifle |
+| `wpn_project_rifle_ncar` | `assets/project_assets/weapon_rifle_ncar.glb` | Shotgun-slot first-person placeholder and pickup rack |
+| `wpn_project_smg_fr17` | `assets/project_assets/weapon_smg_fr17.glb` | SMG first-person placeholder, direct-switch SMG, pickup rack |
+| `wpn_project_sidearm_glock19` | `assets/project_assets/weapon_sidearm_glock19.glb` | Sidearm first-person placeholder, direct-switch sidearm, pickup rack |
+| `wpn_project_sidearm_p320` | `assets/project_assets/weapon_sidearm_p320.glb` | Showcase rack sidearm |
+| `env_project_skybox1` | `assets/project_assets/skybox1.glb` | First-pass Dev Range sky environment mesh |
 
 ## Ready With Notes
 
@@ -91,9 +92,9 @@ Current runtime bridge:
 - The Dev Range now provides temporary runtime collision proxies for visible A2 stage pieces in `GreyboxWorld`.
 - Runtime proxy ids include `asset_a2_slide_ramp_collision`, `asset_a2_wallrun_panel_collision`, `asset_a2_cover_crate_collision`, `asset_a2_range_hero_collision`, and asset-stage plinth/backboard collision ids.
 - These proxies make the current smoke-test scene playable, but they are not a replacement for authored `col_` nodes or collision metadata in production assets.
-- The game asset catalog also contains temporary Project asset IDs that resolve to sibling-folder GLBs under `../Assets`. These are intentionally not committed here yet; decide later whether they move into `assets/`, use Git LFS, or stay as local staged source drops.
-- Current Project preview IDs are `chr_project_male1`, `wpn_project_rifle_m4a1`, `wpn_project_rifle_afr120`, `wpn_project_rifle_ncar`, `wpn_project_smg_fr17`, `wpn_project_sidearm_glock19`, and `wpn_project_sidearm_p320`.
-- Project assets `chr_project_male1`, `wpn_project_rifle_m4a1`, `wpn_project_rifle_afr120`, `wpn_project_rifle_ncar`, `wpn_project_smg_fr17`, `wpn_project_sidearm_glock19`, and `wpn_project_sidearm_p320` are runtime-active but need a future non-destructive normalization pass with stable filename stems, `socket_muzzle`/grip sockets for weapons, root/camera/weapon sockets for the character, and optional `col_` proxies.
+- The game asset catalog now resolves Project asset IDs from committed repo-local paths under `assets/project_assets`. Future asset-agent work should add authored sockets/collision/animation data instead of relying on runtime placement heuristics.
+- Current Project preview IDs are `chr_project_male1`, `wpn_project_rifle_m4a1`, `wpn_project_rifle_afr120`, `wpn_project_rifle_ncar`, `wpn_project_smg_fr17`, `wpn_project_sidearm_glock19`, `wpn_project_sidearm_p320`, and `env_project_skybox1`.
+- Project assets `chr_project_male1`, `wpn_project_rifle_m4a1`, `wpn_project_rifle_afr120`, `wpn_project_rifle_ncar`, `wpn_project_smg_fr17`, `wpn_project_sidearm_glock19`, and `wpn_project_sidearm_p320` are runtime-active but need a future non-destructive normalization pass with stable filename stems, `socket_muzzle`/grip sockets for weapons, root/camera/weapon sockets for the character, and optional `col_` proxies. `env_project_skybox1` is runtime-active as a temporary large GLB sky mesh until NovaCore gets a dedicated cubemap/skybox pass.
 
 ## Import Metadata Contract
 
@@ -134,7 +135,7 @@ Socket expectations:
 Run:
 
 ```powershell
-python tools\assets\asset_readiness_check.py --repo-root . --with-blender --output assets\processed\readiness\asset_readiness_scan.json
+python tools\assets\asset_readiness_check.py --repo-root . --output assets\processed\readiness\asset_readiness_scan.json
 ```
 
-Use `--fail-on-error` if this should become a CI gate after the current manual-work items are resolved.
+Add `--with-blender` for a full Blender-source transform audit, and use `--fail-on-error` if this should become a CI gate after the current manual-work items are resolved.

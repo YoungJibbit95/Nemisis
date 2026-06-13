@@ -28,6 +28,10 @@ struct PlayerInputCommand final {
     bool adsHeld = false;
     bool reloadPressed = false;
     bool reloadHeld = false;
+    bool pickupWeaponPressed = false;
+    bool switchWeaponPrimaryPressed = false;
+    bool switchWeaponSmgPressed = false;
+    bool switchWeaponSidearmPressed = false;
 
     novacore::platform::InputDeviceKind device = novacore::platform::InputDeviceKind::KeyboardMouse;
 };

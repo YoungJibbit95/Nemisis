@@ -106,7 +106,8 @@ Current implemented slice:
 - Right trigger maps to fire.
 - Left trigger maps to ADS.
 - Gamepad button bindings cover jump, dash, slide, sprint, mantle, and reload.
-- Keyboard `P` and controller `Y` map to `ResetRange` for the Dev Shooting Range.
+- Keyboard `P` maps to `ResetRange` for the Dev Shooting Range.
+- Keyboard `F` and controller `Y` map to Dev Range weapon pickup; keyboard `4`/`5`/`6` and controller D-pad Up/Left/Right map to direct AR/SMG/sidearm selection.
 - `F1` toggles the debug overlay.
 - `Tab` cycles debug overlay pages.
 - Controller Start/Menu cycles debug overlay pages.

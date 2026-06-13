@@ -1,29 +1,29 @@
 {
-  "generated_at_utc": "2026-06-13T10:35:28+00:00",
+  "generated_at_utc": "2026-06-13T12:08:39+00:00",
   "repo_root": "F:\\Coding\\Project\\Nemisis",
   "catalog": "configs/assets/nemisis_assets.json",
   "summary": {
-    "catalog_entries": 37,
-    "runtime_mesh_or_scene_entries": 35,
-    "glb_files_under_assets": 28,
+    "catalog_entries": 38,
+    "runtime_mesh_or_scene_entries": 36,
+    "glb_files_under_assets": 36,
     "orphan_glbs": 0,
     "uncataloged_blends": 0,
     "by_status": {
       "needs_manual_work": 16,
-      "ready_with_notes": 8,
+      "ready_with_notes": 9,
       "game_ready": 9,
       "needs_collision_or_metadata_work": 4
     },
     "by_issue_severity": {
       "error": 16,
-      "warning": 88,
+      "warning": 92,
       "manual": 16
     }
   },
   "blender": {
-    "requested": true,
-    "path": "F:\\Program Files\\Blender Foundation\\Blender 5.1\\blender.EXE",
-    "version": "Blender 5.1.2",
+    "requested": false,
+    "path": null,
+    "version": null,
     "scan_error": null
   },
   "records": [
@@ -132,23 +132,6 @@
         ],
         "license": "original_project_asset",
         "external_assets": null
-      },
-      "blender_source": {
-        "unit_system": "METRIC",
-        "scale_length": 1.0,
-        "object_count": 8,
-        "mesh_count": 5,
-        "material_count": 5,
-        "sockets": [
-          "socket_head_center",
-          "socket_hit_center",
-          "socket_vfx"
-        ],
-        "collisions": [
-          "col_prop_target_dummy_01"
-        ],
-        "root_objects": [],
-        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -223,23 +206,6 @@
         ],
         "license": "original_project_asset",
         "external_assets": null
-      },
-      "blender_source": {
-        "unit_system": "METRIC",
-        "scale_length": 1.0,
-        "object_count": 13,
-        "mesh_count": 8,
-        "material_count": 3,
-        "sockets": [
-          "socket_eject",
-          "socket_grip_l",
-          "socket_grip_r",
-          "socket_muzzle",
-          "socket_vfx"
-        ],
-        "collisions": [],
-        "root_objects": [],
-        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -314,23 +280,6 @@
         ],
         "license": "original_project_asset",
         "external_assets": null
-      },
-      "blender_source": {
-        "unit_system": "METRIC",
-        "scale_length": 1.0,
-        "object_count": 13,
-        "mesh_count": 8,
-        "material_count": 3,
-        "sockets": [
-          "socket_eject",
-          "socket_grip_l",
-          "socket_grip_r",
-          "socket_muzzle",
-          "socket_vfx"
-        ],
-        "collisions": [],
-        "root_objects": [],
-        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -405,23 +354,6 @@
         ],
         "license": "original_project_asset",
         "external_assets": null
-      },
-      "blender_source": {
-        "unit_system": "METRIC",
-        "scale_length": 1.0,
-        "object_count": 13,
-        "mesh_count": 8,
-        "material_count": 3,
-        "sockets": [
-          "socket_eject",
-          "socket_grip_l",
-          "socket_grip_r",
-          "socket_muzzle",
-          "socket_vfx"
-        ],
-        "collisions": [],
-        "root_objects": [],
-        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -503,30 +435,6 @@
         ],
         "license": "original_project_asset",
         "external_assets": null
-      },
-      "blender_source": {
-        "unit_system": "METRIC",
-        "scale_length": 1.0,
-        "object_count": 84,
-        "mesh_count": 81,
-        "material_count": 7,
-        "sockets": [
-          "socket_control_point",
-          "socket_spawn_alpha",
-          "socket_spawn_bravo"
-        ],
-        "collisions": [
-          "col_env_test_cover_crate_stack_01",
-          "col_env_test_cover_high_01",
-          "col_env_test_cover_low_01",
-          "col_env_test_floor_grid_01",
-          "col_env_test_slide_ramp_01",
-          "col_env_test_wall_back_01",
-          "col_env_test_wall_lane_left_01",
-          "col_env_test_wall_lane_right_01"
-        ],
-        "root_objects": [],
-        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -603,25 +511,6 @@
         ],
         "license": "original_project_asset",
         "external_assets": null
-      },
-      "blender_source": {
-        "unit_system": "METRIC",
-        "scale_length": 1.0,
-        "object_count": 14,
-        "mesh_count": 9,
-        "material_count": 4,
-        "sockets": [
-          "socket_camera",
-          "socket_hit_head",
-          "socket_hit_torso",
-          "socket_root",
-          "socket_weapon_root"
-        ],
-        "collisions": [
-          "col_chr_player_capsule_proxy_01"
-        ],
-        "root_objects": [],
-        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -693,22 +582,6 @@
         ],
         "license": "original_project_asset",
         "external_assets": null
-      },
-      "blender_source": {
-        "unit_system": "METRIC",
-        "scale_length": 1.0,
-        "object_count": 16,
-        "mesh_count": 11,
-        "material_count": 4,
-        "sockets": [
-          "socket_camera",
-          "socket_hand_l",
-          "socket_hand_r",
-          "socket_weapon_root"
-        ],
-        "collisions": [],
-        "root_objects": [],
-        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -788,27 +661,6 @@
         ],
         "license": "original_project_asset",
         "external_assets": null
-      },
-      "blender_source": {
-        "unit_system": "METRIC",
-        "scale_length": 1.0,
-        "object_count": 30,
-        "mesh_count": 22,
-        "material_count": 5,
-        "sockets": [
-          "socket_camera",
-          "socket_hand_l",
-          "socket_hand_r",
-          "socket_head",
-          "socket_root",
-          "socket_vfx",
-          "socket_weapon_root"
-        ],
-        "collisions": [
-          "col_chr_dev_soldier_a_capsule"
-        ],
-        "root_objects": [],
-        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -1469,33 +1321,6 @@
         ],
         "license": "original_project_asset",
         "external_assets": false
-      },
-      "blender_source": {
-        "unit_system": "METRIC",
-        "scale_length": 1.0,
-        "object_count": 21,
-        "mesh_count": 15,
-        "material_count": 5,
-        "sockets": [
-          "socket_eject",
-          "socket_grip_l",
-          "socket_grip_r",
-          "socket_muzzle",
-          "socket_vfx"
-        ],
-        "collisions": [],
-        "root_objects": [
-          {
-            "name": "wpn_a1_compact_rifle_01",
-            "type": "EMPTY",
-            "location": [
-              0.0,
-              0.0,
-              0.0
-            ]
-          }
-        ],
-        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -1556,33 +1381,6 @@
         ],
         "license": "original_project_asset",
         "external_assets": false
-      },
-      "blender_source": {
-        "unit_system": "METRIC",
-        "scale_length": 1.0,
-        "object_count": 21,
-        "mesh_count": 15,
-        "material_count": 5,
-        "sockets": [
-          "socket_eject",
-          "socket_grip_l",
-          "socket_grip_r",
-          "socket_muzzle",
-          "socket_vfx"
-        ],
-        "collisions": [],
-        "root_objects": [
-          {
-            "name": "wpn_a1_modern_rifle_01",
-            "type": "EMPTY",
-            "location": [
-              0.0,
-              0.0,
-              0.0
-            ]
-          }
-        ],
-        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -1642,33 +1440,6 @@
         ],
         "license": "original_project_asset",
         "external_assets": false
-      },
-      "blender_source": {
-        "unit_system": "METRIC",
-        "scale_length": 1.0,
-        "object_count": 17,
-        "mesh_count": 11,
-        "material_count": 4,
-        "sockets": [
-          "socket_eject",
-          "socket_grip_l",
-          "socket_grip_r",
-          "socket_muzzle",
-          "socket_vfx"
-        ],
-        "collisions": [],
-        "root_objects": [
-          {
-            "name": "wpn_a1_compact_sidearm_01",
-            "type": "EMPTY",
-            "location": [
-              0.0,
-              0.0,
-              0.0
-            ]
-          }
-        ],
-        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -1736,38 +1507,6 @@
         ],
         "license": "original_project_asset",
         "external_assets": false
-      },
-      "blender_source": {
-        "unit_system": "METRIC",
-        "scale_length": 1.0,
-        "object_count": 44,
-        "mesh_count": 34,
-        "material_count": 8,
-        "sockets": [
-          "socket_backpack",
-          "socket_camera",
-          "socket_hand_l",
-          "socket_hand_r",
-          "socket_head",
-          "socket_root",
-          "socket_vfx",
-          "socket_weapon_root"
-        ],
-        "collisions": [
-          "col_chr_a1_stylized_operator_01_capsule"
-        ],
-        "root_objects": [
-          {
-            "name": "chr_a1_stylized_operator_01",
-            "type": "EMPTY",
-            "location": [
-              0.0,
-              0.0,
-              0.0
-            ]
-          }
-        ],
-        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -1826,33 +1565,6 @@
         ],
         "license": "original_project_asset",
         "external_assets": false
-      },
-      "blender_source": {
-        "unit_system": "METRIC",
-        "scale_length": 1.0,
-        "object_count": 17,
-        "mesh_count": 10,
-        "material_count": 4,
-        "sockets": [
-          "socket_camera",
-          "socket_hand_l",
-          "socket_hand_r",
-          "socket_vfx",
-          "socket_weapon_root"
-        ],
-        "collisions": [],
-        "root_objects": [
-          {
-            "name": "chr_a1_fp_arms_01",
-            "type": "EMPTY",
-            "location": [
-              0.0,
-              0.0,
-              0.0
-            ]
-          }
-        ],
-        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -1917,35 +1629,6 @@
         ],
         "license": "original_project_asset",
         "external_assets": false
-      },
-      "blender_source": {
-        "unit_system": "METRIC",
-        "scale_length": 1.0,
-        "object_count": 40,
-        "mesh_count": 32,
-        "material_count": 7,
-        "sockets": [
-          "socket_eject",
-          "socket_grip_l",
-          "socket_grip_r",
-          "socket_mag",
-          "socket_muzzle",
-          "socket_optic",
-          "socket_vfx"
-        ],
-        "collisions": [],
-        "root_objects": [
-          {
-            "name": "wpn_a2_blackout_carbine_01",
-            "type": "EMPTY",
-            "location": [
-              0.0,
-              0.0,
-              0.0
-            ]
-          }
-        ],
-        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -2013,36 +1696,6 @@
         ],
         "license": "original_project_asset",
         "external_assets": false
-      },
-      "blender_source": {
-        "unit_system": "METRIC",
-        "scale_length": 1.0,
-        "object_count": 40,
-        "mesh_count": 31,
-        "material_count": 6,
-        "sockets": [
-          "socket_eject",
-          "socket_grip_l",
-          "socket_grip_r",
-          "socket_mag",
-          "socket_muzzle",
-          "socket_optic",
-          "socket_underbarrel",
-          "socket_vfx"
-        ],
-        "collisions": [],
-        "root_objects": [
-          {
-            "name": "wpn_a2_modular_rifle_01",
-            "type": "EMPTY",
-            "location": [
-              0.0,
-              0.0,
-              0.0
-            ]
-          }
-        ],
-        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -2108,35 +1761,6 @@
         ],
         "license": "original_project_asset",
         "external_assets": false
-      },
-      "blender_source": {
-        "unit_system": "METRIC",
-        "scale_length": 1.0,
-        "object_count": 27,
-        "mesh_count": 19,
-        "material_count": 5,
-        "sockets": [
-          "socket_eject",
-          "socket_grip_l",
-          "socket_grip_r",
-          "socket_muzzle",
-          "socket_optic",
-          "socket_rail",
-          "socket_vfx"
-        ],
-        "collisions": [],
-        "root_objects": [
-          {
-            "name": "wpn_a2_striker_sidearm_01",
-            "type": "EMPTY",
-            "location": [
-              0.0,
-              0.0,
-              0.0
-            ]
-          }
-        ],
-        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -2205,38 +1829,6 @@
         ],
         "license": "original_project_asset",
         "external_assets": false
-      },
-      "blender_source": {
-        "unit_system": "METRIC",
-        "scale_length": 1.0,
-        "object_count": 52,
-        "mesh_count": 42,
-        "material_count": 9,
-        "sockets": [
-          "socket_backpack",
-          "socket_camera",
-          "socket_hand_l",
-          "socket_hand_r",
-          "socket_head",
-          "socket_root",
-          "socket_vfx",
-          "socket_weapon_root"
-        ],
-        "collisions": [
-          "col_chr_a2_pilot_operator_01_capsule"
-        ],
-        "root_objects": [
-          {
-            "name": "chr_a2_pilot_operator_01",
-            "type": "EMPTY",
-            "location": [
-              0.0,
-              0.0,
-              0.0
-            ]
-          }
-        ],
-        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -2303,33 +1895,6 @@
         ],
         "license": "original_project_asset",
         "external_assets": false
-      },
-      "blender_source": {
-        "unit_system": "METRIC",
-        "scale_length": 1.0,
-        "object_count": 19,
-        "mesh_count": 13,
-        "material_count": 4,
-        "sockets": [
-          "socket_snap_left",
-          "socket_snap_right",
-          "socket_vfx",
-          "socket_wallrun_end",
-          "socket_wallrun_start"
-        ],
-        "collisions": [],
-        "root_objects": [
-          {
-            "name": "map_a2_wallrun_panel_01",
-            "type": "EMPTY",
-            "location": [
-              0.0,
-              0.0,
-              0.0
-            ]
-          }
-        ],
-        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -2396,33 +1961,6 @@
         ],
         "license": "original_project_asset",
         "external_assets": false
-      },
-      "blender_source": {
-        "unit_system": "METRIC",
-        "scale_length": 1.0,
-        "object_count": 17,
-        "mesh_count": 11,
-        "material_count": 4,
-        "sockets": [
-          "socket_slide_entry",
-          "socket_slide_exit",
-          "socket_snap_bottom",
-          "socket_snap_top",
-          "socket_vfx"
-        ],
-        "collisions": [],
-        "root_objects": [
-          {
-            "name": "map_a2_slide_ramp_01",
-            "type": "EMPTY",
-            "location": [
-              0.0,
-              0.0,
-              0.0
-            ]
-          }
-        ],
-        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -2484,31 +2022,6 @@
         ],
         "license": "original_project_asset",
         "external_assets": false
-      },
-      "blender_source": {
-        "unit_system": "METRIC",
-        "scale_length": 1.0,
-        "object_count": 19,
-        "mesh_count": 15,
-        "material_count": 4,
-        "sockets": [
-          "socket_cover_peak",
-          "socket_snap_center",
-          "socket_vfx"
-        ],
-        "collisions": [],
-        "root_objects": [
-          {
-            "name": "map_a2_cover_crate_01",
-            "type": "EMPTY",
-            "location": [
-              0.0,
-              0.0,
-              0.0
-            ]
-          }
-        ],
-        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -2572,32 +2085,6 @@
         ],
         "license": "original_project_asset",
         "external_assets": false
-      },
-      "blender_source": {
-        "unit_system": "METRIC",
-        "scale_length": 1.0,
-        "object_count": 18,
-        "mesh_count": 13,
-        "material_count": 5,
-        "sockets": [
-          "socket_interact",
-          "socket_snap_center",
-          "socket_target_center",
-          "socket_vfx"
-        ],
-        "collisions": [],
-        "root_objects": [
-          {
-            "name": "prop_a2_range_hero_01",
-            "type": "EMPTY",
-            "location": [
-              0.0,
-              0.0,
-              0.0
-            ]
-          }
-        ],
-        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -2610,7 +2097,7 @@
         "imported_glb",
         "dev_sandbox"
       ],
-      "source": "../Assets/character_male1.glb",
+      "source": "assets/project_assets/character_male1.glb",
       "issues": [
         {
           "severity": "warning",
@@ -2633,8 +2120,8 @@
           "message": "Declared LOD names are not visible in GLB node names."
         }
       ],
-      "cooked": "../Assets/character_male1.glb",
-      "metadata": "F:/Coding/Project/Nemisis/../Assets/character_male1.metadata.json",
+      "cooked": "assets/project_assets/character_male1.glb",
+      "metadata": "assets/project_assets/character_male1.metadata.json",
       "status": "needs_manual_work",
       "glb": {
         "valid": true,
@@ -2678,7 +2165,7 @@
         "imported_glb",
         "dev_sandbox"
       ],
-      "source": "../Assets/weapon_rifle_m4a1.glb",
+      "source": "assets/project_assets/weapon_rifle_m4a1.glb",
       "issues": [
         {
           "severity": "warning",
@@ -2701,8 +2188,8 @@
           "message": "Declared LOD names are not visible in GLB node names."
         }
       ],
-      "cooked": "../Assets/weapon_rifle_m4a1.glb",
-      "metadata": "F:/Coding/Project/Nemisis/../Assets/weapon_rifle_m4a1.metadata.json",
+      "cooked": "assets/project_assets/weapon_rifle_m4a1.glb",
+      "metadata": "assets/project_assets/weapon_rifle_m4a1.metadata.json",
       "status": "needs_manual_work",
       "glb": {
         "valid": true,
@@ -2746,7 +2233,7 @@
         "imported_glb",
         "dev_sandbox"
       ],
-      "source": "../Assets/weapon_rifle_afr120.glb",
+      "source": "assets/project_assets/weapon_rifle_afr120.glb",
       "issues": [
         {
           "severity": "warning",
@@ -2769,8 +2256,8 @@
           "message": "Declared LOD names are not visible in GLB node names."
         }
       ],
-      "cooked": "../Assets/weapon_rifle_afr120.glb",
-      "metadata": "F:/Coding/Project/Nemisis/../Assets/weapon_rifle_afr120.metadata.json",
+      "cooked": "assets/project_assets/weapon_rifle_afr120.glb",
+      "metadata": "assets/project_assets/weapon_rifle_afr120.metadata.json",
       "status": "needs_manual_work",
       "glb": {
         "valid": true,
@@ -2814,7 +2301,7 @@
         "imported_glb",
         "dev_sandbox"
       ],
-      "source": "../Assets/weapon_rifle_ncar.glb",
+      "source": "assets/project_assets/weapon_rifle_ncar.glb",
       "issues": [
         {
           "severity": "warning",
@@ -2837,8 +2324,8 @@
           "message": "Declared LOD names are not visible in GLB node names."
         }
       ],
-      "cooked": "../Assets/weapon_rifle_ncar.glb",
-      "metadata": "F:/Coding/Project/Nemisis/../Assets/weapon_rifle_ncar.metadata.json",
+      "cooked": "assets/project_assets/weapon_rifle_ncar.glb",
+      "metadata": "assets/project_assets/weapon_rifle_ncar.metadata.json",
       "status": "needs_manual_work",
       "glb": {
         "valid": true,
@@ -2882,7 +2369,7 @@
         "imported_glb",
         "dev_sandbox"
       ],
-      "source": "../Assets/weapon_smg_fr17.glb",
+      "source": "assets/project_assets/weapon_smg_fr17.glb",
       "issues": [
         {
           "severity": "warning",
@@ -2905,8 +2392,8 @@
           "message": "Declared LOD names are not visible in GLB node names."
         }
       ],
-      "cooked": "../Assets/weapon_smg_fr17.glb",
-      "metadata": "F:/Coding/Project/Nemisis/../Assets/weapon_smg_fr17.metadata.json",
+      "cooked": "assets/project_assets/weapon_smg_fr17.glb",
+      "metadata": "assets/project_assets/weapon_smg_fr17.metadata.json",
       "status": "needs_manual_work",
       "glb": {
         "valid": true,
@@ -2950,7 +2437,7 @@
         "imported_glb",
         "dev_sandbox"
       ],
-      "source": "../Assets/weapon_sidearm_glock19.glb",
+      "source": "assets/project_assets/weapon_sidearm_glock19.glb",
       "issues": [
         {
           "severity": "warning",
@@ -2973,8 +2460,8 @@
           "message": "Declared LOD names are not visible in GLB node names."
         }
       ],
-      "cooked": "../Assets/weapon_sidearm_glock19.glb",
-      "metadata": "F:/Coding/Project/Nemisis/../Assets/weapon_sidearm_glock19.metadata.json",
+      "cooked": "assets/project_assets/weapon_sidearm_glock19.glb",
+      "metadata": "assets/project_assets/weapon_sidearm_glock19.metadata.json",
       "status": "needs_manual_work",
       "glb": {
         "valid": true,
@@ -3018,7 +2505,7 @@
         "imported_glb",
         "dev_sandbox"
       ],
-      "source": "../Assets/weapon_sidearm_p320.glb",
+      "source": "assets/project_assets/weapon_sidearm_p320.glb",
       "issues": [
         {
           "severity": "warning",
@@ -3041,8 +2528,8 @@
           "message": "Declared LOD names are not visible in GLB node names."
         }
       ],
-      "cooked": "../Assets/weapon_sidearm_p320.glb",
-      "metadata": "F:/Coding/Project/Nemisis/../Assets/weapon_sidearm_p320.metadata.json",
+      "cooked": "assets/project_assets/weapon_sidearm_p320.glb",
+      "metadata": "assets/project_assets/weapon_sidearm_p320.metadata.json",
       "status": "needs_manual_work",
       "glb": {
         "valid": true,
@@ -3068,6 +2555,69 @@
           0.0382,
           0.2693
         ],
+        "collision": "none",
+        "sockets": [],
+        "license": "original_project_asset",
+        "external_assets": false
+      }
+    },
+    {
+      "id": "env_project_skybox1",
+      "kind": "mesh",
+      "tags": [
+        "environment",
+        "skybox",
+        "sky_dome",
+        "project_assets",
+        "imported_glb",
+        "dev_sandbox"
+      ],
+      "source": "assets/project_assets/skybox1.glb",
+      "issues": [
+        {
+          "severity": "warning",
+          "check": "naming",
+          "message": "GLB filename stem 'skybox1' does not match asset id 'env_project_skybox1'."
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: dimensions_m"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: target_dimensions_m"
+        },
+        {
+          "severity": "warning",
+          "check": "lods",
+          "message": "Declared LOD names are not visible in GLB node names."
+        }
+      ],
+      "cooked": "assets/project_assets/skybox1.glb",
+      "metadata": "assets/project_assets/skybox1.metadata.json",
+      "status": "ready_with_notes",
+      "glb": {
+        "valid": true,
+        "asset_version": "2.0",
+        "bin_chunk_bytes": 10542692,
+        "nodes": 4,
+        "meshes": 3,
+        "materials": 3,
+        "sockets": [],
+        "collisions": [],
+        "external_buffer_uris": [],
+        "external_image_uris": []
+      },
+      "metadata_summary": {
+        "category": "environment",
+        "scale_meters": true,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+Z",
+        "blender_forward_axis": "+Z",
+        "origin": "Imported Project/Assets skybox GLB; rendered as a large first-pass environment mesh until NovaCore gains a dedicated cubemap sky pass.",
+        "dimensions_m": null,
         "collision": "none",
         "sockets": [],
         "license": "original_project_asset",

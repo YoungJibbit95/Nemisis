@@ -64,6 +64,7 @@ private:
     void persistUserSettingsIfChanged();
     void rebuildActiveAttachmentSummary();
     void syncRuntimeLoadout();
+    void processGameplayWeaponInteractions(const player::PlayerInputCommand& command);
     void ensureActiveWeapon(weapons::WeaponRuntimeState& weaponState, const weapons::WeaponDefinition& effectiveWeapon);
     void ensureLocalPlayer();
     void resetDevRangeState();

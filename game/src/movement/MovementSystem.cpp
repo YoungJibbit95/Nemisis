@@ -319,6 +319,11 @@ PlayerMovementState MovementSystem::simulate(
     }
 
     const bool canUseGroundJump = isGroundedLike(state.mode) || state.coyoteTimeRemaining > 0.0F;
+    const bool canUseAirJump = state.mode == MovementMode::Airborne &&
+        state.hasDoubleJump &&
+        state.airborneTimeSeconds >= tuning_.doubleJumpMinAirborneSeconds &&
+        state.coyoteTimeRemaining <= 0.0F;
+    const bool wantsAirJump = command.doubleJumpPressed || (command.jumpPressed && canUseAirJump);
     if (command.jumpPressed && state.mode == MovementMode::WallRunning) {
         const auto tangent = chooseWallRunTangent(state.wallRunTangent, state.velocity, direction);
         const auto normal = normalizedOrZero(state.wallRunNormal);
@@ -332,6 +337,11 @@ PlayerMovementState MovementSystem::simulate(
         state.hasDoubleJump = true;
         triggerWallJumpDetach(state.tech);
         state.mode = MovementMode::Airborne;
+    } else if (wantsAirJump && canUseAirJump) {
+        triggerDoubleJumpPlatform(state.tech, state.position);
+        state.velocity.y = tuning_.doubleJumpImpulse;
+        state.hasDoubleJump = false;
+        state.jumpBufferRemaining = 0.0F;
     } else if (bufferedJump && canUseGroundJump) {
         state.velocity.y = tuning_.jumpVelocity;
         if (state.mode == MovementMode::Sliding) {
@@ -343,14 +353,6 @@ PlayerMovementState MovementSystem::simulate(
         state.coyoteTimeRemaining = 0.0F;
         state.hasDoubleJump = true;
         state.mode = MovementMode::Airborne;
-    } else if ((command.doubleJumpPressed || command.jumpPressed) &&
-        state.mode == MovementMode::Airborne &&
-        state.hasDoubleJump &&
-        state.coyoteTimeRemaining <= 0.0F) {
-        triggerDoubleJumpPlatform(state.tech, state.position);
-        state.velocity.y = tuning_.doubleJumpImpulse;
-        state.hasDoubleJump = false;
-        state.jumpBufferRemaining = 0.0F;
     } else if ((command.mantlePressed || command.mantleHeld) && state.mode == MovementMode::Airborne) {
         triggerMantleReach(state.tech);
     }
@@ -393,8 +395,10 @@ PlayerMovementState MovementSystem::applyWallRunContact(
     float fixedDeltaSeconds) const {
     fixedDeltaSeconds = std::max(0.0F, fixedDeltaSeconds);
     const auto input = horizontalInput(command.move);
+    const bool hasWallRunInput = input.magnitude > 0.12F ||
+        horizontalSpeed(state.velocity) > tuning_.walkSpeed * 0.55F;
     const bool wantsWallRun = contact.available &&
-        input.magnitude > 0.20F &&
+        hasWallRunInput &&
         state.position.y >= tuning_.wallRunMinHeight &&
         state.mode != MovementMode::Grounded &&
         state.mode != MovementMode::Sliding &&
@@ -430,7 +434,7 @@ PlayerMovementState MovementSystem::applyWallRunContact(
     const float speed = std::max(tuning_.wallRunSpeed, horizontalSpeed(state.velocity));
     state.velocity.x = tangent.x * speed;
     state.velocity.z = tangent.z * speed;
-    state.velocity.y = std::clamp(state.velocity.y + (1.25F * fixedDeltaSeconds), -0.85F, 1.25F);
+    state.velocity.y = std::clamp(std::max(state.velocity.y, -0.45F) + (1.65F * fixedDeltaSeconds), -0.45F, 1.55F);
     state.hasDoubleJump = true;
     state.lastHorizontalSpeed = horizontalSpeed(state.velocity);
     return state;

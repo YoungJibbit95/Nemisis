@@ -84,6 +84,10 @@ novacore::platform::InputActionMap createDefaultActionMap() {
     bindButton(actionMap, actions::Fire, mouse(mouse_codes::Left));
     bindButton(actionMap, actions::Ads, mouse(mouse_codes::Right));
     bindButton(actionMap, actions::Reload, keyboard(key_codes::R));
+    bindButton(actionMap, actions::PickupWeapon, keyboard(key_codes::F));
+    bindButton(actionMap, actions::SwitchWeaponPrimary, keyboard(key_codes::Digit4));
+    bindButton(actionMap, actions::SwitchWeaponSmg, keyboard(key_codes::Digit5));
+    bindButton(actionMap, actions::SwitchWeaponSidearm, keyboard(key_codes::Digit6));
     bindButton(actionMap, actions::MenuUp, keyboard(key_codes::Up));
     bindButton(actionMap, actions::MenuDown, keyboard(key_codes::Down));
     bindButton(actionMap, actions::MenuLeft, keyboard(key_codes::Left));
@@ -119,7 +123,10 @@ novacore::platform::InputActionMap createDefaultActionMap() {
     bindAxis(actionMap, actions::Fire, gamepadAxis(gamepad_axes::RightTrigger), 1.0F, 0.15F);
     bindAxis(actionMap, actions::Ads, gamepadAxis(gamepad_axes::LeftTrigger), 1.0F, 0.15F);
     bindButton(actionMap, actions::Reload, gamepadButton(gamepad_buttons::X));
-    bindButton(actionMap, actions::ResetRange, gamepadButton(gamepad_buttons::Y));
+    bindButton(actionMap, actions::PickupWeapon, gamepadButton(gamepad_buttons::Y));
+    bindButton(actionMap, actions::SwitchWeaponPrimary, gamepadButton(gamepad_buttons::DPadUp));
+    bindButton(actionMap, actions::SwitchWeaponSmg, gamepadButton(gamepad_buttons::DPadLeft));
+    bindButton(actionMap, actions::SwitchWeaponSidearm, gamepadButton(gamepad_buttons::DPadRight));
     bindButton(actionMap, actions::MenuUp, gamepadButton(gamepad_buttons::DPadUp));
     bindButton(actionMap, actions::MenuDown, gamepadButton(gamepad_buttons::DPadDown));
     bindButton(actionMap, actions::MenuLeft, gamepadButton(gamepad_buttons::DPadLeft));

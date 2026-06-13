@@ -286,6 +286,7 @@ void testMovementTuningConfigReplay() {
         "slide": { "max_duration": 1.1, "steering_acceleration": 9.0, "jump_boost": 3.0, "buffer_time": 0.18 },
         "dash": { "impulse": 12.0, "cooldown": 1.25 },
         "air": { "max_speed": 8.75, "drag": 0.2 },
+        "double_jump": { "min_airborne_time": 0.04 },
         "jump": { "coyote_time": 0.12, "buffer_time": 0.14 },
         "wall_run": { "speed": 9.0, "max_duration": 1.5, "wall_jump_impulse": 7.0, "min_height": 0.7, "probe_distance": 0.6 }
     })";
@@ -305,6 +306,7 @@ void testMovementTuningConfigReplay() {
     expectNear(tuning.wallRunSpeed, 9.0F, 0.001F, "wall run speed loads from config");
     expectNear(tuning.coyoteTimeSeconds, 0.12F, 0.001F, "coyote time loads from config");
     expectNear(tuning.jumpBufferSeconds, 0.14F, 0.001F, "jump buffer loads from config");
+    expectNear(tuning.doubleJumpMinAirborneSeconds, 0.04F, 0.001F, "double jump min airborne time loads from config");
     expectNear(tuning.wallRunMinHeight, 0.7F, 0.001F, "wall run min height loads from config");
     expectNear(tuning.wallRunProbeDistance, 0.6F, 0.001F, "wall run probe distance loads from config");
 }

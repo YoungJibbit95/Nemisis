@@ -58,6 +58,10 @@ constexpr float kPi = 3.14159265358979323846F;
     return mode == movement::MovementMode::Airborne;
 }
 
+[[nodiscard]] bool isWallRunning(movement::MovementMode mode) {
+    return mode == movement::MovementMode::WallRunning;
+}
+
 [[nodiscard]] float movementSpeed01(const CameraRigInput& input) {
     constexpr float kFastReferenceSpeed = 8.6F;
     return clamp01(cameraRigHorizontalSpeed(input.playerVelocity) / kFastReferenceSpeed);
@@ -83,12 +87,15 @@ constexpr float kPi = 3.14159265358979323846F;
     if (isDashing(input.movementMode)) {
         target += tuning.dashFovKickDegrees;
     }
+    if (isWallRunning(input.movementMode)) {
+        target += tuning.wallRunFovKickDegrees;
+    }
     if (isAirborne(input.movementMode)) {
         target += tuning.airborneFovKickDegrees;
     }
 
     const float adsMultiplier = std::clamp(input.weapon.adsAlpha, 0.0F, 1.0F);
-    const float weaponFovMultiplier = std::clamp(input.adsHeld ? 0.88F : 1.0F, 0.70F, 1.0F);
+    const float weaponFovMultiplier = std::clamp(input.adsHeld ? 0.82F : 1.0F, 0.70F, 1.0F);
     target = lerp(target, target * weaponFovMultiplier, adsMultiplier);
     return target;
 }
@@ -101,6 +108,10 @@ constexpr float kPi = 3.14159265358979323846F;
     if (isDashing(input.movementMode)) {
         const float direction = input.playerVelocity.x >= 0.0F ? 1.0F : -1.0F;
         target += tuning.dashRollDegrees * direction;
+    }
+    if (isWallRunning(input.movementMode)) {
+        const float direction = input.playerVelocity.x >= 0.0F ? 1.0F : -1.0F;
+        target += tuning.wallRunRollDegrees * direction;
     }
     const float strafeSway = std::clamp(input.playerVelocity.x * 0.10F, -1.0F, 1.0F);
     target += strafeSway * tuning.velocitySwayDegrees;
