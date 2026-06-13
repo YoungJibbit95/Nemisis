@@ -27,6 +27,7 @@ struct MovementTuning final {
     float slideEndSpeed = 4.0F;
     float slideJumpBoost = 2.5F;
     float slideCooldownSeconds = 0.25F;
+    float slideBufferSeconds = 0.16F;
 
     float dashImpulse = 9.0F;
     float dashDurationSeconds = 0.18F;

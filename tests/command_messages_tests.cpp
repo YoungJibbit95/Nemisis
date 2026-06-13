@@ -32,8 +32,12 @@ nemisis::player::PlayerInputCommand sampleCommand(std::uint64_t tick) {
     command.look.x = 1.5F;
     command.look.y = -0.25F;
     command.jumpPressed = true;
+    command.jumpHeld = true;
+    command.slideHeld = true;
+    command.mantleHeld = true;
     command.fireHeld = true;
     command.adsHeld = true;
+    command.reloadHeld = true;
     command.device = novacore::platform::InputDeviceKind::Controller;
     return command;
 }
@@ -56,7 +60,11 @@ void testCommandPacketRoundTrip() {
     expectNear(command.move.y, 0.75F, 0.001F, "command packet keeps move");
     expectNear(command.look.x, 1.5F, 0.001F, "command packet keeps look");
     expect(command.jumpPressed, "command packet keeps jump");
+    expect(command.jumpHeld, "command packet keeps jump held");
+    expect(command.slideHeld, "command packet keeps slide held");
+    expect(command.mantleHeld, "command packet keeps mantle held");
     expect(command.fireHeld, "command packet keeps fire");
+    expect(command.reloadHeld, "command packet keeps reload held");
     expect(command.device == novacore::platform::InputDeviceKind::Controller, "command packet keeps device");
 }
 

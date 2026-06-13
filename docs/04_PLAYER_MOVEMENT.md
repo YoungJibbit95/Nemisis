@@ -26,12 +26,16 @@ Movement consumes a normalized `PlayerInputCommand`:
 - Move vector.
 - Look delta.
 - Jump.
+- Jump held state.
 - Double Jump.
 - Crouch/Slide.
+- Slide held state and buffered slide intent.
 - Sprint / Tactical Sprint.
 - Dash.
 - Mantle request.
+- Mantle held state.
 - Fire/ADS/reload actions.
+- Reload held state for reliable reload intent.
 - Device source metadata.
 
 MKB and controller produce the same command shape.
@@ -61,11 +65,13 @@ Runtime placement:
 - Ground friction decelerates released input.
 - Air movement has configurable acceleration, max speed, and drag.
 - Slide has configurable impulse, duration, steering, friction, end speed, cooldown, and slide-jump boost.
+- Slide now has input buffering and a held-input latch so sprint-slide requests can be pressed slightly early without repeated slide spam.
 - Dash has configurable impulse, steering, duration, and cooldown.
 - Wall-run contact uses NovaCore `PhysicsWorld` wall-run surface probes, stores wall normal/tangent, carries tangent velocity, preserves double jump, and supports the first wall-jump impulse.
 - Wall-run entry now emits a movement-tech cue for the operator arm-button animation and gravity-inverter boot glow.
 - Double-jump now emits a movement-tech cue for the left-hand energy-platform throw/step visual.
 - Mantle input now checks NovaCore mantle probes against cover/ledge tops, stores a deterministic target foot position, moves along a fixed-tick climb curve, and emits mantle-reach/mantle-climb animation/VFX cues.
+- Mantle activation accepts held jump/mantle intent during the valid airborne window, and active mantle interpolation is isolated from normal collision position overwrite.
 - Movement state stores slide/dash timers, grounded/airborne time, input magnitude, and last horizontal speed for camera/HUD/debug use.
 - The first `PlayerCameraRig` turns movement state into local visual camera feel: smoothed eye position, head bob, roll, FOV kick, weapon sway, and recoil view offsets.
 
@@ -102,16 +108,17 @@ Implemented foundation:
 - Walk.
 - Sprint / Tactical Sprint (with stamina/cooldown).
 - Slide (momentum-based).
+- Slide buffer and held-slide latch.
 - Jump / Double Jump.
 - Dash (multi-directional, tactical cooldown).
 - Wall Run contact entry and Wall Jump.
 - Wall Run and Double Jump movement-tech visual cues.
 - First mantle/climb foundation with engine-backed ledge probe, deterministic fixed-tick climb curve, debug lines, and `mantle-climb` cue.
+- NovaCore KCC ramp/slide grounding treats ramps as continuous walkable surfaces instead of one-frame step edges.
 
 Planned features:
 
 - Crouch.
-- Mantle.
 - Strafing / Air Strafing.
 - Wall-run camera lean, detach rules, cooldowns, eligibility windows, and server replay validation.
 

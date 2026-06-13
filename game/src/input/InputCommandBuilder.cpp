@@ -87,17 +87,21 @@ player::PlayerInputCommand buildPlayerInputCommand(
     command.move.x = std::clamp(right - left, -1.0F, 1.0F);
     command.move.y = std::clamp(forward - backward, -1.0F, 1.0F);
     command.jumpPressed = pressed(actions, actions::Jump);
+    command.jumpHeld = down(actions, actions::Jump);
     command.doubleJumpPressed = pressed(actions, actions::DoubleJump);
     command.crouchHeld = down(actions, actions::Slide);
     command.slidePressed = pressed(actions, actions::Slide);
+    command.slideHeld = down(actions, actions::Slide);
     command.sprintHeld = down(actions, actions::Sprint);
     command.tacticalSprintHeld = down(actions, actions::TacticalSprint);
     command.dashPressed = pressed(actions, actions::Dash);
     command.mantlePressed = pressed(actions, actions::Mantle);
+    command.mantleHeld = down(actions, actions::Mantle);
 
     command.fireHeld = down(actions, actions::Fire);
     command.adsHeld = down(actions, actions::Ads);
     command.reloadPressed = pressed(actions, actions::Reload);
+    command.reloadHeld = down(actions, actions::Reload);
     command.device = dominantDevice(actions);
 
     const bool controller = command.device == novacore::platform::InputDeviceKind::Controller;

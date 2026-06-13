@@ -64,6 +64,13 @@ std::vector<AssetSpec> requiredSpecs() {
         {"map_a2_slide_ramp_01", "mesh", "environment", "assets/source/blender/a2_visual_pack/map_a2_slide_ramp_01.blend", "assets/generated/a2_visual_pack/map_a2_slide_ramp_01.glb", "visual_only_use_simple_ramp_collision"},
         {"map_a2_cover_crate_01", "mesh", "environment", "assets/source/blender/a2_visual_pack/map_a2_cover_crate_01.blend", "assets/generated/a2_visual_pack/map_a2_cover_crate_01.glb", "visual_only_use_box_collision"},
         {"prop_a2_range_hero_01", "mesh", "prop", "assets/source/blender/a2_visual_pack/prop_a2_range_hero_01.blend", "assets/generated/a2_visual_pack/prop_a2_range_hero_01.glb", "visual_only_use_simple_cylinder_or_box_collision"},
+        {"chr_project_male1", "mesh", "character", "assets/project_assets/character_male1.glb", "assets/project_assets/character_male1.glb"},
+        {"wpn_project_rifle_m4a1", "mesh", "weapon", "assets/project_assets/weapon_rifle_m4a1.glb", "assets/project_assets/weapon_rifle_m4a1.glb"},
+        {"wpn_project_rifle_afr120", "mesh", "weapon", "assets/project_assets/weapon_rifle_afr120.glb", "assets/project_assets/weapon_rifle_afr120.glb"},
+        {"wpn_project_rifle_ncar", "mesh", "weapon", "assets/project_assets/weapon_rifle_ncar.glb", "assets/project_assets/weapon_rifle_ncar.glb"},
+        {"wpn_project_smg_fr17", "mesh", "weapon", "assets/project_assets/weapon_smg_fr17.glb", "assets/project_assets/weapon_smg_fr17.glb"},
+        {"wpn_project_sidearm_glock19", "mesh", "weapon", "assets/project_assets/weapon_sidearm_glock19.glb", "assets/project_assets/weapon_sidearm_glock19.glb"},
+        {"wpn_project_sidearm_p320", "mesh", "weapon", "assets/project_assets/weapon_sidearm_p320.glb", "assets/project_assets/weapon_sidearm_p320.glb"},
     };
 }
 

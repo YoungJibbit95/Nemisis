@@ -87,6 +87,41 @@ void testRampSurfaceGroundsPlayer() {
     expect(result.position.y > 0.40F && result.position.y < 0.50F, "ramp collision resolves sampled height");
     expect(result.groundNormal.y > 0.98F, "ramp normal stays walkable");
     expect(result.groundNormal.z < 0.0F, "positive-z ramp normal leans against slope");
+
+    const auto highResult = nemisis::dev::resolveGreyboxPlayerCollision(
+        world,
+        queryAt({-13.5F, 0.12F, 2.65F}));
+    expect(highResult.grounded, "player can ground near ramp top");
+    expect(highResult.onRamp, "ramp top still reports ramp state");
+    expect(highResult.groundPrimitiveId == "ramp_left_slide", "ramp top reports primitive id");
+    expect(highResult.position.y > 0.82F, "ramp top resolves high surface");
+}
+
+void testAssetCollisionProxiesBlockAndGroundPlayer() {
+    const auto world = nemisis::dev::createDevRangeGreyboxWorld();
+
+    const auto crate = nemisis::dev::resolveGreyboxPlayerCollision(
+        world,
+        queryAt({3.60F, 0.0F, -3.95F}));
+    expect(crate.blocked, "A2 cover crate collision proxy blocks player");
+    expect(crate.lastPrimitiveId == "asset_a2_cover_crate_collision", "A2 crate collision reports proxy id");
+
+    const auto ramp = nemisis::dev::resolveGreyboxPlayerCollision(
+        world,
+        queryAt({-5.65F, 0.08F, -5.35F}));
+    expect(ramp.grounded, "A2 slide ramp proxy grounds player");
+    expect(ramp.onRamp, "A2 slide ramp proxy reports ramp state");
+    expect(ramp.groundPrimitiveId == "asset_a2_slide_ramp_collision", "A2 ramp collision reports proxy id");
+
+    nemisis::dev::GreyboxCollisionQuery wallrun{};
+    wallrun.position = {4.92F, 0.78F, -5.20F};
+    wallrun.radius = 0.42F;
+    wallrun.height = 1.80F;
+    wallrun.wallProbeDistance = 0.60F;
+    wallrun.enableGroundSnap = false;
+    const auto wallrunResult = nemisis::dev::resolveGreyboxPlayerCollision(world, wallrun);
+    expect(wallrunResult.nearWallRunSurface, "A2 wallrun panel proxy reports runnable contact");
+    expect(wallrunResult.wallPrimitiveId == "asset_a2_wallrun_panel_collision", "A2 wallrun proxy reports id");
 }
 
 void testLowStepIsWalkable() {
@@ -145,7 +180,7 @@ void testAirborneStepUpCanBeDisabled() {
 void testLeavingRaisedSupportBecomesAirborne() {
     const auto world = nemisis::dev::createDevRangeGreyboxWorld();
     nemisis::dev::GreyboxCollisionQuery query{};
-    query.position = {-3.5F, 0.36F, -5.35F};
+    query.position = {-9.0F, 0.36F, -4.0F};
     query.radius = 0.42F;
     query.height = 1.80F;
     query.snapDownDistance = 0.20F;
@@ -278,6 +313,7 @@ int main() {
     testCoverPushout();
     testOpenLaneStaysFree();
     testRampSurfaceGroundsPlayer();
+    testAssetCollisionProxiesBlockAndGroundPlayer();
     testLowStepIsWalkable();
     testRisingJumpDoesNotSnapBackToGround();
     testAirborneStepUpCanBeDisabled();

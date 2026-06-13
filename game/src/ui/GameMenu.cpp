@@ -43,6 +43,49 @@ constexpr std::array<std::string_view, 4> kWeaponCycle{
     return state(actions, action).pressed;
 }
 
+[[nodiscard]] bool pointerInside(MenuPointerState pointer, UiRect rect) {
+    if (!pointer.available) {
+        return false;
+    }
+    return pointer.x >= rect.x &&
+        pointer.x <= rect.x + rect.width &&
+        pointer.y >= rect.y &&
+        pointer.y <= rect.y + rect.height;
+}
+
+[[nodiscard]] UiRect tabRect(std::size_t index) {
+    constexpr float startX = 52.0F;
+    constexpr float y = 142.0F;
+    constexpr float tabWidth = 164.0F;
+    constexpr float tabHeight = 38.0F;
+    return UiRect{
+        startX + static_cast<float>(index) * (tabWidth + 8.0F),
+        y,
+        tabWidth,
+        tabHeight,
+    };
+}
+
+[[nodiscard]] UiRect menuRowRect(MenuTab tab, std::size_t index) {
+    switch (tab) {
+    case MenuTab::Play:
+        return UiRect{416.0F, 216.0F + static_cast<float>(index) * 56.0F, 520.0F, 44.0F};
+    case MenuTab::Gamemodes:
+        return UiRect{66.0F, 222.0F + static_cast<float>(index) * 60.0F, 500.0F, 44.0F};
+    case MenuTab::Loadout:
+        return index == 0U
+            ? UiRect{370.0F, 216.0F, 570.0F, 44.0F}
+            : UiRect{370.0F, 278.0F + static_cast<float>(index - 1U) * 48.0F, 570.0F, 44.0F};
+    case MenuTab::Character:
+        return UiRect{370.0F, 216.0F + static_cast<float>(index) * 58.0F, 600.0F, 44.0F};
+    case MenuTab::Settings:
+        return UiRect{340.0F, 216.0F + static_cast<float>(index) * 56.0F, 620.0F, 44.0F};
+    case MenuTab::Account:
+        return UiRect{};
+    }
+    return UiRect{};
+}
+
 void addRect(
     novacore::render::RenderFrameInfo& frame,
     float x,
@@ -877,7 +920,7 @@ void GameMenu::update(const novacore::platform::InputActionMap& actions) {
     weapons::AttachmentRegistry attachments;
     attachments.registerPrototypeAttachments();
     auto loadout = weapons::defaultPrototypeLoadout();
-    update(actions, settings, loadout, attachments);
+    update(actions, settings, loadout, attachments, {});
 }
 
 void GameMenu::update(
@@ -885,6 +928,15 @@ void GameMenu::update(
     settings::GameSettings& settings,
     weapons::WeaponLoadout& loadout,
     const weapons::AttachmentRegistry& attachments) {
+    update(actions, settings, loadout, attachments, {});
+}
+
+void GameMenu::update(
+    const novacore::platform::InputActionMap& actions,
+    settings::GameSettings& settings,
+    weapons::WeaponLoadout& loadout,
+    const weapons::AttachmentRegistry& attachments,
+    MenuPointerState pointer) {
     if (pressed(actions, input::actions::ToggleDebug)) {
         debugOverlayEnabled_ = !debugOverlayEnabled_;
     }
@@ -952,6 +1004,8 @@ void GameMenu::update(
     if (pressed(actions, input::actions::MenuConfirm)) {
         activateSelection(settings, loadout, attachments);
     }
+
+    updatePointer(pointer, settings, loadout, attachments);
 }
 
 void GameMenu::updateFrame(double deltaSeconds) {
@@ -1264,6 +1318,38 @@ void GameMenu::adjustCurrentValue(
     const int index = static_cast<int>(std::distance(slotAttachments.begin(), it));
     const int next = (index + direction + static_cast<int>(slotAttachments.size())) % static_cast<int>(slotAttachments.size());
     weapons::setAttachment(loadout, slot, slotAttachments[static_cast<std::size_t>(next)]->id);
+}
+
+void GameMenu::updatePointer(
+    MenuPointerState pointer,
+    settings::GameSettings& settings,
+    weapons::WeaponLoadout& loadout,
+    const weapons::AttachmentRegistry& attachments) {
+    if (!pointer.available || screen_ != GameScreen::MainMenu) {
+        return;
+    }
+
+    for (std::size_t index = 0; index < kTabs.size(); ++index) {
+        if (!pointerInside(pointer, tabRect(index))) {
+            continue;
+        }
+        if (pointer.primaryPressed) {
+            setTab(kTabs[index]);
+        }
+        return;
+    }
+
+    const auto itemCount = itemCountForTab();
+    for (std::size_t index = 0; index < itemCount; ++index) {
+        if (!pointerInside(pointer, menuRowRect(tab_, index))) {
+            continue;
+        }
+        selectedIndex_ = index;
+        if (pointer.primaryPressed) {
+            activateSelection(settings, loadout, attachments);
+        }
+        return;
+    }
 }
 
 std::size_t GameMenu::itemCountForTab() const {

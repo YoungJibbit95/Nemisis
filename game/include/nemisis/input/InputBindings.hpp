@@ -33,6 +33,7 @@ inline constexpr std::string_view MenuPrevTab = "menu_prev_tab";
 inline constexpr std::string_view MenuNextTab = "menu_next_tab";
 inline constexpr std::string_view MenuConfirm = "menu_confirm";
 inline constexpr std::string_view MenuBack = "menu_back";
+inline constexpr std::string_view MenuPointerPrimary = "menu_pointer_primary";
 inline constexpr std::string_view ToggleDebug = "toggle_debug";
 inline constexpr std::string_view DebugNextPage = "debug_next_page";
 inline constexpr std::string_view SelectDevRange = "select_dev_range";

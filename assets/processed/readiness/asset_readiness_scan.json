@@ -1,0 +1,3080 @@
+{
+  "generated_at_utc": "2026-06-13T10:35:28+00:00",
+  "repo_root": "F:\\Coding\\Project\\Nemisis",
+  "catalog": "configs/assets/nemisis_assets.json",
+  "summary": {
+    "catalog_entries": 37,
+    "runtime_mesh_or_scene_entries": 35,
+    "glb_files_under_assets": 28,
+    "orphan_glbs": 0,
+    "uncataloged_blends": 0,
+    "by_status": {
+      "needs_manual_work": 16,
+      "ready_with_notes": 8,
+      "game_ready": 9,
+      "needs_collision_or_metadata_work": 4
+    },
+    "by_issue_severity": {
+      "error": 16,
+      "warning": 88,
+      "manual": 16
+    }
+  },
+  "blender": {
+    "requested": true,
+    "path": "F:\\Program Files\\Blender Foundation\\Blender 5.1\\blender.EXE",
+    "version": "Blender 5.1.2",
+    "scan_error": null
+  },
+  "records": [
+    {
+      "id": "mat_wpn_ar_polymer_dark",
+      "kind": "material",
+      "tags": [
+        "material",
+        "weapon",
+        "dev_sandbox"
+      ],
+      "source": "assets/materials/weapons/mat_wpn_ar_polymer_dark.json",
+      "issues": [
+        {
+          "severity": "error",
+          "check": "source",
+          "message": "Source path is missing: assets/materials/weapons/mat_wpn_ar_polymer_dark.json"
+        }
+      ],
+      "status": "needs_manual_work"
+    },
+    {
+      "id": "mat_env_movement_accent",
+      "kind": "material",
+      "tags": [
+        "material",
+        "environment",
+        "dev_sandbox"
+      ],
+      "source": "assets/materials/environments/mat_env_movement_accent.json",
+      "issues": [
+        {
+          "severity": "error",
+          "check": "source",
+          "message": "Source path is missing: assets/materials/environments/mat_env_movement_accent.json"
+        }
+      ],
+      "status": "needs_manual_work"
+    },
+    {
+      "id": "prop_target_dummy_01",
+      "kind": "mesh",
+      "tags": [
+        "prop",
+        "target",
+        "combat_test",
+        "dev_sandbox"
+      ],
+      "source": "assets/source/blender/props/prop_target_dummy_01.blend",
+      "issues": [
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: origin"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: dimensions_m"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: target_dimensions_m"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: external_assets"
+        }
+      ],
+      "cooked": "assets/export/gltf/props/prop_target_dummy_01.glb",
+      "metadata": "assets/export/gltf/props/prop_target_dummy_01.metadata.json",
+      "status": "ready_with_notes",
+      "glb": {
+        "valid": true,
+        "asset_version": "2.0",
+        "bin_chunk_bytes": 89888,
+        "nodes": 8,
+        "meshes": 5,
+        "materials": 5,
+        "sockets": [
+          "socket_head_center",
+          "socket_hit_center",
+          "socket_vfx"
+        ],
+        "collisions": [
+          "col_prop_target_dummy_01"
+        ],
+        "external_buffer_uris": [],
+        "external_image_uris": []
+      },
+      "metadata_summary": {
+        "category": "prop",
+        "scale_meters": true,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+Z",
+        "blender_forward_axis": null,
+        "origin": null,
+        "dimensions_m": null,
+        "collision": "col_prop_target_dummy_01",
+        "sockets": [
+          "socket_hit_center",
+          "socket_head_center",
+          "socket_vfx"
+        ],
+        "license": "original_project_asset",
+        "external_assets": null
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 8,
+        "mesh_count": 5,
+        "material_count": 5,
+        "sockets": [
+          "socket_head_center",
+          "socket_hit_center",
+          "socket_vfx"
+        ],
+        "collisions": [
+          "col_prop_target_dummy_01"
+        ],
+        "root_objects": [],
+        "non_applied_mesh_transform_count": 0
+      }
+    },
+    {
+      "id": "wpn_ar_01",
+      "kind": "mesh",
+      "tags": [
+        "weapon",
+        "ar",
+        "first_person",
+        "world_model",
+        "dev_sandbox"
+      ],
+      "source": "assets/source/blender/weapons/wpn_ar_01.blend",
+      "issues": [
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: origin"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: dimensions_m"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: target_dimensions_m"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: external_assets"
+        }
+      ],
+      "cooked": "assets/export/gltf/weapons/wpn_ar_01.glb",
+      "metadata": "assets/export/gltf/weapons/wpn_ar_01.metadata.json",
+      "status": "ready_with_notes",
+      "glb": {
+        "valid": true,
+        "asset_version": "2.0",
+        "bin_chunk_bytes": 10608,
+        "nodes": 13,
+        "meshes": 8,
+        "materials": 3,
+        "sockets": [
+          "socket_eject",
+          "socket_grip_l",
+          "socket_grip_r",
+          "socket_muzzle",
+          "socket_vfx"
+        ],
+        "collisions": [],
+        "external_buffer_uris": [],
+        "external_image_uris": []
+      },
+      "metadata_summary": {
+        "category": "weapon",
+        "scale_meters": true,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+Z",
+        "blender_forward_axis": null,
+        "origin": null,
+        "dimensions_m": null,
+        "collision": "none",
+        "sockets": [
+          "socket_muzzle",
+          "socket_grip_r",
+          "socket_grip_l",
+          "socket_eject",
+          "socket_vfx"
+        ],
+        "license": "original_project_asset",
+        "external_assets": null
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 13,
+        "mesh_count": 8,
+        "material_count": 3,
+        "sockets": [
+          "socket_eject",
+          "socket_grip_l",
+          "socket_grip_r",
+          "socket_muzzle",
+          "socket_vfx"
+        ],
+        "collisions": [],
+        "root_objects": [],
+        "non_applied_mesh_transform_count": 0
+      }
+    },
+    {
+      "id": "wpn_smg_01",
+      "kind": "mesh",
+      "tags": [
+        "weapon",
+        "smg",
+        "first_person",
+        "world_model",
+        "dev_sandbox"
+      ],
+      "source": "assets/source/blender/weapons/wpn_smg_01.blend",
+      "issues": [
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: origin"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: dimensions_m"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: target_dimensions_m"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: external_assets"
+        }
+      ],
+      "cooked": "assets/export/gltf/weapons/wpn_smg_01.glb",
+      "metadata": "assets/export/gltf/weapons/wpn_smg_01.metadata.json",
+      "status": "ready_with_notes",
+      "glb": {
+        "valid": true,
+        "asset_version": "2.0",
+        "bin_chunk_bytes": 9816,
+        "nodes": 13,
+        "meshes": 8,
+        "materials": 3,
+        "sockets": [
+          "socket_eject",
+          "socket_grip_l",
+          "socket_grip_r",
+          "socket_muzzle",
+          "socket_vfx"
+        ],
+        "collisions": [],
+        "external_buffer_uris": [],
+        "external_image_uris": []
+      },
+      "metadata_summary": {
+        "category": "weapon",
+        "scale_meters": true,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+Z",
+        "blender_forward_axis": null,
+        "origin": null,
+        "dimensions_m": null,
+        "collision": "none",
+        "sockets": [
+          "socket_muzzle",
+          "socket_grip_r",
+          "socket_grip_l",
+          "socket_eject",
+          "socket_vfx"
+        ],
+        "license": "original_project_asset",
+        "external_assets": null
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 13,
+        "mesh_count": 8,
+        "material_count": 3,
+        "sockets": [
+          "socket_eject",
+          "socket_grip_l",
+          "socket_grip_r",
+          "socket_muzzle",
+          "socket_vfx"
+        ],
+        "collisions": [],
+        "root_objects": [],
+        "non_applied_mesh_transform_count": 0
+      }
+    },
+    {
+      "id": "wpn_sidearm_01",
+      "kind": "mesh",
+      "tags": [
+        "weapon",
+        "sidearm",
+        "first_person",
+        "world_model",
+        "dev_sandbox"
+      ],
+      "source": "assets/source/blender/weapons/wpn_sidearm_01.blend",
+      "issues": [
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: origin"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: dimensions_m"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: target_dimensions_m"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: external_assets"
+        }
+      ],
+      "cooked": "assets/export/gltf/weapons/wpn_sidearm_01.glb",
+      "metadata": "assets/export/gltf/weapons/wpn_sidearm_01.metadata.json",
+      "status": "ready_with_notes",
+      "glb": {
+        "valid": true,
+        "asset_version": "2.0",
+        "bin_chunk_bytes": 9816,
+        "nodes": 13,
+        "meshes": 8,
+        "materials": 3,
+        "sockets": [
+          "socket_eject",
+          "socket_grip_l",
+          "socket_grip_r",
+          "socket_muzzle",
+          "socket_vfx"
+        ],
+        "collisions": [],
+        "external_buffer_uris": [],
+        "external_image_uris": []
+      },
+      "metadata_summary": {
+        "category": "weapon",
+        "scale_meters": true,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+Z",
+        "blender_forward_axis": null,
+        "origin": null,
+        "dimensions_m": null,
+        "collision": "none",
+        "sockets": [
+          "socket_muzzle",
+          "socket_grip_r",
+          "socket_grip_l",
+          "socket_eject",
+          "socket_vfx"
+        ],
+        "license": "original_project_asset",
+        "external_assets": null
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 13,
+        "mesh_count": 8,
+        "material_count": 3,
+        "sockets": [
+          "socket_eject",
+          "socket_grip_l",
+          "socket_grip_r",
+          "socket_muzzle",
+          "socket_vfx"
+        ],
+        "collisions": [],
+        "root_objects": [],
+        "non_applied_mesh_transform_count": 0
+      }
+    },
+    {
+      "id": "env_test_arena_kit_01",
+      "kind": "scene",
+      "tags": [
+        "environment",
+        "arena_kit",
+        "movement_test",
+        "greybox",
+        "spawn_markers",
+        "cover",
+        "dev_sandbox"
+      ],
+      "source": "assets/source/blender/environments/env_test_arena_kit_01.blend",
+      "issues": [
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: origin"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: dimensions_m"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: target_dimensions_m"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: external_assets"
+        }
+      ],
+      "cooked": "assets/export/gltf/environments/env_test_arena_kit_01.glb",
+      "metadata": "assets/export/gltf/environments/env_test_arena_kit_01.metadata.json",
+      "status": "ready_with_notes",
+      "glb": {
+        "valid": true,
+        "asset_version": "2.0",
+        "bin_chunk_bytes": 62352,
+        "nodes": 84,
+        "meshes": 81,
+        "materials": 7,
+        "sockets": [
+          "socket_control_point",
+          "socket_spawn_alpha",
+          "socket_spawn_bravo"
+        ],
+        "collisions": [
+          "col_env_test_cover_crate_stack_01",
+          "col_env_test_cover_high_01",
+          "col_env_test_cover_low_01",
+          "col_env_test_floor_grid_01",
+          "col_env_test_slide_ramp_01",
+          "col_env_test_wall_back_01",
+          "col_env_test_wall_lane_left_01",
+          "col_env_test_wall_lane_right_01"
+        ],
+        "external_buffer_uris": [],
+        "external_image_uris": []
+      },
+      "metadata_summary": {
+        "category": "environment",
+        "scale_meters": true,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+Z",
+        "blender_forward_axis": null,
+        "origin": null,
+        "dimensions_m": null,
+        "collision": "per_piece_col_prefix",
+        "sockets": [
+          "socket_spawn_alpha",
+          "socket_spawn_bravo",
+          "socket_control_point"
+        ],
+        "license": "original_project_asset",
+        "external_assets": null
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 84,
+        "mesh_count": 81,
+        "material_count": 7,
+        "sockets": [
+          "socket_control_point",
+          "socket_spawn_alpha",
+          "socket_spawn_bravo"
+        ],
+        "collisions": [
+          "col_env_test_cover_crate_stack_01",
+          "col_env_test_cover_high_01",
+          "col_env_test_cover_low_01",
+          "col_env_test_floor_grid_01",
+          "col_env_test_slide_ramp_01",
+          "col_env_test_wall_back_01",
+          "col_env_test_wall_lane_left_01",
+          "col_env_test_wall_lane_right_01"
+        ],
+        "root_objects": [],
+        "non_applied_mesh_transform_count": 0
+      }
+    },
+    {
+      "id": "chr_player_capsule_proxy_01",
+      "kind": "mesh",
+      "tags": [
+        "character",
+        "player_proxy",
+        "capsule",
+        "hitbox_test",
+        "dev_sandbox"
+      ],
+      "source": "assets/source/blender/characters/chr_player_capsule_proxy_01.blend",
+      "issues": [
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: origin"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: dimensions_m"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: target_dimensions_m"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: external_assets"
+        }
+      ],
+      "cooked": "assets/export/gltf/characters/chr_player_capsule_proxy_01.glb",
+      "metadata": "assets/export/gltf/characters/chr_player_capsule_proxy_01.metadata.json",
+      "status": "ready_with_notes",
+      "glb": {
+        "valid": true,
+        "asset_version": "2.0",
+        "bin_chunk_bytes": 220344,
+        "nodes": 14,
+        "meshes": 9,
+        "materials": 4,
+        "sockets": [
+          "socket_camera",
+          "socket_hit_head",
+          "socket_hit_torso",
+          "socket_root",
+          "socket_weapon_root"
+        ],
+        "collisions": [
+          "col_chr_player_capsule_proxy_01"
+        ],
+        "external_buffer_uris": [],
+        "external_image_uris": []
+      },
+      "metadata_summary": {
+        "category": "character",
+        "scale_meters": true,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+Z",
+        "blender_forward_axis": null,
+        "origin": null,
+        "dimensions_m": null,
+        "collision": "col_chr_player_capsule_proxy_01",
+        "sockets": [
+          "socket_root",
+          "socket_camera",
+          "socket_weapon_root",
+          "socket_hit_head",
+          "socket_hit_torso"
+        ],
+        "license": "original_project_asset",
+        "external_assets": null
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 14,
+        "mesh_count": 9,
+        "material_count": 4,
+        "sockets": [
+          "socket_camera",
+          "socket_hit_head",
+          "socket_hit_torso",
+          "socket_root",
+          "socket_weapon_root"
+        ],
+        "collisions": [
+          "col_chr_player_capsule_proxy_01"
+        ],
+        "root_objects": [],
+        "non_applied_mesh_transform_count": 0
+      }
+    },
+    {
+      "id": "chr_dev_arms_a",
+      "kind": "mesh",
+      "tags": [
+        "character",
+        "first_person_arms",
+        "animation_test",
+        "dev_sandbox"
+      ],
+      "source": "assets/source/blender/characters/chr_dev_arms_a.blend",
+      "issues": [
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: origin"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: dimensions_m"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: target_dimensions_m"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: external_assets"
+        }
+      ],
+      "cooked": "assets/export/gltf/characters/chr_dev_arms_a.glb",
+      "metadata": "assets/export/gltf/characters/chr_dev_arms_a.metadata.json",
+      "status": "ready_with_notes",
+      "glb": {
+        "valid": true,
+        "asset_version": "2.0",
+        "bin_chunk_bytes": 156224,
+        "nodes": 23,
+        "meshes": 11,
+        "materials": 4,
+        "sockets": [
+          "socket_camera",
+          "socket_hand_l",
+          "socket_hand_r",
+          "socket_weapon_root"
+        ],
+        "collisions": [],
+        "external_buffer_uris": [],
+        "external_image_uris": []
+      },
+      "metadata_summary": {
+        "category": "character",
+        "scale_meters": true,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+Z",
+        "blender_forward_axis": null,
+        "origin": null,
+        "dimensions_m": null,
+        "collision": "none",
+        "sockets": [
+          "socket_camera",
+          "socket_weapon_root",
+          "socket_hand_r",
+          "socket_hand_l"
+        ],
+        "license": "original_project_asset",
+        "external_assets": null
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 16,
+        "mesh_count": 11,
+        "material_count": 4,
+        "sockets": [
+          "socket_camera",
+          "socket_hand_l",
+          "socket_hand_r",
+          "socket_weapon_root"
+        ],
+        "collisions": [],
+        "root_objects": [],
+        "non_applied_mesh_transform_count": 0
+      }
+    },
+    {
+      "id": "chr_dev_soldier_a",
+      "kind": "mesh",
+      "tags": [
+        "character",
+        "third_person",
+        "hitbox_test",
+        "dev_sandbox"
+      ],
+      "source": "assets/source/blender/characters/chr_dev_soldier_a.blend",
+      "issues": [
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: origin"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: dimensions_m"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: target_dimensions_m"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: external_assets"
+        }
+      ],
+      "cooked": "assets/export/gltf/characters/chr_dev_soldier_a.glb",
+      "metadata": "assets/export/gltf/characters/chr_dev_soldier_a.metadata.json",
+      "status": "ready_with_notes",
+      "glb": {
+        "valid": true,
+        "asset_version": "2.0",
+        "bin_chunk_bytes": 182520,
+        "nodes": 47,
+        "meshes": 22,
+        "materials": 5,
+        "sockets": [
+          "socket_camera",
+          "socket_hand_l",
+          "socket_hand_r",
+          "socket_head",
+          "socket_root",
+          "socket_vfx",
+          "socket_weapon_root"
+        ],
+        "collisions": [
+          "col_chr_dev_soldier_a_capsule"
+        ],
+        "external_buffer_uris": [],
+        "external_image_uris": []
+      },
+      "metadata_summary": {
+        "category": "character",
+        "scale_meters": true,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+Z",
+        "blender_forward_axis": null,
+        "origin": null,
+        "dimensions_m": null,
+        "collision": "col_chr_dev_soldier_a_capsule",
+        "sockets": [
+          "socket_root",
+          "socket_camera",
+          "socket_weapon_root",
+          "socket_hand_r",
+          "socket_hand_l",
+          "socket_head",
+          "socket_vfx"
+        ],
+        "license": "original_project_asset",
+        "external_assets": null
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 30,
+        "mesh_count": 22,
+        "material_count": 5,
+        "sockets": [
+          "socket_camera",
+          "socket_hand_l",
+          "socket_hand_r",
+          "socket_head",
+          "socket_root",
+          "socket_vfx",
+          "socket_weapon_root"
+        ],
+        "collisions": [
+          "col_chr_dev_soldier_a_capsule"
+        ],
+        "root_objects": [],
+        "non_applied_mesh_transform_count": 0
+      }
+    },
+    {
+      "id": "wpn_proto_smg_01",
+      "kind": "mesh",
+      "tags": [
+        "weapon",
+        "smg",
+        "prototype_pack",
+        "first_person",
+        "world_model",
+        "dev_sandbox"
+      ],
+      "source": "tools/blender/make_prototype_pack.py",
+      "issues": [
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: origin"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: dimensions_m"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: target_dimensions_m"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: external_assets"
+        },
+        {
+          "severity": "manual",
+          "check": "orientation",
+          "message": "gameplay_forward_axis is +X; current asset plan expects +Z."
+        },
+        {
+          "severity": "error",
+          "check": "sockets",
+          "message": "Metadata sockets missing from GLB nodes: socket_grip_l, socket_grip_r, socket_root"
+        },
+        {
+          "severity": "warning",
+          "check": "lods",
+          "message": "Declared LOD names are not visible in GLB node names."
+        }
+      ],
+      "cooked": "assets/generated/prototype_pack/wpn_proto_smg_01.glb",
+      "metadata": "assets/generated/prototype_pack/wpn_proto_smg_01.metadata.json",
+      "status": "needs_manual_work",
+      "glb": {
+        "valid": true,
+        "asset_version": "2.0",
+        "bin_chunk_bytes": 16656,
+        "nodes": 20,
+        "meshes": 16,
+        "materials": 4,
+        "sockets": [
+          "socket_grip",
+          "socket_mag",
+          "socket_muzzle"
+        ],
+        "collisions": [],
+        "external_buffer_uris": [],
+        "external_image_uris": []
+      },
+      "metadata_summary": {
+        "category": "weapon",
+        "scale_meters": true,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+X",
+        "blender_forward_axis": null,
+        "origin": null,
+        "dimensions_m": null,
+        "collision": "none",
+        "sockets": [
+          "socket_root",
+          "socket_muzzle",
+          "socket_grip_r",
+          "socket_grip_l"
+        ],
+        "license": "original_project_asset",
+        "external_assets": null
+      }
+    },
+    {
+      "id": "chr_proto_humanoid_01",
+      "kind": "mesh",
+      "tags": [
+        "character",
+        "prototype_pack",
+        "hitbox_test",
+        "dev_sandbox"
+      ],
+      "source": "tools/blender/make_prototype_pack.py",
+      "issues": [
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: origin"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: dimensions_m"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: target_dimensions_m"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: external_assets"
+        },
+        {
+          "severity": "manual",
+          "check": "orientation",
+          "message": "gameplay_forward_axis is +Y; current asset plan expects +Z."
+        },
+        {
+          "severity": "error",
+          "check": "collision",
+          "message": "Declared collision object is missing from GLB nodes: col_chr_proto_humanoid_01_capsule"
+        },
+        {
+          "severity": "warning",
+          "check": "lods",
+          "message": "Declared LOD names are not visible in GLB node names."
+        }
+      ],
+      "cooked": "assets/generated/prototype_pack/chr_proto_humanoid_01.glb",
+      "metadata": "assets/generated/prototype_pack/chr_proto_humanoid_01.metadata.json",
+      "status": "needs_manual_work",
+      "glb": {
+        "valid": true,
+        "asset_version": "2.0",
+        "bin_chunk_bytes": 45744,
+        "nodes": 22,
+        "meshes": 19,
+        "materials": 4,
+        "sockets": [
+          "socket_head",
+          "socket_root"
+        ],
+        "collisions": [],
+        "external_buffer_uris": [],
+        "external_image_uris": []
+      },
+      "metadata_summary": {
+        "category": "character",
+        "scale_meters": true,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+Y",
+        "blender_forward_axis": null,
+        "origin": null,
+        "dimensions_m": null,
+        "collision": "col_chr_proto_humanoid_01_capsule",
+        "sockets": [
+          "socket_root",
+          "socket_head"
+        ],
+        "license": "original_project_asset",
+        "external_assets": null
+      }
+    },
+    {
+      "id": "map_wall_panel_01",
+      "kind": "mesh",
+      "tags": [
+        "environment",
+        "prototype_pack",
+        "wall",
+        "greybox",
+        "dev_sandbox"
+      ],
+      "source": "tools/blender/make_prototype_pack.py",
+      "issues": [
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: origin"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: dimensions_m"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: target_dimensions_m"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: external_assets"
+        },
+        {
+          "severity": "manual",
+          "check": "orientation",
+          "message": "gameplay_forward_axis is +Y; current asset plan expects +Z."
+        },
+        {
+          "severity": "error",
+          "check": "sockets",
+          "message": "Metadata sockets missing from GLB nodes: socket_root, socket_snap_left, socket_snap_right"
+        },
+        {
+          "severity": "manual",
+          "check": "collision",
+          "message": "Collision is documented as runtime/simple collision only: box"
+        },
+        {
+          "severity": "warning",
+          "check": "lods",
+          "message": "Declared LOD names are not visible in GLB node names."
+        }
+      ],
+      "cooked": "assets/generated/prototype_pack/map_wall_panel_01.glb",
+      "metadata": "assets/generated/prototype_pack/map_wall_panel_01.metadata.json",
+      "status": "needs_manual_work",
+      "glb": {
+        "valid": true,
+        "asset_version": "2.0",
+        "bin_chunk_bytes": 6984,
+        "nodes": 10,
+        "meshes": 9,
+        "materials": 3,
+        "sockets": [],
+        "collisions": [],
+        "external_buffer_uris": [],
+        "external_image_uris": []
+      },
+      "metadata_summary": {
+        "category": "environment",
+        "scale_meters": true,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+Y",
+        "blender_forward_axis": null,
+        "origin": null,
+        "dimensions_m": null,
+        "collision": "box",
+        "sockets": [
+          "socket_root",
+          "socket_snap_left",
+          "socket_snap_right"
+        ],
+        "license": "original_project_asset",
+        "external_assets": null
+      }
+    },
+    {
+      "id": "map_floor_tile_01",
+      "kind": "mesh",
+      "tags": [
+        "environment",
+        "prototype_pack",
+        "floor",
+        "greybox",
+        "dev_sandbox"
+      ],
+      "source": "tools/blender/make_prototype_pack.py",
+      "issues": [
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: origin"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: dimensions_m"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: target_dimensions_m"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: external_assets"
+        },
+        {
+          "severity": "manual",
+          "check": "orientation",
+          "message": "gameplay_forward_axis is +Y; current asset plan expects +Z."
+        },
+        {
+          "severity": "error",
+          "check": "sockets",
+          "message": "Metadata sockets missing from GLB nodes: socket_root, socket_snap_east, socket_snap_north, socket_snap_south, socket_snap_west"
+        },
+        {
+          "severity": "manual",
+          "check": "collision",
+          "message": "Collision is documented as runtime/simple collision only: walkable_box"
+        },
+        {
+          "severity": "warning",
+          "check": "lods",
+          "message": "Declared LOD names are not visible in GLB node names."
+        }
+      ],
+      "cooked": "assets/generated/prototype_pack/map_floor_tile_01.glb",
+      "metadata": "assets/generated/prototype_pack/map_floor_tile_01.metadata.json",
+      "status": "needs_manual_work",
+      "glb": {
+        "valid": true,
+        "asset_version": "2.0",
+        "bin_chunk_bytes": 6216,
+        "nodes": 9,
+        "meshes": 8,
+        "materials": 3,
+        "sockets": [],
+        "collisions": [],
+        "external_buffer_uris": [],
+        "external_image_uris": []
+      },
+      "metadata_summary": {
+        "category": "environment",
+        "scale_meters": true,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+Y",
+        "blender_forward_axis": null,
+        "origin": null,
+        "dimensions_m": null,
+        "collision": "walkable_box",
+        "sockets": [
+          "socket_root",
+          "socket_snap_north",
+          "socket_snap_south",
+          "socket_snap_east",
+          "socket_snap_west"
+        ],
+        "license": "original_project_asset",
+        "external_assets": null
+      }
+    },
+    {
+      "id": "map_cover_crate_01",
+      "kind": "mesh",
+      "tags": [
+        "environment",
+        "prototype_pack",
+        "cover",
+        "greybox",
+        "dev_sandbox"
+      ],
+      "source": "tools/blender/make_prototype_pack.py",
+      "issues": [
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: origin"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: dimensions_m"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: target_dimensions_m"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: external_assets"
+        },
+        {
+          "severity": "manual",
+          "check": "orientation",
+          "message": "gameplay_forward_axis is +Y; current asset plan expects +Z."
+        },
+        {
+          "severity": "error",
+          "check": "sockets",
+          "message": "Metadata sockets missing from GLB nodes: socket_cover_top, socket_root"
+        },
+        {
+          "severity": "manual",
+          "check": "collision",
+          "message": "Collision is documented as runtime/simple collision only: box"
+        },
+        {
+          "severity": "warning",
+          "check": "lods",
+          "message": "Declared LOD names are not visible in GLB node names."
+        }
+      ],
+      "cooked": "assets/generated/prototype_pack/map_cover_crate_01.glb",
+      "metadata": "assets/generated/prototype_pack/map_cover_crate_01.metadata.json",
+      "status": "needs_manual_work",
+      "glb": {
+        "valid": true,
+        "asset_version": "2.0",
+        "bin_chunk_bytes": 7896,
+        "nodes": 11,
+        "meshes": 10,
+        "materials": 3,
+        "sockets": [],
+        "collisions": [],
+        "external_buffer_uris": [],
+        "external_image_uris": []
+      },
+      "metadata_summary": {
+        "category": "environment",
+        "scale_meters": true,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+Y",
+        "blender_forward_axis": null,
+        "origin": null,
+        "dimensions_m": null,
+        "collision": "box",
+        "sockets": [
+          "socket_root",
+          "socket_cover_top"
+        ],
+        "license": "original_project_asset",
+        "external_assets": null
+      }
+    },
+    {
+      "id": "map_ramp_01",
+      "kind": "mesh",
+      "tags": [
+        "environment",
+        "prototype_pack",
+        "ramp",
+        "movement_test",
+        "greybox",
+        "dev_sandbox"
+      ],
+      "source": "tools/blender/make_prototype_pack.py",
+      "issues": [
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: origin"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: dimensions_m"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: target_dimensions_m"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: external_assets"
+        },
+        {
+          "severity": "manual",
+          "check": "orientation",
+          "message": "gameplay_forward_axis is +Y; current asset plan expects +Z."
+        },
+        {
+          "severity": "error",
+          "check": "sockets",
+          "message": "Metadata sockets missing from GLB nodes: socket_high_edge, socket_low_edge, socket_root"
+        },
+        {
+          "severity": "manual",
+          "check": "collision",
+          "message": "Collision is documented as runtime/simple collision only: ramp_wedge"
+        },
+        {
+          "severity": "warning",
+          "check": "lods",
+          "message": "Declared LOD names are not visible in GLB node names."
+        }
+      ],
+      "cooked": "assets/generated/prototype_pack/map_ramp_01.glb",
+      "metadata": "assets/generated/prototype_pack/map_ramp_01.metadata.json",
+      "status": "needs_manual_work",
+      "glb": {
+        "valid": true,
+        "asset_version": "2.0",
+        "bin_chunk_bytes": 4392,
+        "nodes": 7,
+        "meshes": 6,
+        "materials": 3,
+        "sockets": [],
+        "collisions": [],
+        "external_buffer_uris": [],
+        "external_image_uris": []
+      },
+      "metadata_summary": {
+        "category": "environment",
+        "scale_meters": true,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+Y",
+        "blender_forward_axis": null,
+        "origin": null,
+        "dimensions_m": null,
+        "collision": "ramp_wedge",
+        "sockets": [
+          "socket_root",
+          "socket_low_edge",
+          "socket_high_edge"
+        ],
+        "license": "original_project_asset",
+        "external_assets": null
+      }
+    },
+    {
+      "id": "map_target_stand_01",
+      "kind": "mesh",
+      "tags": [
+        "prop",
+        "prototype_pack",
+        "target",
+        "combat_test",
+        "dev_sandbox"
+      ],
+      "source": "tools/blender/make_prototype_pack.py",
+      "issues": [
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: origin"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: dimensions_m"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: target_dimensions_m"
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: external_assets"
+        },
+        {
+          "severity": "manual",
+          "check": "orientation",
+          "message": "gameplay_forward_axis is +Y; current asset plan expects +Z."
+        },
+        {
+          "severity": "error",
+          "check": "sockets",
+          "message": "Metadata sockets missing from GLB nodes: socket_root, socket_target_center"
+        },
+        {
+          "severity": "manual",
+          "check": "collision",
+          "message": "Collision is documented as runtime/simple collision only: box"
+        },
+        {
+          "severity": "warning",
+          "check": "lods",
+          "message": "Declared LOD names are not visible in GLB node names."
+        }
+      ],
+      "cooked": "assets/generated/prototype_pack/map_target_stand_01.glb",
+      "metadata": "assets/generated/prototype_pack/map_target_stand_01.metadata.json",
+      "status": "needs_manual_work",
+      "glb": {
+        "valid": true,
+        "asset_version": "2.0",
+        "bin_chunk_bytes": 14688,
+        "nodes": 9,
+        "meshes": 8,
+        "materials": 4,
+        "sockets": [],
+        "collisions": [],
+        "external_buffer_uris": [],
+        "external_image_uris": []
+      },
+      "metadata_summary": {
+        "category": "prop",
+        "scale_meters": true,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+Y",
+        "blender_forward_axis": null,
+        "origin": null,
+        "dimensions_m": null,
+        "collision": "box",
+        "sockets": [
+          "socket_root",
+          "socket_target_center"
+        ],
+        "license": "original_project_asset",
+        "external_assets": null
+      }
+    },
+    {
+      "id": "wpn_a1_compact_rifle_01",
+      "kind": "mesh",
+      "tags": [
+        "weapon",
+        "rifle",
+        "compact",
+        "a1_prototype_pack",
+        "first_person",
+        "world_model",
+        "visual_blockout",
+        "dev_sandbox"
+      ],
+      "source": "assets/source/blender/weapons/wpn_a1_compact_rifle_01.blend",
+      "issues": [],
+      "cooked": "assets/export/gltf/weapons/wpn_a1_compact_rifle_01.glb",
+      "metadata": "assets/export/gltf/weapons/wpn_a1_compact_rifle_01.metadata.json",
+      "status": "game_ready",
+      "glb": {
+        "valid": true,
+        "asset_version": "2.0",
+        "bin_chunk_bytes": 17448,
+        "nodes": 21,
+        "meshes": 15,
+        "materials": 5,
+        "sockets": [
+          "socket_eject",
+          "socket_grip_l",
+          "socket_grip_r",
+          "socket_muzzle",
+          "socket_vfx"
+        ],
+        "collisions": [],
+        "external_buffer_uris": [],
+        "external_image_uris": []
+      },
+      "metadata_summary": {
+        "category": "weapon",
+        "scale_meters": true,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+Z",
+        "blender_forward_axis": "+Y",
+        "origin": "Origin at approximate right-hand grip/root; Blender forward axis is +Y.",
+        "dimensions_m": [
+          0.1875,
+          1.14,
+          0.5324
+        ],
+        "collision": "none",
+        "sockets": [
+          "socket_muzzle",
+          "socket_grip_r",
+          "socket_grip_l",
+          "socket_eject",
+          "socket_vfx"
+        ],
+        "license": "original_project_asset",
+        "external_assets": false
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 21,
+        "mesh_count": 15,
+        "material_count": 5,
+        "sockets": [
+          "socket_eject",
+          "socket_grip_l",
+          "socket_grip_r",
+          "socket_muzzle",
+          "socket_vfx"
+        ],
+        "collisions": [],
+        "root_objects": [
+          {
+            "name": "wpn_a1_compact_rifle_01",
+            "type": "EMPTY",
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ],
+        "non_applied_mesh_transform_count": 0
+      }
+    },
+    {
+      "id": "wpn_a1_modern_rifle_01",
+      "kind": "mesh",
+      "tags": [
+        "weapon",
+        "rifle",
+        "assault_rifle",
+        "a1_prototype_pack",
+        "first_person",
+        "world_model",
+        "visual_blockout",
+        "dev_sandbox"
+      ],
+      "source": "assets/source/blender/weapons/wpn_a1_modern_rifle_01.blend",
+      "issues": [],
+      "cooked": "assets/export/gltf/weapons/wpn_a1_modern_rifle_01.glb",
+      "metadata": "assets/export/gltf/weapons/wpn_a1_modern_rifle_01.metadata.json",
+      "status": "game_ready",
+      "glb": {
+        "valid": true,
+        "asset_version": "2.0",
+        "bin_chunk_bytes": 18336,
+        "nodes": 21,
+        "meshes": 15,
+        "materials": 5,
+        "sockets": [
+          "socket_eject",
+          "socket_grip_l",
+          "socket_grip_r",
+          "socket_muzzle",
+          "socket_vfx"
+        ],
+        "collisions": [],
+        "external_buffer_uris": [],
+        "external_image_uris": []
+      },
+      "metadata_summary": {
+        "category": "weapon",
+        "scale_meters": true,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+Z",
+        "blender_forward_axis": "+Y",
+        "origin": "Origin at approximate right-hand grip/root; Blender forward axis is +Y.",
+        "dimensions_m": [
+          0.185,
+          1.4525,
+          0.645
+        ],
+        "collision": "none",
+        "sockets": [
+          "socket_muzzle",
+          "socket_grip_r",
+          "socket_grip_l",
+          "socket_eject",
+          "socket_vfx"
+        ],
+        "license": "original_project_asset",
+        "external_assets": false
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 21,
+        "mesh_count": 15,
+        "material_count": 5,
+        "sockets": [
+          "socket_eject",
+          "socket_grip_l",
+          "socket_grip_r",
+          "socket_muzzle",
+          "socket_vfx"
+        ],
+        "collisions": [],
+        "root_objects": [
+          {
+            "name": "wpn_a1_modern_rifle_01",
+            "type": "EMPTY",
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ],
+        "non_applied_mesh_transform_count": 0
+      }
+    },
+    {
+      "id": "wpn_a1_compact_sidearm_01",
+      "kind": "mesh",
+      "tags": [
+        "weapon",
+        "sidearm",
+        "a1_prototype_pack",
+        "first_person",
+        "world_model",
+        "visual_blockout",
+        "dev_sandbox"
+      ],
+      "source": "assets/source/blender/weapons/wpn_a1_compact_sidearm_01.blend",
+      "issues": [],
+      "cooked": "assets/export/gltf/weapons/wpn_a1_compact_sidearm_01.glb",
+      "metadata": "assets/export/gltf/weapons/wpn_a1_compact_sidearm_01.metadata.json",
+      "status": "game_ready",
+      "glb": {
+        "valid": true,
+        "asset_version": "2.0",
+        "bin_chunk_bytes": 11688,
+        "nodes": 17,
+        "meshes": 11,
+        "materials": 4,
+        "sockets": [
+          "socket_eject",
+          "socket_grip_l",
+          "socket_grip_r",
+          "socket_muzzle",
+          "socket_vfx"
+        ],
+        "collisions": [],
+        "external_buffer_uris": [],
+        "external_image_uris": []
+      },
+      "metadata_summary": {
+        "category": "weapon",
+        "scale_meters": true,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+Z",
+        "blender_forward_axis": "+Y",
+        "origin": "Origin at approximate right-hand grip/root; Blender forward axis is +Y.",
+        "dimensions_m": [
+          0.125,
+          0.4688,
+          0.3842
+        ],
+        "collision": "none",
+        "sockets": [
+          "socket_muzzle",
+          "socket_grip_r",
+          "socket_grip_l",
+          "socket_eject",
+          "socket_vfx"
+        ],
+        "license": "original_project_asset",
+        "external_assets": false
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 17,
+        "mesh_count": 11,
+        "material_count": 4,
+        "sockets": [
+          "socket_eject",
+          "socket_grip_l",
+          "socket_grip_r",
+          "socket_muzzle",
+          "socket_vfx"
+        ],
+        "collisions": [],
+        "root_objects": [
+          {
+            "name": "wpn_a1_compact_sidearm_01",
+            "type": "EMPTY",
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ],
+        "non_applied_mesh_transform_count": 0
+      }
+    },
+    {
+      "id": "chr_a1_stylized_operator_01",
+      "kind": "mesh",
+      "tags": [
+        "character",
+        "third_person",
+        "operator",
+        "a1_prototype_pack",
+        "hitbox_test",
+        "visual_blockout",
+        "dev_sandbox"
+      ],
+      "source": "assets/source/blender/characters/chr_a1_stylized_operator_01.blend",
+      "issues": [],
+      "cooked": "assets/export/gltf/characters/chr_a1_stylized_operator_01.glb",
+      "metadata": "assets/export/gltf/characters/chr_a1_stylized_operator_01.metadata.json",
+      "status": "game_ready",
+      "glb": {
+        "valid": true,
+        "asset_version": "2.0",
+        "bin_chunk_bytes": 92024,
+        "nodes": 61,
+        "meshes": 34,
+        "materials": 8,
+        "sockets": [
+          "socket_backpack",
+          "socket_camera",
+          "socket_hand_l",
+          "socket_hand_r",
+          "socket_head",
+          "socket_root",
+          "socket_vfx",
+          "socket_weapon_root"
+        ],
+        "collisions": [
+          "col_chr_a1_stylized_operator_01_capsule"
+        ],
+        "external_buffer_uris": [],
+        "external_image_uris": []
+      },
+      "metadata_summary": {
+        "category": "character",
+        "scale_meters": true,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+Z",
+        "blender_forward_axis": "+Y",
+        "origin": "Origin at feet/root on the floor.",
+        "dimensions_m": [
+          1.1355,
+          0.8,
+          1.885
+        ],
+        "collision": "col_chr_a1_stylized_operator_01_capsule",
+        "sockets": [
+          "socket_root",
+          "socket_camera",
+          "socket_weapon_root",
+          "socket_hand_r",
+          "socket_hand_l",
+          "socket_head",
+          "socket_backpack",
+          "socket_vfx"
+        ],
+        "license": "original_project_asset",
+        "external_assets": false
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 44,
+        "mesh_count": 34,
+        "material_count": 8,
+        "sockets": [
+          "socket_backpack",
+          "socket_camera",
+          "socket_hand_l",
+          "socket_hand_r",
+          "socket_head",
+          "socket_root",
+          "socket_vfx",
+          "socket_weapon_root"
+        ],
+        "collisions": [
+          "col_chr_a1_stylized_operator_01_capsule"
+        ],
+        "root_objects": [
+          {
+            "name": "chr_a1_stylized_operator_01",
+            "type": "EMPTY",
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ],
+        "non_applied_mesh_transform_count": 0
+      }
+    },
+    {
+      "id": "chr_a1_fp_arms_01",
+      "kind": "mesh",
+      "tags": [
+        "character",
+        "first_person_arms",
+        "a1_prototype_pack",
+        "animation_test",
+        "visual_blockout",
+        "dev_sandbox"
+      ],
+      "source": "assets/source/blender/characters/chr_a1_fp_arms_01.blend",
+      "issues": [],
+      "cooked": "assets/export/gltf/characters/chr_a1_fp_arms_01.glb",
+      "metadata": "assets/export/gltf/characters/chr_a1_fp_arms_01.metadata.json",
+      "status": "game_ready",
+      "glb": {
+        "valid": true,
+        "asset_version": "2.0",
+        "bin_chunk_bytes": 16960,
+        "nodes": 24,
+        "meshes": 10,
+        "materials": 4,
+        "sockets": [
+          "socket_camera",
+          "socket_hand_l",
+          "socket_hand_r",
+          "socket_vfx",
+          "socket_weapon_root"
+        ],
+        "collisions": [],
+        "external_buffer_uris": [],
+        "external_image_uris": []
+      },
+      "metadata_summary": {
+        "category": "character",
+        "scale_meters": true,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+Z",
+        "blender_forward_axis": "+Y",
+        "origin": "Origin at camera/root alignment point.",
+        "dimensions_m": [
+          0.6206,
+          0.8221,
+          0.3355
+        ],
+        "collision": "none",
+        "sockets": [
+          "socket_camera",
+          "socket_weapon_root",
+          "socket_hand_r",
+          "socket_hand_l",
+          "socket_vfx"
+        ],
+        "license": "original_project_asset",
+        "external_assets": false
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 17,
+        "mesh_count": 10,
+        "material_count": 4,
+        "sockets": [
+          "socket_camera",
+          "socket_hand_l",
+          "socket_hand_r",
+          "socket_vfx",
+          "socket_weapon_root"
+        ],
+        "collisions": [],
+        "root_objects": [
+          {
+            "name": "chr_a1_fp_arms_01",
+            "type": "EMPTY",
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ],
+        "non_applied_mesh_transform_count": 0
+      }
+    },
+    {
+      "id": "wpn_a2_blackout_carbine_01",
+      "kind": "mesh",
+      "tags": [
+        "weapon",
+        "carbine",
+        "blackout",
+        "a2_visual_pack",
+        "first_person",
+        "world_model",
+        "visual_testasset",
+        "dev_sandbox"
+      ],
+      "source": "assets/source/blender/a2_visual_pack/wpn_a2_blackout_carbine_01.blend",
+      "issues": [],
+      "cooked": "assets/generated/a2_visual_pack/wpn_a2_blackout_carbine_01.glb",
+      "metadata": "assets/generated/a2_visual_pack/wpn_a2_blackout_carbine_01.metadata.json",
+      "status": "game_ready",
+      "glb": {
+        "valid": true,
+        "asset_version": "2.0",
+        "bin_chunk_bytes": 31320,
+        "nodes": 40,
+        "meshes": 32,
+        "materials": 7,
+        "sockets": [
+          "socket_eject",
+          "socket_grip_l",
+          "socket_grip_r",
+          "socket_mag",
+          "socket_muzzle",
+          "socket_optic",
+          "socket_vfx"
+        ],
+        "collisions": [],
+        "external_buffer_uris": [],
+        "external_image_uris": []
+      },
+      "metadata_summary": {
+        "category": "weapon",
+        "scale_meters": true,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+Z",
+        "blender_forward_axis": "+Y",
+        "origin": "Origin at approximate right-hand grip/root; Blender forward axis is +Y.",
+        "dimensions_m": [
+          0.21,
+          1.395,
+          0.6178
+        ],
+        "collision": "none",
+        "sockets": [
+          "socket_muzzle",
+          "socket_grip_r",
+          "socket_grip_l",
+          "socket_optic",
+          "socket_mag",
+          "socket_eject",
+          "socket_vfx"
+        ],
+        "license": "original_project_asset",
+        "external_assets": false
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 40,
+        "mesh_count": 32,
+        "material_count": 7,
+        "sockets": [
+          "socket_eject",
+          "socket_grip_l",
+          "socket_grip_r",
+          "socket_mag",
+          "socket_muzzle",
+          "socket_optic",
+          "socket_vfx"
+        ],
+        "collisions": [],
+        "root_objects": [
+          {
+            "name": "wpn_a2_blackout_carbine_01",
+            "type": "EMPTY",
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ],
+        "non_applied_mesh_transform_count": 0
+      }
+    },
+    {
+      "id": "wpn_a2_modular_rifle_01",
+      "kind": "mesh",
+      "tags": [
+        "weapon",
+        "rifle",
+        "assault_rifle",
+        "modular",
+        "a2_visual_pack",
+        "first_person",
+        "world_model",
+        "visual_testasset",
+        "dev_sandbox"
+      ],
+      "source": "assets/source/blender/a2_visual_pack/wpn_a2_modular_rifle_01.blend",
+      "issues": [],
+      "cooked": "assets/generated/a2_visual_pack/wpn_a2_modular_rifle_01.glb",
+      "metadata": "assets/generated/a2_visual_pack/wpn_a2_modular_rifle_01.metadata.json",
+      "status": "game_ready",
+      "glb": {
+        "valid": true,
+        "asset_version": "2.0",
+        "bin_chunk_bytes": 30696,
+        "nodes": 40,
+        "meshes": 31,
+        "materials": 6,
+        "sockets": [
+          "socket_eject",
+          "socket_grip_l",
+          "socket_grip_r",
+          "socket_mag",
+          "socket_muzzle",
+          "socket_optic",
+          "socket_underbarrel",
+          "socket_vfx"
+        ],
+        "collisions": [],
+        "external_buffer_uris": [],
+        "external_image_uris": []
+      },
+      "metadata_summary": {
+        "category": "weapon",
+        "scale_meters": true,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+Z",
+        "blender_forward_axis": "+Y",
+        "origin": "Origin at approximate right-hand grip/root; Blender forward axis is +Y.",
+        "dimensions_m": [
+          0.2359,
+          1.6385,
+          0.7062
+        ],
+        "collision": "none",
+        "sockets": [
+          "socket_muzzle",
+          "socket_grip_r",
+          "socket_grip_l",
+          "socket_optic",
+          "socket_underbarrel",
+          "socket_mag",
+          "socket_eject",
+          "socket_vfx"
+        ],
+        "license": "original_project_asset",
+        "external_assets": false
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 40,
+        "mesh_count": 31,
+        "material_count": 6,
+        "sockets": [
+          "socket_eject",
+          "socket_grip_l",
+          "socket_grip_r",
+          "socket_mag",
+          "socket_muzzle",
+          "socket_optic",
+          "socket_underbarrel",
+          "socket_vfx"
+        ],
+        "collisions": [],
+        "root_objects": [
+          {
+            "name": "wpn_a2_modular_rifle_01",
+            "type": "EMPTY",
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ],
+        "non_applied_mesh_transform_count": 0
+      }
+    },
+    {
+      "id": "wpn_a2_striker_sidearm_01",
+      "kind": "mesh",
+      "tags": [
+        "weapon",
+        "sidearm",
+        "striker",
+        "pistol",
+        "a2_visual_pack",
+        "first_person",
+        "world_model",
+        "visual_testasset",
+        "dev_sandbox"
+      ],
+      "source": "assets/source/blender/a2_visual_pack/wpn_a2_striker_sidearm_01.blend",
+      "issues": [],
+      "cooked": "assets/generated/a2_visual_pack/wpn_a2_striker_sidearm_01.glb",
+      "metadata": "assets/generated/a2_visual_pack/wpn_a2_striker_sidearm_01.metadata.json",
+      "status": "game_ready",
+      "glb": {
+        "valid": true,
+        "asset_version": "2.0",
+        "bin_chunk_bytes": 17832,
+        "nodes": 27,
+        "meshes": 19,
+        "materials": 5,
+        "sockets": [
+          "socket_eject",
+          "socket_grip_l",
+          "socket_grip_r",
+          "socket_muzzle",
+          "socket_optic",
+          "socket_rail",
+          "socket_vfx"
+        ],
+        "collisions": [],
+        "external_buffer_uris": [],
+        "external_image_uris": []
+      },
+      "metadata_summary": {
+        "category": "weapon",
+        "scale_meters": true,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+Z",
+        "blender_forward_axis": "+Y",
+        "origin": "Origin at approximate right-hand grip/root; Blender forward axis is +Y.",
+        "dimensions_m": [
+          0.128,
+          0.4937,
+          0.397
+        ],
+        "collision": "none",
+        "sockets": [
+          "socket_muzzle",
+          "socket_grip_r",
+          "socket_grip_l",
+          "socket_optic",
+          "socket_rail",
+          "socket_eject",
+          "socket_vfx"
+        ],
+        "license": "original_project_asset",
+        "external_assets": false
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 27,
+        "mesh_count": 19,
+        "material_count": 5,
+        "sockets": [
+          "socket_eject",
+          "socket_grip_l",
+          "socket_grip_r",
+          "socket_muzzle",
+          "socket_optic",
+          "socket_rail",
+          "socket_vfx"
+        ],
+        "collisions": [],
+        "root_objects": [
+          {
+            "name": "wpn_a2_striker_sidearm_01",
+            "type": "EMPTY",
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ],
+        "non_applied_mesh_transform_count": 0
+      }
+    },
+    {
+      "id": "chr_a2_pilot_operator_01",
+      "kind": "mesh",
+      "tags": [
+        "character",
+        "operator",
+        "pilot",
+        "third_person",
+        "a2_visual_pack",
+        "hitbox_test",
+        "visual_testasset",
+        "dev_sandbox"
+      ],
+      "source": "assets/source/blender/a2_visual_pack/chr_a2_pilot_operator_01.blend",
+      "issues": [],
+      "cooked": "assets/generated/a2_visual_pack/chr_a2_pilot_operator_01.glb",
+      "metadata": "assets/generated/a2_visual_pack/chr_a2_pilot_operator_01.metadata.json",
+      "status": "game_ready",
+      "glb": {
+        "valid": true,
+        "asset_version": "2.0",
+        "bin_chunk_bytes": 102152,
+        "nodes": 69,
+        "meshes": 42,
+        "materials": 9,
+        "sockets": [
+          "socket_backpack",
+          "socket_camera",
+          "socket_hand_l",
+          "socket_hand_r",
+          "socket_head",
+          "socket_root",
+          "socket_vfx",
+          "socket_weapon_root"
+        ],
+        "collisions": [
+          "col_chr_a2_pilot_operator_01_capsule"
+        ],
+        "external_buffer_uris": [],
+        "external_image_uris": []
+      },
+      "metadata_summary": {
+        "category": "character",
+        "scale_meters": true,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+Z",
+        "blender_forward_axis": "+Y",
+        "origin": "Origin at feet/root on the floor.",
+        "dimensions_m": [
+          1.1355,
+          0.8,
+          1.885
+        ],
+        "collision": "col_chr_a2_pilot_operator_01_capsule",
+        "sockets": [
+          "socket_root",
+          "socket_camera",
+          "socket_weapon_root",
+          "socket_hand_r",
+          "socket_hand_l",
+          "socket_head",
+          "socket_backpack",
+          "socket_vfx"
+        ],
+        "license": "original_project_asset",
+        "external_assets": false
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 52,
+        "mesh_count": 42,
+        "material_count": 9,
+        "sockets": [
+          "socket_backpack",
+          "socket_camera",
+          "socket_hand_l",
+          "socket_hand_r",
+          "socket_head",
+          "socket_root",
+          "socket_vfx",
+          "socket_weapon_root"
+        ],
+        "collisions": [
+          "col_chr_a2_pilot_operator_01_capsule"
+        ],
+        "root_objects": [
+          {
+            "name": "chr_a2_pilot_operator_01",
+            "type": "EMPTY",
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ],
+        "non_applied_mesh_transform_count": 0
+      }
+    },
+    {
+      "id": "map_a2_wallrun_panel_01",
+      "kind": "mesh",
+      "tags": [
+        "environment",
+        "wall",
+        "wall_run",
+        "wallrun",
+        "movement_test",
+        "a2_visual_pack",
+        "visual_testasset",
+        "dev_sandbox"
+      ],
+      "source": "assets/source/blender/a2_visual_pack/map_a2_wallrun_panel_01.blend",
+      "issues": [
+        {
+          "severity": "manual",
+          "check": "collision",
+          "message": "Collision is documented as runtime/simple collision only: visual_only_use_simple_wall_collision"
+        }
+      ],
+      "cooked": "assets/generated/a2_visual_pack/map_a2_wallrun_panel_01.glb",
+      "metadata": "assets/generated/a2_visual_pack/map_a2_wallrun_panel_01.metadata.json",
+      "status": "needs_collision_or_metadata_work",
+      "glb": {
+        "valid": true,
+        "asset_version": "2.0",
+        "bin_chunk_bytes": 10056,
+        "nodes": 19,
+        "meshes": 13,
+        "materials": 4,
+        "sockets": [
+          "socket_snap_left",
+          "socket_snap_right",
+          "socket_vfx",
+          "socket_wallrun_end",
+          "socket_wallrun_start"
+        ],
+        "collisions": [],
+        "external_buffer_uris": [],
+        "external_image_uris": []
+      },
+      "metadata_summary": {
+        "category": "map",
+        "scale_meters": true,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+Z",
+        "blender_forward_axis": "+Y",
+        "origin": "Origin at bottom center of the wall footprint; snaps on a 4 m lane module.",
+        "dimensions_m": [
+          4.08,
+          0.292,
+          2.66
+        ],
+        "collision": "visual_only_use_simple_wall_collision",
+        "sockets": [
+          "socket_snap_left",
+          "socket_snap_right",
+          "socket_wallrun_start",
+          "socket_wallrun_end",
+          "socket_vfx"
+        ],
+        "license": "original_project_asset",
+        "external_assets": false
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 19,
+        "mesh_count": 13,
+        "material_count": 4,
+        "sockets": [
+          "socket_snap_left",
+          "socket_snap_right",
+          "socket_vfx",
+          "socket_wallrun_end",
+          "socket_wallrun_start"
+        ],
+        "collisions": [],
+        "root_objects": [
+          {
+            "name": "map_a2_wallrun_panel_01",
+            "type": "EMPTY",
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ],
+        "non_applied_mesh_transform_count": 0
+      }
+    },
+    {
+      "id": "map_a2_slide_ramp_01",
+      "kind": "mesh",
+      "tags": [
+        "environment",
+        "ramp",
+        "slide",
+        "slide_ramp",
+        "movement_test",
+        "a2_visual_pack",
+        "visual_testasset",
+        "dev_sandbox"
+      ],
+      "source": "assets/source/blender/a2_visual_pack/map_a2_slide_ramp_01.blend",
+      "issues": [
+        {
+          "severity": "manual",
+          "check": "collision",
+          "message": "Collision is documented as runtime/simple collision only: visual_only_use_simple_ramp_collision"
+        }
+      ],
+      "cooked": "assets/generated/a2_visual_pack/map_a2_slide_ramp_01.glb",
+      "metadata": "assets/generated/a2_visual_pack/map_a2_slide_ramp_01.metadata.json",
+      "status": "needs_collision_or_metadata_work",
+      "glb": {
+        "valid": true,
+        "asset_version": "2.0",
+        "bin_chunk_bytes": 8304,
+        "nodes": 17,
+        "meshes": 11,
+        "materials": 4,
+        "sockets": [
+          "socket_slide_entry",
+          "socket_slide_exit",
+          "socket_snap_bottom",
+          "socket_snap_top",
+          "socket_vfx"
+        ],
+        "collisions": [],
+        "external_buffer_uris": [],
+        "external_image_uris": []
+      },
+      "metadata_summary": {
+        "category": "map",
+        "scale_meters": true,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+Z",
+        "blender_forward_axis": "+Y",
+        "origin": "Origin centered on the lower ramp footprint; top snap is 0.92 m above floor.",
+        "dimensions_m": [
+          4.0976,
+          2.355,
+          1.0454
+        ],
+        "collision": "visual_only_use_simple_ramp_collision",
+        "sockets": [
+          "socket_snap_bottom",
+          "socket_snap_top",
+          "socket_slide_entry",
+          "socket_slide_exit",
+          "socket_vfx"
+        ],
+        "license": "original_project_asset",
+        "external_assets": false
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 17,
+        "mesh_count": 11,
+        "material_count": 4,
+        "sockets": [
+          "socket_slide_entry",
+          "socket_slide_exit",
+          "socket_snap_bottom",
+          "socket_snap_top",
+          "socket_vfx"
+        ],
+        "collisions": [],
+        "root_objects": [
+          {
+            "name": "map_a2_slide_ramp_01",
+            "type": "EMPTY",
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ],
+        "non_applied_mesh_transform_count": 0
+      }
+    },
+    {
+      "id": "map_a2_cover_crate_01",
+      "kind": "mesh",
+      "tags": [
+        "environment",
+        "cover",
+        "crate",
+        "arena_module",
+        "a2_visual_pack",
+        "visual_testasset",
+        "dev_sandbox"
+      ],
+      "source": "assets/source/blender/a2_visual_pack/map_a2_cover_crate_01.blend",
+      "issues": [
+        {
+          "severity": "manual",
+          "check": "collision",
+          "message": "Collision is documented as runtime/simple collision only: visual_only_use_box_collision"
+        }
+      ],
+      "cooked": "assets/generated/a2_visual_pack/map_a2_cover_crate_01.glb",
+      "metadata": "assets/generated/a2_visual_pack/map_a2_cover_crate_01.metadata.json",
+      "status": "needs_collision_or_metadata_work",
+      "glb": {
+        "valid": true,
+        "asset_version": "2.0",
+        "bin_chunk_bytes": 11592,
+        "nodes": 19,
+        "meshes": 15,
+        "materials": 4,
+        "sockets": [
+          "socket_cover_peak",
+          "socket_snap_center",
+          "socket_vfx"
+        ],
+        "collisions": [],
+        "external_buffer_uris": [],
+        "external_image_uris": []
+      },
+      "metadata_summary": {
+        "category": "map",
+        "scale_meters": true,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+Z",
+        "blender_forward_axis": "+Y",
+        "origin": "Origin at bottom center; height is chest-cover scale for FPS testing.",
+        "dimensions_m": [
+          1.75,
+          1.3335,
+          1.31
+        ],
+        "collision": "visual_only_use_box_collision",
+        "sockets": [
+          "socket_snap_center",
+          "socket_cover_peak",
+          "socket_vfx"
+        ],
+        "license": "original_project_asset",
+        "external_assets": false
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 19,
+        "mesh_count": 15,
+        "material_count": 4,
+        "sockets": [
+          "socket_cover_peak",
+          "socket_snap_center",
+          "socket_vfx"
+        ],
+        "collisions": [],
+        "root_objects": [
+          {
+            "name": "map_a2_cover_crate_01",
+            "type": "EMPTY",
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ],
+        "non_applied_mesh_transform_count": 0
+      }
+    },
+    {
+      "id": "prop_a2_range_hero_01",
+      "kind": "mesh",
+      "tags": [
+        "prop",
+        "range",
+        "hero_prop",
+        "target",
+        "a2_visual_pack",
+        "visual_testasset",
+        "dev_sandbox"
+      ],
+      "source": "assets/source/blender/a2_visual_pack/prop_a2_range_hero_01.blend",
+      "issues": [
+        {
+          "severity": "manual",
+          "check": "collision",
+          "message": "Collision is documented as runtime/simple collision only: visual_only_use_simple_cylinder_or_box_collision"
+        }
+      ],
+      "cooked": "assets/generated/a2_visual_pack/prop_a2_range_hero_01.glb",
+      "metadata": "assets/generated/a2_visual_pack/prop_a2_range_hero_01.metadata.json",
+      "status": "needs_collision_or_metadata_work",
+      "glb": {
+        "valid": true,
+        "asset_version": "2.0",
+        "bin_chunk_bytes": 31368,
+        "nodes": 18,
+        "meshes": 13,
+        "materials": 5,
+        "sockets": [
+          "socket_interact",
+          "socket_snap_center",
+          "socket_target_center",
+          "socket_vfx"
+        ],
+        "collisions": [],
+        "external_buffer_uris": [],
+        "external_image_uris": []
+      },
+      "metadata_summary": {
+        "category": "prop",
+        "scale_meters": true,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+Z",
+        "blender_forward_axis": "+Y",
+        "origin": "Origin at floor center of the prop footprint.",
+        "dimensions_m": [
+          0.76,
+          0.76,
+          1.47
+        ],
+        "collision": "visual_only_use_simple_cylinder_or_box_collision",
+        "sockets": [
+          "socket_interact",
+          "socket_target_center",
+          "socket_vfx",
+          "socket_snap_center"
+        ],
+        "license": "original_project_asset",
+        "external_assets": false
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 18,
+        "mesh_count": 13,
+        "material_count": 5,
+        "sockets": [
+          "socket_interact",
+          "socket_snap_center",
+          "socket_target_center",
+          "socket_vfx"
+        ],
+        "collisions": [],
+        "root_objects": [
+          {
+            "name": "prop_a2_range_hero_01",
+            "type": "EMPTY",
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ],
+        "non_applied_mesh_transform_count": 0
+      }
+    },
+    {
+      "id": "chr_project_male1",
+      "kind": "mesh",
+      "tags": [
+        "character",
+        "third_person",
+        "project_assets",
+        "imported_glb",
+        "dev_sandbox"
+      ],
+      "source": "../Assets/character_male1.glb",
+      "issues": [
+        {
+          "severity": "warning",
+          "check": "naming",
+          "message": "GLB filename stem 'character_male1' does not match asset id 'chr_project_male1'."
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: target_dimensions_m"
+        },
+        {
+          "severity": "error",
+          "check": "sockets",
+          "message": "Required import sockets are missing: socket_camera, socket_root, socket_weapon_root"
+        },
+        {
+          "severity": "warning",
+          "check": "lods",
+          "message": "Declared LOD names are not visible in GLB node names."
+        }
+      ],
+      "cooked": "../Assets/character_male1.glb",
+      "metadata": "F:/Coding/Project/Nemisis/../Assets/character_male1.metadata.json",
+      "status": "needs_manual_work",
+      "glb": {
+        "valid": true,
+        "asset_version": "2.0",
+        "bin_chunk_bytes": 74800832,
+        "nodes": 929,
+        "meshes": 1,
+        "materials": 7,
+        "sockets": [],
+        "collisions": [],
+        "external_buffer_uris": [],
+        "external_image_uris": []
+      },
+      "metadata_summary": {
+        "category": "character",
+        "scale_meters": true,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+Z",
+        "blender_forward_axis": "+Z",
+        "origin": "Imported Project/Assets character GLB; no authored Nemisis sockets or collision proxies.",
+        "dimensions_m": [
+          1.8975,
+          1.8124,
+          0.3942
+        ],
+        "collision": "none",
+        "sockets": [],
+        "license": "original_project_asset",
+        "external_assets": false
+      }
+    },
+    {
+      "id": "wpn_project_rifle_m4a1",
+      "kind": "mesh",
+      "tags": [
+        "weapon",
+        "rifle",
+        "first_person",
+        "world_model",
+        "project_assets",
+        "imported_glb",
+        "dev_sandbox"
+      ],
+      "source": "../Assets/weapon_rifle_m4a1.glb",
+      "issues": [
+        {
+          "severity": "warning",
+          "check": "naming",
+          "message": "GLB filename stem 'weapon_rifle_m4a1' does not match asset id 'wpn_project_rifle_m4a1'."
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: target_dimensions_m"
+        },
+        {
+          "severity": "error",
+          "check": "sockets",
+          "message": "Required import sockets are missing: socket_muzzle"
+        },
+        {
+          "severity": "warning",
+          "check": "lods",
+          "message": "Declared LOD names are not visible in GLB node names."
+        }
+      ],
+      "cooked": "../Assets/weapon_rifle_m4a1.glb",
+      "metadata": "F:/Coding/Project/Nemisis/../Assets/weapon_rifle_m4a1.metadata.json",
+      "status": "needs_manual_work",
+      "glb": {
+        "valid": true,
+        "asset_version": "2.0",
+        "bin_chunk_bytes": 5061780,
+        "nodes": 14,
+        "meshes": 13,
+        "materials": 1,
+        "sockets": [],
+        "collisions": [],
+        "external_buffer_uris": [],
+        "external_image_uris": []
+      },
+      "metadata_summary": {
+        "category": "weapon",
+        "scale_meters": true,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+Z",
+        "blender_forward_axis": "+Z",
+        "origin": "Imported Project/Assets weapon GLB; first-person placement is handled by DevRangeRenderScene.",
+        "dimensions_m": [
+          0.239,
+          0.0618,
+          0.4362
+        ],
+        "collision": "none",
+        "sockets": [],
+        "license": "original_project_asset",
+        "external_assets": false
+      }
+    },
+    {
+      "id": "wpn_project_rifle_afr120",
+      "kind": "mesh",
+      "tags": [
+        "weapon",
+        "rifle",
+        "first_person",
+        "world_model",
+        "project_assets",
+        "imported_glb",
+        "dev_sandbox"
+      ],
+      "source": "../Assets/weapon_rifle_afr120.glb",
+      "issues": [
+        {
+          "severity": "warning",
+          "check": "naming",
+          "message": "GLB filename stem 'weapon_rifle_afr120' does not match asset id 'wpn_project_rifle_afr120'."
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: target_dimensions_m"
+        },
+        {
+          "severity": "error",
+          "check": "sockets",
+          "message": "Required import sockets are missing: socket_muzzle"
+        },
+        {
+          "severity": "warning",
+          "check": "lods",
+          "message": "Declared LOD names are not visible in GLB node names."
+        }
+      ],
+      "cooked": "../Assets/weapon_rifle_afr120.glb",
+      "metadata": "F:/Coding/Project/Nemisis/../Assets/weapon_rifle_afr120.metadata.json",
+      "status": "needs_manual_work",
+      "glb": {
+        "valid": true,
+        "asset_version": "2.0",
+        "bin_chunk_bytes": 8443940,
+        "nodes": 1,
+        "meshes": 1,
+        "materials": 1,
+        "sockets": [],
+        "collisions": [],
+        "external_buffer_uris": [],
+        "external_image_uris": []
+      },
+      "metadata_summary": {
+        "category": "weapon",
+        "scale_meters": true,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+Z",
+        "blender_forward_axis": "+Z",
+        "origin": "Imported Project/Assets weapon GLB; first-person placement is handled by DevRangeRenderScene.",
+        "dimensions_m": [
+          0.0739,
+          0.5001,
+          1.1712
+        ],
+        "collision": "none",
+        "sockets": [],
+        "license": "original_project_asset",
+        "external_assets": false
+      }
+    },
+    {
+      "id": "wpn_project_rifle_ncar",
+      "kind": "mesh",
+      "tags": [
+        "weapon",
+        "rifle",
+        "first_person",
+        "world_model",
+        "project_assets",
+        "imported_glb",
+        "dev_sandbox"
+      ],
+      "source": "../Assets/weapon_rifle_ncar.glb",
+      "issues": [
+        {
+          "severity": "warning",
+          "check": "naming",
+          "message": "GLB filename stem 'weapon_rifle_ncar' does not match asset id 'wpn_project_rifle_ncar'."
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: target_dimensions_m"
+        },
+        {
+          "severity": "error",
+          "check": "sockets",
+          "message": "Required import sockets are missing: socket_muzzle"
+        },
+        {
+          "severity": "warning",
+          "check": "lods",
+          "message": "Declared LOD names are not visible in GLB node names."
+        }
+      ],
+      "cooked": "../Assets/weapon_rifle_ncar.glb",
+      "metadata": "F:/Coding/Project/Nemisis/../Assets/weapon_rifle_ncar.metadata.json",
+      "status": "needs_manual_work",
+      "glb": {
+        "valid": true,
+        "asset_version": "2.0",
+        "bin_chunk_bytes": 66144088,
+        "nodes": 78,
+        "meshes": 77,
+        "materials": 20,
+        "sockets": [],
+        "collisions": [],
+        "external_buffer_uris": [],
+        "external_image_uris": []
+      },
+      "metadata_summary": {
+        "category": "weapon",
+        "scale_meters": true,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+Z",
+        "blender_forward_axis": "+Z",
+        "origin": "Imported Project/Assets weapon GLB; first-person placement is handled by DevRangeRenderScene.",
+        "dimensions_m": [
+          0.3724,
+          0.1139,
+          0.8998
+        ],
+        "collision": "none",
+        "sockets": [],
+        "license": "original_project_asset",
+        "external_assets": false
+      }
+    },
+    {
+      "id": "wpn_project_smg_fr17",
+      "kind": "mesh",
+      "tags": [
+        "weapon",
+        "smg",
+        "first_person",
+        "world_model",
+        "project_assets",
+        "imported_glb",
+        "dev_sandbox"
+      ],
+      "source": "../Assets/weapon_smg_fr17.glb",
+      "issues": [
+        {
+          "severity": "warning",
+          "check": "naming",
+          "message": "GLB filename stem 'weapon_smg_fr17' does not match asset id 'wpn_project_smg_fr17'."
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: target_dimensions_m"
+        },
+        {
+          "severity": "error",
+          "check": "sockets",
+          "message": "Required import sockets are missing: socket_muzzle"
+        },
+        {
+          "severity": "warning",
+          "check": "lods",
+          "message": "Declared LOD names are not visible in GLB node names."
+        }
+      ],
+      "cooked": "../Assets/weapon_smg_fr17.glb",
+      "metadata": "F:/Coding/Project/Nemisis/../Assets/weapon_smg_fr17.metadata.json",
+      "status": "needs_manual_work",
+      "glb": {
+        "valid": true,
+        "asset_version": "2.0",
+        "bin_chunk_bytes": 33165648,
+        "nodes": 57,
+        "meshes": 56,
+        "materials": 11,
+        "sockets": [],
+        "collisions": [],
+        "external_buffer_uris": [],
+        "external_image_uris": []
+      },
+      "metadata_summary": {
+        "category": "weapon",
+        "scale_meters": true,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+Z",
+        "blender_forward_axis": "+Z",
+        "origin": "Imported Project/Assets weapon GLB; first-person placement is handled by DevRangeRenderScene.",
+        "dimensions_m": [
+          0.2958,
+          0.0565,
+          0.4895
+        ],
+        "collision": "none",
+        "sockets": [],
+        "license": "original_project_asset",
+        "external_assets": false
+      }
+    },
+    {
+      "id": "wpn_project_sidearm_glock19",
+      "kind": "mesh",
+      "tags": [
+        "weapon",
+        "sidearm",
+        "first_person",
+        "world_model",
+        "project_assets",
+        "imported_glb",
+        "dev_sandbox"
+      ],
+      "source": "../Assets/weapon_sidearm_glock19.glb",
+      "issues": [
+        {
+          "severity": "warning",
+          "check": "naming",
+          "message": "GLB filename stem 'weapon_sidearm_glock19' does not match asset id 'wpn_project_sidearm_glock19'."
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: target_dimensions_m"
+        },
+        {
+          "severity": "error",
+          "check": "sockets",
+          "message": "Required import sockets are missing: socket_muzzle"
+        },
+        {
+          "severity": "warning",
+          "check": "lods",
+          "message": "Declared LOD names are not visible in GLB node names."
+        }
+      ],
+      "cooked": "../Assets/weapon_sidearm_glock19.glb",
+      "metadata": "F:/Coding/Project/Nemisis/../Assets/weapon_sidearm_glock19.metadata.json",
+      "status": "needs_manual_work",
+      "glb": {
+        "valid": true,
+        "asset_version": "2.0",
+        "bin_chunk_bytes": 4179308,
+        "nodes": 2,
+        "meshes": 1,
+        "materials": 1,
+        "sockets": [],
+        "collisions": [],
+        "external_buffer_uris": [],
+        "external_image_uris": []
+      },
+      "metadata_summary": {
+        "category": "weapon",
+        "scale_meters": true,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+Z",
+        "blender_forward_axis": "+Z",
+        "origin": "Imported Project/Assets sidearm GLB; first-person placement is handled by DevRangeRenderScene.",
+        "dimensions_m": [
+          0.1998,
+          0.035,
+          0.29
+        ],
+        "collision": "none",
+        "sockets": [],
+        "license": "original_project_asset",
+        "external_assets": false
+      }
+    },
+    {
+      "id": "wpn_project_sidearm_p320",
+      "kind": "mesh",
+      "tags": [
+        "weapon",
+        "sidearm",
+        "first_person",
+        "world_model",
+        "project_assets",
+        "imported_glb",
+        "dev_sandbox"
+      ],
+      "source": "../Assets/weapon_sidearm_p320.glb",
+      "issues": [
+        {
+          "severity": "warning",
+          "check": "naming",
+          "message": "GLB filename stem 'weapon_sidearm_p320' does not match asset id 'wpn_project_sidearm_p320'."
+        },
+        {
+          "severity": "warning",
+          "check": "metadata_field",
+          "message": "Readiness metadata field is missing: target_dimensions_m"
+        },
+        {
+          "severity": "error",
+          "check": "sockets",
+          "message": "Required import sockets are missing: socket_muzzle"
+        },
+        {
+          "severity": "warning",
+          "check": "lods",
+          "message": "Declared LOD names are not visible in GLB node names."
+        }
+      ],
+      "cooked": "../Assets/weapon_sidearm_p320.glb",
+      "metadata": "F:/Coding/Project/Nemisis/../Assets/weapon_sidearm_p320.metadata.json",
+      "status": "needs_manual_work",
+      "glb": {
+        "valid": true,
+        "asset_version": "2.0",
+        "bin_chunk_bytes": 2184364,
+        "nodes": 2,
+        "meshes": 1,
+        "materials": 1,
+        "sockets": [],
+        "collisions": [],
+        "external_buffer_uris": [],
+        "external_image_uris": []
+      },
+      "metadata_summary": {
+        "category": "weapon",
+        "scale_meters": true,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+Z",
+        "blender_forward_axis": "+Z",
+        "origin": "Imported Project/Assets sidearm GLB; first-person placement is handled by DevRangeRenderScene.",
+        "dimensions_m": [
+          0.1973,
+          0.0382,
+          0.2693
+        ],
+        "collision": "none",
+        "sockets": [],
+        "license": "original_project_asset",
+        "external_assets": false
+      }
+    }
+  ],
+  "orphan_glbs": [],
+  "uncataloged_blends": []
+}

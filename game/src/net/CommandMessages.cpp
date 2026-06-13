@@ -10,7 +10,7 @@ namespace {
 
 constexpr std::uint32_t kCommandMagic = 0x4E434D44U;
 constexpr std::uint32_t kAckMagic = 0x4E41434BU;
-constexpr std::uint16_t kProtocolVersion = 1;
+constexpr std::uint16_t kProtocolVersion = 2;
 
 void writeCommand(novacore::net::PacketWriter& writer, const player::PlayerInputCommand& command) {
     writer.writeU64(command.tick);
@@ -19,16 +19,20 @@ void writeCommand(novacore::net::PacketWriter& writer, const player::PlayerInput
     writer.writeFloat(command.look.x);
     writer.writeFloat(command.look.y);
     writer.writeU8(command.jumpPressed ? 1U : 0U);
+    writer.writeU8(command.jumpHeld ? 1U : 0U);
     writer.writeU8(command.doubleJumpPressed ? 1U : 0U);
     writer.writeU8(command.crouchHeld ? 1U : 0U);
     writer.writeU8(command.slidePressed ? 1U : 0U);
+    writer.writeU8(command.slideHeld ? 1U : 0U);
     writer.writeU8(command.sprintHeld ? 1U : 0U);
     writer.writeU8(command.tacticalSprintHeld ? 1U : 0U);
     writer.writeU8(command.dashPressed ? 1U : 0U);
     writer.writeU8(command.mantlePressed ? 1U : 0U);
+    writer.writeU8(command.mantleHeld ? 1U : 0U);
     writer.writeU8(command.fireHeld ? 1U : 0U);
     writer.writeU8(command.adsHeld ? 1U : 0U);
     writer.writeU8(command.reloadPressed ? 1U : 0U);
+    writer.writeU8(command.reloadHeld ? 1U : 0U);
     writer.writeU8(static_cast<std::uint8_t>(command.device));
 }
 
@@ -49,16 +53,20 @@ void writeCommand(novacore::net::PacketWriter& writer, const player::PlayerInput
         !reader.readFloat(command.look.x) ||
         !reader.readFloat(command.look.y) ||
         !readBool(reader, command.jumpPressed) ||
+        !readBool(reader, command.jumpHeld) ||
         !readBool(reader, command.doubleJumpPressed) ||
         !readBool(reader, command.crouchHeld) ||
         !readBool(reader, command.slidePressed) ||
+        !readBool(reader, command.slideHeld) ||
         !readBool(reader, command.sprintHeld) ||
         !readBool(reader, command.tacticalSprintHeld) ||
         !readBool(reader, command.dashPressed) ||
         !readBool(reader, command.mantlePressed) ||
+        !readBool(reader, command.mantleHeld) ||
         !readBool(reader, command.fireHeld) ||
         !readBool(reader, command.adsHeld) ||
         !readBool(reader, command.reloadPressed) ||
+        !readBool(reader, command.reloadHeld) ||
         !reader.readU8(device)) {
         return false;
     }

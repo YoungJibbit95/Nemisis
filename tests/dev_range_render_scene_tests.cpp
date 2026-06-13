@@ -3,6 +3,7 @@
 
 #include "novacore/assets/GltfDocument.hpp"
 
+#include <algorithm>
 #include <array>
 #include <cstdlib>
 #include <iostream>
@@ -49,10 +50,11 @@ novacore::assets::GltfMeshData makeMesh() {
 }
 
 nemisis::dev::MeshResourceLookup registerSceneMeshes(novacore::render::Renderer& renderer) {
-    static constexpr std::array<std::string_view, 27> kSceneMeshes{
+    static constexpr std::array<std::string_view, 34> kSceneMeshes{
         "env_test_arena_kit_01",
         "prop_target_dummy_01",
         "chr_dev_soldier_a",
+        "chr_project_male1",
         "chr_proto_humanoid_01",
         "chr_a1_stylized_operator_01",
         "map_floor_tile_01",
@@ -77,6 +79,12 @@ nemisis::dev::MeshResourceLookup registerSceneMeshes(novacore::render::Renderer&
         "map_a2_slide_ramp_01",
         "map_a2_cover_crate_01",
         "prop_a2_range_hero_01",
+        "wpn_project_rifle_m4a1",
+        "wpn_project_rifle_afr120",
+        "wpn_project_rifle_ncar",
+        "wpn_project_smg_fr17",
+        "wpn_project_sidearm_glock19",
+        "wpn_project_sidearm_p320",
     };
 
     nemisis::dev::MeshResourceLookup lookup;
@@ -150,8 +158,8 @@ void testDevRangeRenderSceneBuildsExpectedSubmissions() {
     expect(!world.primitives.empty(), "greybox world fixture has primitives");
     expect(stats.worldBoxCount == (world.primitives.size() - 1U) + targetRange.lanes.size() + 14U, "dev range render scene emits world, lane, asset stage, weapon, hands, muzzle, and aim boxes");
     expect(frame.worldBoxes.size() == stats.worldBoxCount, "world box count matches frame");
-    expect(stats.meshInstanceCount == 27, "dev range render scene emits static, target lane, A2 showcase, and first-person mesh instances");
-    expect(frame.worldMeshes.size() == 27, "frame receives all mesh instances");
+    expect(stats.meshInstanceCount == 34, "dev range render scene emits static, target lane, imported Project asset, A2 showcase, and first-person mesh instances");
+    expect(frame.worldMeshes.size() == 34, "frame receives all mesh instances");
     expect(stats.skippedMeshInstanceCount == 0, "dev range render scene skips no mesh when lookup is complete");
     expect(stats.firstPersonMeshCount == 2, "dev range render scene emits weapon and arms first-person mesh anchors");
     expect(stats.targetMeshCount == targetRange.lanes.size(), "dev range render scene emits one actor mesh per target lane");
@@ -186,7 +194,7 @@ void testDevRangeRenderScenePlacesA2AssetsInSpawnView() {
             player,
         });
 
-    expect(stats.meshInstanceCount == 27, "spawn view scene emits every expected mesh");
+    expect(stats.meshInstanceCount == 34, "spawn view scene emits every expected mesh");
     expect(stats.skippedMeshInstanceCount == 0, "spawn view scene has no skipped A2 meshes");
 
     const auto operatorMesh = findMesh(frame, "chr_a2_pilot_operator_01");
@@ -194,12 +202,20 @@ void testDevRangeRenderScenePlacesA2AssetsInSpawnView() {
     const auto rifleMesh = findMesh(frame, "wpn_a2_modular_rifle_01");
     const auto sidearmMesh = findMesh(frame, "wpn_a2_striker_sidearm_01");
     const auto heroMesh = findMesh(frame, "prop_a2_range_hero_01");
+    const auto projectCharacterMesh = findMesh(frame, "chr_project_male1");
+    const auto projectRifleMesh = findMesh(frame, "wpn_project_rifle_m4a1");
+    const auto projectSmgMesh = findMesh(frame, "wpn_project_smg_fr17");
+    const auto projectSidearmMesh = findMesh(frame, "wpn_project_sidearm_glock19");
 
     expect(operatorMesh.has_value(), "A2 operator mesh is submitted");
     expect(carbineMesh.has_value(), "A2 carbine mesh is submitted");
     expect(rifleMesh.has_value(), "A2 rifle mesh is submitted");
     expect(sidearmMesh.has_value(), "A2 sidearm mesh is submitted");
     expect(heroMesh.has_value(), "A2 hero prop mesh is submitted");
+    expect(projectCharacterMesh.has_value(), "Project character mesh is submitted");
+    expect(projectRifleMesh.has_value(), "Project rifle mesh is submitted");
+    expect(projectSmgMesh.has_value(), "Project SMG mesh is submitted");
+    expect(projectSidearmMesh.has_value(), "Project sidearm mesh is submitted");
 
     if (operatorMesh.has_value()) {
         expect(operatorMesh->position.z > world.playerSpawn.z + 5.0F && operatorMesh->position.z < world.playerSpawn.z + 8.5F, "A2 operator starts in front of spawn");
@@ -215,14 +231,28 @@ void testDevRangeRenderScenePlacesA2AssetsInSpawnView() {
     if (heroMesh.has_value()) {
         expect(heroMesh->position.z > world.playerSpawn.z + 7.5F, "A2 hero prop anchors the visible asset stage");
     }
+    if (projectCharacterMesh.has_value() && projectRifleMesh.has_value() && projectSmgMesh.has_value() && projectSidearmMesh.has_value()) {
+        expect(
+            std::any_of(
+                frame.worldMeshes.begin(),
+                frame.worldMeshes.end(),
+                [&world](const novacore::render::RenderMesh3D& mesh) {
+                    return mesh.assetId == "chr_project_male1" &&
+                        mesh.position.z > world.playerSpawn.z + 5.0F &&
+                        mesh.position.x < -6.5F;
+                }),
+            "Project character starts in the visible asset stage");
+        expect(projectRifleMesh->position.y > 0.9F, "Project rifle is raised on the review rack");
+        expect(projectSmgMesh->position.y > 0.9F, "Project SMG is raised on the review rack");
+        expect(projectSidearmMesh->position.y > 0.8F, "Project sidearm is raised on the review rack");
+    }
 }
 
 void testDevRangeRenderSceneCountsMissingMeshHandles() {
     novacore::render::Renderer renderer;
     auto lookup = registerSceneMeshes(renderer);
-    lookup.erase("wpn_a2_blackout_carbine_01");
-    lookup.erase("wpn_a1_compact_rifle_01");
-    lookup.erase("wpn_ar_01");
+    lookup.erase("wpn_project_rifle_m4a1");
+    lookup.erase("wpn_a2_modular_rifle_01");
     lookup.erase("chr_a1_fp_arms_01");
     lookup.erase("chr_dev_arms_a");
 
@@ -245,9 +275,9 @@ void testDevRangeRenderSceneCountsMissingMeshHandles() {
             player,
         });
 
-    expect(stats.meshInstanceCount == 24, "dev range render scene still emits available static, A2, and target lane meshes");
-    expect(frame.worldMeshes.size() == 24, "frame mesh count drops missing handles");
-    expect(stats.skippedMeshInstanceCount == 5, "dev range render scene counts missing showcase, primary, fallback, and arms handles");
+    expect(stats.meshInstanceCount == 30, "dev range render scene still emits available static, A2, Project, and target lane meshes");
+    expect(frame.worldMeshes.size() == 30, "frame mesh count drops missing handles");
+    expect(stats.skippedMeshInstanceCount == 6, "dev range render scene counts missing showcase, primary, fallback, and arms handles");
     expect(stats.firstPersonMeshCount == 0, "first-person mesh stats reflect missing weapon/arms handles");
     expect(stats.worldLineCount == 1, "dev range render scene still emits aim line without collision sample");
 }

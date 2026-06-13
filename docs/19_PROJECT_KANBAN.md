@@ -124,11 +124,20 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [x] Surface contact roles through Nemisis GreyboxCollision, Dev Sandbox logs, Gameplay debug HUD, and Dev Range world debug lines.
 - [x] Expand `UiCanvas` with text metrics, fit scaling, shadow/outline text, panels, buttons, pills, and dividers.
 - [x] Convert mantle from instant snap to a deterministic fixed-tick climb curve with grounded completion handoff.
+- [x] Add NovaCore short-tap input edge retention and pointer-position support.
+- [x] Add held input fields for jump, slide, mantle, and reload in gameplay commands plus command packet protocol v2.
+- [x] Add slide buffering and held-slide latching for reliable sprint-slide activation.
+- [x] Fix mantle activation so held jump/mantle can catch valid ledges and active climb interpolation is not overwritten by collision resolve.
+- [x] Improve NovaCore KCC ramp/slide grounding for continuous ramp traversal while preserving disabled airborne step-up.
+- [x] Add clickable GameMenu tabs and selectable rows through the unified `nemisis_game` UI path.
+- [x] Add temporary A2 runtime collision proxies for visible asset-stage ramp, wall-run panel, cover crate, hero prop, plinths, and backboard.
+- [x] Add sibling-folder Project GLB runtime bridge and Dev Range preview placement for user-provided character/weapon assets.
+- [x] Add asset-readiness audit tooling/report for Blender/GLB import validation.
 
 ## Doing
 
 - [ ] Expand material fallback controls, validation labels, and renderer resize stress coverage.
-- [ ] Keep UI moving from the new Vulkan primitive path toward SDF/MSDF text, clipping, batching, and richer vector drawing.
+- [ ] Keep UI moving from clickable Vulkan primitive path toward SDF/MSDF text, clipping, batching, focus graph, and richer vector drawing.
 - [ ] Start texture/material binding for A1/A2 GLBs so imported assets look less like tinted blockouts.
 - [ ] Grow the multi-target Dev Range into timed drills, TTK panels, and recoil-control scoring.
 - [ ] Deepen KCC physics beyond the current swept AABB/contact-manifold pass into true capsule sweeps, moving platform contacts, slide validation, and server replay validation.

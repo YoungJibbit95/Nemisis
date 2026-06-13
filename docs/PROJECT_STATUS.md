@@ -1,6 +1,19 @@
 # Nemisis Project Status
 
-## Latest Block - UI Backbone And Physics Contacts
+## Latest Block - Input Reliability, Clickable UI, And KCC Stabilization
+
+- Added NovaCore input edge retention for short taps, plus absolute pointer position in `InputSnapshot`, so quick R/Space/C/mouse clicks are no longer lost when press/release happens inside one frame.
+- Extended `PlayerInputCommand` and command packet protocol v2 with held state for jump, slide, mantle, and reload; reload now accepts held intent when a reload is legal.
+- Added slide input buffering and held-slide latching so sprint-slide can be pressed slightly early, survive landing timing, and avoid repeated auto-slide spam while held.
+- Fixed active mantle handoff by allowing held jump/mantle to trigger candidates and preventing normal collision resolve from overwriting the deterministic climb interpolation.
+- Improved NovaCore KCC ramp grounding by treating ramp/slide surfaces as continuous walkable heightfields instead of single step edges while preserving disabled airborne step-up behavior.
+- Added runtime collision proxies for visible A2 asset-stage pieces: slide ramp, wall-run panel, cover crate, range hero prop, plinths, and backboard.
+- Added a runtime bridge for user-provided sibling-folder Project GLBs under `../Assets`, including character and weapon IDs, DevAssetBindings path resolution, and Dev Range preview placement.
+- Added clickable Main Menu pointer routing for tabs and selectable rows across Play, Gamemodes, Loadout, Character, Settings, and Account surfaces.
+- Added asset readiness audit docs/tooling from the asset worker: Blender 5.1.2 validated 21 `.blend` sources and 28/28 GLBs; remaining asset gaps are material JSONs and authored `col_` proxies.
+- Verified NovaCore Debug build + smoke CTest and Nemisis Debug build + 32/32 CTest suite, including Vulkan main menu/dev-range smoke paths.
+
+## Previous Block - UI Backbone And Physics Contacts
 
 - Fixed the Vulkan UI/text orientation at the NovaCore shader layer, so `nemisis_game` now gets the corrected top-left screen-space UI path through the normal Vulkan renderer.
 - Expanded game-side UI infrastructure with `UiCanvas` text metrics, fit-to-width scaling, shadow/outline text, panels, buttons, pills, and dividers; Main Menu tabs, selectable rows, HUD panels, and debug panels now use the upgraded primitives.

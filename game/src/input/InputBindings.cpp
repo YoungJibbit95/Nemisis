@@ -94,6 +94,7 @@ novacore::platform::InputActionMap createDefaultActionMap() {
     bindButton(actionMap, actions::MenuNextTab, keyboard(key_codes::E));
     bindButton(actionMap, actions::MenuConfirm, keyboard(key_codes::Enter));
     bindButton(actionMap, actions::MenuBack, keyboard(key_codes::Escape));
+    bindButton(actionMap, actions::MenuPointerPrimary, mouse(mouse_codes::Left));
     bindButton(actionMap, actions::ToggleDebug, keyboard(key_codes::F1));
     bindButton(actionMap, actions::DebugNextPage, keyboard(key_codes::Tab));
     bindButton(actionMap, actions::SelectDevRange, keyboard(key_codes::Digit1));

@@ -137,6 +137,68 @@ void testMenuTabsSettingsAndLoadoutMutateRuntimeData() {
     expect(settings.mouse.sensitivityX > originalSensitivity, "right arrow adjusts mouse sensitivity live");
 }
 
+void testPointerNavigationActivatesMenuRows() {
+    auto actions = nemisis::input::createDefaultActionMap();
+    nemisis::ui::GameMenu menu;
+    nemisis::settings::GameSettings settings{};
+    nemisis::weapons::AttachmentRegistry attachments;
+    attachments.registerPrototypeAttachments();
+    auto loadout = nemisis::weapons::defaultPrototypeLoadout();
+
+    menu.update(actions, settings, loadout, attachments, nemisis::ui::MenuPointerState{
+        430.0F,
+        152.0F,
+        true,
+        true,
+        true,
+        false,
+    });
+    expect(menu.tab() == nemisis::ui::MenuTab::Loadout, "pointer click selects loadout tab");
+
+    const auto originalWeapon = loadout.weaponId;
+    menu.update(actions, settings, loadout, attachments, nemisis::ui::MenuPointerState{
+        420.0F,
+        232.0F,
+        true,
+        true,
+        true,
+        false,
+    });
+    expect(loadout.weaponId != originalWeapon, "pointer click activates selected loadout row");
+
+    menu.update(actions, settings, loadout, attachments, nemisis::ui::MenuPointerState{
+        770.0F,
+        152.0F,
+        true,
+        true,
+        true,
+        false,
+    });
+    expect(menu.tab() == nemisis::ui::MenuTab::Settings, "pointer click selects settings tab");
+
+    const float originalSensitivity = settings.mouse.sensitivityX;
+    menu.update(actions, settings, loadout, attachments, nemisis::ui::MenuPointerState{
+        440.0F,
+        232.0F,
+        true,
+        true,
+        true,
+        false,
+    });
+    expect(settings.mouse.sensitivityX > originalSensitivity, "pointer click adjusts settings row");
+
+    menu.showMainMenu(nemisis::ui::MenuTab::Play);
+    menu.update(actions, settings, loadout, attachments, nemisis::ui::MenuPointerState{
+        470.0F,
+        232.0F,
+        true,
+        true,
+        true,
+        false,
+    });
+    expect(menu.screen() == nemisis::ui::GameScreen::Loading, "pointer click starts firing range loading");
+}
+
 } // namespace
 
 int main() {
@@ -145,6 +207,7 @@ int main() {
     testDebugToggle();
     testDebugPageCycle();
     testMenuTabsSettingsAndLoadoutMutateRuntimeData();
+    testPointerNavigationActivatesMenuRows();
 
     if (failures > 0) {
         std::cerr << failures << " game menu test(s) failed\n";

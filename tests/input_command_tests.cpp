@@ -59,6 +59,38 @@ void testPressedActionsBuildCommand() {
     expect(command.device == novacore::platform::InputDeviceKind::KeyboardMouse, "device remains keyboard/mouse");
 }
 
+void testHeldActionsBuildCommand() {
+    auto actionMap = nemisis::input::createDefaultActionMap();
+    novacore::platform::InputSnapshot snapshot;
+    snapshot.setButton(
+        {novacore::platform::InputControlKind::KeyboardKey, nemisis::input::key_codes::Space},
+        true,
+        novacore::platform::InputDeviceKind::KeyboardMouse);
+    snapshot.setButton(
+        {novacore::platform::InputControlKind::KeyboardKey, nemisis::input::key_codes::C},
+        true,
+        novacore::platform::InputDeviceKind::KeyboardMouse);
+    snapshot.setButton(
+        {novacore::platform::InputControlKind::KeyboardKey, nemisis::input::key_codes::R},
+        true,
+        novacore::platform::InputDeviceKind::KeyboardMouse);
+
+    actionMap.update(snapshot);
+    const auto command = nemisis::input::buildPlayerInputCommand(actionMap, 8);
+
+    expect(command.jumpPressed && command.jumpHeld, "jump reports pressed and held on first frame");
+    expect(command.mantlePressed && command.mantleHeld, "mantle shares jump hold intent");
+    expect(command.slidePressed && command.slideHeld, "slide reports pressed and held");
+    expect(command.reloadPressed && command.reloadHeld, "reload reports pressed and held");
+
+    snapshot.beginFrame();
+    actionMap.update(snapshot);
+    const auto held = nemisis::input::buildPlayerInputCommand(actionMap, 9);
+    expect(!held.jumpPressed && held.jumpHeld, "held jump does not repeat pressed");
+    expect(!held.slidePressed && held.slideHeld, "held slide does not repeat pressed");
+    expect(!held.reloadPressed && held.reloadHeld, "held reload does not repeat pressed");
+}
+
 void testControllerActionsBuildCommand() {
     auto actionMap = nemisis::input::createDefaultActionMap();
     novacore::platform::InputSnapshot snapshot;
@@ -171,6 +203,7 @@ void testLookSensitivitySettingsScaleCommand() {
 int main() {
     testMovementActionsBuildCommand();
     testPressedActionsBuildCommand();
+    testHeldActionsBuildCommand();
     testControllerActionsBuildCommand();
     testControllerDeadzoneDoesNotMove();
     testMouseLookBuildsCommand();

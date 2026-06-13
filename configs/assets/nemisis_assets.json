@@ -298,6 +298,76 @@
       "priority": 79,
       "estimated_bytes": 43940,
       "tags": ["prop", "range", "hero_prop", "target", "a2_visual_pack", "visual_testasset", "dev_sandbox"]
+    },
+    {
+      "id": "chr_project_male1",
+      "kind": "mesh",
+      "source": "../Assets/character_male1.glb",
+      "cooked": "../Assets/character_male1.glb",
+      "streamable": true,
+      "priority": 89,
+      "estimated_bytes": 76643628,
+      "tags": ["character", "third_person", "project_assets", "imported_glb", "dev_sandbox"]
+    },
+    {
+      "id": "wpn_project_rifle_m4a1",
+      "kind": "mesh",
+      "source": "../Assets/weapon_rifle_m4a1.glb",
+      "cooked": "../Assets/weapon_rifle_m4a1.glb",
+      "streamable": true,
+      "priority": 91,
+      "estimated_bytes": 5074452,
+      "tags": ["weapon", "rifle", "first_person", "world_model", "project_assets", "imported_glb", "dev_sandbox"]
+    },
+    {
+      "id": "wpn_project_rifle_afr120",
+      "kind": "mesh",
+      "source": "../Assets/weapon_rifle_afr120.glb",
+      "cooked": "../Assets/weapon_rifle_afr120.glb",
+      "streamable": true,
+      "priority": 90,
+      "estimated_bytes": 8445728,
+      "tags": ["weapon", "rifle", "first_person", "world_model", "project_assets", "imported_glb", "dev_sandbox"]
+    },
+    {
+      "id": "wpn_project_rifle_ncar",
+      "kind": "mesh",
+      "source": "../Assets/weapon_rifle_ncar.glb",
+      "cooked": "../Assets/weapon_rifle_ncar.glb",
+      "streamable": true,
+      "priority": 88,
+      "estimated_bytes": 66224088,
+      "tags": ["weapon", "rifle", "first_person", "world_model", "project_assets", "imported_glb", "dev_sandbox"]
+    },
+    {
+      "id": "wpn_project_smg_fr17",
+      "kind": "mesh",
+      "source": "../Assets/weapon_smg_fr17.glb",
+      "cooked": "../Assets/weapon_smg_fr17.glb",
+      "streamable": true,
+      "priority": 87,
+      "estimated_bytes": 33217932,
+      "tags": ["weapon", "smg", "first_person", "world_model", "project_assets", "imported_glb", "dev_sandbox"]
+    },
+    {
+      "id": "wpn_project_sidearm_glock19",
+      "kind": "mesh",
+      "source": "../Assets/weapon_sidearm_glock19.glb",
+      "cooked": "../Assets/weapon_sidearm_glock19.glb",
+      "streamable": true,
+      "priority": 86,
+      "estimated_bytes": 4181416,
+      "tags": ["weapon", "sidearm", "first_person", "world_model", "project_assets", "imported_glb", "dev_sandbox"]
+    },
+    {
+      "id": "wpn_project_sidearm_p320",
+      "kind": "mesh",
+      "source": "../Assets/weapon_sidearm_p320.glb",
+      "cooked": "../Assets/weapon_sidearm_p320.glb",
+      "streamable": true,
+      "priority": 85,
+      "estimated_bytes": 2186252,
+      "tags": ["weapon", "sidearm", "first_person", "world_model", "project_assets", "imported_glb", "dev_sandbox"]
     }
   ]
 }

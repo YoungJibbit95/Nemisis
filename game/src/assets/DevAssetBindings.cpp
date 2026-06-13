@@ -3,6 +3,7 @@
 #include "novacore/assets/GltfDocument.hpp"
 #include "novacore/assets/GltfMetadata.hpp"
 
+#include <filesystem>
 #include <string>
 #include <utility>
 
@@ -39,7 +40,44 @@ constexpr RequiredDevAssetIds kRequiredDevAssets{
     "map_a2_slide_ramp_01",
     "map_a2_cover_crate_01",
     "prop_a2_range_hero_01",
+    "chr_project_male1",
+    "wpn_project_rifle_m4a1",
+    "wpn_project_rifle_afr120",
+    "wpn_project_rifle_ncar",
+    "wpn_project_smg_fr17",
+    "wpn_project_sidearm_glock19",
+    "wpn_project_sidearm_p320",
 };
+
+[[nodiscard]] std::filesystem::path resolveRuntimeAssetPath(
+    const std::filesystem::path& runtimeRoot,
+    const std::filesystem::path& assetPath) {
+    const auto direct = runtimeRoot / assetPath;
+    if (std::filesystem::exists(direct)) {
+        return direct;
+    }
+
+    const auto filename = assetPath.filename();
+    if (filename.empty()) {
+        return direct;
+    }
+
+    auto cursor = std::filesystem::absolute(runtimeRoot);
+    while (true) {
+        const auto siblingProjectAsset = cursor / "Assets" / filename;
+        if (std::filesystem::exists(siblingProjectAsset)) {
+            return siblingProjectAsset;
+        }
+
+        const auto parent = cursor.parent_path();
+        if (parent == cursor || parent.empty()) {
+            break;
+        }
+        cursor = parent;
+    }
+
+    return direct;
+}
 
 void appendErrors(
     DevAssetBindingSummary& summary,
@@ -90,7 +128,9 @@ DevAssetBindingSummary DevAssetBindings::bindAssets(
         }
 
         novacore::assets::GltfAssetMetadata metadata{};
-        const auto metadataPath = runtimeRoot / novacore::assets::metadataPathForCookedAsset(*record);
+        const auto metadataPath = resolveRuntimeAssetPath(
+            runtimeRoot,
+            novacore::assets::metadataPathForCookedAsset(*record));
         const auto metadataResult = novacore::assets::loadGltfAssetMetadataFromJson(metadataPath, metadata);
         if (!metadataResult.ok()) {
             appendErrors(summary, assetId, metadataResult.errors);
@@ -105,7 +145,7 @@ DevAssetBindingSummary DevAssetBindings::bindAssets(
         ++summary.metadataAssetCount;
 
         novacore::assets::GltfMeshData meshData{};
-        const auto meshDataPath = runtimeRoot / record->cookedPath;
+        const auto meshDataPath = resolveRuntimeAssetPath(runtimeRoot, record->cookedPath);
         const auto meshDataResult = novacore::assets::loadGltfMeshData(meshDataPath, meshData);
         if (!meshDataResult.ok()) {
             appendErrors(summary, assetId, meshDataResult.errors);

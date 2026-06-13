@@ -41,6 +41,15 @@ enum class DebugPage {
     Assets
 };
 
+struct MenuPointerState final {
+    float x = 0.0F;
+    float y = 0.0F;
+    bool available = false;
+    bool primaryDown = false;
+    bool primaryPressed = false;
+    bool primaryReleased = false;
+};
+
 class GameMenu final {
 public:
     void update(const novacore::platform::InputActionMap& actions);
@@ -49,6 +58,12 @@ public:
         settings::GameSettings& settings,
         weapons::WeaponLoadout& loadout,
         const weapons::AttachmentRegistry& attachments);
+    void update(
+        const novacore::platform::InputActionMap& actions,
+        settings::GameSettings& settings,
+        weapons::WeaponLoadout& loadout,
+        const weapons::AttachmentRegistry& attachments,
+        MenuPointerState pointer);
     void updateFrame(double deltaSeconds);
     void showMainMenu(MenuTab tab = MenuTab::Play);
     void showLoadingScreen(GameScreen target, float progress = 0.0F);
@@ -97,6 +112,11 @@ private:
     void adjustSelection(int delta);
     void adjustCurrentValue(
         int direction,
+        settings::GameSettings& settings,
+        weapons::WeaponLoadout& loadout,
+        const weapons::AttachmentRegistry& attachments);
+    void updatePointer(
+        MenuPointerState pointer,
         settings::GameSettings& settings,
         weapons::WeaponLoadout& loadout,
         const weapons::AttachmentRegistry& attachments);

@@ -39,7 +39,11 @@ Implemented:
 - KCC snap/step behavior is now state-aware: rising jump arcs disable ground snap, airborne frames can disable step-up, off-support ledges/steps become Airborne, and wall-run probes use movement tuning.
 - KCC movement now uses NovaCore's first swept displacement API before final position resolution, preventing fast horizontal tunneling through ledges/walls while preserving low-step traversal and wall tangent movement.
 - Movement now has coyote time, jump buffering, timed mantle exit, and debug-visible movement timers for faster in-range tuning.
+- Input now preserves short-tap edges and held intent for jump, slide, mantle, and reload.
+- Slide now has a buffered/latching sprint-slide path, and mantle no longer lets normal collision overwrite active climb interpolation.
+- NovaCore ramp/slide grounding now treats ramps as continuous walkable surfaces; A2 visual stage pieces have runtime collision proxies for ramp, wall-run panel, cover crate, hero prop, backboard, and plinths.
 - The Main Menu shell, tabs, and rows use the first segmented rounded-rectangle UI fallback through the shared `UiCanvas` path.
+- The Main Menu tabs and selectable rows are clickable through the unified `nemisis_game` runtime path.
 
 Acceptance:
 

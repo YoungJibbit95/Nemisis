@@ -173,6 +173,35 @@ void testSlideDurationAndSlideJumpReplay() {
     expect(state.lastHorizontalSpeed > movement.tuning().sprintSpeed, "slide jump keeps momentum boost");
 }
 
+void testSlideBufferMakesSprintSlideReliable() {
+    nemisis::movement::MovementSystem movement;
+    nemisis::movement::PlayerMovementState state{};
+    state.position = {0.0F, 0.08F, 0.0F};
+    state.velocity = {0.0F, -1.0F, movement.tuning().sprintSpeed};
+    state.mode = nemisis::movement::MovementMode::Airborne;
+
+    nemisis::player::PlayerInputCommand command{};
+    command.move = novacore::math::Vec2{0.0F, 1.0F};
+    command.sprintHeld = true;
+    command.slidePressed = true;
+    command.slideHeld = true;
+
+    constexpr float dt = 1.0F / 60.0F;
+    state = movement.simulate(state, command, dt);
+    expect(state.slideBufferRemaining > 0.0F, "airborne slide input starts slide buffer");
+    expect(state.mode == nemisis::movement::MovementMode::Airborne, "airborne buffered slide waits for ground");
+
+    command.slidePressed = false;
+    state.position.y = 0.0F;
+    state.velocity.y = 0.0F;
+    state.mode = nemisis::movement::MovementMode::Grounded;
+    state = movement.simulate(state, command, dt);
+
+    expect(state.mode == nemisis::movement::MovementMode::Sliding, "landing with buffered sprint slide enters sliding");
+    expect(state.slideBufferRemaining <= 0.0001F, "slide consumes buffer");
+    expect(state.slideHeldConsumed, "held slide is latched after starting slide");
+}
+
 void testWallRunContactAndWallJumpReplay() {
     nemisis::movement::MovementSystem movement;
     nemisis::movement::PlayerMovementState state{};
@@ -254,7 +283,7 @@ void testMovementTuningConfigReplay() {
     constexpr std::string_view json = R"({
         "sprint_speed": 10.0,
         "ground": { "acceleration": 55.0, "friction": 12.0 },
-        "slide": { "max_duration": 1.1, "steering_acceleration": 9.0, "jump_boost": 3.0 },
+        "slide": { "max_duration": 1.1, "steering_acceleration": 9.0, "jump_boost": 3.0, "buffer_time": 0.18 },
         "dash": { "impulse": 12.0, "cooldown": 1.25 },
         "air": { "max_speed": 8.75, "drag": 0.2 },
         "jump": { "coyote_time": 0.12, "buffer_time": 0.14 },
@@ -270,6 +299,7 @@ void testMovementTuningConfigReplay() {
     expectNear(tuning.groundAcceleration, 55.0F, 0.001F, "ground acceleration loads from config");
     expectNear(tuning.slideMaxDurationSeconds, 1.1F, 0.001F, "slide duration loads from config");
     expectNear(tuning.slideJumpBoost, 3.0F, 0.001F, "slide jump boost loads from config");
+    expectNear(tuning.slideBufferSeconds, 0.18F, 0.001F, "slide buffer loads from config");
     expectNear(tuning.dashImpulse, 12.0F, 0.001F, "dash impulse loads from config");
     expectNear(tuning.airMaxSpeed, 8.75F, 0.001F, "air max speed loads from config");
     expectNear(tuning.wallRunSpeed, 9.0F, 0.001F, "wall run speed loads from config");
@@ -289,6 +319,7 @@ int main() {
     testJumpBufferReplay();
     testDashCooldownReplay();
     testSlideDurationAndSlideJumpReplay();
+    testSlideBufferMakesSprintSlideReliable();
     testWallRunContactAndWallJumpReplay();
     testMantleCandidateReplay();
     testMovementTuningConfigReplay();

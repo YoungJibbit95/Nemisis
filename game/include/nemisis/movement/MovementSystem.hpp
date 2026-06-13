@@ -33,6 +33,7 @@ struct PlayerMovementState final {
     float dashTimeRemaining = 0.0F;
     float slideCooldownRemaining = 0.0F;
     float slideTimeRemaining = 0.0F;
+    float slideBufferRemaining = 0.0F;
     float wallRunTimeRemaining = 0.0F;
     float mantleTimeRemaining = 0.0F;
     float mantleProgressSeconds = 0.0F;
@@ -42,6 +43,7 @@ struct PlayerMovementState final {
     float airborneTimeSeconds = 0.0F;
     float lastHorizontalSpeed = 0.0F;
     float inputMagnitude = 0.0F;
+    bool slideHeldConsumed = false;
 };
 
 struct WallRunContact final {

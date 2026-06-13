@@ -100,6 +100,31 @@ void addPreviewLine(
         state.mode == movement::MovementMode::WallRunning;
 }
 
+[[nodiscard]] ui::MenuPointerState buildMenuPointerState(
+    const novacore::platform::Window& window,
+    const novacore::platform::InputActionMap& actions) {
+    ui::MenuPointerState pointer{};
+    const auto& snapshot = window.inputSnapshot();
+    if (!snapshot.hasPointerPosition() || window.relativeMouseMode()) {
+        return pointer;
+    }
+
+    const auto position = snapshot.pointerPosition();
+    const float width = static_cast<float>(std::max<std::int32_t>(1, window.width()));
+    const float height = static_cast<float>(std::max<std::int32_t>(1, window.height()));
+    pointer.x = position.x * (1280.0F / width);
+    pointer.y = position.y * (720.0F / height);
+    pointer.available = true;
+
+    const auto primary = actions.stateOrDefault(input::actions::MenuPointerPrimary);
+    if (primary.device == novacore::platform::InputDeviceKind::KeyboardMouse) {
+        pointer.primaryDown = primary.down;
+        pointer.primaryPressed = primary.pressed;
+        pointer.primaryReleased = primary.released;
+    }
+    return pointer;
+}
+
 } // namespace
 
 GameApp::GameApp(GameAppOptions options)
@@ -238,7 +263,9 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
         const bool mantleActivationWindow =
             movementState->mode == movement::MovementMode::Airborne &&
             movementState->velocity.y <= movement_.tuning().jumpVelocity * 0.50F;
-        if (movementCommand.mantlePressed && collisionSample.mantleCandidate && mantleActivationWindow) {
+        if ((movementCommand.mantlePressed || movementCommand.mantleHeld || movementCommand.jumpHeld) &&
+            collisionSample.mantleCandidate &&
+            mantleActivationWindow) {
             *movementState = movement_.applyMantleCandidate(
                 *movementState,
                 movementCommand,
@@ -254,11 +281,15 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
             collisionQuery.enableGroundSnap = false;
             collisionQuery.enableStepUp = false;
             collisionSample = dev::resolveGreyboxPlayerCollision(greyboxWorld_, collisionQuery);
+            collisionSample.position = movementState->position;
         }
+        const bool activeMantleInterpolation =
+            movementState->mode == movement::MovementMode::Mantling &&
+            movementState->mantleTimeRemaining > 0.0F;
         const bool wallRunCandidate = collisionSample.nearWallRunSurface &&
             !collisionSample.grounded &&
             movementState->position.y >= movement_.tuning().wallRunMinHeight;
-        if (collisionSample.blocked && !wallRunCandidate) {
+        if (collisionSample.blocked && !wallRunCandidate && !activeMantleInterpolation) {
             if (std::abs(collisionSample.correction.x) > 0.0001F) {
                 movementState->velocity.x = 0.0F;
             }
@@ -274,10 +305,10 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
                 }
             }
         }
-        if (collisionSample.grounded && movementState->velocity.y < 0.0F) {
+        if (collisionSample.grounded && movementState->velocity.y < 0.0F && !activeMantleInterpolation) {
             movementState->velocity.y = 0.0F;
         }
-        if (collisionSample.grounded) {
+        if (collisionSample.grounded && !activeMantleInterpolation) {
             movementState->hasDoubleJump = true;
             movementState->coyoteTimeRemaining = movement_.tuning().coyoteTimeSeconds;
             movementState->airborneTimeSeconds = 0.0F;
@@ -295,16 +326,20 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
             movementState->mode = movement::MovementMode::Airborne;
             movementState->groundedTimeSeconds = 0.0F;
         }
-        movementState->position = collisionSample.position;
-        *movementState = movement_.applyWallRunContact(
-            *movementState,
-            movementCommand,
-            movement::WallRunContact{
-                wallRunCandidate,
-                collisionSample.wallNormal,
-                collisionSample.wallTangent,
-            },
-            static_cast<float>(context.fixedDeltaSeconds));
+        if (!activeMantleInterpolation) {
+            movementState->position = collisionSample.position;
+            *movementState = movement_.applyWallRunContact(
+                *movementState,
+                movementCommand,
+                movement::WallRunContact{
+                    wallRunCandidate,
+                    collisionSample.wallNormal,
+                    collisionSample.wallTangent,
+                },
+                static_cast<float>(context.fixedDeltaSeconds));
+        } else {
+            collisionSample.position = movementState->position;
+        }
         if (auto* transform = world_.getComponent<novacore::ecs::TransformComponent>(localPlayerEntity_);
             transform != nullptr) {
             transform->position = movementState->position;
@@ -336,7 +371,7 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
         if (!weapon.id.empty()) {
             weapons::FireRequest fireRequest{};
             fireRequest.triggerHeld = command.fireHeld;
-            fireRequest.reloadPressed = command.reloadPressed;
+            fireRequest.reloadPressed = command.reloadPressed || command.reloadHeld;
             fireRequest.adsHeld = command.adsHeld;
             fireRequest.movementSpeed = movementSpeed;
             fireRequest.airborne = airborne;
@@ -467,7 +502,7 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
 void GameApp::onFrame(const novacore::core::FrameContext& context) {
     window_.pollEvents(input_);
     actions_.update(window_.inputSnapshot());
-    menu_.update(actions_, settings_, activeLoadout_, attachmentRegistry_);
+    menu_.update(actions_, settings_, activeLoadout_, attachmentRegistry_, buildMenuPointerState(window_, actions_));
     menu_.updateFrame(context.deltaSeconds);
     syncRuntimeLoadout();
     persistUserSettingsIfChanged();

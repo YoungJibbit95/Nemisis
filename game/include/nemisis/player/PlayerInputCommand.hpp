@@ -13,20 +13,23 @@ struct PlayerInputCommand final {
     novacore::math::Vec2 look{};
 
     bool jumpPressed = false;
+    bool jumpHeld = false;
     bool doubleJumpPressed = false;
     bool crouchHeld = false;
     bool slidePressed = false;
+    bool slideHeld = false;
     bool sprintHeld = false;
     bool tacticalSprintHeld = false;
     bool dashPressed = false;
     bool mantlePressed = false;
+    bool mantleHeld = false;
 
     bool fireHeld = false;
     bool adsHeld = false;
     bool reloadPressed = false;
+    bool reloadHeld = false;
 
     novacore::platform::InputDeviceKind device = novacore::platform::InputDeviceKind::KeyboardMouse;
 };
 
 } // namespace nemisis::player
-

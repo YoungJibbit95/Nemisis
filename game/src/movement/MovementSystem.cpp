@@ -161,6 +161,7 @@ PlayerMovementState MovementSystem::simulate(
     state.dashTimeRemaining = consumeCooldown(state.dashTimeRemaining, fixedDeltaSeconds);
     state.slideCooldownRemaining = consumeCooldown(state.slideCooldownRemaining, fixedDeltaSeconds);
     state.slideTimeRemaining = consumeCooldown(state.slideTimeRemaining, fixedDeltaSeconds);
+    state.slideBufferRemaining = consumeCooldown(state.slideBufferRemaining, fixedDeltaSeconds);
     state.wallRunTimeRemaining = consumeCooldown(state.wallRunTimeRemaining, fixedDeltaSeconds);
     state.mantleTimeRemaining = consumeCooldown(state.mantleTimeRemaining, fixedDeltaSeconds);
     state.jumpBufferRemaining = command.jumpPressed
@@ -170,12 +171,22 @@ PlayerMovementState MovementSystem::simulate(
         ? tuning_.coyoteTimeSeconds
         : consumeCooldown(state.coyoteTimeRemaining, fixedDeltaSeconds);
     state.hasWallRunContact = false;
+    if (!command.slideHeld) {
+        state.slideHeldConsumed = false;
+    }
 
     const auto input = horizontalInput(command.move);
     const auto direction = input.direction;
     const bool hasMoveInput = input.magnitude > 0.001F;
     state.inputMagnitude = input.magnitude;
     const bool bufferedJump = state.jumpBufferRemaining > 0.0F;
+    const float currentHorizontalSpeed = horizontalSpeed(state.velocity);
+    const bool sprintSlideIntent = command.slideHeld &&
+        !state.slideHeldConsumed &&
+        (command.sprintHeld || command.tacticalSprintHeld || currentHorizontalSpeed >= tuning_.walkSpeed * 0.80F);
+    if (command.slidePressed || sprintSlideIntent) {
+        state.slideBufferRemaining = tuning_.slideBufferSeconds;
+    }
 
     float targetSpeed = tuning_.walkSpeed;
     if (command.crouchHeld) {
@@ -277,7 +288,9 @@ PlayerMovementState MovementSystem::simulate(
         state.velocity.y = std::max(state.velocity.y, -1.15F);
     }
 
-    if (command.slidePressed && state.mode == MovementMode::Grounded && state.slideCooldownRemaining <= 0.0F) {
+    if (state.slideBufferRemaining > 0.0F &&
+        state.mode == MovementMode::Grounded &&
+        state.slideCooldownRemaining <= 0.0F) {
         const auto slideDirection = hasMoveInput
             ? direction
             : normalizedOrZero(horizontalVelocity(state.velocity));
@@ -287,6 +300,8 @@ PlayerMovementState MovementSystem::simulate(
         state.velocity = state.velocity + (impulseDirection * tuning_.slideImpulse);
         state.slideCooldownRemaining = tuning_.slideCooldownSeconds;
         state.slideTimeRemaining = tuning_.slideMaxDurationSeconds;
+        state.slideBufferRemaining = 0.0F;
+        state.slideHeldConsumed = command.slideHeld;
         state.mode = MovementMode::Sliding;
     }
 
@@ -336,7 +351,7 @@ PlayerMovementState MovementSystem::simulate(
         state.velocity.y = tuning_.doubleJumpImpulse;
         state.hasDoubleJump = false;
         state.jumpBufferRemaining = 0.0F;
-    } else if (command.mantlePressed && state.mode == MovementMode::Airborne) {
+    } else if ((command.mantlePressed || command.mantleHeld) && state.mode == MovementMode::Airborne) {
         triggerMantleReach(state.tech);
     }
 
@@ -427,7 +442,7 @@ PlayerMovementState MovementSystem::applyMantleCandidate(
     MantleCandidate candidate,
     float fixedDeltaSeconds) const {
     (void)fixedDeltaSeconds;
-    if (!command.mantlePressed || !candidate.available) {
+    if (!(command.mantlePressed || command.mantleHeld || command.jumpHeld) || !candidate.available) {
         return state;
     }
 

@@ -35,6 +35,7 @@ MovementTuning movementTuningFromConfig(const novacore::core::ConfigDocument& do
     fallback.slideEndSpeed = numberOr(document, "slide.end_speed", fallback.slideEndSpeed);
     fallback.slideJumpBoost = numberOr(document, "slide.jump_boost", fallback.slideJumpBoost);
     fallback.slideCooldownSeconds = numberOr(document, "slide.cooldown", fallback.slideCooldownSeconds);
+    fallback.slideBufferSeconds = numberOr(document, "slide.buffer_time", fallback.slideBufferSeconds);
 
     fallback.dashImpulse = numberOr(document, "dash.impulse", fallback.dashImpulse);
     fallback.dashDurationSeconds = numberOr(document, "dash.duration", fallback.dashDurationSeconds);

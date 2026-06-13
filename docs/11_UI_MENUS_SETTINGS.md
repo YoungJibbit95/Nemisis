@@ -47,6 +47,13 @@ Focus model:
 - Confirm action.
 - Slider/stepper support.
 
+Current pointer state:
+
+- NovaCore input snapshots now retain absolute pointer coordinates and short click press/release edges.
+- `GameMenu` maps window-space pointer coordinates into the 1280x720 UI layout used by rendering.
+- Main menu tabs and selectable rows are clickable for Play, Gamemodes, Loadout, Character, Settings, and Account.
+- Pointer hover selects rows; primary click activates the same runtime action as keyboard/controller confirm.
+
 ## Menus
 
 V1 screens:
@@ -104,6 +111,7 @@ Current debug/UI implementation:
 - The Dev Shooting Range HUD now shows weapon/ammo, active range score, accuracy, streaks, target HP, target respawn, player health, and short event feedback.
 - The Gameplay debug page includes player HP and Dev Range score/accuracy in addition to movement and collision telemetry.
 - `Q/E` and controller shoulders switch top-level menu tabs.
+- Mouse clicks switch top-level menu tabs and activate selectable rows.
 - Left/Right and controller D-pad left/right adjust Loadout and Settings values live.
 - Keyboard `P` and controller `Y` reset the active Dev Shooting Range session while gameplay is active.
 - `F1` toggles the debug overlay.

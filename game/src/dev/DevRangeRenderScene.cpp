@@ -78,25 +78,25 @@ struct StaticMeshPlacement final {
 
 [[nodiscard]] std::string_view firstPersonWeaponAssetId(std::string_view weaponId) {
     if (weaponId == "sidearm_01") {
+        return "wpn_project_sidearm_glock19";
+    }
+    if (weaponId == "smg_01") {
+        return "wpn_project_smg_fr17";
+    }
+    if (weaponId == "shotgun_01") {
+        return "wpn_project_rifle_ncar";
+    }
+    return "wpn_project_rifle_m4a1";
+}
+
+[[nodiscard]] std::string_view fallbackWeaponAssetId(std::string_view weaponId) {
+    if (weaponId == "sidearm_01") {
         return "wpn_a2_striker_sidearm_01";
     }
     if (weaponId == "smg_01") {
         return "wpn_a2_blackout_carbine_01";
     }
-    if (weaponId == "shotgun_01") {
-        return "wpn_a2_modular_rifle_01";
-    }
-    return "wpn_a2_blackout_carbine_01";
-}
-
-[[nodiscard]] std::string_view fallbackWeaponAssetId(std::string_view weaponId) {
-    if (weaponId == "sidearm_01") {
-        return "wpn_sidearm_01";
-    }
-    if (weaponId == "smg_01") {
-        return "wpn_proto_smg_01";
-    }
-    return "wpn_ar_01";
+    return "wpn_a2_modular_rifle_01";
 }
 
 [[nodiscard]] std::array<float, 4> firstPersonWeaponTint(weapons::WeaponClass weaponClass) {
@@ -109,7 +109,7 @@ struct StaticMeshPlacement final {
     return kWeaponMeshTint;
 }
 
-[[nodiscard]] std::array<StaticMeshPlacement, 17> staticShowcaseMeshes() {
+[[nodiscard]] std::array<StaticMeshPlacement, 24> staticShowcaseMeshes() {
     return {
         StaticMeshPlacement{
             "env_test_arena_kit_01",
@@ -229,6 +229,55 @@ struct StaticMeshPlacement final {
             {1.08F, 1.08F, 1.08F},
             180.0F,
             {0.95F, 0.50F, 0.20F, 1.0F},
+        },
+        StaticMeshPlacement{
+            "chr_project_male1",
+            {-7.55F, 0.0F, -6.75F},
+            {0.92F, 0.92F, 0.92F},
+            180.0F,
+            {0.72F, 0.76F, 0.72F, 1.0F},
+        },
+        StaticMeshPlacement{
+            "wpn_project_rifle_m4a1",
+            {-4.95F, 1.02F, -7.78F},
+            {2.05F, 2.05F, 2.05F},
+            92.0F,
+            {0.62F, 0.64F, 0.58F, 1.0F},
+        },
+        StaticMeshPlacement{
+            "wpn_project_rifle_afr120",
+            {-2.75F, 1.05F, -7.88F},
+            {0.78F, 0.78F, 0.78F},
+            88.0F,
+            {0.54F, 0.64F, 0.72F, 1.0F},
+        },
+        StaticMeshPlacement{
+            "wpn_project_rifle_ncar",
+            {-0.55F, 1.04F, -7.86F},
+            {1.10F, 1.10F, 1.10F},
+            88.0F,
+            {0.56F, 0.60F, 0.66F, 1.0F},
+        },
+        StaticMeshPlacement{
+            "wpn_project_smg_fr17",
+            {1.45F, 1.00F, -7.82F},
+            {1.55F, 1.55F, 1.55F},
+            90.0F,
+            {0.46F, 0.62F, 0.68F, 1.0F},
+        },
+        StaticMeshPlacement{
+            "wpn_project_sidearm_glock19",
+            {3.15F, 0.92F, -7.86F},
+            {2.00F, 2.00F, 2.00F},
+            92.0F,
+            {0.66F, 0.61F, 0.54F, 1.0F},
+        },
+        StaticMeshPlacement{
+            "wpn_project_sidearm_p320",
+            {4.55F, 0.92F, -7.86F},
+            {2.05F, 2.05F, 2.05F},
+            92.0F,
+            {0.68F, 0.60F, 0.52F, 1.0F},
         },
     };
 }
@@ -399,13 +448,23 @@ void DevRangeRenderSceneBuilder::appendTargetLaneMeshes(
             {color[0] * 0.55F, color[1] * 0.55F, color[2] * 0.55F, 0.75F},
             stats);
 
-        const auto actorAsset = eliminated ? std::string_view("prop_target_dummy_01") : std::string_view("chr_dev_soldier_a");
+        const auto actorAsset = eliminated ? std::string_view("prop_target_dummy_01") : std::string_view("chr_project_male1");
         if (appendMesh(
                 frame,
                 desc,
                 actorAsset,
                 {lane.target.position.x, 0.0F, lane.target.position.z},
                 eliminated ? novacore::math::Vec3{0.82F, 0.82F, 0.82F} : novacore::math::Vec3{0.92F, 0.92F, 0.92F},
+                180.0F,
+                color,
+                stats)) {
+            ++stats.targetMeshCount;
+        } else if (!eliminated && appendMesh(
+                frame,
+                desc,
+                "chr_dev_soldier_a",
+                {lane.target.position.x, 0.0F, lane.target.position.z},
+                {0.92F, 0.92F, 0.92F},
                 180.0F,
                 color,
                 stats)) {
