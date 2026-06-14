@@ -1,0 +1,204 @@
+{
+  "schema_version": 1,
+  "description": "Non-destructive normalization plan for imported Nemisis Project weapon and character GLBs. Source binaries are not edited; tools/blender/normalize_project_assets.py can audit or export reproducible normalized GLBs from this metadata.",
+  "coordinate_contract": {
+    "blender_target_up_axis": "+Z",
+    "blender_target_forward_axis": "+Y",
+    "runtime_up_axis": "Y",
+    "gameplay_forward_axis": "+Z",
+    "gltf_export_yup": true,
+    "runtime_dimensions_from_blender_size": ["X", "Z", "Y"]
+  },
+  "scan_roots": [
+    "../Assets",
+    "assets"
+  ],
+  "inventory_keywords": [
+    "weapon",
+    "wpn",
+    "rifle",
+    "smg",
+    "sidearm",
+    "glock",
+    "p320",
+    "m4",
+    "afr",
+    "ncar",
+    "fr17",
+    "hk416",
+    "hk-416",
+    "character",
+    "chr",
+    "arms",
+    "operator"
+  ],
+  "global_ignore_mesh_names": [
+    "Icosphere"
+  ],
+  "global_ignore_mesh_name_prefixes": [
+    "Icosphere."
+  ],
+  "assets": [
+    {
+      "id": "chr_project_male1",
+      "category": "character",
+      "source": "assets/project_assets/character_male1.glb",
+      "output": "assets/processed/normalized/project_assets/chr_project_male1.glb",
+      "aliases": ["character_male1"],
+      "findings": [
+        "Contains exported Icosphere helper mesh that distorts whole-file bounds.",
+        "No authored Nemisis socket_root, socket_camera, socket_weapon_root, hand sockets, or col_ collision proxy.",
+        "Visible character mesh is offset from origin by roughly +0.103m X and -0.109m Y in Blender space."
+      ],
+      "normalization": {
+        "remove_mesh_names": ["Icosphere"],
+        "rotation_euler_deg": [0.0, 0.0, 0.0],
+        "origin": {
+          "mode": "bounds_floor_center",
+          "center_axes": ["X", "Y"],
+          "floor_axis": "Z"
+        },
+        "ensure_root_empty": true
+      }
+    },
+    {
+      "id": "wpn_project_rifle_m4a1",
+      "category": "weapon",
+      "source": "assets/project_assets/weapon_rifle_m4a1.glb",
+      "output": "assets/processed/normalized/project_assets/wpn_project_rifle_m4a1.glb",
+      "aliases": ["weapon_rifle_m4a1", "m4a1", "hk416_candidate_no_explicit_hk416_match"],
+      "findings": [
+        "No explicit HK416 path, metadata, material, or object-name match was found; this M4A1 asset is the closest rifle candidate.",
+        "Current sidecar dimensions understate actual weapon length because only part of the model appears to have been measured.",
+        "Weapon height is on Blender +X while Nemisis target assets use Blender +Z up, so the configured fix rolls source +X to target +Z.",
+        "No authored socket_muzzle, grip sockets, eject socket, or col_ collision proxy."
+      ],
+      "normalization": {
+        "remove_mesh_names": ["Icosphere"],
+        "rotation_euler_deg": [0.0, -90.0, 0.0],
+        "origin": {
+          "mode": "bounds_floor_center",
+          "center_axes": ["X", "Y"],
+          "floor_axis": "Z"
+        },
+        "ensure_root_empty": true
+      }
+    },
+    {
+      "id": "wpn_project_rifle_afr120",
+      "category": "weapon",
+      "source": "assets/project_assets/weapon_rifle_afr120.glb",
+      "output": "assets/processed/normalized/project_assets/wpn_project_rifle_afr120.glb",
+      "aliases": ["weapon_rifle_afr120", "afr120"],
+      "findings": [
+        "Axis layout already matches Blender +Z up and +Y forward in an isolated import.",
+        "Rifle height is large for a shoulder weapon, but this may be intentional sci-fi styling.",
+        "No authored socket_muzzle, grip sockets, eject socket, or col_ collision proxy."
+      ],
+      "normalization": {
+        "remove_mesh_names": ["Icosphere"],
+        "rotation_euler_deg": [0.0, 0.0, 0.0],
+        "origin": {
+          "mode": "bounds_floor_center",
+          "center_axes": ["X", "Y"],
+          "floor_axis": "Z"
+        },
+        "ensure_root_empty": true
+      }
+    },
+    {
+      "id": "wpn_project_rifle_ncar",
+      "category": "weapon",
+      "source": "assets/project_assets/weapon_rifle_ncar.glb",
+      "output": "assets/processed/normalized/project_assets/wpn_project_rifle_ncar.glb",
+      "aliases": ["weapon_rifle_ncar", "ncar"],
+      "findings": [
+        "Weapon height is on Blender +X while Nemisis target assets use Blender +Z up, so the configured fix rolls source +X to target +Z.",
+        "No authored socket_muzzle, grip sockets, eject socket, or col_ collision proxy."
+      ],
+      "normalization": {
+        "remove_mesh_names": ["Icosphere"],
+        "rotation_euler_deg": [0.0, -90.0, 0.0],
+        "origin": {
+          "mode": "bounds_floor_center",
+          "center_axes": ["X", "Y"],
+          "floor_axis": "Z"
+        },
+        "ensure_root_empty": true
+      }
+    },
+    {
+      "id": "wpn_project_smg_fr17",
+      "category": "weapon",
+      "source": "assets/project_assets/weapon_smg_fr17.glb",
+      "output": "assets/processed/normalized/project_assets/wpn_project_smg_fr17.glb",
+      "aliases": ["weapon_smg_fr17", "fr17"],
+      "findings": [
+        "Weapon height is on Blender +X while Nemisis target assets use Blender +Z up, so the configured fix rolls source +X to target +Z.",
+        "No authored socket_muzzle, grip sockets, eject socket, or col_ collision proxy."
+      ],
+      "normalization": {
+        "remove_mesh_names": ["Icosphere"],
+        "rotation_euler_deg": [0.0, -90.0, 0.0],
+        "origin": {
+          "mode": "bounds_floor_center",
+          "center_axes": ["X", "Y"],
+          "floor_axis": "Z"
+        },
+        "ensure_root_empty": true
+      }
+    },
+    {
+      "id": "wpn_project_sidearm_glock19",
+      "category": "weapon",
+      "source": "assets/project_assets/weapon_sidearm_glock19.glb",
+      "output": "assets/processed/normalized/project_assets/wpn_project_sidearm_glock19.glb",
+      "aliases": ["weapon_sidearm_glock19", "glock19"],
+      "findings": [
+        "Sidearm height is on Blender +X while Nemisis target assets use Blender +Z up, so the configured fix rolls source +X to target +Z.",
+        "Source length is about 0.29m before scaling; configured normalization scales uniformly to a 0.187m Glock 19 reference length.",
+        "No authored socket_muzzle, grip sockets, eject socket, or col_ collision proxy."
+      ],
+      "normalization": {
+        "remove_mesh_names": ["Icosphere"],
+        "rotation_euler_deg": [0.0, -90.0, 0.0],
+        "scale_to_dimension_m": {
+          "axis": "Y",
+          "size": 0.187
+        },
+        "origin": {
+          "mode": "bounds_floor_center",
+          "center_axes": ["X", "Y"],
+          "floor_axis": "Z"
+        },
+        "ensure_root_empty": true
+      }
+    },
+    {
+      "id": "wpn_project_sidearm_p320",
+      "category": "weapon",
+      "source": "assets/project_assets/weapon_sidearm_p320.glb",
+      "output": "assets/processed/normalized/project_assets/wpn_project_sidearm_p320.glb",
+      "aliases": ["weapon_sidearm_p320", "p320"],
+      "findings": [
+        "Sidearm height is on Blender +X while Nemisis target assets use Blender +Z up, so the configured fix rolls source +X to target +Z.",
+        "Source length is about 0.269m before scaling; configured normalization scales uniformly to a 0.203m P320 reference length.",
+        "No authored socket_muzzle, grip sockets, eject socket, or col_ collision proxy."
+      ],
+      "normalization": {
+        "remove_mesh_names": ["Icosphere"],
+        "rotation_euler_deg": [0.0, -90.0, 0.0],
+        "scale_to_dimension_m": {
+          "axis": "Y",
+          "size": 0.203
+        },
+        "origin": {
+          "mode": "bounds_floor_center",
+          "center_axes": ["X", "Y"],
+          "floor_axis": "Z"
+        },
+        "ensure_root_empty": true
+      }
+    }
+  ]
+}

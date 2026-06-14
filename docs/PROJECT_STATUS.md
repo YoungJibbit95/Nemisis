@@ -1,5 +1,15 @@
 # Nemisis Project Status
 
+## Latest Block - Timed Dev Range Drills, TTK Panel Data, And Recoil-Control Scoring
+
+- Added a timed Dev Range drill layer on top of the existing multi-lane target range with a 60-second active window, score, best score, hits, misses, eliminations, perfect lane clears, and completion feedback.
+- Added per-lane drill breakdowns that track shots fired, hits, eliminations, damage dealt, latest distance, latest measured TTK, best TTK, and live target-window hit quality.
+- Wired `GameApp` shot handling so fired shots feed the active lane even on misses, hit lanes feed measured TTK from first hit to elimination, and recoil/spread telemetry feeds a recoil-control score.
+- Upgraded the playable HUD top strip to show drill status, time remaining, score, latest TTK, recoil-control percentage, active lane accuracy, lane best TTK, and live target count.
+- Expanded Dev Sandbox log telemetry with drill score, timer, accuracy, recoil-control, and latest TTK values.
+- Added regression coverage for timed drill completion/reset, lane TTK measurement, recoil-control scoring, Dev Sandbox drill telemetry, and HUD drill/TTK/control/lane rendering.
+- Verified `cmake --build --preset windows-msvc-debug --config Debug` and `ctest --test-dir build/windows-msvc-debug -C Debug --output-on-failure` with 33/33 passing tests.
+
 ## Latest Block - Character Animation Backbone And First-Person Viewmodel Rig
 
 - Added a new `nemisis::player::PlayerAnimation` subsystem with persistent animation state, movement-driven clip selection, procedural locomotion phase, ADS/reload/fire blends, wallrun lean, mantle reach, double-jump energy-platform cue alpha, and first-person/third-person pose offsets.

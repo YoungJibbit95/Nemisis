@@ -11,6 +11,7 @@
 #include "nemisis/movement/MovementConfig.hpp"
 #include "nemisis/movement/MovementSystem.hpp"
 #include "nemisis/net/LoopbackCommandBridge.hpp"
+#include "nemisis/net/PredictionHistory.hpp"
 #include "nemisis/player/PlayerAnimation.hpp"
 #include "nemisis/player/PlayerCameraRig.hpp"
 #include "nemisis/player/PlayerCommandQueue.hpp"
@@ -75,7 +76,6 @@ private:
     void syncRelativeMouseMode();
     void registerDevMeshResources();
     void releaseDevMeshResources();
-    void appendA0MeshWireframePreview(novacore::render::RenderFrameInfo& frame) const;
     [[nodiscard]] dev::DevRangePlayerRenderState currentPlayerRenderState() const;
 
     GameAppOptions options_;
@@ -104,6 +104,7 @@ private:
     movement::MovementSystem movement_;
     render::DevRenderTuning renderTuning_;
     net::LoopbackCommandBridge loopbackBridge_;
+    net::PlayerPredictionHistory predictionHistory_;
     player::PlayerCommandQueue localCommandQueue_;
     player::CharacterAnimationState characterAnimation_;
     player::CharacterAnimationFrame latestCharacterAnimationFrame_;

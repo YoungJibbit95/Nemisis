@@ -25,6 +25,17 @@ nemisis::weapons::FireResult firedShot() {
     return fire;
 }
 
+nemisis::dev::DevRangeShotScoreContext centerLaneContext() {
+    nemisis::dev::DevRangeShotScoreContext context{};
+    context.laneKnown = true;
+    context.laneIndex = 1U;
+    context.laneId = "center_20m";
+    context.laneName = "CENTER 20M";
+    context.targetMaxHealth = 150.0F;
+    context.distanceMeters = 19.25F;
+    return context;
+}
+
 void testScoreAndAccuracy() {
     nemisis::dev::DevRangeSessionState session{};
 
@@ -99,12 +110,89 @@ void testPlayerDamageRegenAndRespawn() {
     expect(session.score.playerRespawns == 1U, "player respawn increments count");
 }
 
+void testTimedDrillLaneTtkAndRecoilScoring() {
+    nemisis::dev::DevRangeSessionState session{};
+    nemisis::dev::DevRangeSessionTuning tuning{};
+    tuning.drillTimeLimitSeconds = 12.0F;
+    nemisis::dev::recordRangeReset(session, tuning);
+
+    nemisis::dev::tickDevRangeDrill(session, 0.15F, tuning);
+
+    auto firstFire = firedShot();
+    firstFire.recoilPitchOffsetDegrees = 0.35F;
+    firstFire.recoilYawOffsetDegrees = 0.12F;
+    firstFire.movementSpreadDegrees = 0.20F;
+
+    nemisis::dev::DebugTargetHitResult firstHit{};
+    firstHit.hit = true;
+    firstHit.damageApplied = 50.0F;
+    firstHit.healthRemaining = 100.0F;
+    firstHit.distanceMeters = 19.25F;
+    nemisis::dev::recordShotResult(session, firstFire, firstHit, centerLaneContext(), tuning);
+
+    nemisis::dev::tickDevRangeDrill(session, 0.20F, tuning);
+
+    auto finalFire = firedShot();
+    finalFire.shotIndex = 2U;
+    finalFire.recoilPitchOffsetDegrees = 0.55F;
+    finalFire.recoilYawOffsetDegrees = -0.18F;
+    finalFire.movementSpreadDegrees = 0.16F;
+
+    nemisis::dev::DebugTargetHitResult elimination{};
+    elimination.hit = true;
+    elimination.eliminated = true;
+    elimination.damageApplied = 100.0F;
+    elimination.healthRemaining = 0.0F;
+    elimination.distanceMeters = 19.25F;
+    nemisis::dev::recordShotResult(session, finalFire, elimination, centerLaneContext(), tuning);
+
+    const auto* lane = nemisis::dev::activeDevRangeLaneScore(session, 1U);
+    expect(lane != nullptr, "drill creates lane score entry");
+    expect(lane != nullptr && lane->shotsFired == 2U, "lane score records target shots");
+    expect(lane != nullptr && lane->shotsHit == 2U, "lane score records target hits");
+    expect(lane != nullptr && lane->targetsEliminated == 1U, "lane score records lane eliminations");
+    expect(lane != nullptr && lane->latestTtkSeconds > 0.19F && lane->latestTtkSeconds < 0.21F, "lane score records measured TTK from first hit to elimination");
+    expect(lane != nullptr && lane->bestTtkSeconds == lane->latestTtkSeconds, "lane score records best TTK");
+    expect(session.drill.targetsEliminated == 1U, "drill records eliminations");
+    expect(session.drill.perfectLaneClears == 1U, "drill records perfect lane clear");
+    expect(session.drill.score > 0U, "drill accumulates score");
+    expect(session.drill.bestScore == session.drill.score, "drill best score tracks current score");
+    expect(session.drill.recoilControlScore < 100.0F, "drill recoil control reacts to recoil and spread");
+    expect(nemisis::dev::devRangeDrillAccuracy(session.drill) == 1.0F, "drill accuracy uses drill shots");
+}
+
+void testDrillTimerCompletesAndResetRestarts() {
+    nemisis::dev::DevRangeSessionState session{};
+    nemisis::dev::DevRangeSessionTuning tuning{};
+    tuning.drillTimeLimitSeconds = 1.0F;
+    tuning.eventTextSeconds = 0.5F;
+
+    nemisis::dev::recordRangeReset(session, tuning);
+    expect(session.drill.timeRemainingSeconds > 0.99F, "range reset starts timed drill");
+
+    nemisis::dev::tickDevRangeDrill(session, 0.45F, tuning);
+    expect(session.drill.status == nemisis::dev::DevRangeDrillStatus::Active, "drill remains active before time limit");
+    nemisis::dev::tickDevRangeDrill(session, 0.60F, tuning);
+    expect(session.drill.status == nemisis::dev::DevRangeDrillStatus::Complete, "drill completes at time limit");
+    expect(session.drill.timeRemainingSeconds == 0.0F, "completed drill has no remaining time");
+    expect(session.eventText.find("Drill complete") != std::string::npos, "drill completion writes event text");
+
+    session.drill.score = 500U;
+    session.drill.bestScore = 500U;
+    nemisis::dev::recordRangeReset(session, tuning);
+    expect(session.drill.status == nemisis::dev::DevRangeDrillStatus::Active, "range reset restarts drill");
+    expect(session.drill.score == 0U, "range reset clears current drill score");
+    expect(session.drill.bestScore == 500U, "range reset preserves best drill score");
+}
+
 } // namespace
 
 int main() {
     testScoreAndAccuracy();
     testRespawnAndResetTimers();
     testPlayerDamageRegenAndRespawn();
+    testTimedDrillLaneTtkAndRecoilScoring();
+    testDrillTimerCompletesAndResetRestarts();
 
     if (failures > 0) {
         std::cerr << failures << " dev range session test(s) failed\n";

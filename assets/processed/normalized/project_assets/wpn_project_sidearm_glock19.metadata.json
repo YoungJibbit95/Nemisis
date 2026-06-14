@@ -1,0 +1,19 @@
+{
+  "id": "wpn_project_sidearm_glock19",
+  "source": "assets/project_assets/weapon_sidearm_glock19.glb",
+  "export": "assets/processed/normalized/project_assets/wpn_project_sidearm_glock19.glb",
+  "category": "weapon",
+  "scale_meters": true,
+  "runtime_up_axis": "Y",
+  "gameplay_forward_axis": "+Z",
+  "blender_up_axis": "+Z",
+  "blender_forward_axis": "+Y",
+  "dimensions_m": [0.02257, 0.12885, 0.187],
+  "origin": "Normalized Project sidearm GLB; source +X height rotated to target +Z up, scaled to Glock 19 reference length, and bounds recentered.",
+  "sockets": [],
+  "collision": "none",
+  "lods": ["wpn_project_sidearm_glock19_lod0"],
+  "license": "original_project_asset",
+  "external_assets": false,
+  "generated_by": "tools/blender/normalize_project_assets.py"
+}

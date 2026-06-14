@@ -73,9 +73,11 @@ add_executable(nemisis_game
     game/src/movement/MovementSystem.cpp
     game/src/net/CommandMessages.cpp
     game/src/net/LoopbackCommandBridge.cpp
+    game/src/net/PredictionHistory.cpp
     game/src/player/PlayerAnimation.cpp
     game/src/player/PlayerCommandQueue.cpp
     game/src/player/PlayerCameraRig.cpp
+    game/src/player/PlayerFirstPersonRig.cpp
     game/src/player/PlayerHealth.cpp
     game/src/player/PlayerProfile.cpp
     game/src/player/PlayerSpawn.cpp
@@ -206,6 +208,7 @@ add_executable(nemisis_dev_range_render_scene_tests
     game/src/dev/DevTargetRange.cpp
     game/src/dev/GreyboxWorld.cpp
     game/src/player/PlayerAnimation.cpp
+    game/src/player/PlayerFirstPersonRig.cpp
     game/src/player/PlayerView.cpp
     tests/dev_range_render_scene_tests.cpp
 )
@@ -230,6 +233,20 @@ target_include_directories(nemisis_player_animation_tests
 
 target_link_libraries(nemisis_player_animation_tests PRIVATE Novacore::Engine)
 add_test(NAME nemisis_player_animation_tests COMMAND nemisis_player_animation_tests)
+
+add_executable(nemisis_player_first_person_rig_tests
+    game/src/player/PlayerAnimation.cpp
+    game/src/player/PlayerFirstPersonRig.cpp
+    tests/player_first_person_rig_tests.cpp
+)
+
+target_include_directories(nemisis_player_first_person_rig_tests
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/game/include
+)
+
+target_link_libraries(nemisis_player_first_person_rig_tests PRIVATE Novacore::Engine)
+add_test(NAME nemisis_player_first_person_rig_tests COMMAND nemisis_player_first_person_rig_tests)
 
 add_executable(nemisis_render_tuning_tests
     game/src/render/RenderTuning.cpp
@@ -337,6 +354,19 @@ target_include_directories(nemisis_loopback_command_bridge_tests
 
 target_link_libraries(nemisis_loopback_command_bridge_tests PRIVATE Novacore::Engine)
 add_test(NAME nemisis_loopback_command_bridge_tests COMMAND nemisis_loopback_command_bridge_tests)
+
+add_executable(nemisis_prediction_history_tests
+    game/src/net/PredictionHistory.cpp
+    tests/prediction_history_tests.cpp
+)
+
+target_include_directories(nemisis_prediction_history_tests
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/game/include
+)
+
+target_link_libraries(nemisis_prediction_history_tests PRIVATE Novacore::Engine)
+add_test(NAME nemisis_prediction_history_tests COMMAND nemisis_prediction_history_tests)
 
 add_executable(nemisis_player_spawn_tests
     game/src/player/PlayerSpawn.cpp
@@ -550,6 +580,7 @@ foreach(nemisis_runtime_target IN ITEMS
     nemisis_ui_canvas_tests
     nemisis_dev_range_render_scene_tests
     nemisis_player_animation_tests
+    nemisis_player_first_person_rig_tests
     nemisis_weapon_simulation_tests
     nemisis_player_command_queue_tests
     nemisis_player_health_tests
@@ -557,6 +588,7 @@ foreach(nemisis_runtime_target IN ITEMS
     nemisis_dev_asset_bindings_tests
     nemisis_command_messages_tests
     nemisis_loopback_command_bridge_tests
+    nemisis_prediction_history_tests
     nemisis_player_spawn_tests
     nemisis_dev_sandbox_tests
     nemisis_greybox_world_tests

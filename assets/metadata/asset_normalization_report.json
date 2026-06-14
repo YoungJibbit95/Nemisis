@@ -1,0 +1,1869 @@
+{
+  "schema_version": 1,
+  "mode": "export",
+  "repo_root": ".",
+  "config": "assets/metadata/asset_normalization_fixups.json",
+  "coordinate_contract": {
+    "blender_target_up_axis": "+Z",
+    "blender_target_forward_axis": "+Y",
+    "runtime_up_axis": "Y",
+    "gameplay_forward_axis": "+Z",
+    "gltf_export_yup": true,
+    "runtime_dimensions_from_blender_size": [
+      "X",
+      "Z",
+      "Y"
+    ]
+  },
+  "inventory": {
+    "weapon_character_model_count": 46,
+    "by_extension": {
+      ".glb": 31,
+      ".blend": 15
+    },
+    "hk416_path_matches": [],
+    "records": [
+      {
+        "path": "assets/export/gltf/characters/chr_a1_fp_arms_01.glb",
+        "extension": ".glb",
+        "matched_keywords": [
+          "character",
+          "chr",
+          "arms"
+        ],
+        "bytes": 29076
+      },
+      {
+        "path": "assets/export/gltf/characters/chr_a1_stylized_operator_01.glb",
+        "extension": ".glb",
+        "matched_keywords": [
+          "character",
+          "chr",
+          "operator"
+        ],
+        "bytes": 127772
+      },
+      {
+        "path": "assets/export/gltf/characters/chr_dev_arms_a.glb",
+        "extension": ".glb",
+        "matched_keywords": [
+          "character",
+          "chr",
+          "arms"
+        ],
+        "bytes": 168744
+      },
+      {
+        "path": "assets/export/gltf/characters/chr_dev_soldier_a.glb",
+        "extension": ".glb",
+        "matched_keywords": [
+          "character",
+          "chr"
+        ],
+        "bytes": 206248
+      },
+      {
+        "path": "assets/export/gltf/characters/chr_player_capsule_proxy_01.glb",
+        "extension": ".glb",
+        "matched_keywords": [
+          "character",
+          "chr"
+        ],
+        "bytes": 229364
+      },
+      {
+        "path": "assets/export/gltf/weapons/wpn_a1_compact_rifle_01.glb",
+        "extension": ".glb",
+        "matched_keywords": [
+          "weapon",
+          "wpn",
+          "rifle"
+        ],
+        "bytes": 31692
+      },
+      {
+        "path": "assets/export/gltf/weapons/wpn_a1_compact_sidearm_01.glb",
+        "extension": ".glb",
+        "matched_keywords": [
+          "weapon",
+          "wpn",
+          "sidearm"
+        ],
+        "bytes": 22468
+      },
+      {
+        "path": "assets/export/gltf/weapons/wpn_a1_modern_rifle_01.glb",
+        "extension": ".glb",
+        "matched_keywords": [
+          "weapon",
+          "wpn",
+          "rifle"
+        ],
+        "bytes": 32644
+      },
+      {
+        "path": "assets/export/gltf/weapons/wpn_ar_01.glb",
+        "extension": ".glb",
+        "matched_keywords": [
+          "weapon",
+          "wpn"
+        ],
+        "bytes": 18000
+      },
+      {
+        "path": "assets/export/gltf/weapons/wpn_sidearm_01.glb",
+        "extension": ".glb",
+        "matched_keywords": [
+          "weapon",
+          "wpn",
+          "sidearm"
+        ],
+        "bytes": 17544
+      },
+      {
+        "path": "assets/export/gltf/weapons/wpn_smg_01.glb",
+        "extension": ".glb",
+        "matched_keywords": [
+          "weapon",
+          "wpn",
+          "smg"
+        ],
+        "bytes": 17468
+      },
+      {
+        "path": "assets/generated/a2_visual_pack/chr_a2_pilot_operator_01.glb",
+        "extension": ".glb",
+        "matched_keywords": [
+          "chr",
+          "operator"
+        ],
+        "bytes": 144940
+      },
+      {
+        "path": "assets/generated/a2_visual_pack/wpn_a2_blackout_carbine_01.glb",
+        "extension": ".glb",
+        "matched_keywords": [
+          "wpn"
+        ],
+        "bytes": 60456
+      },
+      {
+        "path": "assets/generated/a2_visual_pack/wpn_a2_modular_rifle_01.glb",
+        "extension": ".glb",
+        "matched_keywords": [
+          "wpn",
+          "rifle"
+        ],
+        "bytes": 58972
+      },
+      {
+        "path": "assets/generated/a2_visual_pack/wpn_a2_striker_sidearm_01.glb",
+        "extension": ".glb",
+        "matched_keywords": [
+          "wpn",
+          "sidearm"
+        ],
+        "bytes": 35684
+      },
+      {
+        "path": "assets/generated/prototype_pack/chr_proto_humanoid_01.glb",
+        "extension": ".glb",
+        "matched_keywords": [
+          "chr"
+        ],
+        "bytes": 61760
+      },
+      {
+        "path": "assets/generated/prototype_pack/wpn_proto_smg_01.glb",
+        "extension": ".glb",
+        "matched_keywords": [
+          "wpn",
+          "smg"
+        ],
+        "bytes": 30568
+      },
+      {
+        "path": "assets/processed/normalized/project_assets/chr_project_male1.glb",
+        "extension": ".glb",
+        "matched_keywords": [
+          "chr"
+        ],
+        "bytes": 77442544
+      },
+      {
+        "path": "assets/processed/normalized/project_assets/wpn_project_rifle_afr120.glb",
+        "extension": ".glb",
+        "matched_keywords": [
+          "wpn",
+          "rifle",
+          "afr"
+        ],
+        "bytes": 8468856
+      },
+      {
+        "path": "assets/processed/normalized/project_assets/wpn_project_rifle_m4a1.glb",
+        "extension": ".glb",
+        "matched_keywords": [
+          "wpn",
+          "rifle",
+          "m4"
+        ],
+        "bytes": 5076968
+      },
+      {
+        "path": "assets/processed/normalized/project_assets/wpn_project_rifle_ncar.glb",
+        "extension": ".glb",
+        "matched_keywords": [
+          "wpn",
+          "rifle",
+          "ncar"
+        ],
+        "bytes": 66314916
+      },
+      {
+        "path": "assets/processed/normalized/project_assets/wpn_project_sidearm_glock19.glb",
+        "extension": ".glb",
+        "matched_keywords": [
+          "wpn",
+          "sidearm",
+          "glock"
+        ],
+        "bytes": 4404852
+      },
+      {
+        "path": "assets/processed/normalized/project_assets/wpn_project_sidearm_p320.glb",
+        "extension": ".glb",
+        "matched_keywords": [
+          "wpn",
+          "sidearm",
+          "p320"
+        ],
+        "bytes": 2189500
+      },
+      {
+        "path": "assets/processed/normalized/project_assets/wpn_project_smg_fr17.glb",
+        "extension": ".glb",
+        "matched_keywords": [
+          "wpn",
+          "smg",
+          "fr17"
+        ],
+        "bytes": 33297484
+      },
+      {
+        "path": "assets/project_assets/character_male1.glb",
+        "extension": ".glb",
+        "matched_keywords": [
+          "character"
+        ],
+        "bytes": 76643628
+      },
+      {
+        "path": "assets/project_assets/weapon_rifle_afr120.glb",
+        "extension": ".glb",
+        "matched_keywords": [
+          "weapon",
+          "rifle",
+          "afr"
+        ],
+        "bytes": 8445728
+      },
+      {
+        "path": "assets/project_assets/weapon_rifle_m4a1.glb",
+        "extension": ".glb",
+        "matched_keywords": [
+          "weapon",
+          "rifle",
+          "m4"
+        ],
+        "bytes": 5074452
+      },
+      {
+        "path": "assets/project_assets/weapon_rifle_ncar.glb",
+        "extension": ".glb",
+        "matched_keywords": [
+          "weapon",
+          "rifle",
+          "ncar"
+        ],
+        "bytes": 66224088
+      },
+      {
+        "path": "assets/project_assets/weapon_sidearm_glock19.glb",
+        "extension": ".glb",
+        "matched_keywords": [
+          "weapon",
+          "sidearm",
+          "glock"
+        ],
+        "bytes": 4181416
+      },
+      {
+        "path": "assets/project_assets/weapon_sidearm_p320.glb",
+        "extension": ".glb",
+        "matched_keywords": [
+          "weapon",
+          "sidearm",
+          "p320"
+        ],
+        "bytes": 2186252
+      },
+      {
+        "path": "assets/project_assets/weapon_smg_fr17.glb",
+        "extension": ".glb",
+        "matched_keywords": [
+          "weapon",
+          "smg",
+          "fr17"
+        ],
+        "bytes": 33217932
+      },
+      {
+        "path": "assets/source/blender/a2_visual_pack/chr_a2_pilot_operator_01.blend",
+        "extension": ".blend",
+        "matched_keywords": [
+          "chr",
+          "operator"
+        ],
+        "bytes": 133261
+      },
+      {
+        "path": "assets/source/blender/a2_visual_pack/wpn_a2_blackout_carbine_01.blend",
+        "extension": ".blend",
+        "matched_keywords": [
+          "wpn"
+        ],
+        "bytes": 113972
+      },
+      {
+        "path": "assets/source/blender/a2_visual_pack/wpn_a2_modular_rifle_01.blend",
+        "extension": ".blend",
+        "matched_keywords": [
+          "wpn",
+          "rifle"
+        ],
+        "bytes": 112581
+      },
+      {
+        "path": "assets/source/blender/a2_visual_pack/wpn_a2_striker_sidearm_01.blend",
+        "extension": ".blend",
+        "matched_keywords": [
+          "wpn",
+          "sidearm"
+        ],
+        "bytes": 105964
+      },
+      {
+        "path": "assets/source/blender/characters/chr_a1_fp_arms_01.blend",
+        "extension": ".blend",
+        "matched_keywords": [
+          "character",
+          "chr",
+          "arms"
+        ],
+        "bytes": 103311
+      },
+      {
+        "path": "assets/source/blender/characters/chr_a1_stylized_operator_01.blend",
+        "extension": ".blend",
+        "matched_keywords": [
+          "character",
+          "chr",
+          "operator"
+        ],
+        "bytes": 129569
+      },
+      {
+        "path": "assets/source/blender/characters/chr_dev_arms_a.blend",
+        "extension": ".blend",
+        "matched_keywords": [
+          "character",
+          "chr",
+          "arms"
+        ],
+        "bytes": 124946
+      },
+      {
+        "path": "assets/source/blender/characters/chr_dev_soldier_a.blend",
+        "extension": ".blend",
+        "matched_keywords": [
+          "character",
+          "chr"
+        ],
+        "bytes": 135438
+      },
+      {
+        "path": "assets/source/blender/characters/chr_player_capsule_proxy_01.blend",
+        "extension": ".blend",
+        "matched_keywords": [
+          "character",
+          "chr"
+        ],
+        "bytes": 127263
+      },
+      {
+        "path": "assets/source/blender/weapons/wpn_a1_compact_rifle_01.blend",
+        "extension": ".blend",
+        "matched_keywords": [
+          "weapon",
+          "wpn",
+          "rifle"
+        ],
+        "bytes": 104386
+      },
+      {
+        "path": "assets/source/blender/weapons/wpn_a1_compact_sidearm_01.blend",
+        "extension": ".blend",
+        "matched_keywords": [
+          "weapon",
+          "wpn",
+          "sidearm"
+        ],
+        "bytes": 101445
+      },
+      {
+        "path": "assets/source/blender/weapons/wpn_a1_modern_rifle_01.blend",
+        "extension": ".blend",
+        "matched_keywords": [
+          "weapon",
+          "wpn",
+          "rifle"
+        ],
+        "bytes": 104680
+      },
+      {
+        "path": "assets/source/blender/weapons/wpn_ar_01.blend",
+        "extension": ".blend",
+        "matched_keywords": [
+          "weapon",
+          "wpn"
+        ],
+        "bytes": 98792
+      },
+      {
+        "path": "assets/source/blender/weapons/wpn_sidearm_01.blend",
+        "extension": ".blend",
+        "matched_keywords": [
+          "weapon",
+          "wpn",
+          "sidearm"
+        ],
+        "bytes": 98709
+      },
+      {
+        "path": "assets/source/blender/weapons/wpn_smg_01.blend",
+        "extension": ".blend",
+        "matched_keywords": [
+          "weapon",
+          "wpn",
+          "smg"
+        ],
+        "bytes": 98784
+      }
+    ]
+  },
+  "assets": [
+    {
+      "id": "chr_project_male1",
+      "source": "assets/project_assets/character_male1.glb",
+      "category": "character",
+      "aliases": [
+        "character_male1"
+      ],
+      "ignored_meshes_present": [
+        "Icosphere"
+      ],
+      "managed_object_count": 223,
+      "managed_mesh_count": 1,
+      "top_level_transforms": [
+        {
+          "name": "Sci-Fi Rigged male character",
+          "type": "EMPTY",
+          "location": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation_euler": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "name": "WGT-rig_root",
+          "type": "EMPTY",
+          "location": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation_euler": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            0.81324,
+            0.81324,
+            0.81324
+          ]
+        },
+        {
+          "name": "WGT-rig_eyes",
+          "type": "EMPTY",
+          "location": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation_euler": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            0.02202,
+            0.02202,
+            0.02202
+          ]
+        },
+        {
+          "name": "WGT-rig_eye.L",
+          "type": "EMPTY",
+          "location": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation_euler": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            0.02202,
+            0.02202,
+            0.02202
+          ]
+        },
+        {
+          "name": "WGT-rig_eye.R",
+          "type": "EMPTY",
+          "location": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation_euler": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            -0.02202,
+            -0.02202,
+            -0.02202
+          ]
+        },
+        {
+          "name": "WGT-rig_VIS_upper_arm_ik_pole.L",
+          "type": "EMPTY",
+          "location": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation_euler": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            0.54322,
+            0.54322,
+            0.54322
+          ]
+        },
+        {
+          "name": "WGT-rig_VIS_upper_arm_ik_pole.R",
+          "type": "EMPTY",
+          "location": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation_euler": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            -0.54322,
+            -0.54322,
+            -0.54322
+          ]
+        },
+        {
+          "name": "WGT-rig_VIS_thigh_ik_pole.L",
+          "type": "EMPTY",
+          "location": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation_euler": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            0.88823,
+            0.88823,
+            0.88823
+          ]
+        },
+        {
+          "name": "WGT-rig_VIS_thigh_ik_pole.R",
+          "type": "EMPTY",
+          "location": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation_euler": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            -0.88823,
+            -0.88823,
+            -0.88823
+          ]
+        },
+        {
+          "name": "WGT-rig_torso",
+          "type": "EMPTY",
+          "location": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation_euler": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            0.35414,
+            0.35414,
+            0.35414
+          ]
+        },
+        {
+          "name": "WGT-rig_hips",
+          "type": "EMPTY",
+          "location": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation_euler": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            0.14756,
+            0.14756,
+            0.14756
+          ]
+        },
+        {
+          "name": "WGT-rig_chest",
+          "type": "EMPTY",
+          "location": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation_euler": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            0.19674,
+            0.19674,
+            0.19674
+          ]
+        },
+        {
+          "name": "WGT-rig_spine_fk.001",
+          "type": "EMPTY",
+          "location": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation_euler": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            0.12217,
+            0.12217,
+            0.12217
+          ]
+        },
+        {
+          "name": "WGT-rig_spine_fk",
+          "type": "EMPTY",
+          "location": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation_euler": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            0.1361,
+            0.1361,
+            0.1361
+          ]
+        },
+        {
+          "name": "WGT-rig_tweak_spine",
+          "type": "EMPTY",
+          "location": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation_euler": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            0.06805,
+            0.06805,
+            0.06805
+          ]
+        },
+        {
+          "name": "WGT-rig_foot_tweak.L",
+          "type": "EMPTY",
+          "location": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation_euler": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            0.02936,
+            0.02936,
+            0.02936
+          ]
+        },
+        {
+          "name": "WGT-rig_shin_tweak.L",
+          "type": "EMPTY",
+          "location": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation_euler": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            0.11442,
+            0.11442,
+            0.11442
+          ]
+        },
+        {
+          "name": "WGT-rig_shin_tweak.L.001",
+          "type": "EMPTY",
+          "location": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation_euler": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            0.11442,
+            0.11442,
+            0.11442
+          ]
+        },
+        {
+          "name": "WGT-rig_thigh_tweak.L.001",
+          "type": "EMPTY",
+          "location": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation_euler": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            0.10996,
+            0.10996,
+            0.10996
+          ]
+        },
+        {
+          "name": "WGT-rig_foot_tweak.R",
+          "type": "EMPTY",
+          "location": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation_euler": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            -0.02936,
+            -0.02936,
+            -0.02936
+          ]
+        },
+        {
+          "name": "WGT-rig_shin_tweak.R",
+          "type": "EMPTY",
+          "location": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation_euler": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            -0.11442,
+            -0.11442,
+            -0.11442
+          ]
+        },
+        {
+          "name": "WGT-rig_shin_tweak.R.001",
+          "type": "EMPTY",
+          "location": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation_euler": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            -0.11442,
+            -0.11442,
+            -0.11442
+          ]
+        },
+        {
+          "name": "WGT-rig_thigh_tweak.R.001",
+          "type": "EMPTY",
+          "location": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation_euler": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            -0.10996,
+            -0.10996,
+            -0.10996
+          ]
+        },
+        {
+          "name": "WGT-rig_thigh_parent.L",
+          "type": "EMPTY",
+          "location": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation_euler": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            0.10996,
+            0.10996,
+            0.10996
+          ]
+        },
+        {
+          "name": "WGT-rig_thigh_fk.L",
+          "type": "EMPTY",
+          "location": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation_euler": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            0.43985,
+            0.43985,
+            0.43985
+          ]
+        },
+        {
+          "name": "WGT-rig_shin_fk.L",
+          "type": "EMPTY",
+          "location": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation_euler": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            0.45766,
+            0.45766,
+            0.45766
+          ]
+        },
+        {
+          "name": "WGT-rig_foot_fk.L",
+          "type": "EMPTY",
+          "location": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation_euler": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            0.11742,
+            0.11742,
+            0.11742
+          ]
+        },
+        {
+          "name": "WGT-rig_toe_fk.L",
+          "type": "EMPTY",
+          "location": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation_euler": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            0.12261,
+            0.12261,
+            0.12261
+          ]
+        },
+        {
+          "name": "WGT-rig_thigh_ik.L",
+          "type": "EMPTY",
+          "location": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation_euler": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            0.43985,
+            0.43985,
+            0.43985
+          ]
+        },
+        {
+          "name": "WGT-rig_thigh_tweak.L",
+          "type": "EMPTY",
+          "location": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation_euler": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            0.10996,
+            0.10996,
+            0.10996
+          ]
+        }
+      ],
+      "non_applied_mesh_transforms": [],
+      "bounds_before": {
+        "min_xyz_blender": [
+          -0.32273,
+          -0.30891,
+          -0.0003
+        ],
+        "max_xyz_blender": [
+          0.52903,
+          0.09105,
+          1.78568
+        ],
+        "size_xyz_blender": [
+          0.85176,
+          0.39996,
+          1.78599
+        ],
+        "center_xyz_blender": [
+          0.10315,
+          -0.10893,
+          0.89269
+        ],
+        "runtime_dimensions_m": [
+          0.85176,
+          1.78599,
+          0.39996
+        ]
+      },
+      "configured_findings": [
+        "Contains exported Icosphere helper mesh that distorts whole-file bounds.",
+        "No authored Nemisis socket_root, socket_camera, socket_weapon_root, hand sockets, or col_ collision proxy.",
+        "Visible character mesh is offset from origin by roughly +0.103m X and -0.109m Y in Blender space."
+      ],
+      "normalization": {
+        "remove_mesh_names": [
+          "Icosphere"
+        ],
+        "rotation_euler_deg": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "origin": {
+          "mode": "bounds_floor_center",
+          "center_axes": [
+            "X",
+            "Y"
+          ],
+          "floor_axis": "Z"
+        },
+        "ensure_root_empty": true
+      },
+      "removed_meshes": [
+        "Icosphere"
+      ],
+      "scale_factor_applied": null,
+      "translation_applied": [
+        -0.10315,
+        0.10893,
+        0.0003
+      ],
+      "bounds_after_configured_normalization": {
+        "min_xyz_blender": [
+          -0.42588,
+          -0.19998,
+          -0.0
+        ],
+        "max_xyz_blender": [
+          0.42588,
+          0.19998,
+          1.78598
+        ],
+        "size_xyz_blender": [
+          0.85176,
+          0.39996,
+          1.78599
+        ],
+        "center_xyz_blender": [
+          0.0,
+          0.0,
+          0.89299
+        ],
+        "runtime_dimensions_m": [
+          0.85176,
+          1.78599,
+          0.39996
+        ]
+      },
+      "exported": "assets/processed/normalized/project_assets/chr_project_male1.glb"
+    },
+    {
+      "id": "wpn_project_rifle_m4a1",
+      "source": "assets/project_assets/weapon_rifle_m4a1.glb",
+      "category": "weapon",
+      "aliases": [
+        "weapon_rifle_m4a1",
+        "m4a1",
+        "hk416_candidate_no_explicit_hk416_match"
+      ],
+      "ignored_meshes_present": [],
+      "managed_object_count": 14,
+      "managed_mesh_count": 13,
+      "top_level_transforms": [
+        {
+          "name": "M4a1 Weapon",
+          "type": "EMPTY",
+          "location": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation_euler": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        }
+      ],
+      "non_applied_mesh_transforms": [],
+      "bounds_before": {
+        "min_xyz_blender": [
+          -0.07353,
+          -0.36262,
+          0.0
+        ],
+        "max_xyz_blender": [
+          0.19279,
+          0.49623,
+          0.06361
+        ],
+        "size_xyz_blender": [
+          0.26632,
+          0.85884,
+          0.06361
+        ],
+        "center_xyz_blender": [
+          0.05963,
+          0.06681,
+          0.0318
+        ],
+        "runtime_dimensions_m": [
+          0.26632,
+          0.06361,
+          0.85884
+        ]
+      },
+      "configured_findings": [
+        "No explicit HK416 path, metadata, material, or object-name match was found; this M4A1 asset is the closest rifle candidate.",
+        "Current sidecar dimensions understate actual weapon length because only part of the model appears to have been measured.",
+        "Weapon height is on Blender +X while Nemisis target assets use Blender +Z up, so the configured fix rolls source +X to target +Z.",
+        "No authored socket_muzzle, grip sockets, eject socket, or col_ collision proxy."
+      ],
+      "normalization": {
+        "remove_mesh_names": [
+          "Icosphere"
+        ],
+        "rotation_euler_deg": [
+          0.0,
+          -90.0,
+          0.0
+        ],
+        "origin": {
+          "mode": "bounds_floor_center",
+          "center_axes": [
+            "X",
+            "Y"
+          ],
+          "floor_axis": "Z"
+        },
+        "ensure_root_empty": true
+      },
+      "removed_meshes": [],
+      "scale_factor_applied": null,
+      "translation_applied": [
+        0.0318,
+        -0.06681,
+        0.07353
+      ],
+      "bounds_after_configured_normalization": {
+        "min_xyz_blender": [
+          -0.03181,
+          -0.42943,
+          0.0
+        ],
+        "max_xyz_blender": [
+          0.0318,
+          0.42942,
+          0.26632
+        ],
+        "size_xyz_blender": [
+          0.06361,
+          0.85884,
+          0.26632
+        ],
+        "center_xyz_blender": [
+          -0.0,
+          -0.0,
+          0.13316
+        ],
+        "runtime_dimensions_m": [
+          0.06361,
+          0.26632,
+          0.85884
+        ]
+      },
+      "exported": "assets/processed/normalized/project_assets/wpn_project_rifle_m4a1.glb"
+    },
+    {
+      "id": "wpn_project_rifle_afr120",
+      "source": "assets/project_assets/weapon_rifle_afr120.glb",
+      "category": "weapon",
+      "aliases": [
+        "weapon_rifle_afr120",
+        "afr120"
+      ],
+      "ignored_meshes_present": [],
+      "managed_object_count": 1,
+      "managed_mesh_count": 1,
+      "top_level_transforms": [
+        {
+          "name": "Sci-Fi Tactical Rifle",
+          "type": "MESH",
+          "location": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation_euler": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        }
+      ],
+      "non_applied_mesh_transforms": [],
+      "bounds_before": {
+        "min_xyz_blender": [
+          -0.0386,
+          -0.64046,
+          0.00067
+        ],
+        "max_xyz_blender": [
+          0.03533,
+          0.53076,
+          0.5008
+        ],
+        "size_xyz_blender": [
+          0.07392,
+          1.17122,
+          0.50013
+        ],
+        "center_xyz_blender": [
+          -0.00164,
+          -0.05485,
+          0.25074
+        ],
+        "runtime_dimensions_m": [
+          0.07392,
+          0.50013,
+          1.17122
+        ]
+      },
+      "configured_findings": [
+        "Axis layout already matches Blender +Z up and +Y forward in an isolated import.",
+        "Rifle height is large for a shoulder weapon, but this may be intentional sci-fi styling.",
+        "No authored socket_muzzle, grip sockets, eject socket, or col_ collision proxy."
+      ],
+      "normalization": {
+        "remove_mesh_names": [
+          "Icosphere"
+        ],
+        "rotation_euler_deg": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "origin": {
+          "mode": "bounds_floor_center",
+          "center_axes": [
+            "X",
+            "Y"
+          ],
+          "floor_axis": "Z"
+        },
+        "ensure_root_empty": true
+      },
+      "removed_meshes": [],
+      "scale_factor_applied": null,
+      "translation_applied": [
+        0.00164,
+        0.05485,
+        -0.00067
+      ],
+      "bounds_after_configured_normalization": {
+        "min_xyz_blender": [
+          -0.03696,
+          -0.58561,
+          -0.0
+        ],
+        "max_xyz_blender": [
+          0.03697,
+          0.58561,
+          0.50013
+        ],
+        "size_xyz_blender": [
+          0.07392,
+          1.17122,
+          0.50013
+        ],
+        "center_xyz_blender": [
+          0.0,
+          0.0,
+          0.25007
+        ],
+        "runtime_dimensions_m": [
+          0.07392,
+          0.50013,
+          1.17122
+        ]
+      },
+      "exported": "assets/processed/normalized/project_assets/wpn_project_rifle_afr120.glb"
+    },
+    {
+      "id": "wpn_project_rifle_ncar",
+      "source": "assets/project_assets/weapon_rifle_ncar.glb",
+      "category": "weapon",
+      "aliases": [
+        "weapon_rifle_ncar",
+        "ncar"
+      ],
+      "ignored_meshes_present": [],
+      "managed_object_count": 78,
+      "managed_mesh_count": 77,
+      "top_level_transforms": [
+        {
+          "name": "Sci-Fi Rifle",
+          "type": "EMPTY",
+          "location": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation_euler": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        }
+      ],
+      "non_applied_mesh_transforms": [],
+      "bounds_before": {
+        "min_xyz_blender": [
+          -0.11603,
+          -0.41095,
+          -7e-05
+        ],
+        "max_xyz_blender": [
+          0.25635,
+          0.48883,
+          0.11378
+        ],
+        "size_xyz_blender": [
+          0.37238,
+          0.89978,
+          0.11385
+        ],
+        "center_xyz_blender": [
+          0.07016,
+          0.03894,
+          0.05686
+        ],
+        "runtime_dimensions_m": [
+          0.37238,
+          0.11385,
+          0.89978
+        ]
+      },
+      "configured_findings": [
+        "Weapon height is on Blender +X while Nemisis target assets use Blender +Z up, so the configured fix rolls source +X to target +Z.",
+        "No authored socket_muzzle, grip sockets, eject socket, or col_ collision proxy."
+      ],
+      "normalization": {
+        "remove_mesh_names": [
+          "Icosphere"
+        ],
+        "rotation_euler_deg": [
+          0.0,
+          -90.0,
+          0.0
+        ],
+        "origin": {
+          "mode": "bounds_floor_center",
+          "center_axes": [
+            "X",
+            "Y"
+          ],
+          "floor_axis": "Z"
+        },
+        "ensure_root_empty": true
+      },
+      "removed_meshes": [],
+      "scale_factor_applied": null,
+      "translation_applied": [
+        0.05686,
+        -0.03894,
+        0.11603
+      ],
+      "bounds_after_configured_normalization": {
+        "min_xyz_blender": [
+          -0.05692,
+          -0.44989,
+          0.0
+        ],
+        "max_xyz_blender": [
+          0.05693,
+          0.44989,
+          0.37238
+        ],
+        "size_xyz_blender": [
+          0.11385,
+          0.89978,
+          0.37238
+        ],
+        "center_xyz_blender": [
+          0.0,
+          0.0,
+          0.18619
+        ],
+        "runtime_dimensions_m": [
+          0.11385,
+          0.37238,
+          0.89978
+        ]
+      },
+      "exported": "assets/processed/normalized/project_assets/wpn_project_rifle_ncar.glb"
+    },
+    {
+      "id": "wpn_project_smg_fr17",
+      "source": "assets/project_assets/weapon_smg_fr17.glb",
+      "category": "weapon",
+      "aliases": [
+        "weapon_smg_fr17",
+        "fr17"
+      ],
+      "ignored_meshes_present": [],
+      "managed_object_count": 57,
+      "managed_mesh_count": 56,
+      "top_level_transforms": [
+        {
+          "name": "SMG Sci Fi submachine gun concept",
+          "type": "EMPTY",
+          "location": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation_euler": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        }
+      ],
+      "non_applied_mesh_transforms": [],
+      "bounds_before": {
+        "min_xyz_blender": [
+          -0.11898,
+          -0.22192,
+          -0.00246
+        ],
+        "max_xyz_blender": [
+          0.1768,
+          0.26763,
+          0.05406
+        ],
+        "size_xyz_blender": [
+          0.29578,
+          0.48954,
+          0.05652
+        ],
+        "center_xyz_blender": [
+          0.02891,
+          0.02286,
+          0.0258
+        ],
+        "runtime_dimensions_m": [
+          0.29578,
+          0.05652,
+          0.48954
+        ]
+      },
+      "configured_findings": [
+        "Weapon height is on Blender +X while Nemisis target assets use Blender +Z up, so the configured fix rolls source +X to target +Z.",
+        "No authored socket_muzzle, grip sockets, eject socket, or col_ collision proxy."
+      ],
+      "normalization": {
+        "remove_mesh_names": [
+          "Icosphere"
+        ],
+        "rotation_euler_deg": [
+          0.0,
+          -90.0,
+          0.0
+        ],
+        "origin": {
+          "mode": "bounds_floor_center",
+          "center_axes": [
+            "X",
+            "Y"
+          ],
+          "floor_axis": "Z"
+        },
+        "ensure_root_empty": true
+      },
+      "removed_meshes": [],
+      "scale_factor_applied": null,
+      "translation_applied": [
+        0.0258,
+        -0.02286,
+        0.11898
+      ],
+      "bounds_after_configured_normalization": {
+        "min_xyz_blender": [
+          -0.02826,
+          -0.24478,
+          -0.0
+        ],
+        "max_xyz_blender": [
+          0.02826,
+          0.24477,
+          0.29578
+        ],
+        "size_xyz_blender": [
+          0.05652,
+          0.48954,
+          0.29578
+        ],
+        "center_xyz_blender": [
+          0.0,
+          -0.0,
+          0.14789
+        ],
+        "runtime_dimensions_m": [
+          0.05652,
+          0.29578,
+          0.48954
+        ]
+      },
+      "exported": "assets/processed/normalized/project_assets/wpn_project_smg_fr17.glb"
+    },
+    {
+      "id": "wpn_project_sidearm_glock19",
+      "source": "assets/project_assets/weapon_sidearm_glock19.glb",
+      "category": "weapon",
+      "aliases": [
+        "weapon_sidearm_glock19",
+        "glock19"
+      ],
+      "ignored_meshes_present": [],
+      "managed_object_count": 2,
+      "managed_mesh_count": 1,
+      "top_level_transforms": [
+        {
+          "name": "Glock",
+          "type": "EMPTY",
+          "location": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation_euler": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        }
+      ],
+      "non_applied_mesh_transforms": [],
+      "bounds_before": {
+        "min_xyz_blender": [
+          -0.11517,
+          -0.21592,
+          -0.00076
+        ],
+        "max_xyz_blender": [
+          0.08464,
+          0.07407,
+          0.03424
+        ],
+        "size_xyz_blender": [
+          0.19982,
+          0.29,
+          0.035
+        ],
+        "center_xyz_blender": [
+          -0.01527,
+          -0.07093,
+          0.01674
+        ],
+        "runtime_dimensions_m": [
+          0.19982,
+          0.035,
+          0.29
+        ]
+      },
+      "configured_findings": [
+        "Sidearm height is on Blender +X while Nemisis target assets use Blender +Z up, so the configured fix rolls source +X to target +Z.",
+        "Source length is about 0.29m before scaling; configured normalization scales uniformly to a 0.187m Glock 19 reference length.",
+        "No authored socket_muzzle, grip sockets, eject socket, or col_ collision proxy."
+      ],
+      "normalization": {
+        "remove_mesh_names": [
+          "Icosphere"
+        ],
+        "rotation_euler_deg": [
+          0.0,
+          -90.0,
+          0.0
+        ],
+        "scale_to_dimension_m": {
+          "axis": "Y",
+          "size": 0.187
+        },
+        "origin": {
+          "mode": "bounds_floor_center",
+          "center_axes": [
+            "X",
+            "Y"
+          ],
+          "floor_axis": "Z"
+        },
+        "ensure_root_empty": true
+      },
+      "removed_meshes": [],
+      "scale_factor_applied": 0.644828,
+      "translation_applied": [
+        0.01079,
+        0.04574,
+        0.07427
+      ],
+      "bounds_after_configured_normalization": {
+        "min_xyz_blender": [
+          -0.01129,
+          -0.09349,
+          0.0
+        ],
+        "max_xyz_blender": [
+          0.01128,
+          0.0935,
+          0.12885
+        ],
+        "size_xyz_blender": [
+          0.02257,
+          0.187,
+          0.12885
+        ],
+        "center_xyz_blender": [
+          -0.0,
+          0.0,
+          0.06443
+        ],
+        "runtime_dimensions_m": [
+          0.02257,
+          0.12885,
+          0.187
+        ]
+      },
+      "exported": "assets/processed/normalized/project_assets/wpn_project_sidearm_glock19.glb"
+    },
+    {
+      "id": "wpn_project_sidearm_p320",
+      "source": "assets/project_assets/weapon_sidearm_p320.glb",
+      "category": "weapon",
+      "aliases": [
+        "weapon_sidearm_p320",
+        "p320"
+      ],
+      "ignored_meshes_present": [],
+      "managed_object_count": 2,
+      "managed_mesh_count": 1,
+      "top_level_transforms": [
+        {
+          "name": "P320 Handgun",
+          "type": "EMPTY",
+          "location": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation_euler": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        }
+      ],
+      "non_applied_mesh_transforms": [],
+      "bounds_before": {
+        "min_xyz_blender": [
+          -0.11434,
+          -0.11963,
+          0.00024
+        ],
+        "max_xyz_blender": [
+          0.08296,
+          0.14966,
+          0.03847
+        ],
+        "size_xyz_blender": [
+          0.1973,
+          0.26928,
+          0.03823
+        ],
+        "center_xyz_blender": [
+          -0.01569,
+          0.01502,
+          0.01936
+        ],
+        "runtime_dimensions_m": [
+          0.1973,
+          0.03823,
+          0.26928
+        ]
+      },
+      "configured_findings": [
+        "Sidearm height is on Blender +X while Nemisis target assets use Blender +Z up, so the configured fix rolls source +X to target +Z.",
+        "Source length is about 0.269m before scaling; configured normalization scales uniformly to a 0.203m P320 reference length.",
+        "No authored socket_muzzle, grip sockets, eject socket, or col_ collision proxy."
+      ],
+      "normalization": {
+        "remove_mesh_names": [
+          "Icosphere"
+        ],
+        "rotation_euler_deg": [
+          0.0,
+          -90.0,
+          0.0
+        ],
+        "scale_to_dimension_m": {
+          "axis": "Y",
+          "size": 0.203
+        },
+        "origin": {
+          "mode": "bounds_floor_center",
+          "center_axes": [
+            "X",
+            "Y"
+          ],
+          "floor_axis": "Z"
+        },
+        "ensure_root_empty": true
+      },
+      "removed_meshes": [],
+      "scale_factor_applied": 0.753862,
+      "translation_applied": [
+        0.01459,
+        -0.01132,
+        0.0862
+      ],
+      "bounds_after_configured_normalization": {
+        "min_xyz_blender": [
+          -0.01441,
+          -0.1015,
+          0.0
+        ],
+        "max_xyz_blender": [
+          0.01441,
+          0.1015,
+          0.14874
+        ],
+        "size_xyz_blender": [
+          0.02882,
+          0.203,
+          0.14874
+        ],
+        "center_xyz_blender": [
+          -0.0,
+          0.0,
+          0.07437
+        ],
+        "runtime_dimensions_m": [
+          0.02882,
+          0.14874,
+          0.203
+        ]
+      },
+      "exported": "assets/processed/normalized/project_assets/wpn_project_sidearm_p320.glb"
+    }
+  ]
+}

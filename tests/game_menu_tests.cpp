@@ -216,6 +216,11 @@ void testDevRangeHudUsesPlayableResponsiveLayout() {
     sample.rangeSession.score.targetsEliminated = 3;
     sample.rangeSession.score.shotsFired = 10;
     sample.rangeSession.score.shotsHit = 7;
+    sample.rangeSession.drill.score = 1240;
+    sample.rangeSession.drill.timeRemainingSeconds = 42.5F;
+    sample.rangeSession.drill.latestTtkSeconds = 0.38F;
+    sample.rangeSession.drill.recoilControlScore = 86.0F;
+    nemisis::dev::ensureDevRangeLaneScore(sample.rangeSession, 1U, "center_20m", "CENTER 20M");
 
     nemisis::weapons::AttachmentRegistry attachments;
     attachments.registerPrototypeAttachments();
@@ -257,7 +262,10 @@ void testDevRangeHudUsesPlayableResponsiveLayout() {
 
     expect(hasText("OPERATOR"), "dev range HUD keeps player health anchored as operator panel");
     expect(hasText("NOVA RIFLE"), "dev range HUD keeps loadout weapon visible");
-    expect(hasText("ELIMS"), "dev range HUD keeps compact score strip visible");
+    expect(hasText("DRILL"), "dev range HUD keeps timed drill strip visible");
+    expect(hasText("CTRL"), "dev range HUD exposes recoil-control scoring");
+    expect(hasText("TTK"), "dev range HUD exposes measured TTK panel data");
+    expect(hasText("CENTER 20M"), "dev range HUD exposes active lane breakdown");
     expect(hasText("DEBUG Gameplay"), "debug overlay renders as compact gameplay panel");
     expect(!hasText("TARGET LANE"), "normal dev range HUD no longer renders the large target lane debug panel");
     expect(
@@ -270,6 +278,76 @@ void testDevRangeHudUsesPlayableResponsiveLayout() {
         "loadout panel anchors to the bottom-right after 1920x1080 scaling");
 }
 
+void testNetworkDebugOverlayIncludesPredictionTelemetry() {
+    auto actions = nemisis::input::createDefaultActionMap();
+    nemisis::ui::GameMenu menu;
+    menu.showDevRange();
+
+    press(actions, nemisis::input::key_codes::Tab);
+    menu.update(actions);
+    expect(menu.debugPage() == nemisis::ui::DebugPage::Network, "tab selects network debug page");
+
+    nemisis::dev::DevSandboxSample sample{};
+    sample.targetRange = nemisis::dev::makeDefaultDevTargetRange();
+    sample.network.pendingCommandCount = 2;
+    sample.netBridge.sentCommandPackets = 8;
+    sample.netBridge.receivedAckPackets = 7;
+    sample.netBridge.lastAcknowledgedTick = 42;
+    sample.prediction.storedSamples = 5;
+    sample.prediction.unacknowledgedTickSpan = 3;
+    sample.prediction.hasLatestError = true;
+    sample.prediction.latestError.positionErrorMeters = 0.19F;
+    sample.prediction.latestError.exceedsCorrectionThreshold = true;
+
+    nemisis::weapons::AttachmentRegistry attachments;
+    attachments.registerPrototypeAttachments();
+    auto loadout = nemisis::weapons::defaultPrototypeLoadout();
+    nemisis::weapons::AttachmentBuildSummary attachmentSummary{};
+    attachmentSummary.effectiveWeapon.id = "ar_01";
+    attachmentSummary.effectiveWeapon.displayName = "NOVA RIFLE";
+    attachmentSummary.effectiveMagazineSize = 30;
+
+    novacore::render::RenderBackendFrameStats backendStats{};
+    backendStats.swapchainWidth = 1280;
+    backendStats.swapchainHeight = 720;
+    nemisis::dev::DevRangeRenderSceneStats sceneStats{};
+    sceneStats.worldBoxCount = 50;
+    sceneStats.meshInstanceCount = 36;
+
+    novacore::render::RenderFrameInfo frame{};
+    menu.appendRenderCommands(
+        frame,
+        sample,
+        nemisis::dev::GreyboxWorld{},
+        "Vulkan",
+        "Vulkan 1.4 test",
+        0,
+        {},
+        {},
+        backendStats,
+        sceneStats,
+        {},
+        loadout,
+        attachments,
+        attachmentSummary,
+        {});
+
+    const auto hasText = [&frame](std::string_view text) {
+        return std::any_of(
+            frame.debugTexts.begin(),
+            frame.debugTexts.end(),
+            [text](const novacore::render::DebugText& command) {
+                return command.text.find(text) != std::string::npos;
+            });
+    };
+
+    expect(hasText("DEBUG Network"), "network debug overlay renders selected page");
+    expect(hasText("PRED"), "network debug overlay labels prediction history");
+    expect(hasText("5/3"), "network debug overlay shows prediction sample/span telemetry");
+    expect(hasText("ERR"), "network debug overlay labels prediction error");
+    expect(hasText("0.19m"), "network debug overlay shows latest prediction error magnitude");
+}
+
 } // namespace
 
 int main() {
@@ -280,6 +358,7 @@ int main() {
     testMenuTabsSettingsAndLoadoutMutateRuntimeData();
     testPointerNavigationActivatesMenuRows();
     testDevRangeHudUsesPlayableResponsiveLayout();
+    testNetworkDebugOverlayIncludesPredictionTelemetry();
 
     if (failures > 0) {
         std::cerr << failures << " game menu test(s) failed\n";
