@@ -12,6 +12,7 @@
 #include "nemisis/movement/MovementSystem.hpp"
 #include "nemisis/net/LoopbackCommandBridge.hpp"
 #include "nemisis/net/PredictionHistory.hpp"
+#include "nemisis/net/SnapshotInterpolation.hpp"
 #include "nemisis/player/PlayerAnimation.hpp"
 #include "nemisis/player/PlayerCameraRig.hpp"
 #include "nemisis/player/PlayerCommandQueue.hpp"
@@ -34,6 +35,7 @@
 
 #include <array>
 #include <filesystem>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -105,6 +107,8 @@ private:
     render::DevRenderTuning renderTuning_;
     net::LoopbackCommandBridge loopbackBridge_;
     net::PlayerPredictionHistory predictionHistory_;
+    net::PlayerSnapshotInterpolator localSnapshotInterpolator_;
+    std::optional<net::PlayerSnapshotState> pendingAuthoritativeSnapshot_;
     player::PlayerCommandQueue localCommandQueue_;
     player::CharacterAnimationState characterAnimation_;
     player::CharacterAnimationFrame latestCharacterAnimationFrame_;

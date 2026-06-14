@@ -298,6 +298,9 @@ void testNetworkDebugOverlayIncludesPredictionTelemetry() {
     sample.prediction.hasLatestError = true;
     sample.prediction.latestError.positionErrorMeters = 0.19F;
     sample.prediction.latestError.exceedsCorrectionThreshold = true;
+    sample.snapshots.storedSnapshots = 4;
+    sample.snapshots.newestServerTick = 45;
+    sample.snapshots.hasNewestServerTick = true;
 
     nemisis::weapons::AttachmentRegistry attachments;
     attachments.registerPrototypeAttachments();
@@ -346,6 +349,8 @@ void testNetworkDebugOverlayIncludesPredictionTelemetry() {
     expect(hasText("5/3"), "network debug overlay shows prediction sample/span telemetry");
     expect(hasText("ERR"), "network debug overlay labels prediction error");
     expect(hasText("0.19m"), "network debug overlay shows latest prediction error magnitude");
+    expect(hasText("SNAP"), "network debug overlay labels snapshot interpolation");
+    expect(hasText("4 n45"), "network debug overlay shows snapshot count and newest tick");
 }
 
 } // namespace

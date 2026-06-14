@@ -40,6 +40,9 @@ void testSummaryIncludesPlayableTelemetry() {
     sample.prediction.latestError.positionErrorMeters = 0.08F;
     sample.prediction.latestError.yawErrorDegrees = 0.4F;
     sample.prediction.latestError.exceedsCorrectionThreshold = false;
+    sample.snapshots.storedSnapshots = 3;
+    sample.snapshots.newestServerTick = 44;
+    sample.snapshots.hasNewestServerTick = true;
     sample.targetRange = nemisis::dev::makeDefaultDevTargetRange();
     sample.target.health = 122.0F;
     sample.target.hitsTaken = 2;
@@ -101,6 +104,8 @@ void testSummaryIncludesPlayableTelemetry() {
     expect(summary.find("predSpan=2") != std::string::npos, "summary includes prediction unacknowledged span");
     expect(summary.find("predErr=0.08") != std::string::npos, "summary includes latest prediction error");
     expect(summary.find("predFix=no") != std::string::npos, "summary includes prediction correction state");
+    expect(summary.find("snapStored=3") != std::string::npos, "summary includes snapshot interpolation count");
+    expect(summary.find("snapNewest=44") != std::string::npos, "summary includes newest snapshot tick");
     expect(summary.find("drillScore=900") != std::string::npos, "summary includes drill score");
     expect(summary.find("recoilControl=82") != std::string::npos, "summary includes recoil control score");
     expect(summary.find("latestTtk=0.42") != std::string::npos, "summary includes latest TTK");

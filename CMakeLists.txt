@@ -14,6 +14,10 @@ option(NEMISIS_WARNINGS_AS_ERRORS "Treat warnings as errors" OFF)
 option(NEMISIS_COPY_RUNTIME_DATA "Copy configs and asset docs beside the game executable" ON)
 set(NOVACORE_ENGINE_ROOT "" CACHE PATH "Path to a NovaCore Engine checkout")
 
+if(MSVC)
+    add_compile_options(/EHsc)
+endif()
+
 function(nemisis_copy_mingw_runtime target_name)
     if(NOT MINGW)
         return()
@@ -74,6 +78,8 @@ add_executable(nemisis_game
     game/src/net/CommandMessages.cpp
     game/src/net/LoopbackCommandBridge.cpp
     game/src/net/PredictionHistory.cpp
+    game/src/net/SnapshotInterpolation.cpp
+    game/src/net/SnapshotMessages.cpp
     game/src/player/PlayerAnimation.cpp
     game/src/player/PlayerCommandQueue.cpp
     game/src/player/PlayerCameraRig.cpp
@@ -368,6 +374,21 @@ target_include_directories(nemisis_prediction_history_tests
 target_link_libraries(nemisis_prediction_history_tests PRIVATE Novacore::Engine)
 add_test(NAME nemisis_prediction_history_tests COMMAND nemisis_prediction_history_tests)
 
+add_executable(nemisis_snapshot_messages_tests
+    game/src/net/PredictionHistory.cpp
+    game/src/net/SnapshotInterpolation.cpp
+    game/src/net/SnapshotMessages.cpp
+    tests/snapshot_messages_tests.cpp
+)
+
+target_include_directories(nemisis_snapshot_messages_tests
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/game/include
+)
+
+target_link_libraries(nemisis_snapshot_messages_tests PRIVATE Novacore::Engine)
+add_test(NAME nemisis_snapshot_messages_tests COMMAND nemisis_snapshot_messages_tests)
+
 add_executable(nemisis_player_spawn_tests
     game/src/player/PlayerSpawn.cpp
     tests/player_spawn_tests.cpp
@@ -589,6 +610,7 @@ foreach(nemisis_runtime_target IN ITEMS
     nemisis_command_messages_tests
     nemisis_loopback_command_bridge_tests
     nemisis_prediction_history_tests
+    nemisis_snapshot_messages_tests
     nemisis_player_spawn_tests
     nemisis_dev_sandbox_tests
     nemisis_greybox_world_tests

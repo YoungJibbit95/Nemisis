@@ -7,6 +7,7 @@
 #include "nemisis/dev/DevTargetRange.hpp"
 #include "nemisis/net/LoopbackCommandBridge.hpp"
 #include "nemisis/net/PredictionHistory.hpp"
+#include "nemisis/net/SnapshotInterpolation.hpp"
 #include "nemisis/player/PlayerComponents.hpp"
 #include "nemisis/player/PlayerInputCommand.hpp"
 #include "nemisis/weapons/WeaponSimulation.hpp"
@@ -47,6 +48,7 @@ struct DevSandboxSample final {
     net::LoopbackBridgeStats netBridge{};
     net::PredictionHistoryStats prediction{};
     net::PredictionError predictionError{};
+    net::PlayerSnapshotInterpolationStats snapshots{};
     player::PlayerViewComponent view{};
     GreyboxCollisionResult collision{};
 };

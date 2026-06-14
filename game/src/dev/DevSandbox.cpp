@@ -164,7 +164,11 @@ std::string DevSandbox::latestSummary() const {
            << " pending=" << latest_.network.pendingCommandCount
            << " predStored=" << latest_.prediction.storedSamples
            << " predAck=" << latest_.prediction.lastAcknowledgedTick
-           << " predSpan=" << latest_.prediction.unacknowledgedTickSpan;
+           << " predSpan=" << latest_.prediction.unacknowledgedTickSpan
+           << " snapStored=" << latest_.snapshots.storedSnapshots;
+    if (latest_.snapshots.hasNewestServerTick) {
+        stream << " snapNewest=" << latest_.snapshots.newestServerTick;
+    }
     if (latest_.prediction.hasLatestError || latest_.predictionError.hasPrediction) {
         const auto& error = latest_.prediction.hasLatestError
             ? latest_.prediction.latestError

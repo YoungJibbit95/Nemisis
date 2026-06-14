@@ -938,7 +938,7 @@ void renderDebugOverlay(
     const HudLayout& layout) {
     const float x = layout.safeInsetX;
     const float y = layout.safeInsetY;
-    addHudPanel(frame, layout, x, y, 364.0F, 140.0F, 10.0F, palette::Accent, true);
+    addHudPanel(frame, layout, x, y, 364.0F, 166.0F, 10.0F, palette::Accent, true);
     addHudText(frame, layout, x + 14.0F, y + 13.0F, 1.08F, {0.72F, 0.90F, 0.95F, 1.0F}, "DEBUG " + std::string(debugPageName));
     addHudText(frame, layout, x + 256.0F, y + 13.0F, 0.78F, palette::TextSecondary, "TAB PAGE");
     addHudLine(frame, layout, x + 14.0F, y + 35.0F, x + 346.0F, y + 35.0F, {0.08F, 0.28F, 0.32F, 0.82F});
@@ -1030,6 +1030,14 @@ void renderDebugOverlay(
             sample.prediction.hasLatestError
                 ? fixedTwo(sample.prediction.latestError.positionErrorMeters) + "m"
                 : "--");
+        addHudMetric(
+            frame,
+            layout,
+            x + 14.0F,
+            y + 148.0F,
+            "SNAP",
+            std::to_string(sample.snapshots.storedSnapshots) + " n" +
+                std::to_string(sample.snapshots.newestServerTick));
         break;
     case DebugPage::Assets:
         addHudMetric(frame, layout, x + 14.0F, y + 48.0F, "RENDER", std::string(rendererBackend));
