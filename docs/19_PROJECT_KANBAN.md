@@ -149,6 +149,15 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [x] Replace wall-run/mantle/double-jump arm debug-box cues with first-person arms mesh cue submissions.
 - [x] Add NovaCore mesh fill/rim/specular/contrast/saturation lighting controls and Nemisis render tuning coverage.
 - [x] Verify Nemisis 32/32 CTest and NovaCore 1/1 CTest after fixed-tick input, movement, first-person, and lighting block.
+- [x] Replace the cluttered Dev Range HUD with a resolution-aware playable layout: HP bottom-left, loadout/ammo bottom-right, compact score strip top-center, and a small debug overlay top-left.
+- [x] Remove the large target-lane/dummy debug panel from normal gameplay HUD output.
+- [x] Fix virtual-canvas pointer mapping so clickable menu UI remains aligned when the window resolution or aspect ratio changes.
+- [x] Fix landing-time jump buffering so a buffered jump is not erased when the player lands inside the same fixed tick.
+- [x] Add wall-run contact grace and detach cooldown state/tuning to reduce probe-jitter and instant reattach issues.
+- [x] Expose double-jump buffer telemetry through sandbox samples, logs, and the compact debug HUD.
+- [x] Re-orient first-person Project weapon mounts so long guns are upright and SMG/shotgun/sidearm use forward-facing corrections.
+- [x] Add regression coverage for same-tick landing buffered jumps, wallrun grace/cooldown, new wall-run config values, and corrected weapon mount rotations.
+- [x] Verify Nemisis 32/32 CTest and NovaCore 1/1 CTest after responsive HUD, KCC jump reliability, wallrun grace, and viewmodel orientation work.
 
 ## Doing
 
@@ -156,7 +165,7 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [ ] Keep UI moving from clickable Vulkan primitive path toward SDF/MSDF text, clipping, batching, focus graph, and richer vector drawing.
 - [ ] Start texture/material binding for A1/A2 GLBs so imported assets look less like tinted blockouts.
 - [ ] Grow the multi-target Dev Range into timed drills, TTK panels, and recoil-control scoring.
-- [ ] Deepen KCC physics beyond the current swept AABB/contact-manifold pass into true capsule sweeps, moving platform contacts, slide validation, and server replay validation.
+- [ ] Deepen KCC physics beyond the current swept AABB/contact-manifold pass into true capsule sweeps, moving platform contacts, slope/slide validation, and server replay validation.
 - [ ] Author or generate Project-asset sockets (`socket_muzzle`, `socket_weapon_root`, `socket_camera`, hands) so the runtime can stop using placement heuristics.
 - [ ] Replace first-person mesh offsets and mesh-cue poses with authored first-person arm/weapon animation clips once Blender-ready rigs exist.
 
@@ -166,8 +175,8 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [ ] Packet simulation for latency, jitter, loss, duplication, and reorder.
 - [ ] Vulkan validation debug labels and resize stress tests.
 - [ ] Renderer texture/material residency and cross-zone reference counting.
-- [ ] Timed mantle attach/climb curves, slide validation, richer slope/step debug visualization, and capsule-vs-world contact manifolds.
-- [ ] Wall-run camera feel, wall detach rules, wall-run cooldown, and surface eligibility tuning.
+- [ ] Timed mantle attach/climb curves, richer slope/step debug visualization, and capsule-vs-world contact manifolds.
+- [ ] Wall-run camera feel, wall detach rules beyond the first cooldown, and surface eligibility tuning.
 - [ ] Convert movement-tech debug visuals into authored first-person and third-person animation clips.
 - [ ] Promote Project asset import-axis data from hard-coded dev mounts into asset metadata/cooker outputs with socket validation.
 - [ ] Add a dedicated NovaCore skybox/cubemap pass instead of rendering sky as a large regular GLB mesh.

@@ -163,6 +163,8 @@ PlayerMovementState MovementSystem::simulate(
     state.slideTimeRemaining = consumeCooldown(state.slideTimeRemaining, fixedDeltaSeconds);
     state.slideBufferRemaining = consumeCooldown(state.slideBufferRemaining, fixedDeltaSeconds);
     state.wallRunTimeRemaining = consumeCooldown(state.wallRunTimeRemaining, fixedDeltaSeconds);
+    state.wallRunContactGraceRemaining = consumeCooldown(state.wallRunContactGraceRemaining, fixedDeltaSeconds);
+    state.wallRunDetachCooldownRemaining = consumeCooldown(state.wallRunDetachCooldownRemaining, fixedDeltaSeconds);
     state.mantleTimeRemaining = consumeCooldown(state.mantleTimeRemaining, fixedDeltaSeconds);
     state.jumpBufferRemaining = command.jumpPressed
         ? tuning_.jumpBufferSeconds
@@ -214,6 +216,9 @@ PlayerMovementState MovementSystem::simulate(
     }
     if (state.mode == MovementMode::WallRunning && state.wallRunTimeRemaining <= 0.0F) {
         stopGravityBoots(state.tech);
+        state.wallRunDetachCooldownRemaining = std::max(
+            state.wallRunDetachCooldownRemaining,
+            tuning_.wallRunDetachCooldownSeconds);
         state.mode = MovementMode::Airborne;
     }
     if (state.mode == MovementMode::Mantling) {
@@ -355,6 +360,8 @@ PlayerMovementState MovementSystem::simulate(
             (normal * tuning_.wallJumpImpulse) +
             novacore::math::Vec3{0.0F, tuning_.doubleJumpImpulse, 0.0F};
         state.wallRunTimeRemaining = 0.0F;
+        state.wallRunContactGraceRemaining = 0.0F;
+        state.wallRunDetachCooldownRemaining = tuning_.wallRunDetachCooldownSeconds;
         state.jumpBufferRemaining = 0.0F;
         state.doubleJumpBufferRemaining = 0.0F;
         state.coyoteTimeRemaining = 0.0F;
@@ -395,20 +402,41 @@ PlayerMovementState MovementSystem::simulate(
     state.position = state.position + (state.velocity * fixedDeltaSeconds);
 
     if (state.position.y <= 0.0F) {
+        const bool consumeBufferedLandingJump =
+            state.jumpBufferRemaining > 0.0F &&
+            state.mode != MovementMode::Mantling &&
+            state.mode != MovementMode::WallRunning;
         state.position.y = 0.0F;
-        state.velocity.y = 0.0F;
-        state.groundJumpAvailable = true;
-        state.hasDoubleJump = true;
-        state.coyoteTimeRemaining = tuning_.coyoteTimeSeconds;
-        state.jumpBufferRemaining = 0.0F;
-        state.doubleJumpBufferRemaining = 0.0F;
-        state.mantleTimeRemaining = 0.0F;
-        stopGravityBoots(state.tech);
-        if (state.mode == MovementMode::Airborne || state.mode == MovementMode::Dashing) {
-            state.mode = MovementMode::Grounded;
+        if (consumeBufferedLandingJump) {
+            state.velocity.y = tuning_.jumpVelocity;
+            state.groundJumpAvailable = false;
+            state.hasDoubleJump = true;
+            state.coyoteTimeRemaining = 0.0F;
+            state.jumpBufferRemaining = 0.0F;
+            state.doubleJumpBufferRemaining = 0.0F;
+            state.mantleTimeRemaining = 0.0F;
+            state.wallRunTimeRemaining = 0.0F;
+            state.wallRunContactGraceRemaining = 0.0F;
+            stopGravityBoots(state.tech);
+            state.mode = MovementMode::Airborne;
+            state.groundedTimeSeconds = 0.0F;
+            state.airborneTimeSeconds = fixedDeltaSeconds;
+        } else {
+            state.velocity.y = 0.0F;
+            state.groundJumpAvailable = true;
+            state.hasDoubleJump = true;
+            state.coyoteTimeRemaining = tuning_.coyoteTimeSeconds;
+            state.jumpBufferRemaining = 0.0F;
+            state.doubleJumpBufferRemaining = 0.0F;
+            state.mantleTimeRemaining = 0.0F;
+            state.wallRunContactGraceRemaining = 0.0F;
+            stopGravityBoots(state.tech);
+            if (state.mode == MovementMode::Airborne || state.mode == MovementMode::Dashing) {
+                state.mode = MovementMode::Grounded;
+            }
+            state.groundedTimeSeconds += fixedDeltaSeconds;
+            state.airborneTimeSeconds = 0.0F;
         }
-        state.groundedTimeSeconds += fixedDeltaSeconds;
-        state.airborneTimeSeconds = 0.0F;
     } else {
         state.airborneTimeSeconds += fixedDeltaSeconds;
         state.groundedTimeSeconds = 0.0F;
@@ -426,9 +454,16 @@ PlayerMovementState MovementSystem::applyWallRunContact(
     float fixedDeltaSeconds) const {
     fixedDeltaSeconds = std::max(0.0F, fixedDeltaSeconds);
     const auto input = horizontalInput(command.move);
+    const bool contactGraceActive =
+        state.mode == MovementMode::WallRunning &&
+        state.wallRunContactGraceRemaining > 0.0F &&
+        state.wallRunNormal.lengthSquared() > 0.0001F &&
+        state.wallRunTangent.lengthSquared() > 0.0001F;
+    const bool usableContact = contact.available || contactGraceActive;
     const bool hasWallRunInput = input.magnitude > 0.12F ||
         horizontalSpeed(state.velocity) > tuning_.walkSpeed * 0.55F;
-    const bool wantsWallRun = contact.available &&
+    const bool wantsWallRun = usableContact &&
+        state.wallRunDetachCooldownRemaining <= 0.0F &&
         hasWallRunInput &&
         state.position.y >= tuning_.wallRunMinHeight &&
         state.mode != MovementMode::Grounded &&
@@ -438,12 +473,17 @@ PlayerMovementState MovementSystem::applyWallRunContact(
     if (!wantsWallRun) {
         if (state.mode == MovementMode::WallRunning) {
             stopGravityBoots(state.tech);
+            state.wallRunDetachCooldownRemaining = std::max(
+                state.wallRunDetachCooldownRemaining,
+                tuning_.wallRunDetachCooldownSeconds * 0.50F);
             state.mode = MovementMode::Airborne;
         }
         return state;
     }
 
-    const auto tangent = chooseWallRunTangent(contact.tangent, state.velocity, input.direction);
+    const auto contactNormal = contact.available ? contact.normal : state.wallRunNormal;
+    const auto contactTangent = contact.available ? contact.tangent : state.wallRunTangent;
+    const auto tangent = chooseWallRunTangent(contactTangent, state.velocity, input.direction);
     if (tangent.lengthSquared() <= 0.0001F) {
         return state;
     }
@@ -451,8 +491,11 @@ PlayerMovementState MovementSystem::applyWallRunContact(
     const bool enteringWallRun = state.mode != MovementMode::WallRunning || !state.hasWallRunContact;
     state.mode = MovementMode::WallRunning;
     state.hasWallRunContact = true;
-    state.wallRunNormal = normalizedOrZero(contact.normal);
+    state.wallRunNormal = normalizedOrZero(contactNormal);
     state.wallRunTangent = tangent;
+    if (contact.available) {
+        state.wallRunContactGraceRemaining = tuning_.wallRunContactGraceSeconds;
+    }
     if (enteringWallRun) {
         triggerWallRunGravityTech(state.tech, state.wallRunNormal);
     } else {

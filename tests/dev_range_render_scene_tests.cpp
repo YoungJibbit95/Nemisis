@@ -191,7 +191,7 @@ void testDevRangeRenderSceneBuildsExpectedSubmissions() {
     if (firstPersonRifle.has_value()) {
         expect(firstPersonRifle->position.z > player.position.z + 0.45F, "first-person rifle sits in front of the camera");
         expect(firstPersonRifle->yawDegrees > 205.0F && firstPersonRifle->yawDegrees < 215.0F, "first-person rifle applies 180-degree imported-asset yaw correction");
-        expect(firstPersonRifle->rollDegrees < -85.0F && firstPersonRifle->rollDegrees > -95.0F, "first-person rifle applies imported-asset roll correction");
+        expect(std::abs(firstPersonRifle->rollDegrees) < 5.0F, "first-person rifle stays upright after imported-asset roll correction");
         expect(firstPersonRifle->scale.x > 1.8F, "first-person rifle uses a visible weapon scale");
     }
 }
@@ -254,8 +254,8 @@ void testDevRangeRenderSceneUsesPerWeaponImportAxisCorrections() {
     const auto smgMesh = findLastMesh(smgFrame, "wpn_project_smg_fr17");
     expect(smgMesh.has_value(), "SMG first-person Project mesh is submitted");
     if (smgMesh.has_value()) {
-        expect(smgMesh->yawDegrees > -1.0F && smgMesh->yawDegrees < 1.0F, "SMG uses its own forward-axis correction instead of AR yaw");
-        expect(smgMesh->rollDegrees < -85.0F && smgMesh->rollDegrees > -95.0F, "SMG uses long-weapon upright roll correction");
+        expect(smgMesh->yawDegrees > 179.0F && smgMesh->yawDegrees < 181.0F, "SMG uses forward-facing long-gun yaw correction");
+        expect(std::abs(smgMesh->rollDegrees) < 5.0F, "SMG uses upright long-weapon roll correction");
     }
 
     auto sidearmPlayer = smgPlayer;
@@ -270,7 +270,7 @@ void testDevRangeRenderSceneUsesPerWeaponImportAxisCorrections() {
     const auto sidearmMesh = findLastMesh(sidearmFrame, "wpn_project_sidearm_glock19");
     expect(sidearmMesh.has_value(), "sidearm first-person Project mesh is submitted");
     if (sidearmMesh.has_value()) {
-        expect(sidearmMesh->yawDegrees > -1.0F && sidearmMesh->yawDegrees < 1.0F, "sidearm uses non-AR forward-axis correction");
+        expect(sidearmMesh->yawDegrees > 179.0F && sidearmMesh->yawDegrees < 181.0F, "sidearm uses forward-facing pistol yaw correction");
         expect(sidearmMesh->rollDegrees > 85.0F && sidearmMesh->rollDegrees < 95.0F, "sidearm keeps pistol upright roll correction");
     }
 }

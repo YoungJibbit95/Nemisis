@@ -1,8 +1,11 @@
 #include "nemisis/input/InputBindings.hpp"
+#include "nemisis/dev/DevTargetRange.hpp"
+#include "nemisis/dev/GreyboxWorld.hpp"
 #include "nemisis/settings/GameSettings.hpp"
 #include "nemisis/ui/GameMenu.hpp"
 #include "nemisis/weapons/WeaponAttachments.hpp"
 
+#include <algorithm>
 #include <cstdlib>
 #include <iostream>
 #include <string_view>
@@ -199,6 +202,74 @@ void testPointerNavigationActivatesMenuRows() {
     expect(menu.screen() == nemisis::ui::GameScreen::Loading, "pointer click starts firing range loading");
 }
 
+void testDevRangeHudUsesPlayableResponsiveLayout() {
+    nemisis::ui::GameMenu menu;
+    menu.showDevRange();
+
+    nemisis::dev::DevSandboxSample sample{};
+    sample.playerHealth.health = 114.0F;
+    sample.playerHealth.maxHealth = 150.0F;
+    sample.weapon.weaponId = "ar_01";
+    sample.weapon.ammoInMagazine = 24;
+    sample.weapon.adsAlpha = 0.35F;
+    sample.targetRange = nemisis::dev::makeDefaultDevTargetRange();
+    sample.rangeSession.score.targetsEliminated = 3;
+    sample.rangeSession.score.shotsFired = 10;
+    sample.rangeSession.score.shotsHit = 7;
+
+    nemisis::weapons::AttachmentRegistry attachments;
+    attachments.registerPrototypeAttachments();
+    auto loadout = nemisis::weapons::defaultPrototypeLoadout();
+    nemisis::weapons::AttachmentBuildSummary attachmentSummary{};
+    attachmentSummary.effectiveWeapon.id = "ar_01";
+    attachmentSummary.effectiveWeapon.displayName = "NOVA RIFLE";
+    attachmentSummary.effectiveMagazineSize = 30;
+
+    novacore::render::RenderBackendFrameStats backendStats{};
+    backendStats.swapchainWidth = 1920;
+    backendStats.swapchainHeight = 1080;
+    novacore::render::RenderFrameInfo frame{};
+    menu.appendRenderCommands(
+        frame,
+        sample,
+        nemisis::dev::GreyboxWorld{},
+        "Vulkan",
+        "Vulkan 1.4 test",
+        0,
+        {},
+        {},
+        backendStats,
+        {},
+        {},
+        loadout,
+        attachments,
+        attachmentSummary,
+        {});
+
+    const auto hasText = [&frame](std::string_view text) {
+        return std::any_of(
+            frame.debugTexts.begin(),
+            frame.debugTexts.end(),
+            [text](const novacore::render::DebugText& command) {
+                return command.text.find(text) != std::string::npos;
+            });
+    };
+
+    expect(hasText("OPERATOR"), "dev range HUD keeps player health anchored as operator panel");
+    expect(hasText("NOVA RIFLE"), "dev range HUD keeps loadout weapon visible");
+    expect(hasText("ELIMS"), "dev range HUD keeps compact score strip visible");
+    expect(hasText("DEBUG Gameplay"), "debug overlay renders as compact gameplay panel");
+    expect(!hasText("TARGET LANE"), "normal dev range HUD no longer renders the large target lane debug panel");
+    expect(
+        std::any_of(
+            frame.debugRects.begin(),
+            frame.debugRects.end(),
+            [](const novacore::render::DebugRect& rect) {
+                return rect.x > 1200.0F && rect.y > 890.0F && rect.width > 400.0F;
+            }),
+        "loadout panel anchors to the bottom-right after 1920x1080 scaling");
+}
+
 } // namespace
 
 int main() {
@@ -208,6 +279,7 @@ int main() {
     testDebugPageCycle();
     testMenuTabsSettingsAndLoadoutMutateRuntimeData();
     testPointerNavigationActivatesMenuRows();
+    testDevRangeHudUsesPlayableResponsiveLayout();
 
     if (failures > 0) {
         std::cerr << failures << " game menu test(s) failed\n";

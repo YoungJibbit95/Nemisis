@@ -193,6 +193,26 @@ void testJumpBufferReplay() {
     expect(state.velocity.y > 0.0F, "buffered jump launches upward");
 }
 
+void testLandingConsumesBufferedJumpImmediately() {
+    nemisis::movement::MovementSystem movement;
+    nemisis::movement::PlayerMovementState state{};
+    state.position = {0.0F, 0.02F, 0.0F};
+    state.velocity = {0.0F, -2.4F, 0.0F};
+    state.mode = nemisis::movement::MovementMode::Airborne;
+    state.hasDoubleJump = false;
+
+    nemisis::player::PlayerInputCommand command{};
+    command.jumpPressed = true;
+
+    const auto jumped = movement.simulate(state, command, 1.0F / 60.0F);
+
+    expect(jumped.mode == nemisis::movement::MovementMode::Airborne, "same-tick landing buffer launches instead of eating jump");
+    expect(jumped.position.y <= 0.001F, "same-tick buffered launch starts from grounded foot position");
+    expect(jumped.velocity.y > movement.tuning().jumpVelocity - 0.05F, "same-tick buffered launch applies full jump velocity");
+    expect(jumped.jumpBufferRemaining <= 0.0001F, "same-tick buffered launch consumes jump buffer");
+    expect(jumped.hasDoubleJump, "same-tick buffered launch refreshes air jump");
+}
+
 void testDashCooldownReplay() {
     nemisis::movement::MovementSystem movement;
     nemisis::movement::PlayerMovementState state{};
@@ -303,6 +323,41 @@ void testWallRunContactAndWallJumpReplay() {
     expect(state.tech.wallJumpDetachTriggered, "wall jump triggers detach animation cue");
 }
 
+void testWallRunContactGraceReplay() {
+    nemisis::movement::MovementSystem movement;
+    nemisis::movement::PlayerMovementState state{};
+    state.position = {0.0F, 1.1F, 0.0F};
+    state.velocity = {0.0F, -0.8F, 6.0F};
+    state.mode = nemisis::movement::MovementMode::Airborne;
+
+    nemisis::player::PlayerInputCommand command{};
+    command.move = novacore::math::Vec2{0.0F, 1.0F};
+
+    constexpr float dt = 1.0F / 60.0F;
+    state = movement.applyWallRunContact(
+        state,
+        command,
+        nemisis::movement::WallRunContact{
+            true,
+            {1.0F, 0.0F, 0.0F},
+            {0.0F, 0.0F, 1.0F},
+        },
+        dt);
+    expect(state.wallRunContactGraceRemaining > 0.05F, "wallrun contact starts grace timer");
+
+    state = movement.applyWallRunContact(
+        state,
+        command,
+        nemisis::movement::WallRunContact{},
+        dt);
+    expect(state.mode == nemisis::movement::MovementMode::WallRunning, "wallrun grace survives a one-frame probe miss");
+    expect(state.hasWallRunContact, "wallrun grace keeps contact telemetry active");
+
+    command.jumpPressed = true;
+    state = movement.simulate(state, command, dt);
+    expect(state.wallRunDetachCooldownRemaining > 0.05F, "wall jump starts detach cooldown to prevent instant reattach jitter");
+}
+
 void testMantleCandidateReplay() {
     nemisis::movement::MovementSystem movement;
     nemisis::movement::PlayerMovementState state{};
@@ -352,7 +407,15 @@ void testMovementTuningConfigReplay() {
         "air": { "max_speed": 8.75, "drag": 0.2 },
         "double_jump": { "min_airborne_time": 0.04, "buffer_time": 0.19 },
         "jump": { "coyote_time": 0.12, "buffer_time": 0.14 },
-        "wall_run": { "speed": 9.0, "max_duration": 1.5, "wall_jump_impulse": 7.0, "min_height": 0.7, "probe_distance": 0.6 }
+        "wall_run": {
+            "speed": 9.0,
+            "max_duration": 1.5,
+            "wall_jump_impulse": 7.0,
+            "min_height": 0.7,
+            "probe_distance": 0.6,
+            "contact_grace": 0.11,
+            "detach_cooldown": 0.18
+        }
     })";
 
     novacore::core::ConfigDocument document;
@@ -374,6 +437,8 @@ void testMovementTuningConfigReplay() {
     expectNear(tuning.doubleJumpBufferSeconds, 0.19F, 0.001F, "double jump buffer loads from config");
     expectNear(tuning.wallRunMinHeight, 0.7F, 0.001F, "wall run min height loads from config");
     expectNear(tuning.wallRunProbeDistance, 0.6F, 0.001F, "wall run probe distance loads from config");
+    expectNear(tuning.wallRunContactGraceSeconds, 0.11F, 0.001F, "wall run contact grace loads from config");
+    expectNear(tuning.wallRunDetachCooldownSeconds, 0.18F, 0.001F, "wall run detach cooldown loads from config");
 }
 
 } // namespace
@@ -386,10 +451,12 @@ int main() {
     testBufferedDoubleJumpSurvivesCoyoteWindow();
     testCoyoteJumpReplay();
     testJumpBufferReplay();
+    testLandingConsumesBufferedJumpImmediately();
     testDashCooldownReplay();
     testSlideDurationAndSlideJumpReplay();
     testSlideBufferMakesSprintSlideReliable();
     testWallRunContactAndWallJumpReplay();
+    testWallRunContactGraceReplay();
     testMantleCandidateReplay();
     testMovementTuningConfigReplay();
 

@@ -33,6 +33,20 @@ constexpr std::array<std::string_view, 4> kWeaponCycle{
     "shotgun_01",
 };
 
+constexpr float kHudVirtualWidth = 1280.0F;
+constexpr float kHudVirtualHeight = 720.0F;
+
+struct HudLayout final {
+    float screenWidth = kHudVirtualWidth;
+    float screenHeight = kHudVirtualHeight;
+    float scale = 1.0F;
+    float textScale = 1.0F;
+    float originX = 0.0F;
+    float originY = 0.0F;
+    float safeInsetX = 24.0F;
+    float safeInsetY = 20.0F;
+};
+
 [[nodiscard]] novacore::platform::InputActionState state(
     const novacore::platform::InputActionMap& actions,
     std::string_view action) {
@@ -227,6 +241,132 @@ void addMetric(
     std::string value) {
     addText(frame, x, y, 2.0F, {0.48F, 0.58F, 0.64F, 1.0F}, std::move(label));
     addText(frame, x + 168.0F, y, 2.0F, palette::TextPrimary, std::move(value));
+}
+
+[[nodiscard]] HudLayout makeHudLayout(
+    const novacore::render::RenderBackendFrameStats& stats,
+    const settings::GameSettings& settings) {
+    HudLayout layout{};
+    layout.screenWidth = stats.swapchainWidth > 0U
+        ? static_cast<float>(stats.swapchainWidth)
+        : kHudVirtualWidth;
+    layout.screenHeight = stats.swapchainHeight > 0U
+        ? static_cast<float>(stats.swapchainHeight)
+        : kHudVirtualHeight;
+    if (!std::isfinite(layout.screenWidth) || layout.screenWidth <= 1.0F) {
+        layout.screenWidth = kHudVirtualWidth;
+    }
+    if (!std::isfinite(layout.screenHeight) || layout.screenHeight <= 1.0F) {
+        layout.screenHeight = kHudVirtualHeight;
+    }
+
+    layout.scale = std::min(layout.screenWidth / kHudVirtualWidth, layout.screenHeight / kHudVirtualHeight);
+    if (!std::isfinite(layout.scale) || layout.scale <= 0.001F) {
+        layout.scale = 1.0F;
+    }
+    layout.originX = (layout.screenWidth - (kHudVirtualWidth * layout.scale)) * 0.5F;
+    layout.originY = (layout.screenHeight - (kHudVirtualHeight * layout.scale)) * 0.5F;
+
+    const float safeArea = std::clamp(settings.video.menuSafeArea, 0.80F, 1.0F);
+    layout.safeInsetX = ((1.0F - safeArea) * 0.5F * kHudVirtualWidth) + 18.0F;
+    layout.safeInsetY = ((1.0F - safeArea) * 0.5F * kHudVirtualHeight) + 16.0F;
+    layout.textScale = std::clamp(layout.scale * settings.video.hudScale, 0.72F, 1.85F);
+    return layout;
+}
+
+[[nodiscard]] float hudX(const HudLayout& layout, float x) {
+    return layout.originX + (x * layout.scale);
+}
+
+[[nodiscard]] float hudY(const HudLayout& layout, float y) {
+    return layout.originY + (y * layout.scale);
+}
+
+[[nodiscard]] float hudScale(const HudLayout& layout, float value) {
+    return value * layout.scale;
+}
+
+[[nodiscard]] UiRect hudRect(const HudLayout& layout, float x, float y, float width, float height) {
+    return UiRect{
+        hudX(layout, x),
+        hudY(layout, y),
+        hudScale(layout, width),
+        hudScale(layout, height),
+    };
+}
+
+void addHudPanel(
+    novacore::render::RenderFrameInfo& frame,
+    const HudLayout& layout,
+    float x,
+    float y,
+    float width,
+    float height,
+    float radius,
+    std::array<float, 4> accent,
+    bool showAccent = false) {
+    const auto rect = hudRect(layout, x, y, width, height);
+    addPanel(frame, rect.x, rect.y, rect.width, rect.height, hudScale(layout, radius), accent, showAccent);
+}
+
+void addHudText(
+    novacore::render::RenderFrameInfo& frame,
+    const HudLayout& layout,
+    float x,
+    float y,
+    float scale,
+    std::array<float, 4> color,
+    std::string text) {
+    addText(frame, hudX(layout, x), hudY(layout, y), scale * layout.textScale, color, std::move(text));
+}
+
+void addHudLine(
+    novacore::render::RenderFrameInfo& frame,
+    const HudLayout& layout,
+    float x0,
+    float y0,
+    float x1,
+    float y1,
+    std::array<float, 4> color) {
+    addLine(frame, hudX(layout, x0), hudY(layout, y0), hudX(layout, x1), hudY(layout, y1), color);
+}
+
+void addHudProgress(
+    novacore::render::RenderFrameInfo& frame,
+    const HudLayout& layout,
+    UiRect rect,
+    float value,
+    std::array<float, 4> background,
+    std::array<float, 4> foreground) {
+    addProgress(frame, hudRect(layout, rect.x, rect.y, rect.width, rect.height), value, background, foreground);
+}
+
+void addHudCrosshair(
+    novacore::render::RenderFrameInfo& frame,
+    const HudLayout& layout,
+    float centerX,
+    float centerY,
+    float gap,
+    float length,
+    std::array<float, 4> color) {
+    addCrosshair(
+        frame,
+        hudX(layout, centerX),
+        hudY(layout, centerY),
+        hudScale(layout, gap),
+        hudScale(layout, length),
+        color);
+}
+
+void addHudMetric(
+    novacore::render::RenderFrameInfo& frame,
+    const HudLayout& layout,
+    float x,
+    float y,
+    std::string label,
+    std::string value) {
+    addHudText(frame, layout, x, y, 0.92F, {0.48F, 0.58F, 0.64F, 1.0F}, std::move(label));
+    addHudText(frame, layout, x + 94.0F, y, 0.96F, palette::TextPrimary, std::move(value));
 }
 
 [[nodiscard]] std::string fixedOne(float value) {
@@ -730,99 +870,147 @@ void renderDevRangeHud(
     novacore::render::RenderFrameInfo& frame,
     const dev::DevSandboxSample& sample,
     const weapons::AttachmentBuildSummary& attachmentSummary,
-    const settings::GameSettings& settings) {
-    addHeader(frame, "DEV SHOOTING RANGE", "ESC BACK  F1 DEBUG  TAB PAGE  MOUSE/RIGHT STICK LOOK");
-    addCrosshair(
+    const settings::GameSettings& settings,
+    const HudLayout& layout) {
+    const float crosshairGap = 6.0F +
+        (sample.fire.movementSpreadDegrees * 1.4F) -
+        (std::clamp(sample.weapon.adsAlpha, 0.0F, 1.0F) * 1.6F);
+    addHudCrosshair(
         frame,
+        layout,
         640.0F,
-        340.0F,
-        7.0F + (sample.fire.movementSpreadDegrees * 2.0F),
+        360.0F,
+        std::max(4.0F, crosshairGap),
         12.0F,
         sample.targetHit.hit ? palette::Danger : palette::TextPrimary);
-
-    addPanel(frame, 814.0F, 34.0F, 390.0F, 116.0F, 10.0F, palette::Warning, true);
-    addText(frame, 836.0F, 58.0F, 2.0F, palette::Accent, attachmentSummary.effectiveWeapon.displayName);
-    addMetric(frame, 836.0F, 92.0F, "AMMO", std::to_string(sample.weapon.ammoInMagazine) + " / " + std::to_string(attachmentSummary.effectiveMagazineSize));
-    addMetric(frame, 836.0F, 122.0F, "ADS", fixedOne(sample.weapon.adsAlpha) + "  recoil " + fixedOne(sample.weapon.recoilPitchOffsetDegrees));
-    addMetric(frame, 1030.0F, 92.0F, "HUD", fixedTwo(settings.video.hudScale));
-    addMetric(frame, 1030.0F, 122.0F, "DMG", std::string(yesNo(settings.gameplay.showDamageNumbers)));
 
     const float healthRatio = sample.playerHealth.maxHealth > 0.0F
         ? std::clamp(sample.playerHealth.health / sample.playerHealth.maxHealth, 0.0F, 1.0F)
         : 0.0F;
-    addPanel(frame, 58.0F, 34.0F, 330.0F, 116.0F, 10.0F, palette::Accent, true);
-    addText(frame, 80.0F, 58.0F, 2.0F, palette::TextPrimary, "PLAYER");
-    addProgress(frame, {80.0F, 94.0F, 210.0F, 14.0F}, healthRatio, {0.11F, 0.05F, 0.05F, 1.0F}, healthRatio > 0.35F ? palette::Success : palette::Danger);
-    addMetric(frame, 80.0F, 122.0F, "HP", fixedOne(sample.playerHealth.health) + " / " + fixedOne(sample.playerHealth.maxHealth));
-
-    addPanel(frame, 414.0F, 34.0F, 360.0F, 116.0F, 10.0F, palette::Success, true);
-    addText(frame, 436.0F, 58.0F, 2.0F, palette::Accent, "RANGE SESSION");
-    addMetric(frame, 436.0F, 92.0F, "ELIMS", std::to_string(sample.rangeSession.score.targetsEliminated));
-    addMetric(frame, 436.0F, 122.0F, "ACC", percent(dev::devRangeAccuracy(sample.rangeSession.score)));
-    addMetric(frame, 610.0F, 92.0F, "STREAK", std::to_string(sample.rangeSession.score.currentStreak));
-    addMetric(frame, 610.0F, 122.0F, "BEST", std::to_string(sample.rangeSession.score.bestStreak));
-    addText(
+    const auto healthColor = healthRatio > 0.62F
+        ? palette::Success
+        : healthRatio > 0.30F
+            ? palette::Warning
+            : palette::Danger;
+    addHudPanel(
         frame,
-        436.0F,
-        146.0F,
-        1.0F,
+        layout,
+        layout.safeInsetX,
+        720.0F - layout.safeInsetY - 86.0F,
+        318.0F,
+        76.0F,
+        10.0F,
+        healthColor,
+        true);
+    addHudText(frame, layout, layout.safeInsetX + 16.0F, 720.0F - layout.safeInsetY - 68.0F, 1.05F, palette::TextSecondary, "OPERATOR");
+    addHudText(
+        frame,
+        layout,
+        layout.safeInsetX + 16.0F,
+        720.0F - layout.safeInsetY - 43.0F,
+        2.15F,
+        palette::TextPrimary,
+        fixedOne(sample.playerHealth.health));
+    addHudText(
+        frame,
+        layout,
+        layout.safeInsetX + 104.0F,
+        720.0F - layout.safeInsetY - 35.0F,
+        0.95F,
+        palette::TextSecondary,
+        "/ " + fixedOne(sample.playerHealth.maxHealth) + " HP");
+    addHudProgress(
+        frame,
+        layout,
+        {layout.safeInsetX + 16.0F, 720.0F - layout.safeInsetY - 18.0F, 284.0F, 12.0F},
+        healthRatio,
+        {0.08F, 0.05F, 0.05F, 0.95F},
+        healthColor);
+
+    addHudPanel(
+        frame,
+        layout,
+        1280.0F - layout.safeInsetX - 354.0F,
+        720.0F - layout.safeInsetY - 96.0F,
+        354.0F,
+        86.0F,
+        10.0F,
+        palette::Warning,
+        true);
+    addHudText(
+        frame,
+        layout,
+        1280.0F - layout.safeInsetX - 334.0F,
+        720.0F - layout.safeInsetY - 74.0F,
+        1.05F,
+        palette::Accent,
+        shortId(attachmentSummary.effectiveWeapon.displayName, 24));
+    addHudText(
+        frame,
+        layout,
+        1280.0F - layout.safeInsetX - 122.0F,
+        720.0F - layout.safeInsetY - 60.0F,
+        2.55F,
+        palette::TextPrimary,
+        std::to_string(sample.weapon.ammoInMagazine));
+    addHudText(
+        frame,
+        layout,
+        1280.0F - layout.safeInsetX - 54.0F,
+        720.0F - layout.safeInsetY - 48.0F,
+        1.15F,
+        palette::TextSecondary,
+        "/ " + std::to_string(attachmentSummary.effectiveMagazineSize));
+    addHudMetric(
+        frame,
+        layout,
+        1280.0F - layout.safeInsetX - 334.0F,
+        720.0F - layout.safeInsetY - 40.0F,
+        "ADS",
+        fixedOne(sample.weapon.adsAlpha));
+    const float reloadProgress = sample.weapon.reloading ? sample.weapon.reloadProgress : 0.0F;
+    addHudProgress(
+        frame,
+        layout,
+        {1280.0F - layout.safeInsetX - 334.0F, 720.0F - layout.safeInsetY - 14.0F, 306.0F, 8.0F},
+        sample.weapon.reloading ? reloadProgress : sample.weapon.adsAlpha,
+        {0.06F, 0.07F, 0.075F, 0.92F},
+        sample.weapon.reloading ? palette::Warning : palette::Accent);
+
+    addHudPanel(frame, layout, 448.0F, layout.safeInsetY, 384.0F, 54.0F, 10.0F, palette::Success, true);
+    addHudMetric(frame, layout, 466.0F, layout.safeInsetY + 15.0F, "ELIMS", std::to_string(sample.rangeSession.score.targetsEliminated));
+    addHudMetric(frame, layout, 602.0F, layout.safeInsetY + 15.0F, "ACC", percent(dev::devRangeAccuracy(sample.rangeSession.score)));
+    addHudMetric(frame, layout, 722.0F, layout.safeInsetY + 15.0F, "STREAK", std::to_string(sample.rangeSession.score.currentStreak));
+    addHudText(
+        frame,
+        layout,
+        535.0F,
+        layout.safeInsetY + 38.0F,
+        0.74F,
         palette::TextSecondary,
         "TARGETS " + std::to_string(dev::aliveTargetCount(sample.targetRange)) + "/" +
             std::to_string(dev::totalTargetCount(sample.targetRange)) + "  DOWN " +
             std::to_string(dev::eliminatedTargetCount(sample.targetRange)));
 
     if (sample.fire.fired) {
-        addText(
+        addHudText(
             frame,
+            layout,
             sample.targetHit.hit ? 598.0F : 586.0F,
-            292.0F,
-            3.0F,
+            286.0F,
+            2.25F,
             sample.targetHit.hit ? palette::Danger : palette::Warning,
             sample.targetHit.hit ? "HIT" : "MISS");
     }
     if (sample.targetHit.hit && settings.gameplay.showDamageNumbers) {
-        addText(frame, 674.0F, 286.0F, 2.0F, palette::Warning, "-" + fixedOne(sample.targetHit.damageApplied));
+        addHudText(frame, layout, 674.0F, 292.0F, 1.30F, palette::Warning, "-" + fixedOne(sample.targetHit.damageApplied));
     }
     if (!sample.rangeSession.eventText.empty()) {
-        addText(frame, 544.0F, 250.0F, 3.0F, palette::Accent, sample.rangeSession.eventText);
+        addHudText(frame, layout, 536.0F, 248.0F, 1.70F, palette::Accent, sample.rangeSession.eventText);
     }
     if (sample.rangeSession.targetRespawnSeconds > 0.0F) {
-        addText(frame, 530.0F, 286.0F, 2.0F, palette::Warning, "TARGET RESPAWN " + fixedOne(sample.rangeSession.targetRespawnSeconds));
+        addHudText(frame, layout, 530.0F, 316.0F, 1.00F, palette::Warning, "RESPAWN " + fixedOne(sample.rangeSession.targetRespawnSeconds));
     }
-    addText(frame, 58.0F, 164.0F, 1.0F, palette::TextSecondary, "P / Y resets range  -  Q/E or LB/RB tabs in menu");
-}
-
-void renderDevRangePanels(
-    novacore::render::RenderFrameInfo& frame,
-    const dev::DevSandboxSample& sample,
-    const dev::GreyboxWorld& greyboxWorld) {
-    addDevRangeMap(frame, greyboxWorld, sample);
-    addRect(frame, 838.0F, 212.0F, 250.0F, 318.0F, {0.018F, 0.026F, 0.030F, 0.92F});
-    addText(frame, 858.0F, 234.0F, 2.0F, {0.65F, 0.80F, 0.84F, 1.0F}, "TARGET LANE");
-    addLine(frame, 864.0F, 498.0F, 1020.0F, 302.0F, {0.16F, 0.24F, 0.25F, 1.0F});
-    addLine(frame, 1052.0F, 498.0F, 1020.0F, 302.0F, {0.16F, 0.24F, 0.25F, 1.0F});
-    addLine(frame, 864.0F, 498.0F, 1052.0F, 498.0F, {0.16F, 0.24F, 0.25F, 1.0F});
-    addRect(frame, 934.0F, 304.0F, 82.0F, 138.0F, {0.40F, 0.08F, 0.06F, 0.9F});
-    addRect(frame, 952.0F, 270.0F, 46.0F, 46.0F, {0.82F, 0.18F, 0.14F, 0.95F});
-    const auto* activeLane = dev::activeTargetLane(sample.targetRange);
-    addText(
-        frame,
-        858.0F,
-        260.0F,
-        1.0F,
-        palette::TextSecondary,
-        activeLane != nullptr ? activeLane->displayName : "SINGLE TARGET");
-    addText(
-        frame,
-        858.0F,
-        282.0F,
-        1.0F,
-        palette::TextSecondary,
-        "ALIVE " + std::to_string(dev::aliveTargetCount(sample.targetRange)) + "/" +
-            std::to_string(dev::totalTargetCount(sample.targetRange)));
-    const float hpRatio = std::clamp(sample.target.health / sample.target.maxHealth, 0.0F, 1.0F);
-    addProgress(frame, {820.0F, 552.0F, 260.0F, 18.0F}, hpRatio, {0.16F, 0.06F, 0.05F, 1.0F}, palette::Danger);
-    addText(frame, 820.0F, 530.0F, 2.0F, palette::TextPrimary, "ACTIVE TARGET HP " + fixedOne(sample.target.health));
 }
 
 void renderPlaceholderMode(novacore::render::RenderFrameInfo& frame, GameScreen screen) {
@@ -846,27 +1034,25 @@ void renderDebugOverlay(
     const assets::DevAssetBindingSummary& assetSummary,
     const novacore::render::MeshResourceStats& meshStats,
     const novacore::render::RenderBackendFrameStats& backendFrameStats,
-    const dev::DevRangeRenderSceneStats& sceneStats) {
-    addRect(frame, 30.0F, 558.0F, 1210.0F, 146.0F, {0.015F, 0.025F, 0.030F, 0.92F});
-    addText(frame, 48.0F, 574.0F, 2.0F, {0.72F, 0.90F, 0.95F, 1.0F}, "DEBUG " + std::string(debugPageName) + "  TAB/START");
+    const dev::DevRangeRenderSceneStats& sceneStats,
+    const HudLayout& layout) {
+    const float x = layout.safeInsetX;
+    const float y = layout.safeInsetY;
+    addHudPanel(frame, layout, x, y, 364.0F, 140.0F, 10.0F, palette::Accent, true);
+    addHudText(frame, layout, x + 14.0F, y + 13.0F, 1.08F, {0.72F, 0.90F, 0.95F, 1.0F}, "DEBUG " + std::string(debugPageName));
+    addHudText(frame, layout, x + 256.0F, y + 13.0F, 0.78F, palette::TextSecondary, "TAB PAGE");
+    addHudLine(frame, layout, x + 14.0F, y + 35.0F, x + 346.0F, y + 35.0F, {0.08F, 0.28F, 0.32F, 0.82F});
 
     switch (debugPage) {
     case DebugPage::Gameplay:
-        addMetric(frame, 48.0F, 604.0F, "SCREEN", std::string(screenName));
-        addMetric(frame, 48.0F, 630.0F, "MODE", std::string(movementModeName(sample.movementMode)));
-        addMetric(frame, 48.0F, 656.0F, "INPUT", std::string(deviceName(sample.command.device)));
-        addMetric(frame, 386.0F, 604.0F, "TICK", std::to_string(sample.tick));
-        addMetric(frame, 386.0F, 630.0F, "WEAPON", shortId(sample.weapon.weaponId, 20));
-        addMetric(frame, 386.0F, 656.0F, "AMMO", std::to_string(sample.weapon.ammoInMagazine) + " / shot " + std::to_string(sample.weapon.shotIndex));
-        addMetric(frame, 674.0F, 604.0F, "POS", vec3Summary(sample.position));
-        addMetric(frame, 674.0F, 630.0F, "ADS", fixedOne(sample.weapon.adsAlpha) + " recoil " + fixedOne(sample.weapon.recoilPitchOffsetDegrees));
-        addMetric(frame, 674.0F, 656.0F, "TECH", std::string(movement::movementTechCueName(movement::dominantMovementTechCue(sample.movementTech))));
-        addMetric(frame, 928.0F, 604.0F, "HP", fixedOne(sample.playerHealth.health) + "/" + fixedOne(sample.playerHealth.maxHealth));
-        addMetric(frame, 928.0F, 630.0F, "RANGE", std::to_string(sample.rangeSession.score.targetsEliminated) + " elim " + percent(dev::devRangeAccuracy(sample.rangeSession.score)));
-        addMetric(
+        addHudMetric(frame, layout, x + 14.0F, y + 48.0F, "SCREEN", std::string(screenName));
+        addHudMetric(frame, layout, x + 14.0F, y + 68.0F, "MODE", std::string(movementModeName(sample.movementMode)));
+        addHudMetric(frame, layout, x + 14.0F, y + 88.0F, "POS", vec3Summary(sample.position));
+        addHudMetric(
             frame,
-            928.0F,
-            656.0F,
+            layout,
+            x + 14.0F,
+            y + 108.0F,
             "KCC",
             std::to_string(sample.collision.hitCount) + "h " +
                 std::to_string(sample.collision.contacts.size()) + "c " +
@@ -877,38 +1063,67 @@ void renderDebugOverlay(
                         : sample.collision.onRamp
                             ? "Ramp"
                             : sample.collision.stepped ? "Step" : yesNo(sample.collision.blocked)));
-        addMetric(frame, 48.0F, 682.0F, "JUMP", "coy " + fixedTwo(sample.coyoteTimeRemaining) + " buf " + fixedTwo(sample.jumpBufferRemaining));
-        addMetric(frame, 386.0F, 682.0F, "MANTLE", fixedTwo(sample.mantleTimeRemaining));
-        addMetric(frame, 674.0F, 682.0F, "WALL", fixedTwo(sample.wallRunTimeRemaining));
-        addMetric(
+        addHudMetric(
             frame,
-            928.0F,
-            682.0F,
+            layout,
+            x + 14.0F,
+            y + 128.0F,
+            "JUMP",
+            "c " + fixedTwo(sample.coyoteTimeRemaining) +
+                " b " + fixedTwo(sample.jumpBufferRemaining) +
+                " dj " + fixedTwo(sample.doubleJumpBufferRemaining));
+        addHudMetric(
+            frame,
+            layout,
+            x + 190.0F,
+            y + 48.0F,
+            "WEAPON",
+            shortId(sample.weapon.weaponId, 13));
+        addHudMetric(
+            frame,
+            layout,
+            x + 190.0F,
+            y + 68.0F,
+            "AMMO",
+            std::to_string(sample.weapon.ammoInMagazine) + " s" + std::to_string(sample.weapon.shotIndex));
+        addHudMetric(
+            frame,
+            layout,
+            x + 190.0F,
+            y + 88.0F,
+            "TECH",
+            shortId(std::string(movement::movementTechCueName(movement::dominantMovementTechCue(sample.movementTech))), 12));
+        addHudMetric(frame, layout, x + 190.0F, y + 108.0F, "WALL", fixedTwo(sample.wallRunTimeRemaining));
+        addHudMetric(
+            frame,
+            layout,
+            x + 190.0F,
+            y + 128.0F,
             "SWEEP",
             sample.collision.sweepHit
-                ? shortId(sample.collision.sweepPrimitiveId, 12) + " " + fixedTwo(sample.collision.sweepFraction)
+                ? shortId(sample.collision.sweepPrimitiveId, 8) + " " + fixedTwo(sample.collision.sweepFraction)
                 : sample.collision.swept ? contactRoleSummary(sample.collision) : "off");
         break;
     case DebugPage::Network:
-        addMetric(frame, 48.0F, 604.0F, "CMD TX", std::to_string(sample.netBridge.sentCommandPackets));
-        addMetric(frame, 48.0F, 630.0F, "CMD RX", std::to_string(sample.netBridge.receivedCommandPackets));
-        addMetric(frame, 386.0F, 604.0F, "ACK TX", std::to_string(sample.netBridge.sentAckPackets));
-        addMetric(frame, 386.0F, 630.0F, "ACK RX", std::to_string(sample.netBridge.receivedAckPackets));
-        addMetric(frame, 674.0F, 604.0F, "PENDING", std::to_string(sample.network.pendingCommandCount));
-        addMetric(frame, 674.0F, 630.0F, "ACK TICK", std::to_string(sample.netBridge.lastAcknowledgedTick));
-        addMetric(frame, 928.0F, 604.0F, "SCENE", std::to_string(sceneStats.worldBoxCount) + "B " + std::to_string(sceneStats.meshInstanceCount) + "M " + std::to_string(sceneStats.worldLineCount) + "L");
-        addMetric(frame, 928.0F, 630.0F, "SKIPPED", std::to_string(sceneStats.skippedMeshInstanceCount));
+        addHudMetric(frame, layout, x + 14.0F, y + 48.0F, "CMD TX", std::to_string(sample.netBridge.sentCommandPackets));
+        addHudMetric(frame, layout, x + 14.0F, y + 68.0F, "CMD RX", std::to_string(sample.netBridge.receivedCommandPackets));
+        addHudMetric(frame, layout, x + 14.0F, y + 88.0F, "PENDING", std::to_string(sample.network.pendingCommandCount));
+        addHudMetric(frame, layout, x + 14.0F, y + 108.0F, "ACK", std::to_string(sample.netBridge.lastAcknowledgedTick));
+        addHudMetric(frame, layout, x + 190.0F, y + 48.0F, "ACK TX", std::to_string(sample.netBridge.sentAckPackets));
+        addHudMetric(frame, layout, x + 190.0F, y + 68.0F, "ACK RX", std::to_string(sample.netBridge.receivedAckPackets));
+        addHudMetric(frame, layout, x + 190.0F, y + 88.0F, "SCENE", std::to_string(sceneStats.worldBoxCount) + "B " + std::to_string(sceneStats.meshInstanceCount) + "M");
+        addHudMetric(frame, layout, x + 190.0F, y + 108.0F, "SKIP", std::to_string(sceneStats.skippedMeshInstanceCount));
         break;
     case DebugPage::Assets:
-        addMetric(frame, 48.0F, 604.0F, "RENDERER", std::string(rendererBackend));
-        addMetric(frame, 48.0F, 630.0F, "VULKAN", std::string(vulkanSummary).substr(0, 34));
-        addMetric(frame, 386.0F, 604.0F, "MESH CPU", std::to_string(meshStats.registeredResources) + "/" + std::to_string(assetSummary.requiredAssetCount));
-        addMetric(frame, 386.0F, 630.0F, "GPU", std::to_string(meshStats.residentResources) + " RES / " + std::to_string(meshStats.pendingUploadResources) + " PEND");
-        addMetric(frame, 674.0F, 604.0F, "SWAP", std::to_string(backendFrameStats.swapchainWidth) + "x" + std::to_string(backendFrameStats.swapchainHeight));
-        addMetric(frame, 674.0F, 630.0F, "FRAME", std::to_string(backendFrameStats.submittedFrames) + " / q " + std::to_string(meshStats.uploadQueueLength + queuedAssets));
-        addMetric(frame, 928.0F, 604.0F, "RECREATE", std::to_string(backendFrameStats.swapchainRecreateCount) + " / skip " + std::to_string(backendFrameStats.skippedFrames));
-        addMetric(frame, 928.0F, 630.0F, "DRAW", std::to_string(backendFrameStats.lastWorldBoxCount) + "B " + std::to_string(backendFrameStats.lastWorldMeshCount) + "M " + std::to_string(backendFrameStats.lastWorldLineCount) + "L");
-        addMetric(frame, 928.0F, 656.0F, "UI", std::to_string(backendFrameStats.lastUiRectCount) + "R " + std::to_string(backendFrameStats.lastUiLineCount) + "L " + std::to_string(backendFrameStats.lastUiTextCount) + "T");
+        addHudMetric(frame, layout, x + 14.0F, y + 48.0F, "RENDER", std::string(rendererBackend));
+        addHudMetric(frame, layout, x + 14.0F, y + 68.0F, "VULKAN", shortId(std::string(vulkanSummary), 20));
+        addHudMetric(frame, layout, x + 14.0F, y + 88.0F, "SWAP", std::to_string(backendFrameStats.swapchainWidth) + "x" + std::to_string(backendFrameStats.swapchainHeight));
+        addHudMetric(frame, layout, x + 14.0F, y + 108.0F, "FRAME", std::to_string(backendFrameStats.submittedFrames));
+        addHudMetric(frame, layout, x + 190.0F, y + 48.0F, "MESH CPU", std::to_string(meshStats.registeredResources) + "/" + std::to_string(assetSummary.requiredAssetCount));
+        addHudMetric(frame, layout, x + 190.0F, y + 68.0F, "GPU", std::to_string(meshStats.residentResources) + "r " + std::to_string(meshStats.pendingUploadResources) + "p");
+        addHudMetric(frame, layout, x + 190.0F, y + 88.0F, "DRAW", std::to_string(backendFrameStats.lastWorldBoxCount) + "B " + std::to_string(backendFrameStats.lastWorldMeshCount) + "M");
+        addHudMetric(frame, layout, x + 190.0F, y + 108.0F, "UI", std::to_string(backendFrameStats.lastUiRectCount) + "R " + std::to_string(backendFrameStats.lastUiTextCount) + "T");
+        addHudMetric(frame, layout, x + 190.0F, y + 128.0F, "QUEUE", std::to_string(meshStats.uploadQueueLength + queuedAssets));
         break;
     }
 }
@@ -1058,15 +1273,16 @@ void GameMenu::appendRenderCommands(
     const weapons::AttachmentRegistry& attachments,
     const weapons::AttachmentBuildSummary& attachmentSummary,
     const player::AccountStats& accountStats) const {
-    addRect(frame, 0.0F, 0.0F, 1280.0F, 720.0F, {0.0F, 0.0F, 0.0F, 0.05F});
+    const auto layout = makeHudLayout(backendFrameStats, settings);
+    addRect(frame, 0.0F, 0.0F, layout.screenWidth, layout.screenHeight, {0.0F, 0.0F, 0.0F, 0.05F});
 
     if (screen_ == GameScreen::Loading) {
         renderLoadingScreen(frame, loadingTarget_, loadingProgress_, attachmentSummary);
     } else if (screen_ == GameScreen::MainMenu) {
         renderMainMenuShell(frame, tab_, selectedIndex_, settings, loadout, attachments, attachmentSummary, accountStats);
     } else if (screen_ == GameScreen::DevRange) {
-        renderDevRangeHud(frame, sample, attachmentSummary, settings);
-        renderDevRangePanels(frame, sample, greyboxWorld);
+        (void)greyboxWorld;
+        renderDevRangeHud(frame, sample, attachmentSummary, settings, layout);
     } else {
         renderPlaceholderMode(frame, screen_);
     }
@@ -1084,7 +1300,8 @@ void GameMenu::appendRenderCommands(
             assetSummary,
             meshStats,
             backendFrameStats,
-            sceneStats);
+            sceneStats,
+            layout);
     }
 }
 

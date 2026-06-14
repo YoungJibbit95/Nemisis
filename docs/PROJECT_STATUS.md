@@ -1,5 +1,18 @@
 # Nemisis Project Status
 
+## Latest Block - Responsive Play HUD, KCC Jump Reliability, Wallrun Grace, And Viewmodel Upright Pass
+
+- Rebuilt the live Dev Range HUD into a cleaner playable layout: compact range strip at top center, player health bottom-left, loadout/ammo/weapon state bottom-right, centered hit feedback, and no more large target-lane/dummy debug panel in the normal gameplay view.
+- Added a resolution-aware HUD layout layer that reads the active swapchain size, preserves the 16:9 virtual canvas, honors menu safe area/HUD scale, and scales crosshair, panels, progress bars, and text consistently across window sizes.
+- Reworked the debug overlay into a compact top-left diagnostics panel with Gameplay, Network, and Assets pages instead of the previous full-width bottom debug slab.
+- Fixed menu pointer mapping for non-1280x720 windows by converting mouse coordinates through the same virtual-canvas scale/origin model, so clickable tabs/rows stay aligned at other resolutions.
+- Fixed a movement reliability bug where a buffered jump could be erased on the same tick the player landed; landing with a valid jump buffer now immediately launches from the grounded foot position and preserves the double-jump follow-up.
+- Added wall-run contact grace and detach cooldown tuning so a one-frame wall probe miss no longer kills wallrun instantly, while wall-jump detaches cannot immediately reattach and jitter.
+- Exposed `doubleJumpBufferRemaining` through `DevSandboxSample`, sandbox summaries, and the compact Gameplay debug page so jump/double-jump timing can be diagnosed live.
+- Updated Project weapon viewmodel import-axis handling so long guns render upright instead of over-rolled, SMG/shotgun/sidearm use forward-facing corrections, and first-person weapon/arms offsets react to sprint, slide, wallrun, mantle, ADS, recoil, and reload.
+- Added regression coverage for same-tick landing jump buffering, wallrun contact grace/detach cooldown, new wallrun tuning config values, and the corrected upright/forward-facing first-person weapon transforms.
+- Verified `cmake --build --preset windows-msvc-debug --config Debug`, Nemisis `ctest` 32/32, and NovaCore `ctest` 1/1.
+
 ## Latest Block - Fixed-Tick Input, Higher Movement, Weapon Mounts, And Mesh Lighting
 
 - Added `GameplayInputBuffer` so one-frame jump, slide, reload, pickup, and weapon-switch edges captured during render frames survive until the next fixed gameplay tick.

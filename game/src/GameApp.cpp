@@ -169,8 +169,11 @@ void addPreviewLine(
     const auto position = snapshot.pointerPosition();
     const float width = static_cast<float>(std::max<std::int32_t>(1, window.width()));
     const float height = static_cast<float>(std::max<std::int32_t>(1, window.height()));
-    pointer.x = position.x * (1280.0F / width);
-    pointer.y = position.y * (720.0F / height);
+    const float scale = std::max(0.001F, std::min(width / 1280.0F, height / 720.0F));
+    const float originX = (width - (1280.0F * scale)) * 0.5F;
+    const float originY = (height - (720.0F * scale)) * 0.5F;
+    pointer.x = (position.x - originX) / scale;
+    pointer.y = (position.y - originY) / scale;
     pointer.available = true;
 
     const auto primary = actions.stateOrDefault(input::actions::MenuPointerPrimary);
@@ -553,6 +556,7 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
         movementState != nullptr ? movementState->tech : movement::MovementTechState{},
         movementState != nullptr ? movementState->coyoteTimeRemaining : 0.0F,
         movementState != nullptr ? movementState->jumpBufferRemaining : 0.0F,
+        movementState != nullptr ? movementState->doubleJumpBufferRemaining : 0.0F,
         movementState != nullptr ? movementState->mantleTimeRemaining : 0.0F,
         movementState != nullptr ? movementState->wallRunTimeRemaining : 0.0F,
         weaponSample,

@@ -51,6 +51,8 @@ MovementTuning movementTuningFromConfig(const novacore::core::ConfigDocument& do
     fallback.wallJumpImpulse = numberOr(document, "wall_run.wall_jump_impulse", fallback.wallJumpImpulse);
     fallback.wallRunMinHeight = numberOr(document, "wall_run.min_height", fallback.wallRunMinHeight);
     fallback.wallRunProbeDistance = numberOr(document, "wall_run.probe_distance", fallback.wallRunProbeDistance);
+    fallback.wallRunContactGraceSeconds = numberOr(document, "wall_run.contact_grace", fallback.wallRunContactGraceSeconds);
+    fallback.wallRunDetachCooldownSeconds = numberOr(document, "wall_run.detach_cooldown", fallback.wallRunDetachCooldownSeconds);
 
     fallback.mantleMaxRange = numberOr(document, "mantle.max_range", fallback.mantleMaxRange);
     fallback.mantleMaxHeight = numberOr(document, "mantle.max_height", fallback.mantleMaxHeight);

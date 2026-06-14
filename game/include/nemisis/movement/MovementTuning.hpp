@@ -41,6 +41,8 @@ struct MovementTuning final {
     float wallJumpImpulse = 6.2F;
     float wallRunMinHeight = 0.35F;
     float wallRunProbeDistance = 0.82F;
+    float wallRunContactGraceSeconds = 0.12F;
+    float wallRunDetachCooldownSeconds = 0.16F;
 
     float mantleMaxRange = 1.25F;
     float mantleMaxHeight = 1.4F;

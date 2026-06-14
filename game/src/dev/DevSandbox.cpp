@@ -133,6 +133,7 @@ std::string DevSandbox::latestSummary() const {
            << " tech=" << movement::movementTechCueName(movement::dominantMovementTechCue(latest_.movementTech))
            << " coyote=" << latest_.coyoteTimeRemaining
            << " jumpBuffer=" << latest_.jumpBufferRemaining
+           << " doubleJumpBuffer=" << latest_.doubleJumpBufferRemaining
            << " mantleTimer=" << latest_.mantleTimeRemaining
            << " wallTimer=" << latest_.wallRunTimeRemaining
            << " ammo=" << latest_.weapon.ammoInMagazine

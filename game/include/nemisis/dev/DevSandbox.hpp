@@ -30,6 +30,7 @@ struct DevSandboxSample final {
     movement::MovementTechState movementTech{};
     float coyoteTimeRemaining = 0.0F;
     float jumpBufferRemaining = 0.0F;
+    float doubleJumpBufferRemaining = 0.0F;
     float mantleTimeRemaining = 0.0F;
     float wallRunTimeRemaining = 0.0F;
     weapons::WeaponRuntimeState weapon{};
