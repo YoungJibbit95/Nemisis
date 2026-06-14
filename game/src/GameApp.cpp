@@ -234,9 +234,6 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
     loopbackBridge_.processServer(context.tickIndex);
     const auto acknowledgedCommands = loopbackBridge_.processClientAcks(localCommandQueue_);
     net::PredictionReconciliationResult predictionReconciliation{};
-    if (acknowledgedCommands > 0U) {
-        predictionReconciliation = predictionHistory_.acknowledgeThrough(loopbackBridge_.stats().lastAcknowledgedTick);
-    }
 
     auto movementCommand = command;
     auto* view = world_.getComponent<player::PlayerViewComponent>(localPlayerEntity_);
@@ -570,6 +567,26 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
         predictionSnapshot.hasAnimation = true;
     }
     (void)predictionHistory_.record(predictionSnapshot);
+    if (pendingAuthoritativeSnapshot_.has_value()) {
+        predictionReconciliation = predictionHistory_.reconcile(
+            net::authoritativeStateFromSnapshot(*pendingAuthoritativeSnapshot_));
+    }
+
+    const auto authoritativeSnapshot = net::makePlayerSnapshotState(
+        playerId,
+        context.tickIndex,
+        command.tick,
+        movementState != nullptr ? &movementSample : nullptr,
+        view,
+        weaponState != nullptr ? &weaponSample : nullptr);
+    net::SnapshotPacket authoritativePacket{};
+    authoritativePacket.serverTick = context.tickIndex;
+    authoritativePacket.players.push_back(authoritativeSnapshot);
+    if (const auto decodedPacket = net::deserializeSnapshotPacket(net::serializeSnapshotPacket(authoritativePacket));
+        decodedPacket.has_value() && !decodedPacket->players.empty()) {
+        pendingAuthoritativeSnapshot_ = decodedPacket->players.front();
+        (void)localSnapshotInterpolator_.store(decodedPacket->players.front());
+    }
     const auto predictionStats = predictionHistory_.stats();
 
     devSandbox_.recordTick(dev::DevSandboxSample{
@@ -597,6 +614,7 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
         loopbackBridge_.stats(),
         predictionStats,
         predictionReconciliation.error,
+        localSnapshotInterpolator_.stats(),
         view != nullptr ? *view : player::PlayerViewComponent{},
         collisionSample,
     });
@@ -929,6 +947,8 @@ void GameApp::ensureLocalPlayer() {
     localPlayerEntity_ = player::spawnLocalPlayer(world_, spawnDesc, &activeAttachmentBuild_.effectiveWeapon);
     localCommandQueue_.clear();
     predictionHistory_.clear();
+    localSnapshotInterpolator_.clear();
+    pendingAuthoritativeSnapshot_.reset();
     player::resetCharacterAnimation(characterAnimation_);
     latestCharacterAnimationFrame_ = {};
     hasCharacterAnimationFrame_ = false;
@@ -972,6 +992,8 @@ void GameApp::resetDevRangeState() {
 
     localCommandQueue_.clear();
     predictionHistory_.clear();
+    localSnapshotInterpolator_.clear();
+    pendingAuthoritativeSnapshot_.reset();
     player::resetCharacterAnimation(characterAnimation_);
     latestCharacterAnimationFrame_ = {};
     hasCharacterAnimationFrame_ = false;
