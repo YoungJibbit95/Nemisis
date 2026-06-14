@@ -1,0 +1,19 @@
+{
+  "id": "wpn_project_rifle_afr120",
+  "source": "assets/project_assets/weapon_rifle_afr120.glb",
+  "export": "assets/processed/normalized/project_assets/wpn_project_rifle_afr120.glb",
+  "category": "weapon",
+  "scale_meters": true,
+  "runtime_up_axis": "Y",
+  "gameplay_forward_axis": "+Z",
+  "blender_up_axis": "+Z",
+  "blender_forward_axis": "+Y",
+  "dimensions_m": [0.07392, 0.50013, 1.17122],
+  "origin": "Normalized Project rifle GLB; bounds recentered and floor aligned.",
+  "sockets": [],
+  "collision": "none",
+  "lods": ["wpn_project_rifle_afr120_lod0"],
+  "license": "original_project_asset",
+  "external_assets": false,
+  "generated_by": "tools/blender/normalize_project_assets.py"
+}

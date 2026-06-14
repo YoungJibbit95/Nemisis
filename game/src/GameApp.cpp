@@ -29,24 +29,6 @@ namespace {
 
 constexpr std::string_view kDefaultWeaponId = "ar_01";
 
-struct MeshPreviewBounds final {
-    float minX = std::numeric_limits<float>::max();
-    float maxX = std::numeric_limits<float>::lowest();
-    float minZ = std::numeric_limits<float>::max();
-    float maxZ = std::numeric_limits<float>::lowest();
-
-    void include(novacore::math::Vec3 value) {
-        minX = std::min(minX, value.x);
-        maxX = std::max(maxX, value.x);
-        minZ = std::min(minZ, value.z);
-        maxZ = std::max(maxZ, value.z);
-    }
-
-    [[nodiscard]] bool valid() const {
-        return minX <= maxX && minZ <= maxZ;
-    }
-};
-
 struct DevRangeWeaponPickup final {
     std::string_view weaponId;
     std::string_view label;
@@ -82,38 +64,6 @@ struct DevRangeWeaponPickup final {
         }
     }
     return nearest;
-}
-
-[[nodiscard]] std::array<float, 2> projectMeshPreview(
-    const MeshPreviewBounds& bounds,
-    novacore::math::Vec3 position) {
-    constexpr float mapX = 58.0F;
-    constexpr float mapY = 190.0F;
-    constexpr float mapWidth = 520.0F;
-    constexpr float mapHeight = 338.0F;
-
-    const float spanX = std::max(0.001F, bounds.maxX - bounds.minX);
-    const float spanZ = std::max(0.001F, bounds.maxZ - bounds.minZ);
-    return {
-        mapX + ((position.x - bounds.minX) / spanX) * mapWidth,
-        mapY + mapHeight - (((position.z - bounds.minZ) / spanZ) * mapHeight),
-    };
-}
-
-void addPreviewLine(
-    novacore::render::RenderFrameInfo& frame,
-    const MeshPreviewBounds& bounds,
-    novacore::math::Vec3 a,
-    novacore::math::Vec3 b) {
-    const auto pa = projectMeshPreview(bounds, a);
-    const auto pb = projectMeshPreview(bounds, b);
-    frame.debugLines.push_back(novacore::render::DebugLine{
-        pa[0],
-        pa[1],
-        pb[0],
-        pb[1],
-        {0.20F, 0.80F, 0.92F, 0.62F},
-    });
 }
 
 [[nodiscard]] bool actionPressed(
@@ -283,6 +233,10 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
     loopbackBridge_.sendPendingCommands(playerId, localCommandQueue_);
     loopbackBridge_.processServer(context.tickIndex);
     const auto acknowledgedCommands = loopbackBridge_.processClientAcks(localCommandQueue_);
+    net::PredictionReconciliationResult predictionReconciliation{};
+    if (acknowledgedCommands > 0U) {
+        predictionReconciliation = predictionHistory_.acknowledgeThrough(loopbackBridge_.stats().lastAcknowledgedTick);
+    }
 
     auto movementCommand = command;
     auto* view = world_.getComponent<player::PlayerViewComponent>(localPlayerEntity_);
@@ -482,7 +436,26 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
         targetRangeHit = dev::applyShotToDevTargetRange(targetRange_, shotTrace);
         targetHit = targetRangeHit.targetHit;
     }
-    dev::recordShotResult(devRangeSession_, fireResult, targetHit, devRangeTuning_);
+    dev::DevRangeShotScoreContext shotScoreContext{};
+    if (targetRangeHit.hit) {
+        shotScoreContext.laneKnown = true;
+        shotScoreContext.laneIndex = targetRangeHit.laneIndex;
+        shotScoreContext.laneId = targetRangeHit.laneId;
+        shotScoreContext.laneName = targetRangeHit.laneName;
+        shotScoreContext.distanceMeters = targetHit.distanceMeters;
+        if (targetRangeHit.laneIndex < targetRange_.lanes.size()) {
+            shotScoreContext.targetMaxHealth = targetRange_.lanes[targetRangeHit.laneIndex].target.maxHealth;
+        }
+    } else if (const auto* lane = dev::activeTargetLane(targetRange_); lane != nullptr) {
+        shotScoreContext.laneKnown = true;
+        shotScoreContext.laneIndex = targetRange_.lanes.empty()
+            ? 0U
+            : std::min(targetRange_.activeLaneIndex, targetRange_.lanes.size() - 1U);
+        shotScoreContext.laneId = lane->id;
+        shotScoreContext.laneName = lane->displayName;
+        shotScoreContext.targetMaxHealth = lane->target.maxHealth;
+    }
+    dev::recordShotResult(devRangeSession_, fireResult, targetHit, shotScoreContext, devRangeTuning_);
     if (targetRangeHit.hit && !targetRangeHit.laneName.empty() && !devRangeSession_.eventText.empty()) {
         devRangeSession_.eventText += "  " + targetRangeHit.laneName;
     }
@@ -579,6 +552,26 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
         hasCharacterAnimationFrame_ = true;
     }
 
+    net::PredictionSnapshot predictionSnapshot{};
+    predictionSnapshot.tick = command.tick;
+    predictionSnapshot.command = command;
+    predictionSnapshot.movement = movementSample;
+    predictionSnapshot.view = view != nullptr ? *view : player::PlayerViewComponent{};
+    predictionSnapshot.weapon = weaponSample;
+    predictionSnapshot.fire = fireResult;
+    predictionSnapshot.shot = shotTrace;
+    predictionSnapshot.hasShot = hasShotTrace;
+    if (cameraRig_.initialized) {
+        predictionSnapshot.camera = cameraRig_;
+        predictionSnapshot.hasCamera = true;
+    }
+    if (hasCharacterAnimationFrame_) {
+        predictionSnapshot.animation = latestCharacterAnimationFrame_;
+        predictionSnapshot.hasAnimation = true;
+    }
+    (void)predictionHistory_.record(predictionSnapshot);
+    const auto predictionStats = predictionHistory_.stats();
+
     devSandbox_.recordTick(dev::DevSandboxSample{
         command.tick,
         command,
@@ -602,6 +595,8 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
         targetHit,
         networkSample,
         loopbackBridge_.stats(),
+        predictionStats,
+        predictionReconciliation.error,
         view != nullptr ? *view : player::PlayerViewComponent{},
         collisionSample,
     });
@@ -679,7 +674,6 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
         attachmentRegistry_,
         activeAttachmentBuild_,
         accountStats_);
-    appendA0MeshWireframePreview(frameInfo);
     renderer_.beginFrame(frameInfo);
     renderer_.endFrame();
 }
@@ -934,6 +928,7 @@ void GameApp::ensureLocalPlayer() {
     rebuildActiveAttachmentSummary();
     localPlayerEntity_ = player::spawnLocalPlayer(world_, spawnDesc, &activeAttachmentBuild_.effectiveWeapon);
     localCommandQueue_.clear();
+    predictionHistory_.clear();
     player::resetCharacterAnimation(characterAnimation_);
     latestCharacterAnimationFrame_ = {};
     hasCharacterAnimationFrame_ = false;
@@ -976,6 +971,7 @@ void GameApp::resetDevRangeState() {
     }
 
     localCommandQueue_.clear();
+    predictionHistory_.clear();
     player::resetCharacterAnimation(characterAnimation_);
     latestCharacterAnimationFrame_ = {};
     hasCharacterAnimationFrame_ = false;
@@ -984,6 +980,7 @@ void GameApp::resetDevRangeState() {
 }
 
 void GameApp::tickRangeSession(float fixedDeltaSeconds) {
+    dev::tickDevRangeDrill(devRangeSession_, fixedDeltaSeconds, devRangeTuning_);
     dev::tickSessionFeedback(devRangeSession_, fixedDeltaSeconds);
 }
 
@@ -1123,58 +1120,6 @@ void GameApp::releaseDevMeshResources() {
         renderer_.releaseMeshResource(handle);
     }
     devMeshResources_.clear();
-}
-
-void GameApp::appendA0MeshWireframePreview(novacore::render::RenderFrameInfo& frame) const {
-    if (!menu_.gameplayActive()) {
-        return;
-    }
-
-    const auto* arena = devAssetBindings_.meshCatalog().findByAssetId("env_test_arena_kit_01");
-    if (arena == nullptr || !arena->meshData.has_value()) {
-        return;
-    }
-
-    MeshPreviewBounds bounds{};
-    for (const auto& primitive : arena->meshData->primitives) {
-        for (const auto& position : primitive.positions) {
-            bounds.include(position);
-        }
-    }
-    if (!bounds.valid()) {
-        return;
-    }
-
-    frame.debugTexts.push_back(novacore::render::DebugText{
-        370.0F,
-        206.0F,
-        1.0F,
-        {0.45F, 0.92F, 0.98F, 1.0F},
-        "A0 GLB WIREFRAME",
-    });
-
-    constexpr std::size_t kLineBudget = 2400;
-    std::size_t emittedLines = 0;
-    for (const auto& primitive : arena->meshData->primitives) {
-        for (std::size_t index = 0; index + 2 < primitive.indices.size(); index += 3) {
-            const auto ia = static_cast<std::size_t>(primitive.indices[index]);
-            const auto ib = static_cast<std::size_t>(primitive.indices[index + 1]);
-            const auto ic = static_cast<std::size_t>(primitive.indices[index + 2]);
-            if (ia >= primitive.positions.size() ||
-                ib >= primitive.positions.size() ||
-                ic >= primitive.positions.size()) {
-                continue;
-            }
-
-            addPreviewLine(frame, bounds, primitive.positions[ia], primitive.positions[ib]);
-            addPreviewLine(frame, bounds, primitive.positions[ib], primitive.positions[ic]);
-            addPreviewLine(frame, bounds, primitive.positions[ic], primitive.positions[ia]);
-            emittedLines += 3;
-            if (emittedLines >= kLineBudget) {
-                return;
-            }
-        }
-    }
 }
 
 dev::DevRangePlayerRenderState GameApp::currentPlayerRenderState() const {

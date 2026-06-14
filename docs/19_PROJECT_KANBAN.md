@@ -164,13 +164,15 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [x] Add animation regression coverage for locomotion clips, ADS damping, reload/fire overlays, slide, wallrun, mantle, double-jump energy-platform cues, and reset behavior.
 - [x] Add render scene coverage for animated first-person mesh submissions and camera-rig local-body hiding.
 - [x] Verify Nemisis 33/33 CTest after character animation backbone and first-person viewmodel rig block.
+- [x] Add timed Dev Range drill state with score, best score, lane breakdowns, measured TTK, recoil-control scoring, HUD panel data, sandbox telemetry, and regression tests.
+- [x] Verify Nemisis Debug build and 33/33 CTest after timed Dev Range drill, TTK, and recoil-control scoring work.
 
 ## Doing
 
 - [ ] Expand material fallback controls, validation labels, and renderer resize stress coverage.
 - [ ] Keep UI moving from clickable Vulkan primitive path toward SDF/MSDF text, clipping, batching, focus graph, and richer vector drawing.
 - [ ] Start texture/material binding for A1/A2 GLBs so imported assets look less like tinted blockouts.
-- [ ] Grow the multi-target Dev Range into timed drills, TTK panels, and recoil-control scoring.
+- [ ] Extend Dev Range drills with selectable drill variants, recoil graphs, richer lane awards, and future server validation hooks.
 - [ ] Deepen KCC physics beyond the current swept AABB/contact-manifold pass into true capsule sweeps, moving platform contacts, slope/slide validation, and server replay validation.
 - [ ] Author or generate Project-asset sockets (`socket_muzzle`, `socket_weapon_root`, `socket_camera`, hands) so the runtime can stop using placement heuristics.
 - [ ] Replace procedural first-person mesh-anchor poses with authored skeletal arm/weapon clips once Blender-ready rigs, sockets, and animation exports exist.
@@ -193,7 +195,7 @@ This file mirrors the active work locally while GitHub Projects also track the l
 
 - [ ] TDM placeholder match lifecycle.
 - [ ] Control placeholder objective lifecycle.
-- [ ] Timed range drills, lane score breakdowns, and measured TTK panels.
+- [ ] Selectable drill variants, lane score breakdown polish, recoil graphs, and measured TTK history panels.
 - [ ] Player damage sources, down-state, respawn flow, and future server validation.
 - [ ] Recoil/ADS/range-score HUD widgets fed from runtime telemetry.
 

@@ -152,10 +152,27 @@ std::string DevSandbox::latestSummary() const {
            << " score=" << latest_.rangeSession.score.targetsEliminated
            << " accuracy=" << devRangeAccuracy(latest_.rangeSession.score)
            << " streak=" << latest_.rangeSession.score.currentStreak
+           << " drillStatus=" << devRangeDrillStatusName(latest_.rangeSession.drill.status)
+           << " drillScore=" << latest_.rangeSession.drill.score
+           << " drillTime=" << latest_.rangeSession.drill.timeRemainingSeconds
+           << " drillAccuracy=" << devRangeDrillAccuracy(latest_.rangeSession.drill)
+           << " recoilControl=" << latest_.rangeSession.drill.recoilControlScore
+           << " latestTtk=" << latest_.rangeSession.drill.latestTtkSeconds
            << " targetsAlive=" << aliveTargetCount(latest_.targetRange)
            << "/" << totalTargetCount(latest_.targetRange)
            << " targetsDown=" << eliminatedTargetCount(latest_.targetRange)
-           << " pending=" << latest_.network.pendingCommandCount;
+           << " pending=" << latest_.network.pendingCommandCount
+           << " predStored=" << latest_.prediction.storedSamples
+           << " predAck=" << latest_.prediction.lastAcknowledgedTick
+           << " predSpan=" << latest_.prediction.unacknowledgedTickSpan;
+    if (latest_.prediction.hasLatestError || latest_.predictionError.hasPrediction) {
+        const auto& error = latest_.prediction.hasLatestError
+            ? latest_.prediction.latestError
+            : latest_.predictionError;
+        stream << " predErr=" << error.positionErrorMeters
+               << " predYaw=" << error.yawErrorDegrees
+               << " predFix=" << (error.exceedsCorrectionThreshold ? "yes" : "no");
+    }
     if (latest_.hasShot) {
         stream << " traceSeed=" << latest_.shot.seed
                << " traceRange=" << latest_.shot.rangeMeters

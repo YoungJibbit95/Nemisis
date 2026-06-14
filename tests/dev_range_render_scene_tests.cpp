@@ -170,29 +170,31 @@ void testDevRangeRenderSceneBuildsExpectedSubmissions() {
     expect(frame.lighting.rimIntensity > 0.20F, "dev range lighting applies rim light for mesh readability");
 
     expect(!world.primitives.empty(), "greybox world fixture has primitives");
-    expect(stats.worldBoxCount == (world.primitives.size() - 1U) + targetRange.lanes.size() + 19U, "dev range render scene emits world, lane, asset stage, pickup pads, muzzle, mantle/tech, and aim boxes");
+    expect(stats.worldBoxCount == (world.primitives.size() - 1U) + targetRange.lanes.size() + 17U, "dev range render scene emits world, lane, asset stage, pickup pads, and first-person rig primitives");
     expect(frame.worldBoxes.size() == stats.worldBoxCount, "world box count matches frame");
-    expect(stats.meshInstanceCount == 40, "dev range render scene emits skybox, static, player body, target lane, imported Project asset, A2 showcase, and animated first-person mesh instances");
-    expect(frame.worldMeshes.size() == 40, "frame receives all mesh instances");
+    expect(stats.meshInstanceCount == 36, "dev range render scene emits skybox, static, player body, target lane, imported Project asset, A2 showcase, weapon, and arms without first-person T-pose mesh");
+    expect(frame.worldMeshes.size() == 36, "frame receives all mesh instances");
     expect(stats.skippedMeshInstanceCount == 0, "dev range render scene skips no mesh when lookup is complete");
-    expect(stats.firstPersonMeshCount == 6, "dev range render scene emits weapon, camera-linked body, arms, and weapon-grip first-person mesh anchors");
+    expect(stats.firstPersonMeshCount == 2, "dev range render scene emits weapon and one arms viewmodel mesh for first-person");
+    expect(stats.firstPersonBodyPrimitiveCount == 4, "first-person rig submits hands and forearms as camera-linked body primitives");
     expect(stats.targetMeshCount == targetRange.lanes.size(), "dev range render scene emits one actor mesh per target lane");
-    expect(stats.aimMarkerBoxCount == 5, "dev range render scene emits five aim marker boxes");
     expect(stats.worldLineCount == 3, "dev range render scene emits aim, ground-normal, and contact lines");
     expect(frame.worldLines.size() == 3, "frame receives world debug lines");
 
     const auto firstMesh = frame.worldMeshes.front();
     expect(firstMesh.assetId == "env_project_skybox1", "first dev mesh is the project skybox background");
     expect(firstMesh.mesh.isValid(), "first dev mesh has a valid renderer resource handle");
+    expect(firstMesh.scale.x > 0.15F && firstMesh.scale.x < 0.17F, "project skybox GLB is scaled into the camera far plane");
+    expect(firstMesh.position.y < frame.camera3D.position.y - 7.5F, "project skybox is lowered so imported water/ground planes stay below the camera");
     expect(findMesh(frame, "env_test_arena_kit_01").has_value(), "dev range render scene still submits the arena kit");
 
     const auto firstPersonRifle = findLastMesh(frame, "wpn_project_rifle_m4a1");
     expect(firstPersonRifle.has_value(), "first-person Project rifle mesh is submitted");
     if (firstPersonRifle.has_value()) {
         expect(firstPersonRifle->position.z > player.position.z + 0.45F, "first-person rifle sits in front of the camera");
-        expect(firstPersonRifle->yawDegrees > 205.0F && firstPersonRifle->yawDegrees < 215.0F, "first-person rifle applies 180-degree imported-asset yaw correction");
-        expect(std::abs(firstPersonRifle->rollDegrees) < 5.0F, "first-person rifle stays upright after imported-asset roll correction");
-        expect(firstPersonRifle->scale.x > 1.8F, "first-person rifle uses a visible weapon scale");
+        expect(firstPersonRifle->yawDegrees > 31.0F && firstPersonRifle->yawDegrees < 33.0F, "first-person rifle uses normalized Project asset forward axis");
+        expect(std::abs(firstPersonRifle->rollDegrees) < 5.0F, "first-person rifle stays upright without legacy import roll correction");
+        expect(firstPersonRifle->scale.x > 0.9F && firstPersonRifle->scale.x < 1.1F, "first-person rifle uses normalized Project asset scale");
     }
 }
 
@@ -254,8 +256,8 @@ void testDevRangeRenderSceneUsesPerWeaponImportAxisCorrections() {
     const auto smgMesh = findLastMesh(smgFrame, "wpn_project_smg_fr17");
     expect(smgMesh.has_value(), "SMG first-person Project mesh is submitted");
     if (smgMesh.has_value()) {
-        expect(smgMesh->yawDegrees > 179.0F && smgMesh->yawDegrees < 181.0F, "SMG uses forward-facing long-gun yaw correction");
-        expect(std::abs(smgMesh->rollDegrees) < 5.0F, "SMG uses upright long-weapon roll correction");
+        expect(std::abs(smgMesh->yawDegrees) < 1.0F, "SMG uses normalized forward axis without legacy yaw correction");
+        expect(std::abs(smgMesh->rollDegrees) < 5.0F, "SMG uses upright normalized roll");
     }
 
     auto sidearmPlayer = smgPlayer;
@@ -270,8 +272,8 @@ void testDevRangeRenderSceneUsesPerWeaponImportAxisCorrections() {
     const auto sidearmMesh = findLastMesh(sidearmFrame, "wpn_project_sidearm_glock19");
     expect(sidearmMesh.has_value(), "sidearm first-person Project mesh is submitted");
     if (sidearmMesh.has_value()) {
-        expect(sidearmMesh->yawDegrees > 179.0F && sidearmMesh->yawDegrees < 181.0F, "sidearm uses forward-facing pistol yaw correction");
-        expect(sidearmMesh->rollDegrees > 85.0F && sidearmMesh->rollDegrees < 95.0F, "sidearm keeps pistol upright roll correction");
+        expect(std::abs(sidearmMesh->yawDegrees) < 1.0F, "sidearm uses normalized forward axis without legacy yaw correction");
+        expect(std::abs(sidearmMesh->rollDegrees) < 5.0F, "sidearm uses upright normalized roll");
     }
 }
 
@@ -297,8 +299,9 @@ void testDevRangeRenderScenePlacesA2AssetsInSpawnView() {
             player,
         });
 
-    expect(stats.meshInstanceCount == 39, "spawn view scene emits every expected mesh without local body plus animated first-person hand anchors");
+    expect(stats.meshInstanceCount == 35, "spawn view scene emits expected meshes without the old first-person fullbody T-pose mesh");
     expect(stats.skippedMeshInstanceCount == 0, "spawn view scene has no skipped A2 meshes");
+    expect(stats.firstPersonBodyPrimitiveCount == 4, "spawn view keeps only hands and forearms as first-person body primitives");
 
     const auto operatorMesh = findMesh(frame, "chr_a2_pilot_operator_01");
     const auto carbineMesh = findMesh(frame, "wpn_a2_blackout_carbine_01");
@@ -337,7 +340,8 @@ void testDevRangeRenderScenePlacesA2AssetsInSpawnView() {
         expect(heroMesh->position.z > world.playerSpawn.z + 7.5F, "A2 hero prop anchors the visible asset stage");
     }
     if (projectSkyboxMesh.has_value()) {
-        expect(projectSkyboxMesh->scale.x > 30.0F, "Project skybox is expanded around the range camera");
+        expect(projectSkyboxMesh->scale.x > 0.15F && projectSkyboxMesh->scale.x < 0.17F, "Project skybox GLB is normalized for the camera far plane");
+        expect(projectSkyboxMesh->position.y < frame.camera3D.position.y - 7.0F, "Project skybox render origin keeps imported low planes under the camera");
     }
     if (projectCharacterMesh.has_value() && projectRifleMesh.has_value() && projectSmgMesh.has_value() && projectSidearmMesh.has_value()) {
         expect(
@@ -384,8 +388,59 @@ void testDevRangeRenderSceneHidesLocalWorldBodyWhenCameraRigIsActive() {
         nemisis::dev::DevRangeRenderSceneDesc{&world, &targetRange, nullptr, &lookup, cameraRigPlayer});
 
     expect(worldBodyStats.meshInstanceCount == cameraRigStats.meshInstanceCount + 1U, "camera rig skips only the full local third-person body mesh");
-    expect(cameraRigStats.firstPersonMeshCount == worldBodyStats.firstPersonMeshCount, "camera rig keeps the first-person body, arms, and weapon rig visible");
+    expect(cameraRigStats.firstPersonMeshCount == worldBodyStats.firstPersonMeshCount, "camera rig keeps the first-person arms and weapon rig visible");
+    expect(cameraRigStats.firstPersonBodyPrimitiveCount == worldBodyStats.firstPersonBodyPrimitiveCount, "camera rig keeps procedural first-person body primitives visible");
     expect(cameraRigFrame.camera3D.position.y > world.playerSpawn.y + 1.60F, "camera rig still drives the render camera eye height");
+}
+
+void testDevRangeRenderSceneRigsFirstPersonBodyForLookDown() {
+    novacore::render::Renderer renderer;
+    auto lookup = registerSceneMeshes(renderer);
+    const auto world = nemisis::dev::createDevRangeGreyboxWorld();
+    auto targetRange = nemisis::dev::makeDefaultDevTargetRange();
+
+    nemisis::dev::DevRangePlayerRenderState player{};
+    player.position = world.playerSpawn;
+    player.hasMovementState = true;
+    player.hasCameraRig = true;
+    player.cameraPosition = world.playerSpawn + novacore::math::Vec3{0.0F, 1.66F, 0.0F};
+    player.cameraView.yawDegrees = 0.0F;
+    player.cameraView.pitchDegrees = -55.0F;
+    player.activeWeaponId = "ar_01";
+    player.activeWeaponClass = nemisis::weapons::WeaponClass::AssaultRifle;
+    player.adsAlpha = 0.0F;
+    player.animation.firstPersonBodyOffset = {0.0F, -0.04F, 0.02F};
+    player.animation.firstPersonBodyPitchDegrees = -2.0F;
+    player.hasAnimationFrame = true;
+
+    novacore::render::RenderFrameInfo frame{};
+    const auto stats = nemisis::dev::DevRangeRenderSceneBuilder{}.append(
+        frame,
+        nemisis::dev::DevRangeRenderSceneDesc{&world, &targetRange, nullptr, &lookup, player});
+
+    const auto firstPersonArms = findLastMesh(frame, "chr_a1_fp_arms_01");
+    const auto firstPersonWeapon = findLastMesh(frame, "wpn_project_rifle_m4a1");
+    expect(stats.firstPersonMeshCount == 2, "look-down first-person rig keeps arms and weapon mesh submissions");
+    expect(stats.firstPersonBodyPrimitiveCount >= 8, "look-down first-person rig submits torso, pelvis, hands, and forearms as body primitives");
+    expect(firstPersonArms.has_value(), "look-down first-person arms mesh is submitted");
+    expect(firstPersonWeapon.has_value(), "look-down first-person weapon mesh is submitted");
+    expect(
+        std::none_of(
+            frame.worldMeshes.begin(),
+            frame.worldMeshes.end(),
+            [&frame](const novacore::render::RenderMesh3D& mesh) {
+                const float dx = mesh.position.x - frame.camera3D.position.x;
+                const float dz = mesh.position.z - frame.camera3D.position.z;
+                return mesh.assetId == "chr_project_male1" &&
+                    ((dx * dx) + (dz * dz)) < 0.75F &&
+                    mesh.position.y < frame.camera3D.position.y - 1.0F &&
+                    mesh.position.y > frame.camera3D.position.y - 3.0F;
+            }),
+        "look-down first-person rig no longer submits the full T-pose character mesh under the camera");
+    if (firstPersonArms.has_value() && firstPersonWeapon.has_value()) {
+        expect(firstPersonArms->position.y < frame.camera3D.position.y, "first-person arms stay below the camera while looking down");
+        expect(firstPersonWeapon->position.y < frame.camera3D.position.y, "first-person weapon stays below the camera while looking down");
+    }
 }
 
 void testDevRangeRenderSceneCountsMissingMeshHandles() {
@@ -415,10 +470,11 @@ void testDevRangeRenderSceneCountsMissingMeshHandles() {
             player,
         });
 
-    expect(stats.meshInstanceCount == 32, "dev range render scene still emits available skybox, static, A2, Project, target lane, and character-proxy arms meshes");
-    expect(frame.worldMeshes.size() == 32, "frame mesh count drops missing weapon handles but keeps character-proxy arms");
+    expect(stats.meshInstanceCount == 31, "dev range render scene still emits available skybox, static, A2, Project, and target lane meshes");
+    expect(frame.worldMeshes.size() == 31, "frame mesh count drops missing weapon, arms, and first-person T-pose body handles");
     expect(stats.skippedMeshInstanceCount == 6, "dev range render scene counts missing showcase, primary, fallback, and first-person arm handles");
-    expect(stats.firstPersonMeshCount == 1, "first-person mesh stats keep character-proxy arms when weapon handles are missing");
+    expect(stats.firstPersonMeshCount == 0, "first-person mesh stats reports no valid arms or weapon when those handles are missing");
+    expect(stats.firstPersonBodyPrimitiveCount == 4, "first-person rig primitives still render hands and forearms when mesh handles are missing");
     expect(stats.worldLineCount == 1, "dev range render scene still emits aim line without collision sample");
 }
 
@@ -580,6 +636,7 @@ int main() {
     testDevRangeRenderSceneUsesPerWeaponImportAxisCorrections();
     testDevRangeRenderScenePlacesA2AssetsInSpawnView();
     testDevRangeRenderSceneHidesLocalWorldBodyWhenCameraRigIsActive();
+    testDevRangeRenderSceneRigsFirstPersonBodyForLookDown();
     testDevRangeRenderSceneCountsMissingMeshHandles();
     testDevRangeRenderSceneHandlesMissingInputs();
     testDevRangeRenderSceneCanDisableDebugLines();

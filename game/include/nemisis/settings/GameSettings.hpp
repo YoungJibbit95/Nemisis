@@ -35,7 +35,7 @@ struct GameplaySettings final {
 struct VideoSettings final {
     float hudScale = 1.0F;
     float menuSafeArea = 0.96F;
-    bool showDebugWorldLines = true;
+    bool showDebugWorldLines = false;
 };
 
 struct GameSettings final {

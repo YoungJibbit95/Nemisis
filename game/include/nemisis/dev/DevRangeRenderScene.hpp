@@ -55,7 +55,7 @@ struct DevRangeRenderSceneStats final {
     std::size_t worldLineCount = 0;
     std::size_t skippedMeshInstanceCount = 0;
     std::size_t firstPersonMeshCount = 0;
-    std::size_t aimMarkerBoxCount = 0;
+    std::size_t firstPersonBodyPrimitiveCount = 0;
     std::size_t targetMeshCount = 0;
 };
 
@@ -135,11 +135,6 @@ private:
         DevRangeRenderSceneStats& stats) const;
 
     void appendMovementTechVisuals(
-        novacore::render::RenderFrameInfo& frame,
-        const DevRangeRenderSceneDesc& desc,
-        DevRangeRenderSceneStats& stats) const;
-
-    void appendAimMarker(
         novacore::render::RenderFrameInfo& frame,
         const DevRangeRenderSceneDesc& desc,
         DevRangeRenderSceneStats& stats) const;
