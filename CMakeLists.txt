@@ -73,6 +73,7 @@ add_executable(nemisis_game
     game/src/movement/MovementSystem.cpp
     game/src/net/CommandMessages.cpp
     game/src/net/LoopbackCommandBridge.cpp
+    game/src/player/PlayerAnimation.cpp
     game/src/player/PlayerCommandQueue.cpp
     game/src/player/PlayerCameraRig.cpp
     game/src/player/PlayerHealth.cpp
@@ -204,6 +205,7 @@ add_executable(nemisis_dev_range_render_scene_tests
     game/src/dev/DevRangeRenderScene.cpp
     game/src/dev/DevTargetRange.cpp
     game/src/dev/GreyboxWorld.cpp
+    game/src/player/PlayerAnimation.cpp
     game/src/player/PlayerView.cpp
     tests/dev_range_render_scene_tests.cpp
 )
@@ -215,6 +217,19 @@ target_include_directories(nemisis_dev_range_render_scene_tests
 
 target_link_libraries(nemisis_dev_range_render_scene_tests PRIVATE Novacore::Engine)
 add_test(NAME nemisis_dev_range_render_scene_tests COMMAND nemisis_dev_range_render_scene_tests)
+
+add_executable(nemisis_player_animation_tests
+    game/src/player/PlayerAnimation.cpp
+    tests/player_animation_tests.cpp
+)
+
+target_include_directories(nemisis_player_animation_tests
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/game/include
+)
+
+target_link_libraries(nemisis_player_animation_tests PRIVATE Novacore::Engine)
+add_test(NAME nemisis_player_animation_tests COMMAND nemisis_player_animation_tests)
 
 add_executable(nemisis_render_tuning_tests
     game/src/render/RenderTuning.cpp
@@ -533,6 +548,8 @@ foreach(nemisis_runtime_target IN ITEMS
     nemisis_input_command_tests
     nemisis_game_menu_tests
     nemisis_ui_canvas_tests
+    nemisis_dev_range_render_scene_tests
+    nemisis_player_animation_tests
     nemisis_weapon_simulation_tests
     nemisis_player_command_queue_tests
     nemisis_player_health_tests

@@ -86,10 +86,18 @@ struct FirstPersonBodyMount final {
 struct FirstPersonPoseOffset final {
     novacore::math::Vec3 weaponOffset{};
     novacore::math::Vec3 armsOffset{};
+    novacore::math::Vec3 bodyOffset{};
+    novacore::math::Vec3 rightHandOffset{0.11F, -0.11F, -0.17F};
+    novacore::math::Vec3 leftHandOffset{-0.18F, -0.12F, 0.14F};
+    novacore::math::Vec3 supportElbowOffset{-0.26F, -0.18F, -0.03F};
+    float weaponYawDegrees = 0.0F;
     float weaponPitchDegrees = 0.0F;
     float weaponRollDegrees = 0.0F;
+    float armsYawDegrees = 0.0F;
     float armsPitchDegrees = 0.0F;
     float armsRollDegrees = 0.0F;
+    float bodyPitchDegrees = 0.0F;
+    float bodyRollDegrees = 0.0F;
 };
 
 [[nodiscard]] float clamp01(float value) {
@@ -253,6 +261,25 @@ struct FirstPersonPoseOffset final {
 
 [[nodiscard]] FirstPersonPoseOffset firstPersonPoseOffset(const DevRangeRenderSceneDesc& desc, bool sidearm) {
     FirstPersonPoseOffset pose{};
+    if (desc.player.hasAnimationFrame) {
+        const auto& animation = desc.player.animation;
+        pose.weaponOffset = animation.firstPersonWeaponOffset;
+        pose.armsOffset = animation.firstPersonArmsOffset;
+        pose.bodyOffset = animation.firstPersonBodyOffset;
+        pose.rightHandOffset = animation.rightHandLocalOffset;
+        pose.leftHandOffset = animation.leftHandLocalOffset;
+        pose.supportElbowOffset = animation.supportElbowLocalOffset;
+        pose.weaponYawDegrees = animation.firstPersonWeaponYawAddDegrees;
+        pose.weaponPitchDegrees = animation.firstPersonWeaponPitchAddDegrees;
+        pose.weaponRollDegrees = animation.firstPersonWeaponRollAddDegrees;
+        pose.armsYawDegrees = animation.firstPersonArmsYawAddDegrees;
+        pose.armsPitchDegrees = animation.firstPersonArmsPitchAddDegrees;
+        pose.armsRollDegrees = animation.firstPersonArmsRollAddDegrees;
+        pose.bodyPitchDegrees = animation.firstPersonBodyPitchDegrees;
+        pose.bodyRollDegrees = animation.firstPersonBodyRollDegrees;
+        return pose;
+    }
+
     const float ads = clamp01(desc.player.adsAlpha);
     const float freeWeapon = 1.0F - ads;
     const bool sliding = desc.player.movementMode == movement::MovementMode::Sliding;
@@ -287,6 +314,7 @@ struct FirstPersonPoseOffset final {
         pose.armsOffset = pose.armsOffset + novacore::math::Vec3{lean * 0.020F, -0.020F, -0.02F} * freeWeapon;
         pose.weaponRollDegrees += lean * 5.0F;
         pose.armsRollDegrees += lean * 4.0F;
+        pose.bodyRollDegrees += lean * 5.0F;
     }
     if (mantling) {
         const float mantle = easeOut01(desc.player.mantleProgress01);
@@ -294,6 +322,8 @@ struct FirstPersonPoseOffset final {
         pose.armsOffset = pose.armsOffset + novacore::math::Vec3{0.02F, -0.03F + (mantle * 0.16F), -0.04F};
         pose.weaponPitchDegrees -= 7.0F * freeWeapon;
         pose.armsPitchDegrees -= 8.0F * (1.0F - (mantle * 0.35F));
+        pose.bodyOffset = pose.bodyOffset + novacore::math::Vec3{0.0F, 0.05F, -0.02F};
+        pose.bodyPitchDegrees += 4.0F;
     }
     return pose;
 }
@@ -302,10 +332,10 @@ struct FirstPersonPoseOffset final {
     static constexpr FirstPersonBodyMount kBody{
         "chr_project_male1",
         "chr_a2_pilot_operator_01",
-        {0.0F, -1.42F, 0.30F},
-        {0.0F, -1.46F, 0.24F},
-        {0.42F, 0.42F, 0.42F},
-        {0.46F, 0.54F, 0.50F, 0.44F},
+        {0.0F, -2.04F, 0.22F},
+        {0.0F, -2.08F, 0.16F},
+        {0.52F, 0.52F, 0.52F},
+        {0.46F, 0.54F, 0.50F, 0.36F},
     };
     return kBody;
 }
@@ -761,16 +791,26 @@ void DevRangeRenderSceneBuilder::appendLocalPlayerBodyMesh(
     novacore::render::RenderFrameInfo& frame,
     const DevRangeRenderSceneDesc& desc,
     DevRangeRenderSceneStats& stats) const {
-    if (!desc.player.hasMovementState) {
+    if (!desc.player.hasMovementState || desc.player.hasCameraRig) {
         return;
     }
 
     const auto view = renderView(desc);
     const auto vectors = player::viewVectors(view);
+    const auto animationOffset = desc.player.hasAnimationFrame
+        ? desc.player.animation.thirdPersonBodyOffset
+        : novacore::math::Vec3{};
+    const float animationPitch = desc.player.hasAnimationFrame
+        ? desc.player.animation.thirdPersonBodyPitchDegrees
+        : 0.0F;
+    const float animationRoll = desc.player.hasAnimationFrame
+        ? desc.player.animation.thirdPersonBodyRollDegrees
+        : 0.0F;
     const auto bodyPosition =
         desc.player.position -
-        (vectors.forward * 0.16F) +
-        novacore::math::Vec3{0.0F, -0.62F, 0.0F};
+        (vectors.forward * 0.12F) +
+        novacore::math::Vec3{0.0F, 0.02F, 0.0F} +
+        animationOffset;
     const auto bodyColor = desc.player.movementMode == movement::MovementMode::WallRunning
         ? std::array<float, 4>{0.34F, 0.86F, 1.0F, 0.62F}
         : desc.player.movementMode == movement::MovementMode::Mantling
@@ -786,8 +826,8 @@ void DevRangeRenderSceneBuilder::appendLocalPlayerBodyMesh(
             view.yawDegrees,
             bodyColor,
             stats,
-            0.0F,
-            desc.player.cameraRollDegrees * 0.18F)) {
+            animationPitch,
+            (desc.player.cameraRollDegrees * 0.18F) + animationRoll)) {
         (void)appendMesh(
             frame,
             desc,
@@ -797,8 +837,8 @@ void DevRangeRenderSceneBuilder::appendLocalPlayerBodyMesh(
             view.yawDegrees,
             bodyColor,
             stats,
-            0.0F,
-            desc.player.cameraRollDegrees * 0.18F);
+            animationPitch,
+            (desc.player.cameraRollDegrees * 0.18F) + animationRoll);
     }
 }
 
@@ -811,7 +851,7 @@ void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
     const auto eye = playerEyePosition(desc);
     const auto& mount = firstPersonWeaponMount(desc.player.activeWeaponId);
     const bool sidearm = isSidearm(desc.player.activeWeaponClass);
-    const float ads = desc.player.adsAlpha;
+    const float ads = clamp01(desc.player.adsAlpha);
     const auto pose = firstPersonPoseOffset(desc, sidearm);
     const float recoilLift = desc.player.weapon.recoilPitchOffsetDegrees * 0.010F;
     const float recoilSide = desc.player.weapon.recoilYawOffsetDegrees * 0.014F;
@@ -834,6 +874,7 @@ void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
     const float weaponYaw =
         view.yawDegrees +
         mount.yawCorrectionDegrees +
+        pose.weaponYawDegrees +
         (desc.player.weapon.recoilYawOffsetDegrees * mount.recoilYawScale);
     const float weaponPitch =
         (view.pitchDegrees * weaponPitchFollow) +
@@ -875,7 +916,7 @@ void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
     }
 
     const auto& bodyMount = firstPersonBodyMount();
-    const auto bodyOffset = lerpVec3(bodyMount.hipOffset, bodyMount.adsOffset, ads);
+    const auto bodyOffset = lerpVec3(bodyMount.hipOffset, bodyMount.adsOffset, ads) + pose.bodyOffset;
     bool bodyMeshAppended = appendMesh(
         frame,
         desc,
@@ -887,8 +928,8 @@ void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
         view.yawDegrees,
         bodyMount.color,
         stats,
-        0.0F,
-        desc.player.cameraRollDegrees * 0.10F);
+        pose.bodyPitchDegrees,
+        (desc.player.cameraRollDegrees * 0.10F) + pose.bodyRollDegrees);
     if (!bodyMeshAppended) {
         bodyMeshAppended = appendMesh(
             frame,
@@ -901,8 +942,8 @@ void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
             view.yawDegrees,
             bodyMount.color,
             stats,
-            0.0F,
-            desc.player.cameraRollDegrees * 0.10F);
+            pose.bodyPitchDegrees,
+            (desc.player.cameraRollDegrees * 0.10F) + pose.bodyRollDegrees);
     }
     if (bodyMeshAppended) {
         ++stats.firstPersonMeshCount;
@@ -928,7 +969,7 @@ void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
             novacore::math::Vec3{0.0F, (-reloadArc * 0.11F) + mantleLift, 0.0F} +
             (desc.player.weaponSwayOffset * 0.36F * (1.0F - (ads * 0.60F))),
         armsMount.scale,
-        view.yawDegrees + armsMount.yawCorrectionDegrees,
+        view.yawDegrees + armsMount.yawCorrectionDegrees + pose.armsYawDegrees,
         armsMount.color,
         stats,
         (view.pitchDegrees * 0.46F) + armsMount.pitchCorrectionDegrees + pose.armsPitchDegrees + (reloadArc * 8.0F),
@@ -950,6 +991,51 @@ void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
     }
     if (armsMeshAppended) {
         ++stats.firstPersonMeshCount;
+        const auto gripScale = sidearm
+            ? novacore::math::Vec3{0.34F, 0.34F, 0.34F}
+            : novacore::math::Vec3{0.40F, 0.40F, 0.40F};
+        const auto rightHandCenter = weaponCenter + viewLocalOffset(vectors, pose.rightHandOffset);
+        const auto leftHandCenter = weaponCenter + viewLocalOffset(vectors, pose.leftHandOffset);
+        const auto supportElbowCenter = weaponCenter + viewLocalOffset(vectors, pose.supportElbowOffset);
+        if (appendMesh(
+                frame,
+                desc,
+                armsMount.assetId,
+                rightHandCenter,
+                gripScale,
+                view.yawDegrees + armsMount.yawCorrectionDegrees + pose.armsYawDegrees + 2.0F,
+                {0.54F, 0.62F, 0.58F, 0.82F},
+                stats,
+                (view.pitchDegrees * 0.34F) + pose.armsPitchDegrees - 3.0F,
+                armsMount.rollCorrectionDegrees + pose.armsRollDegrees + wallRunRoll + 8.0F)) {
+            ++stats.firstPersonMeshCount;
+        }
+        if (!sidearm && appendMesh(
+                frame,
+                desc,
+                armsMount.assetId,
+                leftHandCenter,
+                gripScale,
+                view.yawDegrees + armsMount.yawCorrectionDegrees + pose.armsYawDegrees - 5.0F,
+                {0.50F, 0.60F, 0.56F, 0.80F},
+                stats,
+                (view.pitchDegrees * 0.32F) + pose.armsPitchDegrees - 5.5F,
+                armsMount.rollCorrectionDegrees + pose.armsRollDegrees + wallRunRoll - 10.0F)) {
+            ++stats.firstPersonMeshCount;
+        }
+        if (!sidearm && appendMesh(
+                frame,
+                desc,
+                armsMount.assetId,
+                supportElbowCenter,
+                {0.30F, 0.30F, 0.30F},
+                view.yawDegrees + armsMount.yawCorrectionDegrees + pose.armsYawDegrees - 8.0F,
+                {0.44F, 0.54F, 0.52F, 0.62F},
+                stats,
+                (view.pitchDegrees * 0.28F) + pose.armsPitchDegrees - 10.0F,
+                armsMount.rollCorrectionDegrees + pose.armsRollDegrees + wallRunRoll - 14.0F)) {
+            ++stats.firstPersonMeshCount;
+        }
     }
 }
 

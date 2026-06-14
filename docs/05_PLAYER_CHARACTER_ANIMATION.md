@@ -39,6 +39,38 @@ Marketplace or custom characters are cleaned in Blender and exported as glTF:
 - Weapon sockets exported as nodes.
 - Hitbox authoring helpers added where needed.
 
+## Current Runtime Backbone
+
+The current runtime has a first procedural animation layer in `nemisis::player::PlayerAnimation`.
+It is not the final skeletal animation system, but it gives the FPS viewmodel a persistent animation state now instead of keeping pose math buried in renderer-local helper code.
+
+Current animation data flow:
+
+- `GameApp` simulates movement, weapons, and the camera rig on the fixed tick.
+- The fixed tick feeds `CharacterAnimationInput` with velocity, movement mode, `MovementTechState`, ADS/reload/recoil/fire state, camera roll, and mantle progress.
+- `CharacterAnimationState` keeps locomotion phase, blend values, reload/fire transients, and the last observed shot index.
+- `CharacterAnimationFrame` exposes the frame consumed by rendering: locomotion clip, upper-body clip, ADS/reload/fire alphas, wallrun lean, first-person weapon/body/arms offsets, right/left hand local offsets, support-elbow offset, and third-person body pose offsets.
+
+Current supported clips/cues:
+
+- Idle, walk, sprint, slide, airborne, wallrun, mantle.
+- Reload, ADS, and fire upper-body overlays.
+- Gravity-boot wallrun lean.
+- Left-hand double-jump energy-platform throw cue.
+- Mantle reach/climb cue.
+
+The Dev Range now renders the local camera presentation from this frame:
+
+- Full local third-person body is skipped when the FPS camera rig is active.
+- The first-person Project character body is lowered/scaled as a temporary torso/legs proxy so the camera no longer sits inside the head.
+- First-person arms, right-hand grip, left support hand, and support elbow submit as weapon-attached mesh anchors.
+- Weapon/arms/body offsets respond to sprint, slide, wallrun, mantle, ADS, reload, recoil, fire, and double-jump platform cues.
+
+Coverage:
+
+- `nemisis_player_animation_tests` validates clip selection, movement poses, ADS damping, reload/fire overlays, energy-platform hand cue, and reset behavior.
+- `nemisis_dev_range_render_scene_tests` validates first-person mesh submissions and that the FPS camera rig hides the complete local third-person body while preserving first-person body/arms/weapon meshes.
+
 ## M1-M3 Placeholder
 
 Before real animation exists:
@@ -98,12 +130,13 @@ The movement-tech hooks are presentation cues, not ability gates. Movement remai
 
 ## Current Placeholder Visuals
 
-Until authored skeleton clips exist, `DevRangeRenderSceneBuilder` renders small debug geometry for the same cues:
+Until authored skeleton clips exist, `DevRangeRenderSceneBuilder` renders a hybrid of real imported meshes and small debug geometry for the same cues:
 
 - Boot glow boxes when gravity inverters are active.
-- A forearm control light on wall-run entry.
+- First-person arms mesh for wall-run forearm control, double-jump throw, and mantle reach beats.
+- Weapon-attached first-person hand/support anchors driven by `CharacterAnimationFrame`.
 - A short-lived energy platform on double jump.
-- A left-hand reach marker when mantle input is requested in air.
+- Small muzzle/aim/boot/energy platform boxes where dedicated VFX assets do not exist yet.
 - A ledge-top highlight when the first mantle/climb snap succeeds.
 
 These are intentionally simple but they lock down timing, naming, and gameplay integration before animation assets are final.

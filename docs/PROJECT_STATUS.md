@@ -1,5 +1,18 @@
 # Nemisis Project Status
 
+## Latest Block - Character Animation Backbone And First-Person Viewmodel Rig
+
+- Added a new `nemisis::player::PlayerAnimation` subsystem with persistent animation state, movement-driven clip selection, procedural locomotion phase, ADS/reload/fire blends, wallrun lean, mantle reach, double-jump energy-platform cue alpha, and first-person/third-person pose offsets.
+- Wired the animation state through `GameApp` fixed ticks after movement, weapon, and camera-rig simulation so each rendered Dev Range frame receives the same authoritative animation sample as gameplay telemetry.
+- Rebuilt the Dev Range first-person composition to consume `CharacterAnimationFrame` data for weapon, arms, body, hand-grip, support-hand, and support-elbow mesh anchors instead of relying on isolated render-local offsets.
+- Fixed the most visible first-person body bug by skipping the full local third-person body mesh whenever the camera rig is active; the player no longer renders a complete T-posed world body into their own camera.
+- Raised and de-sunk the non-camera local body placement so third-person/player proxy rendering is no longer artificially pushed into the floor when inspected outside the FPS camera path.
+- Retuned the first-person Project character body layer lower and smaller, keeping it as a torso/legs proxy while avoiding the camera-in-head presentation until real authored body-part masking/skeleton support exists.
+- Added connected first-person hand/weapon anchors: long guns now submit extra right-hand, left-hand, and support-elbow mesh placements around the weapon mount so ADS, reload, sprint, slide, wallrun, mantle, recoil, and double-jump cues move the arm layer with the weapon.
+- Added `nemisis_player_animation_tests` for idle/walk/sprint, ADS damping, slide, wallrun, mantle, reload, fire, reset, and double-jump energy-platform animation behavior.
+- Expanded Dev Range render scene tests to cover animated first-person mesh counts and the camera-rig rule that hides only the full local third-person body while keeping FP weapon/body/arms visible.
+- Verified `cmake --build --preset windows-msvc-debug` and Nemisis `ctest --test-dir build/windows-msvc-debug -C Debug --output-on-failure` with 33/33 passing tests.
+
 ## Latest Block - Responsive Play HUD, KCC Jump Reliability, Wallrun Grace, And Viewmodel Upright Pass
 
 - Rebuilt the live Dev Range HUD into a cleaner playable layout: compact range strip at top center, player health bottom-left, loadout/ammo/weapon state bottom-right, centered hit feedback, and no more large target-lane/dummy debug panel in the normal gameplay view.
@@ -74,6 +87,7 @@
 - Movement includes coyote time, jump buffering, configurable wall-run probe/min-height tuning, and timed mantle exit state for the playable Dev Range KCC loop.
 - Movement now carries presentation-facing tech cues for wall-run gravity activation, boot glow, double-jump energy platform, wall-jump detach, and mantle reach.
 - Movement now supports the first engine-backed mantle/climb foundation: NovaCore mantle probe, ledge-top target snap, `mantle-climb` tech cue, and debug visualization.
+- Player presentation now has a first procedural animation backbone that turns movement, weapon, and lore-tech cues into consistent first-person weapon/body/arms offsets and third-person body pose offsets.
 - Weapon registry supports AR, SMG, shotgun, and sidearm definitions.
 - Input actions are translated into `PlayerInputCommand` for fixed-tick gameplay.
 - Default input bindings cover MKB plus controller stick/buttons/triggers.

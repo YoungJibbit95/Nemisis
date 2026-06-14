@@ -5,6 +5,7 @@
 #include "nemisis/dev/GreyboxCollision.hpp"
 #include "nemisis/dev/GreyboxWorld.hpp"
 #include "nemisis/movement/MovementSystem.hpp"
+#include "nemisis/player/PlayerAnimation.hpp"
 #include "nemisis/player/PlayerComponents.hpp"
 #include "nemisis/weapons/WeaponTypes.hpp"
 
@@ -41,9 +42,11 @@ struct DevRangePlayerRenderState final {
     weapons::WeaponClass activeWeaponClass = weapons::WeaponClass::AssaultRifle;
     weapons::WeaponRuntimeState weapon{};
     std::uint16_t effectiveMagazineSize = 0;
+    player::CharacterAnimationFrame animation{};
     bool hasMovementState = false;
     bool hasCameraRig = false;
     bool hasWallRunContact = false;
+    bool hasAnimationFrame = false;
 };
 
 struct DevRangeRenderSceneStats final {

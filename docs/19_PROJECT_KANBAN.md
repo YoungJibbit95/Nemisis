@@ -158,6 +158,12 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [x] Re-orient first-person Project weapon mounts so long guns are upright and SMG/shotgun/sidearm use forward-facing corrections.
 - [x] Add regression coverage for same-tick landing buffered jumps, wallrun grace/cooldown, new wall-run config values, and corrected weapon mount rotations.
 - [x] Verify Nemisis 32/32 CTest and NovaCore 1/1 CTest after responsive HUD, KCC jump reliability, wallrun grace, and viewmodel orientation work.
+- [x] Add `PlayerAnimation` as the first persistent procedural character/viewmodel animation backbone.
+- [x] Drive first-person weapon, body, arms, hand-grip, support-hand, and support-elbow mesh anchors from `CharacterAnimationFrame`.
+- [x] Hide the full local third-person body whenever the FPS camera rig is active while keeping camera-linked body/arms/weapon presentation visible.
+- [x] Add animation regression coverage for locomotion clips, ADS damping, reload/fire overlays, slide, wallrun, mantle, double-jump energy-platform cues, and reset behavior.
+- [x] Add render scene coverage for animated first-person mesh submissions and camera-rig local-body hiding.
+- [x] Verify Nemisis 33/33 CTest after character animation backbone and first-person viewmodel rig block.
 
 ## Doing
 
@@ -167,7 +173,7 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [ ] Grow the multi-target Dev Range into timed drills, TTK panels, and recoil-control scoring.
 - [ ] Deepen KCC physics beyond the current swept AABB/contact-manifold pass into true capsule sweeps, moving platform contacts, slope/slide validation, and server replay validation.
 - [ ] Author or generate Project-asset sockets (`socket_muzzle`, `socket_weapon_root`, `socket_camera`, hands) so the runtime can stop using placement heuristics.
-- [ ] Replace first-person mesh offsets and mesh-cue poses with authored first-person arm/weapon animation clips once Blender-ready rigs exist.
+- [ ] Replace procedural first-person mesh-anchor poses with authored skeletal arm/weapon clips once Blender-ready rigs, sockets, and animation exports exist.
 
 ## Next Core
 

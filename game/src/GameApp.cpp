@@ -547,6 +547,38 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
         }
     }
 
+    if (movementState != nullptr) {
+        const float speed01 = cameraRig_.initialized
+            ? cameraRig_.speed01
+            : std::clamp(movementSpeed / std::max(0.001F, movement_.tuning().tacticalSprintSpeed), 0.0F, 1.0F);
+        const float mantleProgress01 =
+            movementState->mantleTimeRemaining > 0.0F || movementState->mantleProgressSeconds > 0.0F
+                ? std::clamp(
+                    movementState->mantleProgressSeconds / std::max(0.001F, movement_.tuning().mantleDurationSeconds),
+                    0.0F,
+                    1.0F)
+                : 0.0F;
+
+        latestCharacterAnimationFrame_ = player::updateCharacterAnimation(
+            characterAnimation_,
+            player::CharacterAnimationInput{
+                movementState->velocity,
+                movementState->mode,
+                movementState->tech,
+                weaponSample,
+                speed01,
+                cameraRig_.initialized ? cameraRig_.rollDegrees : 0.0F,
+                mantleProgress01,
+                static_cast<float>(context.fixedDeltaSeconds),
+                movementState->hasWallRunContact,
+                command.adsHeld,
+                command.sprintHeld,
+                command.tacticalSprintHeld,
+                command.crouchHeld,
+            });
+        hasCharacterAnimationFrame_ = true;
+    }
+
     devSandbox_.recordTick(dev::DevSandboxSample{
         command.tick,
         command,
@@ -902,6 +934,9 @@ void GameApp::ensureLocalPlayer() {
     rebuildActiveAttachmentSummary();
     localPlayerEntity_ = player::spawnLocalPlayer(world_, spawnDesc, &activeAttachmentBuild_.effectiveWeapon);
     localCommandQueue_.clear();
+    player::resetCharacterAnimation(characterAnimation_);
+    latestCharacterAnimationFrame_ = {};
+    hasCharacterAnimationFrame_ = false;
     player::resetCameraRig(cameraRig_);
     gameplayInputBuffer_.clear();
     novacore::core::logInfo("game", "Local player entity spawned");
@@ -941,6 +976,9 @@ void GameApp::resetDevRangeState() {
     }
 
     localCommandQueue_.clear();
+    player::resetCharacterAnimation(characterAnimation_);
+    latestCharacterAnimationFrame_ = {};
+    hasCharacterAnimationFrame_ = false;
     player::resetCameraRig(cameraRig_);
     gameplayInputBuffer_.clear();
 }
@@ -1179,6 +1217,10 @@ dev::DevRangePlayerRenderState GameApp::currentPlayerRenderState() const {
     state.activeWeaponId = activeAttachmentBuild_.effectiveWeapon.id;
     state.activeWeaponClass = activeAttachmentBuild_.effectiveWeapon.weaponClass;
     state.effectiveMagazineSize = activeAttachmentBuild_.effectiveMagazineSize;
+    if (hasCharacterAnimationFrame_) {
+        state.animation = latestCharacterAnimationFrame_;
+        state.hasAnimationFrame = true;
+    }
     if (const auto* weapon = world_.getComponent<weapons::WeaponRuntimeState>(localPlayerEntity_);
         weapon != nullptr) {
         state.weapon = *weapon;

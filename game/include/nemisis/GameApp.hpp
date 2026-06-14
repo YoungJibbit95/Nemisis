@@ -11,6 +11,7 @@
 #include "nemisis/movement/MovementConfig.hpp"
 #include "nemisis/movement/MovementSystem.hpp"
 #include "nemisis/net/LoopbackCommandBridge.hpp"
+#include "nemisis/player/PlayerAnimation.hpp"
 #include "nemisis/player/PlayerCameraRig.hpp"
 #include "nemisis/player/PlayerCommandQueue.hpp"
 #include "nemisis/player/PlayerProfile.hpp"
@@ -104,6 +105,8 @@ private:
     render::DevRenderTuning renderTuning_;
     net::LoopbackCommandBridge loopbackBridge_;
     player::PlayerCommandQueue localCommandQueue_;
+    player::CharacterAnimationState characterAnimation_;
+    player::CharacterAnimationFrame latestCharacterAnimationFrame_;
     player::CameraRigState cameraRig_;
     player::AccountStats accountStats_ = player::prototypeAccountStats();
     novacore::ecs::EntityId localPlayerEntity_;
@@ -115,6 +118,7 @@ private:
     std::string lastPersistedUserSettings_;
     std::size_t menuFlowSmokeStage_ = static_cast<std::size_t>(-1);
     bool relativeMouseDesired_ = false;
+    bool hasCharacterAnimationFrame_ = false;
 };
 
 } // namespace nemisis::game

@@ -172,10 +172,10 @@ void testDevRangeRenderSceneBuildsExpectedSubmissions() {
     expect(!world.primitives.empty(), "greybox world fixture has primitives");
     expect(stats.worldBoxCount == (world.primitives.size() - 1U) + targetRange.lanes.size() + 19U, "dev range render scene emits world, lane, asset stage, pickup pads, muzzle, mantle/tech, and aim boxes");
     expect(frame.worldBoxes.size() == stats.worldBoxCount, "world box count matches frame");
-    expect(stats.meshInstanceCount == 37, "dev range render scene emits skybox, static, player body, target lane, imported Project asset, A2 showcase, and first-person mesh instances");
-    expect(frame.worldMeshes.size() == 37, "frame receives all mesh instances");
+    expect(stats.meshInstanceCount == 40, "dev range render scene emits skybox, static, player body, target lane, imported Project asset, A2 showcase, and animated first-person mesh instances");
+    expect(frame.worldMeshes.size() == 40, "frame receives all mesh instances");
     expect(stats.skippedMeshInstanceCount == 0, "dev range render scene skips no mesh when lookup is complete");
-    expect(stats.firstPersonMeshCount == 3, "dev range render scene emits weapon, camera-linked body, and arms first-person mesh anchors");
+    expect(stats.firstPersonMeshCount == 6, "dev range render scene emits weapon, camera-linked body, arms, and weapon-grip first-person mesh anchors");
     expect(stats.targetMeshCount == targetRange.lanes.size(), "dev range render scene emits one actor mesh per target lane");
     expect(stats.aimMarkerBoxCount == 5, "dev range render scene emits five aim marker boxes");
     expect(stats.worldLineCount == 3, "dev range render scene emits aim, ground-normal, and contact lines");
@@ -297,7 +297,7 @@ void testDevRangeRenderScenePlacesA2AssetsInSpawnView() {
             player,
         });
 
-    expect(stats.meshInstanceCount == 36, "spawn view scene emits every expected mesh without local body");
+    expect(stats.meshInstanceCount == 39, "spawn view scene emits every expected mesh without local body plus animated first-person hand anchors");
     expect(stats.skippedMeshInstanceCount == 0, "spawn view scene has no skipped A2 meshes");
 
     const auto operatorMesh = findMesh(frame, "chr_a2_pilot_operator_01");
@@ -354,6 +354,38 @@ void testDevRangeRenderScenePlacesA2AssetsInSpawnView() {
         expect(projectSmgMesh->position.y > 0.9F, "Project SMG is raised on the review rack");
         expect(projectSidearmMesh->position.y > 0.8F, "Project sidearm is raised on the review rack");
     }
+}
+
+void testDevRangeRenderSceneHidesLocalWorldBodyWhenCameraRigIsActive() {
+    novacore::render::Renderer renderer;
+    auto lookup = registerSceneMeshes(renderer);
+    const auto world = nemisis::dev::createDevRangeGreyboxWorld();
+    auto targetRange = nemisis::dev::makeDefaultDevTargetRange();
+
+    nemisis::dev::DevRangePlayerRenderState worldBodyPlayer{};
+    worldBodyPlayer.position = world.playerSpawn;
+    worldBodyPlayer.view.yawDegrees = 12.0F;
+    worldBodyPlayer.hasMovementState = true;
+
+    auto cameraRigPlayer = worldBodyPlayer;
+    cameraRigPlayer.hasCameraRig = true;
+    cameraRigPlayer.cameraPosition = world.playerSpawn + novacore::math::Vec3{0.0F, 1.68F, 0.0F};
+    cameraRigPlayer.cameraView.yawDegrees = 12.0F;
+    cameraRigPlayer.cameraView.pitchDegrees = -2.0F;
+
+    novacore::render::RenderFrameInfo worldBodyFrame{};
+    const auto worldBodyStats = nemisis::dev::DevRangeRenderSceneBuilder{}.append(
+        worldBodyFrame,
+        nemisis::dev::DevRangeRenderSceneDesc{&world, &targetRange, nullptr, &lookup, worldBodyPlayer});
+
+    novacore::render::RenderFrameInfo cameraRigFrame{};
+    const auto cameraRigStats = nemisis::dev::DevRangeRenderSceneBuilder{}.append(
+        cameraRigFrame,
+        nemisis::dev::DevRangeRenderSceneDesc{&world, &targetRange, nullptr, &lookup, cameraRigPlayer});
+
+    expect(worldBodyStats.meshInstanceCount == cameraRigStats.meshInstanceCount + 1U, "camera rig skips only the full local third-person body mesh");
+    expect(cameraRigStats.firstPersonMeshCount == worldBodyStats.firstPersonMeshCount, "camera rig keeps the first-person body, arms, and weapon rig visible");
+    expect(cameraRigFrame.camera3D.position.y > world.playerSpawn.y + 1.60F, "camera rig still drives the render camera eye height");
 }
 
 void testDevRangeRenderSceneCountsMissingMeshHandles() {
@@ -547,6 +579,7 @@ int main() {
     testDevRangeRenderSceneMovesWeaponTowardSightlineInAds();
     testDevRangeRenderSceneUsesPerWeaponImportAxisCorrections();
     testDevRangeRenderScenePlacesA2AssetsInSpawnView();
+    testDevRangeRenderSceneHidesLocalWorldBodyWhenCameraRigIsActive();
     testDevRangeRenderSceneCountsMissingMeshHandles();
     testDevRangeRenderSceneHandlesMissingInputs();
     testDevRangeRenderSceneCanDisableDebugLines();
