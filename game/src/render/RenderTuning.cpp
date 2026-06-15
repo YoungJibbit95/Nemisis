@@ -1,6 +1,7 @@
 #include "nemisis/render/RenderTuning.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <string>
 
@@ -39,11 +40,42 @@ bool boolOr(const novacore::core::ConfigDocument& document, const char* key, boo
     return {value.x * invLength, value.y * invLength, value.z * invLength};
 }
 
+[[nodiscard]] std::array<float, 4> colorOr(
+    const novacore::core::ConfigDocument& document,
+    const char* prefix,
+    std::array<float, 4> fallback) {
+    const auto value = vectorOr(
+        document,
+        prefix,
+        {fallback[0], fallback[1], fallback[2]});
+    fallback[0] = std::clamp(value.x, 0.0F, 1.0F);
+    fallback[1] = std::clamp(value.y, 0.0F, 1.0F);
+    fallback[2] = std::clamp(value.z, 0.0F, 1.0F);
+    return fallback;
+}
+
 } // namespace
 
 DevRenderTuning devRenderTuningFromConfig(
     const novacore::core::ConfigDocument& document,
     DevRenderTuning fallback) {
+    fallback.sky.enabled = boolOr(document, "sky.enabled", fallback.sky.enabled);
+    fallback.sky.zenithColor = colorOr(document, "sky.zenith_color", fallback.sky.zenithColor);
+    fallback.sky.horizonColor = colorOr(document, "sky.horizon_color", fallback.sky.horizonColor);
+    fallback.sky.groundColor = colorOr(document, "sky.ground_color", fallback.sky.groundColor);
+    fallback.sky.horizonHeight = std::clamp(
+        numberOr(document, "sky.horizon_height", fallback.sky.horizonHeight),
+        0.05F,
+        0.95F);
+    fallback.sky.gradientPower = std::clamp(
+        numberOr(document, "sky.gradient_power", fallback.sky.gradientPower),
+        0.20F,
+        5.0F);
+    fallback.sky.exposure = std::clamp(
+        numberOr(document, "sky.exposure", fallback.sky.exposure),
+        0.0F,
+        4.0F);
+
     fallback.lighting.sunDirection = normalizedOr(
         vectorOr(document, "lighting.sun_direction", fallback.lighting.sunDirection),
         fallback.lighting.sunDirection);

@@ -50,6 +50,8 @@ struct DevRangePlayerRenderState final {
 };
 
 struct DevRangeRenderSceneStats final {
+    bool skyPassEnabled = false;
+    std::size_t skyFallbackMeshCount = 0;
     std::size_t worldBoxCount = 0;
     std::size_t meshInstanceCount = 0;
     std::size_t worldLineCount = 0;
@@ -57,6 +59,7 @@ struct DevRangeRenderSceneStats final {
     std::size_t firstPersonMeshCount = 0;
     std::size_t firstPersonBodyPrimitiveCount = 0;
     std::size_t targetMeshCount = 0;
+    std::size_t materialFallbackProfileCount = 0;
 };
 
 struct DevRangeRenderSceneDesc final {
@@ -65,6 +68,15 @@ struct DevRangeRenderSceneDesc final {
     const GreyboxCollisionResult* collision = nullptr;
     const MeshResourceLookup* meshResources = nullptr;
     DevRangePlayerRenderState player{};
+    novacore::render::RenderSky sky{
+        true,
+        {0.07F, 0.18F, 0.36F, 1.0F},
+        {0.45F, 0.61F, 0.76F, 1.0F},
+        {0.025F, 0.035F, 0.045F, 1.0F},
+        0.46F,
+        1.45F,
+        1.08F,
+    };
     novacore::render::RenderWorldLighting lighting{
         {0.30F, 0.88F, 0.34F},
         0.34F,

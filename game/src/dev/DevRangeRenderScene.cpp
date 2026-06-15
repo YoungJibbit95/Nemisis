@@ -105,6 +105,39 @@ struct FirstPersonBodyMount final {
     return {0.80F, 0.80F, 0.80F, 1.0F};
 }
 
+[[nodiscard]] bool startsWith(std::string_view value, std::string_view prefix) {
+    return value.size() >= prefix.size() && value.substr(0, prefix.size()) == prefix;
+}
+
+[[nodiscard]] novacore::render::RenderMaterialFallback materialFallbackForAsset(std::string_view assetId) {
+    if (startsWith(assetId, "wpn_project_")) {
+        return {1.22F, 1.45F, 1.10F, 0.86F};
+    }
+    if (startsWith(assetId, "wpn_a2_")) {
+        return {1.12F, 1.28F, 1.06F, 0.92F};
+    }
+    if (startsWith(assetId, "wpn_a1_") || startsWith(assetId, "wpn_")) {
+        return {1.06F, 1.16F, 1.04F, 0.94F};
+    }
+    if (startsWith(assetId, "chr_project_")) {
+        return {0.86F, 0.52F, 0.95F, 0.82F};
+    }
+    if (startsWith(assetId, "chr_a2_") || startsWith(assetId, "chr_a1_") || startsWith(assetId, "chr_")) {
+        return {0.92F, 0.62F, 0.98F, 0.88F};
+    }
+    if (startsWith(assetId, "env_") || startsWith(assetId, "map_") || startsWith(assetId, "prop_")) {
+        return {0.78F, 0.42F, 0.92F, 0.74F};
+    }
+    return {};
+}
+
+[[nodiscard]] bool usesMaterialFallbackProfile(const novacore::render::RenderMaterialFallback& material) {
+    return material.rimScale != 1.0F ||
+        material.specularScale != 1.0F ||
+        material.contrastScale != 1.0F ||
+        material.saturationScale != 1.0F;
+}
+
 [[nodiscard]] bool targetEliminated(const DevRangeRenderSceneDesc& desc) {
     const auto* lane = desc.targetRange == nullptr ? nullptr : activeTargetLane(*desc.targetRange);
     return lane != nullptr && lane->target.eliminated;
@@ -621,6 +654,8 @@ DevRangeRenderSceneStats DevRangeRenderSceneBuilder::append(
         return stats;
     }
 
+    frame.sky = desc.sky;
+    stats.skyPassEnabled = desc.sky.enabled;
     frame.lighting = desc.lighting;
     frame.camera3D.enabled = true;
     frame.camera3D.position = playerEyePosition(desc);
@@ -635,7 +670,7 @@ DevRangeRenderSceneStats DevRangeRenderSceneBuilder::append(
 
     const auto targetLaneCount = desc.targetRange == nullptr ? 0U : desc.targetRange->lanes.size();
     frame.worldBoxes.reserve(frame.worldBoxes.size() + desc.greyboxWorld->primitives.size() + targetLaneCount + 21U);
-    frame.worldMeshes.reserve(frame.worldMeshes.size() + 14U + (targetLaneCount * 2U));
+    frame.worldMeshes.reserve(frame.worldMeshes.size() + 13U + (targetLaneCount * 2U));
 
     appendSkyboxMesh(frame, desc, stats);
     appendWorldGeometry(frame, desc, stats);
@@ -681,6 +716,7 @@ bool DevRangeRenderSceneBuilder::appendMesh(
         return false;
     }
 
+    const auto material = materialFallbackForAsset(assetId);
     frame.worldMeshes.push_back(novacore::render::RenderMesh3D{
         handle,
         std::string(assetId),
@@ -690,8 +726,12 @@ bool DevRangeRenderSceneBuilder::appendMesh(
         pitchDegrees,
         rollDegrees,
         color,
+        material,
     });
     ++stats.meshInstanceCount;
+    if (usesMaterialFallbackProfile(material)) {
+        ++stats.materialFallbackProfileCount;
+    }
     return true;
 }
 
@@ -719,9 +759,13 @@ void DevRangeRenderSceneBuilder::appendSkyboxMesh(
     novacore::render::RenderFrameInfo& frame,
     const DevRangeRenderSceneDesc& desc,
     DevRangeRenderSceneStats& stats) const {
+    if (desc.sky.enabled) {
+        return;
+    }
+
     const auto eye = playerEyePosition(desc);
     constexpr float kSkyboxScale = 0.16F;
-    (void)appendMesh(
+    if (appendMesh(
         frame,
         desc,
         "env_project_skybox1",
@@ -729,7 +773,9 @@ void DevRangeRenderSceneBuilder::appendSkyboxMesh(
         {kSkyboxScale, kSkyboxScale, kSkyboxScale},
         0.0F,
         {0.82F, 0.90F, 1.0F, 1.0F},
-        stats);
+        stats)) {
+        ++stats.skyFallbackMeshCount;
+    }
 }
 
 void DevRangeRenderSceneBuilder::appendStaticShowcaseMeshes(

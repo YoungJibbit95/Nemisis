@@ -168,24 +168,23 @@ void testDevRangeRenderSceneBuildsExpectedSubmissions() {
     expect(frame.lighting.sunDirection.y > 0.80F, "dev range lighting points from above");
     expect(frame.lighting.fillIntensity > 0.20F, "dev range lighting applies fill light for imported meshes");
     expect(frame.lighting.rimIntensity > 0.20F, "dev range lighting applies rim light for mesh readability");
+    expect(frame.sky.enabled, "dev range render scene enables renderer sky pass");
+    expect(stats.skyPassEnabled, "dev range render scene reports active sky pass");
 
     expect(!world.primitives.empty(), "greybox world fixture has primitives");
     expect(stats.worldBoxCount == (world.primitives.size() - 1U) + targetRange.lanes.size() + 17U, "dev range render scene emits world, lane, asset stage, pickup pads, and first-person rig primitives");
     expect(frame.worldBoxes.size() == stats.worldBoxCount, "world box count matches frame");
-    expect(stats.meshInstanceCount == 36, "dev range render scene emits skybox, static, player body, target lane, imported Project asset, A2 showcase, weapon, and arms without first-person T-pose mesh");
-    expect(frame.worldMeshes.size() == 36, "frame receives all mesh instances");
+    expect(stats.meshInstanceCount == 35, "dev range render scene emits static, player body, target lane, imported Project asset, A2 showcase, weapon, and arms without first-person T-pose mesh");
+    expect(frame.worldMeshes.size() == 35, "frame receives all mesh instances");
+    expect(stats.skyFallbackMeshCount == 0, "dev range render scene skips legacy skybox mesh while sky pass is active");
     expect(stats.skippedMeshInstanceCount == 0, "dev range render scene skips no mesh when lookup is complete");
+    expect(stats.materialFallbackProfileCount == stats.meshInstanceCount, "dev range render scene assigns material fallback profiles to submitted GLB meshes");
     expect(stats.firstPersonMeshCount == 2, "dev range render scene emits weapon and one arms viewmodel mesh for first-person");
     expect(stats.firstPersonBodyPrimitiveCount == 4, "first-person rig submits hands and forearms as camera-linked body primitives");
     expect(stats.targetMeshCount == targetRange.lanes.size(), "dev range render scene emits one actor mesh per target lane");
     expect(stats.worldLineCount == 3, "dev range render scene emits aim, ground-normal, and contact lines");
     expect(frame.worldLines.size() == 3, "frame receives world debug lines");
 
-    const auto firstMesh = frame.worldMeshes.front();
-    expect(firstMesh.assetId == "env_project_skybox1", "first dev mesh is the project skybox background");
-    expect(firstMesh.mesh.isValid(), "first dev mesh has a valid renderer resource handle");
-    expect(firstMesh.scale.x > 0.15F && firstMesh.scale.x < 0.17F, "project skybox GLB is scaled into the camera far plane");
-    expect(firstMesh.position.y < frame.camera3D.position.y - 7.5F, "project skybox is lowered so imported water/ground planes stay below the camera");
     expect(findMesh(frame, "env_test_arena_kit_01").has_value(), "dev range render scene still submits the arena kit");
 
     const auto firstPersonRifle = findLastMesh(frame, "wpn_project_rifle_m4a1");
@@ -195,6 +194,7 @@ void testDevRangeRenderSceneBuildsExpectedSubmissions() {
         expect(firstPersonRifle->yawDegrees > 31.0F && firstPersonRifle->yawDegrees < 33.0F, "first-person rifle uses normalized Project asset forward axis");
         expect(std::abs(firstPersonRifle->rollDegrees) < 5.0F, "first-person rifle stays upright without legacy import roll correction");
         expect(firstPersonRifle->scale.x > 0.9F && firstPersonRifle->scale.x < 1.1F, "first-person rifle uses normalized Project asset scale");
+        expect(firstPersonRifle->material.specularScale > 1.30F, "first-person rifle uses a weapon material fallback profile");
     }
 }
 
@@ -299,9 +299,12 @@ void testDevRangeRenderScenePlacesA2AssetsInSpawnView() {
             player,
         });
 
-    expect(stats.meshInstanceCount == 35, "spawn view scene emits expected meshes without the old first-person fullbody T-pose mesh");
+    expect(stats.meshInstanceCount == 34, "spawn view scene emits expected meshes without the old first-person fullbody T-pose mesh");
     expect(stats.skippedMeshInstanceCount == 0, "spawn view scene has no skipped A2 meshes");
+    expect(stats.skyPassEnabled, "spawn view uses renderer sky pass");
+    expect(frame.sky.enabled, "spawn view frame carries sky pass data");
     expect(stats.firstPersonBodyPrimitiveCount == 4, "spawn view keeps only hands and forearms as first-person body primitives");
+    expect(stats.materialFallbackProfileCount == stats.meshInstanceCount, "spawn view assigns fallback material response to imported meshes");
 
     const auto operatorMesh = findMesh(frame, "chr_a2_pilot_operator_01");
     const auto carbineMesh = findMesh(frame, "wpn_a2_blackout_carbine_01");
@@ -309,7 +312,6 @@ void testDevRangeRenderScenePlacesA2AssetsInSpawnView() {
     const auto sidearmMesh = findMesh(frame, "wpn_a2_striker_sidearm_01");
     const auto heroMesh = findMesh(frame, "prop_a2_range_hero_01");
     const auto projectCharacterMesh = findMesh(frame, "chr_project_male1");
-    const auto projectSkyboxMesh = findMesh(frame, "env_project_skybox1");
     const auto projectRifleMesh = findMesh(frame, "wpn_project_rifle_m4a1");
     const auto projectSmgMesh = findMesh(frame, "wpn_project_smg_fr17");
     const auto projectSidearmMesh = findMesh(frame, "wpn_project_sidearm_glock19");
@@ -320,7 +322,7 @@ void testDevRangeRenderScenePlacesA2AssetsInSpawnView() {
     expect(sidearmMesh.has_value(), "A2 sidearm mesh is submitted");
     expect(heroMesh.has_value(), "A2 hero prop mesh is submitted");
     expect(projectCharacterMesh.has_value(), "Project character mesh is submitted");
-    expect(projectSkyboxMesh.has_value(), "Project skybox mesh is submitted");
+    expect(!findMesh(frame, "env_project_skybox1").has_value(), "Project skybox GLB mesh is replaced by renderer sky pass");
     expect(projectRifleMesh.has_value(), "Project rifle mesh is submitted");
     expect(projectSmgMesh.has_value(), "Project SMG mesh is submitted");
     expect(projectSidearmMesh.has_value(), "Project sidearm mesh is submitted");
@@ -339,11 +341,9 @@ void testDevRangeRenderScenePlacesA2AssetsInSpawnView() {
     if (heroMesh.has_value()) {
         expect(heroMesh->position.z > world.playerSpawn.z + 7.5F, "A2 hero prop anchors the visible asset stage");
     }
-    if (projectSkyboxMesh.has_value()) {
-        expect(projectSkyboxMesh->scale.x > 0.15F && projectSkyboxMesh->scale.x < 0.17F, "Project skybox GLB is normalized for the camera far plane");
-        expect(projectSkyboxMesh->position.y < frame.camera3D.position.y - 7.0F, "Project skybox render origin keeps imported low planes under the camera");
-    }
     if (projectCharacterMesh.has_value() && projectRifleMesh.has_value() && projectSmgMesh.has_value() && projectSidearmMesh.has_value()) {
+        expect(projectCharacterMesh->material.saturationScale < 0.90F, "Project character uses a desaturated fabric/body fallback material profile");
+        expect(projectRifleMesh->material.specularScale > 1.30F, "Project rifle uses a boosted weapon fallback material profile");
         expect(
             std::any_of(
                 frame.worldMeshes.begin(),
@@ -470,12 +470,42 @@ void testDevRangeRenderSceneCountsMissingMeshHandles() {
             player,
         });
 
-    expect(stats.meshInstanceCount == 31, "dev range render scene still emits available skybox, static, A2, Project, and target lane meshes");
-    expect(frame.worldMeshes.size() == 31, "frame mesh count drops missing weapon, arms, and first-person T-pose body handles");
+    expect(stats.meshInstanceCount == 30, "dev range render scene still emits available static, A2, Project, and target lane meshes");
+    expect(frame.worldMeshes.size() == 30, "frame mesh count drops missing weapon, arms, and first-person T-pose body handles");
     expect(stats.skippedMeshInstanceCount == 6, "dev range render scene counts missing showcase, primary, fallback, and first-person arm handles");
+    expect(stats.materialFallbackProfileCount == stats.meshInstanceCount, "missing handles do not count material fallback profiles for skipped meshes");
     expect(stats.firstPersonMeshCount == 0, "first-person mesh stats reports no valid arms or weapon when those handles are missing");
     expect(stats.firstPersonBodyPrimitiveCount == 4, "first-person rig primitives still render hands and forearms when mesh handles are missing");
     expect(stats.worldLineCount == 1, "dev range render scene still emits aim line without collision sample");
+}
+
+void testDevRangeRenderSceneKeepsSkyboxMeshFallbackWhenSkyPassDisabled() {
+    novacore::render::Renderer renderer;
+    auto lookup = registerSceneMeshes(renderer);
+    const auto world = nemisis::dev::createDevRangeGreyboxWorld();
+    auto targetRange = nemisis::dev::makeDefaultDevTargetRange();
+
+    nemisis::dev::DevRangePlayerRenderState player{};
+    player.position = world.playerSpawn;
+    player.view.yawDegrees = 90.0F;
+
+    nemisis::dev::DevRangeRenderSceneDesc desc{
+        &world,
+        &targetRange,
+        nullptr,
+        &lookup,
+        player,
+    };
+    desc.sky.enabled = false;
+
+    novacore::render::RenderFrameInfo frame{};
+    const auto stats = nemisis::dev::DevRangeRenderSceneBuilder{}.append(frame, desc);
+
+    expect(!frame.sky.enabled, "disabled sky pass propagates to the render frame");
+    expect(!stats.skyPassEnabled, "disabled sky pass is reported in scene stats");
+    expect(stats.skyFallbackMeshCount == 1, "legacy skybox mesh is used as a controlled fallback");
+    expect(findMesh(frame, "env_project_skybox1").has_value(), "legacy Project skybox mesh is submitted only as fallback");
+    expect(stats.materialFallbackProfileCount == stats.meshInstanceCount, "fallback sky mesh still receives material fallback profile data");
 }
 
 void testDevRangeRenderSceneHandlesMissingInputs() {
@@ -506,6 +536,7 @@ void testDevRangeRenderSceneCanDisableDebugLines() {
             &targetRange,
             &collision,
             &lookup,
+            {},
             {},
             {},
             false,
@@ -638,6 +669,7 @@ int main() {
     testDevRangeRenderSceneHidesLocalWorldBodyWhenCameraRigIsActive();
     testDevRangeRenderSceneRigsFirstPersonBodyForLookDown();
     testDevRangeRenderSceneCountsMissingMeshHandles();
+    testDevRangeRenderSceneKeepsSkyboxMeshFallbackWhenSkyPassDisabled();
     testDevRangeRenderSceneHandlesMissingInputs();
     testDevRangeRenderSceneCanDisableDebugLines();
     testDevRangeRenderSceneDrawsMantleCandidateDebugLines();

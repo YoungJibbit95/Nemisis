@@ -61,7 +61,7 @@ These Project GLBs have been moved into `assets/project_assets`, cataloged, boun
 | `wpn_project_smg_fr17` | `assets/project_assets/weapon_smg_fr17.glb` | SMG first-person placeholder, direct-switch SMG, pickup rack |
 | `wpn_project_sidearm_glock19` | `assets/project_assets/weapon_sidearm_glock19.glb` | Sidearm first-person placeholder, direct-switch sidearm, pickup rack |
 | `wpn_project_sidearm_p320` | `assets/project_assets/weapon_sidearm_p320.glb` | Showcase rack sidearm |
-| `env_project_skybox1` | `assets/project_assets/skybox1.glb` | First-pass Dev Range sky environment mesh |
+| `env_project_skybox1` | `assets/project_assets/skybox1.glb` | Disabled-sky fallback mesh; normal Dev Range sky now uses NovaCore's renderer sky pass |
 
 ## Ready With Notes
 
@@ -94,7 +94,7 @@ Current runtime bridge:
 - These proxies make the current smoke-test scene playable, but they are not a replacement for authored `col_` nodes or collision metadata in production assets.
 - The game asset catalog now resolves Project asset IDs from committed repo-local paths under `assets/project_assets`. Future asset-agent work should add authored sockets/collision/animation data instead of relying on runtime placement heuristics.
 - Current Project preview IDs are `chr_project_male1`, `wpn_project_rifle_m4a1`, `wpn_project_rifle_afr120`, `wpn_project_rifle_ncar`, `wpn_project_smg_fr17`, `wpn_project_sidearm_glock19`, `wpn_project_sidearm_p320`, and `env_project_skybox1`.
-- Project assets `chr_project_male1`, `wpn_project_rifle_m4a1`, `wpn_project_rifle_afr120`, `wpn_project_rifle_ncar`, `wpn_project_smg_fr17`, `wpn_project_sidearm_glock19`, and `wpn_project_sidearm_p320` are runtime-active but need a future non-destructive normalization pass with stable filename stems, `socket_muzzle`/grip sockets for weapons, root/camera/weapon sockets for the character, and optional `col_` proxies. `env_project_skybox1` is runtime-active as a temporary large GLB sky mesh until NovaCore gets a dedicated cubemap/skybox pass.
+- Project assets `chr_project_male1`, `wpn_project_rifle_m4a1`, `wpn_project_rifle_afr120`, `wpn_project_rifle_ncar`, `wpn_project_smg_fr17`, `wpn_project_sidearm_glock19`, and `wpn_project_sidearm_p320` are runtime-active but need a future non-destructive normalization pass with stable filename stems, `socket_muzzle`/grip sockets for weapons, root/camera/weapon sockets for the character, and optional `col_` proxies. `env_project_skybox1` remains cataloged as a fallback for disabled sky-pass testing, while normal Dev Range rendering now uses NovaCore's renderer sky pass.
 
 ## Import Metadata Contract
 

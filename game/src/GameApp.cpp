@@ -667,6 +667,7 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
                 &devSandbox_.latestSample().collision,
                 &devMeshResources_,
                 currentPlayerRenderState(),
+                renderTuning_.sky,
                 renderTuning_.lighting,
                 renderTuning_.showWorldDebugLines && settings_.video.showDebugWorldLines,
                 renderTuning_.verticalFovDegrees,

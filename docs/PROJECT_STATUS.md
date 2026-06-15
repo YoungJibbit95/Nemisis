@@ -1,5 +1,13 @@
 # Nemisis Project Status
 
+## Latest Block - Renderer Sky Pass And Dev Range Sky Fallback Cleanup
+
+- Wired a new NovaCore renderer-owned sky pass into the Dev Range render scene so the sky is submitted before depth-tested world geometry instead of relying on the broken large GLB skybox mesh.
+- Added configurable Dev Range sky tuning for enable state, zenith/horizon/ground colors, horizon height, gradient power, and exposure through `configs/render/dev_range_render.json`.
+- Kept `env_project_skybox1` as an explicit fallback mesh only when the renderer sky pass is disabled, with scene stats and regression coverage for both paths.
+- Added per-mesh material fallback profiles for imported weapons, characters, environments, and props so the current descriptor-free GLB path can tune rim/specular/contrast/saturation response per asset family.
+- Updated the Assets debug page telemetry so sky draws, world boxes, mesh submissions, material fallback profile counts, and upload queue state can be checked from the compact in-game overlay.
+
 ## Latest Block - Timed Dev Range Drills, TTK Panel Data, And Recoil-Control Scoring
 
 - Added a timed Dev Range drill layer on top of the existing multi-lane target range with a 60-second active window, score, best score, hits, misses, eliminations, perfect lane clears, and completion feedback.

@@ -1046,9 +1046,18 @@ void renderDebugOverlay(
         addHudMetric(frame, layout, x + 14.0F, y + 108.0F, "FRAME", std::to_string(backendFrameStats.submittedFrames));
         addHudMetric(frame, layout, x + 190.0F, y + 48.0F, "MESH CPU", std::to_string(meshStats.registeredResources) + "/" + std::to_string(assetSummary.requiredAssetCount));
         addHudMetric(frame, layout, x + 190.0F, y + 68.0F, "GPU", std::to_string(meshStats.residentResources) + "r " + std::to_string(meshStats.pendingUploadResources) + "p");
-        addHudMetric(frame, layout, x + 190.0F, y + 88.0F, "DRAW", std::to_string(backendFrameStats.lastWorldBoxCount) + "B " + std::to_string(backendFrameStats.lastWorldMeshCount) + "M");
+        addHudMetric(
+            frame,
+            layout,
+            x + 190.0F,
+            y + 88.0F,
+            "DRAW",
+            std::to_string(backendFrameStats.lastSkyDrawCount) + "S " +
+                std::to_string(backendFrameStats.lastWorldBoxCount) + "B " +
+                std::to_string(backendFrameStats.lastWorldMeshCount) + "M");
         addHudMetric(frame, layout, x + 190.0F, y + 108.0F, "UI", std::to_string(backendFrameStats.lastUiRectCount) + "R " + std::to_string(backendFrameStats.lastUiTextCount) + "T");
-        addHudMetric(frame, layout, x + 190.0F, y + 128.0F, "QUEUE", std::to_string(meshStats.uploadQueueLength + queuedAssets));
+        addHudMetric(frame, layout, x + 190.0F, y + 128.0F, "MAT", std::to_string(sceneStats.materialFallbackProfileCount) + "f");
+        addHudMetric(frame, layout, x + 14.0F, y + 128.0F, "QUEUE", std::to_string(meshStats.uploadQueueLength + queuedAssets));
         break;
     }
 }

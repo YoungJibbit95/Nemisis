@@ -166,10 +166,13 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [x] Verify Nemisis 33/33 CTest after character animation backbone and first-person viewmodel rig block.
 - [x] Add timed Dev Range drill state with score, best score, lane breakdowns, measured TTK, recoil-control scoring, HUD panel data, sandbox telemetry, and regression tests.
 - [x] Verify Nemisis Debug build and 33/33 CTest after timed Dev Range drill, TTK, and recoil-control scoring work.
+- [x] Add a renderer-owned NovaCore sky pass and switch Dev Range away from the broken large GLB skybox path.
+- [x] Keep the old Project skybox GLB as an explicit disabled-sky fallback instead of a normal scene mesh.
+- [x] Add per-mesh material fallback response profiles for Project/A1/A2 weapons, characters, environment meshes, and asset debug telemetry.
 
 ## Doing
 
-- [ ] Expand material fallback controls, validation labels, and renderer resize stress coverage.
+- [ ] Expand renderer validation labels and resize stress coverage.
 - [ ] Keep UI moving from clickable Vulkan primitive path toward SDF/MSDF text, clipping, batching, focus graph, and richer vector drawing.
 - [ ] Start texture/material binding for A1/A2 GLBs so imported assets look less like tinted blockouts.
 - [ ] Extend Dev Range drills with selectable drill variants, recoil graphs, richer lane awards, and future server validation hooks.
@@ -187,7 +190,7 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [ ] Wall-run camera feel, wall detach rules beyond the first cooldown, and surface eligibility tuning.
 - [ ] Convert movement-tech debug visuals into authored first-person and third-person animation clips.
 - [ ] Promote Project asset import-axis data from hard-coded dev mounts into asset metadata/cooker outputs with socket validation.
-- [ ] Add a dedicated NovaCore skybox/cubemap pass instead of rendering sky as a large regular GLB mesh.
+- [ ] Upgrade the new NovaCore sky pass from configurable gradient to authored cubemap/atmosphere inputs.
 - [ ] Shared server validation for greybox collision and movement corrections.
 - [ ] Feed camera/weapon telemetry into prediction-safe replay snapshots for future reconciliation debugging.
 

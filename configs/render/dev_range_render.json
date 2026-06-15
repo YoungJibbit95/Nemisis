@@ -1,5 +1,26 @@
 {
   "profile": "dev_range_readable_vulkan",
+  "sky": {
+    "enabled": true,
+    "zenith_color": {
+      "x": 0.07,
+      "y": 0.18,
+      "z": 0.36
+    },
+    "horizon_color": {
+      "x": 0.45,
+      "y": 0.61,
+      "z": 0.76
+    },
+    "ground_color": {
+      "x": 0.025,
+      "y": 0.035,
+      "z": 0.045
+    },
+    "horizon_height": 0.46,
+    "gradient_power": 1.45,
+    "exposure": 1.08
+  },
   "lighting": {
     "sun_direction": {
       "x": 0.3,
