@@ -857,11 +857,20 @@ void renderDevRangeHud(
         layout.safeInsetY + 12.0F,
         0.92F,
         palette::TextSecondary,
-        "DRILL " + std::string(dev::devRangeDrillStatusName(sample.rangeSession.drill.status)));
+        "DRILL " + std::string(dev::devRangeDrillVariantName(sample.rangeSession.drill.variant)) +
+            " " + std::string(dev::devRangeDrillStatusName(sample.rangeSession.drill.status)));
     addHudMetric(frame, layout, 404.0F, layout.safeInsetY + 33.0F, "TIME", fixedOne(sample.rangeSession.drill.timeRemainingSeconds));
     addHudMetric(frame, layout, 528.0F, layout.safeInsetY + 33.0F, "SCORE", std::to_string(sample.rangeSession.drill.score));
     addHudMetric(frame, layout, 676.0F, layout.safeInsetY + 33.0F, "TTK", secondsOrDash(sample.rangeSession.drill.latestTtkSeconds));
     addHudMetric(frame, layout, 786.0F, layout.safeInsetY + 33.0F, "CTRL", percent(sample.rangeSession.drill.recoilControlScore / 100.0F));
+    addHudText(
+        frame,
+        layout,
+        786.0F,
+        layout.safeInsetY + 14.0F,
+        0.70F,
+        palette::TextSecondary,
+        std::string(dev::devRangeDrillObjectiveLabel(sample.rangeSession.drill.variant)));
     addHudProgress(
         frame,
         layout,

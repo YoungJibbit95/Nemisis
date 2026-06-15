@@ -1,5 +1,6 @@
 #include "nemisis/dev/DevRangeRenderScene.hpp"
 #include "nemisis/dev/GreyboxWorld.hpp"
+#include "nemisis/player/PlayerFirstPersonRig.hpp"
 
 #include "novacore/assets/GltfDocument.hpp"
 
@@ -181,6 +182,7 @@ void testDevRangeRenderSceneBuildsExpectedSubmissions() {
     expect(stats.materialFallbackProfileCount == stats.meshInstanceCount, "dev range render scene assigns material fallback profiles to submitted GLB meshes");
     expect(stats.firstPersonMeshCount == 2, "dev range render scene emits weapon and one arms viewmodel mesh for first-person");
     expect(stats.firstPersonBodyPrimitiveCount == 4, "first-person rig submits hands and forearms as camera-linked body primitives");
+    expect(stats.firstPersonSocketCount == nemisis::player::kFirstPersonRigSocketCount, "first-person rig exposes all camera, hand, weapon, muzzle, and ejection sockets");
     expect(stats.targetMeshCount == targetRange.lanes.size(), "dev range render scene emits one actor mesh per target lane");
     expect(stats.worldLineCount == 3, "dev range render scene emits aim, ground-normal, and contact lines");
     expect(frame.worldLines.size() == 3, "frame receives world debug lines");
@@ -422,6 +424,7 @@ void testDevRangeRenderSceneRigsFirstPersonBodyForLookDown() {
     const auto firstPersonWeapon = findLastMesh(frame, "wpn_project_rifle_m4a1");
     expect(stats.firstPersonMeshCount == 2, "look-down first-person rig keeps arms and weapon mesh submissions");
     expect(stats.firstPersonBodyPrimitiveCount >= 8, "look-down first-person rig submits torso, pelvis, hands, and forearms as body primitives");
+    expect(stats.firstPersonSocketCount == nemisis::player::kFirstPersonRigSocketCount, "look-down first-person rig keeps socket map live for camera-linked viewmodel placement");
     expect(firstPersonArms.has_value(), "look-down first-person arms mesh is submitted");
     expect(firstPersonWeapon.has_value(), "look-down first-person weapon mesh is submitted");
     expect(

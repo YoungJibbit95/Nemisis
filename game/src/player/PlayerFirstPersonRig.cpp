@@ -153,6 +153,27 @@ void setJoint(
     };
 }
 
+void setSocket(
+    FirstPersonRigFrame& frame,
+    FirstPersonRigSocket socket,
+    FirstPersonRigJoint joint,
+    novacore::math::Vec3 localPosition,
+    novacore::math::Vec3 worldPosition,
+    float yawDegrees,
+    float pitchDegrees,
+    float rollDegrees) {
+    frame.sockets[static_cast<std::size_t>(socket)] = FirstPersonRigSocketPose{
+        socket,
+        joint,
+        localPosition,
+        worldPosition,
+        yawDegrees,
+        pitchDegrees,
+        rollDegrees,
+        true,
+    };
+}
+
 void buildBodyJoints(
     FirstPersonRigFrame& frame,
     const FirstPersonRigInput& input,
@@ -396,12 +417,48 @@ std::string_view firstPersonRigJointName(FirstPersonRigJoint joint) {
     return "unknown";
 }
 
+std::string_view firstPersonRigSocketName(FirstPersonRigSocket socket) {
+    switch (socket) {
+    case FirstPersonRigSocket::Camera:
+        return "camera";
+    case FirstPersonRigSocket::BodyRoot:
+        return "body_root";
+    case FirstPersonRigSocket::WeaponRoot:
+        return "weapon_root";
+    case FirstPersonRigSocket::Muzzle:
+        return "muzzle";
+    case FirstPersonRigSocket::EjectionPort:
+        return "ejection_port";
+    case FirstPersonRigSocket::RightGrip:
+        return "right_grip";
+    case FirstPersonRigSocket::LeftGrip:
+        return "left_grip";
+    case FirstPersonRigSocket::RightHand:
+        return "right_hand";
+    case FirstPersonRigSocket::LeftHand:
+        return "left_hand";
+    case FirstPersonRigSocket::SupportElbow:
+        return "support_elbow";
+    case FirstPersonRigSocket::Count:
+        break;
+    }
+    return "unknown";
+}
+
 const FirstPersonJointPose& firstPersonRigJoint(
     const FirstPersonRigFrame& frame,
     FirstPersonRigJoint joint) {
     return frame.joints[std::min(
         static_cast<std::size_t>(joint),
         kFirstPersonRigJointCount - 1U)];
+}
+
+const FirstPersonRigSocketPose& firstPersonRigSocket(
+    const FirstPersonRigFrame& frame,
+    FirstPersonRigSocket socket) {
+    return frame.sockets[std::min(
+        static_cast<std::size_t>(socket),
+        kFirstPersonRigSocketCount - 1U)];
 }
 
 FirstPersonRigFrame evaluateFirstPersonRig(const FirstPersonRigInput& input) {
@@ -523,7 +580,19 @@ FirstPersonRigFrame evaluateFirstPersonRig(const FirstPersonRigInput& input) {
     const auto muzzleLocal = sidearm
         ? makeVec(0.0F, 0.015F, 0.46F)
         : makeVec(0.0F, 0.028F, 0.78F);
+    const auto ejectionPortLocal = sidearm
+        ? makeVec(0.070F, 0.030F, 0.22F)
+        : makeVec(0.105F, 0.052F, 0.34F);
+    const auto rightGripLocal = sidearm
+        ? makeVec(0.050F, -0.020F, 0.070F)
+        : makeVec(0.060F, -0.030F, 0.145F);
+    const auto leftGripLocal = sidearm
+        ? makeVec(-0.055F, -0.035F, -0.045F)
+        : makeVec(-0.090F, -0.055F, 0.380F);
     const auto muzzlePosition = weaponPosition + toWorld(cameraBasis, muzzleLocal);
+    const auto ejectionPortPosition = weaponPosition + toWorld(cameraBasis, ejectionPortLocal);
+    const auto rightGripPosition = weaponPosition + toWorld(cameraBasis, rightGripLocal);
+    const auto leftGripPosition = weaponPosition + toWorld(cameraBasis, leftGripLocal);
     setJoint(
         frame,
         FirstPersonRigJoint::WeaponRoot,
@@ -543,6 +612,97 @@ FirstPersonRigFrame evaluateFirstPersonRig(const FirstPersonRigInput& input) {
         weaponPitch,
         weaponRoll);
     frame.muzzle = makeAttachment(muzzlePosition, {0.06F, 0.06F, 0.06F}, weaponYaw, weaponPitch, weaponRoll);
+
+    setSocket(
+        frame,
+        FirstPersonRigSocket::Camera,
+        FirstPersonRigJoint::Root,
+        {},
+        input.cameraPosition,
+        input.view.yawDegrees,
+        input.view.pitchDegrees,
+        input.cameraRollDegrees);
+    setSocket(
+        frame,
+        FirstPersonRigSocket::BodyRoot,
+        FirstPersonRigJoint::Pelvis,
+        input.bodyMount.hipOffset,
+        bodyPosition,
+        frame.body.yawDegrees,
+        frame.body.pitchDegrees,
+        frame.body.rollDegrees);
+    setSocket(
+        frame,
+        FirstPersonRigSocket::WeaponRoot,
+        FirstPersonRigJoint::WeaponRoot,
+        {},
+        weaponPosition,
+        weaponYaw,
+        weaponPitch,
+        weaponRoll);
+    setSocket(
+        frame,
+        FirstPersonRigSocket::Muzzle,
+        FirstPersonRigJoint::Muzzle,
+        muzzleLocal,
+        muzzlePosition,
+        weaponYaw,
+        weaponPitch,
+        weaponRoll);
+    setSocket(
+        frame,
+        FirstPersonRigSocket::EjectionPort,
+        FirstPersonRigJoint::WeaponRoot,
+        ejectionPortLocal,
+        ejectionPortPosition,
+        weaponYaw,
+        weaponPitch,
+        weaponRoll);
+    setSocket(
+        frame,
+        FirstPersonRigSocket::RightGrip,
+        FirstPersonRigJoint::RightHand,
+        rightGripLocal,
+        rightGripPosition,
+        armsYaw,
+        armsPitch,
+        armsRoll);
+    setSocket(
+        frame,
+        FirstPersonRigSocket::LeftGrip,
+        FirstPersonRigJoint::LeftHand,
+        leftGripLocal,
+        leftGripPosition,
+        armsYaw,
+        armsPitch,
+        armsRoll);
+    setSocket(
+        frame,
+        FirstPersonRigSocket::RightHand,
+        FirstPersonRigJoint::RightHand,
+        firstPersonRigJoint(frame, FirstPersonRigJoint::RightHand).localPosition,
+        frame.rightHand.position,
+        armsYaw,
+        armsPitch,
+        armsRoll);
+    setSocket(
+        frame,
+        FirstPersonRigSocket::LeftHand,
+        FirstPersonRigJoint::LeftHand,
+        firstPersonRigJoint(frame, FirstPersonRigJoint::LeftHand).localPosition,
+        frame.leftHand.position,
+        armsYaw,
+        armsPitch,
+        armsRoll);
+    setSocket(
+        frame,
+        FirstPersonRigSocket::SupportElbow,
+        FirstPersonRigJoint::LeftForearm,
+        firstPersonRigJoint(frame, FirstPersonRigJoint::LeftForearm).localPosition,
+        frame.supportElbow.position,
+        armsYaw,
+        armsPitch,
+        armsRoll);
 
     return frame;
 }

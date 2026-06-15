@@ -106,6 +106,7 @@ novacore::platform::InputActionMap createDefaultActionMap() {
     bindButton(actionMap, actions::SelectControl, keyboard(key_codes::Digit3));
     bindButton(actionMap, actions::SelectMainMenu, keyboard(key_codes::Escape));
     bindButton(actionMap, actions::ResetRange, keyboard(key_codes::P));
+    bindButton(actionMap, actions::CycleDrillVariant, keyboard(key_codes::V));
     bindAxis(actionMap, actions::LookRight, mouseAxis(mouse_axes::X), 0.1F, 0.001F);
     bindAxis(actionMap, actions::LookUp, mouseAxis(mouse_axes::Y), -0.1F, 0.001F);
 
@@ -127,6 +128,7 @@ novacore::platform::InputActionMap createDefaultActionMap() {
     bindButton(actionMap, actions::SwitchWeaponPrimary, gamepadButton(gamepad_buttons::DPadUp));
     bindButton(actionMap, actions::SwitchWeaponSmg, gamepadButton(gamepad_buttons::DPadLeft));
     bindButton(actionMap, actions::SwitchWeaponSidearm, gamepadButton(gamepad_buttons::DPadRight));
+    bindButton(actionMap, actions::CycleDrillVariant, gamepadButton(gamepad_buttons::DPadDown));
     bindButton(actionMap, actions::MenuUp, gamepadButton(gamepad_buttons::DPadUp));
     bindButton(actionMap, actions::MenuDown, gamepadButton(gamepad_buttons::DPadDown));
     bindButton(actionMap, actions::MenuLeft, gamepadButton(gamepad_buttons::DPadLeft));

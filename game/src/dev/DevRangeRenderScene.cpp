@@ -551,6 +551,12 @@ void appendFirstPersonRigPrimitives(
     novacore::render::RenderFrameInfo& frame,
     const player::FirstPersonRigFrame& rig,
     DevRangeRenderSceneStats& stats) {
+    for (const auto& socket : rig.sockets) {
+        if (socket.valid) {
+            ++stats.firstPersonSocketCount;
+        }
+    }
+
     const std::array<float, 4> gloveColor{0.34F, 0.40F, 0.36F, 0.92F};
     const std::array<float, 4> sleeveColor{0.28F, 0.36F, 0.34F, 0.78F};
     const std::array<float, 4> torsoColor{0.24F, 0.32F, 0.30F, 0.18F + (rig.lookDownBodyAlpha * 0.44F)};
@@ -967,30 +973,35 @@ void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
     const auto rig = player::evaluateFirstPersonRig(rigInput);
 
     appendFirstPersonRigPrimitives(frame, rig, stats);
+    const auto& weaponSocket = player::firstPersonRigSocket(rig, player::FirstPersonRigSocket::WeaponRoot);
+    const auto weaponPosition = weaponSocket.valid ? weaponSocket.worldPosition : rig.weapon.position;
+    const auto weaponYaw = weaponSocket.valid ? weaponSocket.yawDegrees : rig.weapon.yawDegrees;
+    const auto weaponPitch = weaponSocket.valid ? weaponSocket.pitchDegrees : rig.weapon.pitchDegrees;
+    const auto weaponRoll = weaponSocket.valid ? weaponSocket.rollDegrees : rig.weapon.rollDegrees;
 
     bool weaponMeshAppended = appendMesh(
         frame,
         desc,
         mount.assetId,
-        rig.weapon.position,
+        weaponPosition,
         rig.weapon.scale,
-        rig.weapon.yawDegrees,
+        weaponYaw,
         withAlpha(mount.color, rig.weapon.alpha),
         stats,
-        rig.weapon.pitchDegrees,
-        rig.weapon.rollDegrees);
+        weaponPitch,
+        weaponRoll);
     if (!weaponMeshAppended) {
         weaponMeshAppended = appendMesh(
             frame,
             desc,
             mount.fallbackAssetId,
-            rig.weapon.position,
+            weaponPosition,
             rig.weapon.scale,
-            rig.weapon.yawDegrees,
+            weaponYaw,
             withAlpha(mount.color, rig.weapon.alpha),
             stats,
-            rig.weapon.pitchDegrees,
-            rig.weapon.rollDegrees);
+            weaponPitch,
+            weaponRoll);
     }
     if (weaponMeshAppended) {
         ++stats.firstPersonMeshCount;

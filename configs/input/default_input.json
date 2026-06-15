@@ -20,6 +20,7 @@
     "switch_weapon_primary": "4",
     "switch_weapon_smg": "5",
     "switch_weapon_sidearm": "6",
+    "cycle_drill_variant": "V",
     "look": "MouseDelta"
   },
   "controller": {
@@ -43,6 +44,7 @@
       "switch_weapon_primary": "DPadUp",
       "switch_weapon_smg": "DPadLeft",
       "switch_weapon_sidearm": "DPadRight",
+      "cycle_drill_variant": "DPadDown",
       "look": "RightStick"
     },
     "aim_assist": {

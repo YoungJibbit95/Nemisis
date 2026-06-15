@@ -104,6 +104,7 @@ void testRigBuildsStableSkeletonHierarchy() {
     expect(rightHand.worldPosition.z > root.worldPosition.z + 0.60F, "right hand is in front of the camera");
     expect(leftHand.worldPosition.z > root.worldPosition.z + 0.65F, "support hand is in front of the camera");
     expect(nemisis::player::firstPersonRigJointName(nemisis::player::FirstPersonRigJoint::WeaponRoot) == "weapon_root", "joint names expose socket ids");
+    expect(nemisis::player::firstPersonRigSocketName(nemisis::player::FirstPersonRigSocket::EjectionPort) == "ejection_port", "socket names expose weapon attachment ids");
 }
 
 void testAdsMovesWeaponAndHandsTowardSightline() {
@@ -175,6 +176,36 @@ void testSidearmUsesShorterMuzzleAndPistolRoll() {
     expectNear(sidearmFrame.weapon.rollDegrees, 0.0F, 0.01F, "sidearm uses normalized pistol roll");
 }
 
+void testRigSocketsExposeCameraHandsAndWeaponAttachments() {
+    auto hip = baseInput();
+    auto ads = hip;
+    ads.adsAlpha = 1.0F;
+    ads.weapon.adsAlpha = 1.0F;
+
+    const auto hipFrame = nemisis::player::evaluateFirstPersonRig(hip);
+    const auto adsFrame = nemisis::player::evaluateFirstPersonRig(ads);
+    const auto& camera = nemisis::player::firstPersonRigSocket(hipFrame, nemisis::player::FirstPersonRigSocket::Camera);
+    const auto& weapon = nemisis::player::firstPersonRigSocket(hipFrame, nemisis::player::FirstPersonRigSocket::WeaponRoot);
+    const auto& muzzle = nemisis::player::firstPersonRigSocket(hipFrame, nemisis::player::FirstPersonRigSocket::Muzzle);
+    const auto& eject = nemisis::player::firstPersonRigSocket(hipFrame, nemisis::player::FirstPersonRigSocket::EjectionPort);
+    const auto& rightGrip = nemisis::player::firstPersonRigSocket(hipFrame, nemisis::player::FirstPersonRigSocket::RightGrip);
+    const auto& leftGrip = nemisis::player::firstPersonRigSocket(hipFrame, nemisis::player::FirstPersonRigSocket::LeftGrip);
+    const auto& hipWeapon = nemisis::player::firstPersonRigSocket(hipFrame, nemisis::player::FirstPersonRigSocket::WeaponRoot);
+    const auto& adsWeapon = nemisis::player::firstPersonRigSocket(adsFrame, nemisis::player::FirstPersonRigSocket::WeaponRoot);
+
+    expect(camera.valid, "camera socket is valid for first-person render anchoring");
+    expect(weapon.valid, "weapon root socket is valid for mesh placement");
+    expect(muzzle.valid, "muzzle socket is valid for traces and effects");
+    expect(eject.valid, "ejection port socket is valid for brass effects");
+    expect(rightGrip.valid && leftGrip.valid, "hand grip sockets are valid for arm IK targets");
+    expect(camera.worldPosition.y == hip.cameraPosition.y, "camera socket follows camera position");
+    expect(muzzle.worldPosition.z > weapon.worldPosition.z + 0.70F, "muzzle socket stays ahead of the weapon root");
+    expect(eject.worldPosition.z > weapon.worldPosition.z + 0.25F, "ejection port is on the receiver behind the muzzle");
+    expect(rightGrip.worldPosition.z < muzzle.worldPosition.z, "right grip is behind the muzzle");
+    expect(leftGrip.worldPosition.z < muzzle.worldPosition.z, "left grip is behind the muzzle");
+    expect(std::abs(adsWeapon.worldPosition.x) < std::abs(hipWeapon.worldPosition.x), "ADS moves weapon socket toward the sightline");
+}
+
 } // namespace
 
 int main() {
@@ -183,6 +214,7 @@ int main() {
     testLookDownRevealsBodyWithoutLiftingItIntoCamera();
     testReloadFireAndWallrunDriveSocketTransforms();
     testSidearmUsesShorterMuzzleAndPistolRoll();
+    testRigSocketsExposeCameraHandsAndWeaponAttachments();
 
     if (failures > 0) {
         std::cerr << failures << " first-person rig test(s) failed\n";

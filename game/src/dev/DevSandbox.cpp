@@ -101,7 +101,7 @@ void DevSandbox::onFrame(double deltaSeconds) {
     if (!printedControls_) {
         novacore::core::logInfo(
             "dev",
-            "Playable dev sandbox controls: WASD/LeftStick move, Mouse/RightStick look, Space/A jump, LeftAlt/B dash, C/B slide, Shift/LeftStick sprint, MouseLeft/RT fire, MouseRight/LT ADS, R/X reload, P/Y reset; multi-lane targets are downrange");
+            "Playable dev sandbox controls: WASD/LeftStick move, Mouse/RightStick look, Space/A jump, LeftAlt/B dash, C/B slide, Shift/LeftStick sprint, MouseLeft/RT fire, MouseRight/LT ADS, R/X reload, V/DPadDown drill, P reset; multi-lane targets are downrange");
         printedControls_ = true;
     }
 
@@ -152,6 +152,8 @@ std::string DevSandbox::latestSummary() const {
            << " score=" << latest_.rangeSession.score.targetsEliminated
            << " accuracy=" << devRangeAccuracy(latest_.rangeSession.score)
            << " streak=" << latest_.rangeSession.score.currentStreak
+           << " drillVariant=" << devRangeDrillVariantName(latest_.rangeSession.drill.variant)
+           << " drillObjective=" << devRangeDrillObjectiveLabel(latest_.rangeSession.drill.variant)
            << " drillStatus=" << devRangeDrillStatusName(latest_.rangeSession.drill.status)
            << " drillScore=" << latest_.rangeSession.drill.score
            << " drillTime=" << latest_.rangeSession.drill.timeRemainingSeconds

@@ -263,6 +263,8 @@ void testDevRangeHudUsesPlayableResponsiveLayout() {
     expect(hasText("OPERATOR"), "dev range HUD keeps player health anchored as operator panel");
     expect(hasText("NOVA RIFLE"), "dev range HUD keeps loadout weapon visible");
     expect(hasText("DRILL"), "dev range HUD keeps timed drill strip visible");
+    expect(hasText("PRECISION"), "dev range HUD exposes active drill variant");
+    expect(hasText("ACCURACY"), "dev range HUD exposes active drill objective");
     expect(hasText("CTRL"), "dev range HUD exposes recoil-control scoring");
     expect(hasText("TTK"), "dev range HUD exposes measured TTK panel data");
     expect(hasText("CENTER 20M"), "dev range HUD exposes active lane breakdown");

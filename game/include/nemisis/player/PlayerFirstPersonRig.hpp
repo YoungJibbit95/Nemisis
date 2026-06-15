@@ -37,6 +37,23 @@ enum class FirstPersonRigJoint : std::uint8_t {
 inline constexpr std::size_t kFirstPersonRigJointCount =
     static_cast<std::size_t>(FirstPersonRigJoint::Count);
 
+enum class FirstPersonRigSocket : std::uint8_t {
+    Camera,
+    BodyRoot,
+    WeaponRoot,
+    Muzzle,
+    EjectionPort,
+    RightGrip,
+    LeftGrip,
+    RightHand,
+    LeftHand,
+    SupportElbow,
+    Count
+};
+
+inline constexpr std::size_t kFirstPersonRigSocketCount =
+    static_cast<std::size_t>(FirstPersonRigSocket::Count);
+
 struct FirstPersonRigMountDesc final {
     novacore::math::Vec3 hipOffset{};
     novacore::math::Vec3 adsOffset{};
@@ -82,6 +99,17 @@ struct FirstPersonJointPose final {
     float rollDegrees = 0.0F;
 };
 
+struct FirstPersonRigSocketPose final {
+    FirstPersonRigSocket socket = FirstPersonRigSocket::Camera;
+    FirstPersonRigJoint joint = FirstPersonRigJoint::Root;
+    novacore::math::Vec3 localPosition{};
+    novacore::math::Vec3 worldPosition{};
+    float yawDegrees = 0.0F;
+    float pitchDegrees = 0.0F;
+    float rollDegrees = 0.0F;
+    bool valid = false;
+};
+
 struct FirstPersonRigAttachment final {
     novacore::math::Vec3 position{};
     novacore::math::Vec3 scale{1.0F, 1.0F, 1.0F};
@@ -94,6 +122,7 @@ struct FirstPersonRigAttachment final {
 
 struct FirstPersonRigFrame final {
     std::array<FirstPersonJointPose, kFirstPersonRigJointCount> joints{};
+    std::array<FirstPersonRigSocketPose, kFirstPersonRigSocketCount> sockets{};
     FirstPersonRigAttachment weapon{};
     FirstPersonRigAttachment arms{};
     FirstPersonRigAttachment body{};
@@ -107,10 +136,15 @@ struct FirstPersonRigFrame final {
 };
 
 [[nodiscard]] std::string_view firstPersonRigJointName(FirstPersonRigJoint joint);
+[[nodiscard]] std::string_view firstPersonRigSocketName(FirstPersonRigSocket socket);
 
 [[nodiscard]] const FirstPersonJointPose& firstPersonRigJoint(
     const FirstPersonRigFrame& frame,
     FirstPersonRigJoint joint);
+
+[[nodiscard]] const FirstPersonRigSocketPose& firstPersonRigSocket(
+    const FirstPersonRigFrame& frame,
+    FirstPersonRigSocket socket);
 
 [[nodiscard]] FirstPersonRigFrame evaluateFirstPersonRig(const FirstPersonRigInput& input);
 

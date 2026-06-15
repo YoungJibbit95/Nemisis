@@ -5,6 +5,7 @@
 #include "nemisis/player/PlayerHealth.hpp"
 #include "nemisis/weapons/WeaponSimulation.hpp"
 
+#include <array>
 #include <cstdint>
 #include <cstddef>
 #include <string>
@@ -16,6 +17,32 @@ namespace nemisis::dev {
 enum class DevRangeDrillStatus {
     Active,
     Complete
+};
+
+enum class DevRangeDrillVariant : std::uint8_t {
+    Precision,
+    Speed,
+    RecoilControl,
+    Count
+};
+
+inline constexpr std::size_t kDevRangeDrillVariantCount =
+    static_cast<std::size_t>(DevRangeDrillVariant::Count);
+
+struct DevRangeDrillRules final {
+    DevRangeDrillVariant variant = DevRangeDrillVariant::Precision;
+    std::string_view name;
+    std::string_view objectiveLabel;
+    float timeLimitSeconds = 60.0F;
+    float hitBasePoints = 90.0F;
+    float damagePointScale = 1.0F;
+    float streakPointScale = 8.0F;
+    float eliminationBasePoints = 320.0F;
+    float perfectClearBonus = 260.0F;
+    float ttkBonusWindowSeconds = 2.2F;
+    float ttkBonusScale = 80.0F;
+    float recoilPointScale = 0.20F;
+    float missPenaltyPoints = 0.0F;
 };
 
 struct DevRangeScoreboard final {
@@ -48,11 +75,13 @@ struct DevRangeLaneScore final {
 
 struct DevRangeDrillState final {
     DevRangeDrillStatus status = DevRangeDrillStatus::Active;
+    DevRangeDrillVariant variant = DevRangeDrillVariant::Precision;
     float timeLimitSeconds = 60.0F;
     float timeRemainingSeconds = 60.0F;
     float elapsedSeconds = 0.0F;
     std::uint32_t score = 0;
     std::uint32_t bestScore = 0;
+    std::array<std::uint32_t, kDevRangeDrillVariantCount> bestScoreByVariant{};
     std::uint32_t shotsFired = 0;
     std::uint32_t shotsHit = 0;
     std::uint32_t targetsEliminated = 0;
@@ -97,6 +126,15 @@ struct DevRangeShotScoreContext final {
 void resetDevRangeSession(DevRangeSessionState& session);
 
 void recordRangeReset(DevRangeSessionState& session, const DevRangeSessionTuning& tuning = {});
+
+void setDevRangeDrillVariant(
+    DevRangeSessionState& session,
+    DevRangeDrillVariant variant,
+    const DevRangeSessionTuning& tuning = {});
+
+void cycleDevRangeDrillVariant(
+    DevRangeSessionState& session,
+    const DevRangeSessionTuning& tuning = {});
 
 void ensureDevRangeLaneScore(
     DevRangeSessionState& session,
@@ -156,6 +194,9 @@ void tickSessionFeedback(DevRangeSessionState& session, float deltaSeconds);
 [[nodiscard]] float devRangeLaneAccuracy(const DevRangeLaneScore& lane);
 [[nodiscard]] float devRangeDrillProgress(const DevRangeDrillState& drill);
 [[nodiscard]] std::string_view devRangeDrillStatusName(DevRangeDrillStatus status);
+[[nodiscard]] std::string_view devRangeDrillVariantName(DevRangeDrillVariant variant);
+[[nodiscard]] std::string_view devRangeDrillObjectiveLabel(DevRangeDrillVariant variant);
+[[nodiscard]] const DevRangeDrillRules& devRangeDrillRules(DevRangeDrillVariant variant);
 [[nodiscard]] const DevRangeLaneScore* activeDevRangeLaneScore(
     const DevRangeSessionState& session,
     std::size_t laneIndex);

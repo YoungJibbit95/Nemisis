@@ -185,6 +185,38 @@ void testDrillTimerCompletesAndResetRestarts() {
     expect(session.drill.bestScore == 500U, "range reset preserves best drill score");
 }
 
+void testDrillVariantsChangeRulesAndPreserveBestScores() {
+    nemisis::dev::DevRangeSessionState session{};
+    nemisis::dev::DevRangeSessionTuning tuning{};
+
+    nemisis::dev::recordRangeReset(session, tuning);
+    expect(session.drill.variant == nemisis::dev::DevRangeDrillVariant::Precision, "default drill starts in precision variant");
+    expect(session.drill.timeLimitSeconds > 69.9F && session.drill.timeLimitSeconds < 70.1F, "precision drill uses precision time limit");
+    expect(nemisis::dev::devRangeDrillVariantName(session.drill.variant) == "PRECISION", "precision variant exposes HUD name");
+    expect(nemisis::dev::devRangeDrillObjectiveLabel(session.drill.variant) == "ACCURACY", "precision variant exposes objective label");
+
+    session.drill.score = 420U;
+    session.drill.bestScore = 420U;
+    nemisis::dev::cycleDevRangeDrillVariant(session, tuning);
+    expect(session.drill.variant == nemisis::dev::DevRangeDrillVariant::Speed, "cycling moves precision drill to speed");
+    expect(session.drill.timeLimitSeconds > 44.9F && session.drill.timeLimitSeconds < 45.1F, "speed drill uses shorter time limit");
+    expect(session.drill.score == 0U, "variant switch restarts current drill score");
+    expect(session.drill.bestScoreByVariant[0] == 420U, "variant switch preserves precision best score");
+    expect(session.eventText.find("SPEED") != std::string::npos, "variant switch writes HUD feedback");
+
+    auto fire = firedShot();
+    fire.recoilPitchOffsetDegrees = 2.0F;
+    fire.recoilYawOffsetDegrees = 1.0F;
+    nemisis::dev::DebugTargetHitResult miss{};
+    nemisis::dev::recordShotResult(session, fire, miss, tuning);
+    expect(session.drill.score == 0U, "speed drill miss penalty cannot underflow score");
+
+    nemisis::dev::setDevRangeDrillVariant(session, nemisis::dev::DevRangeDrillVariant::RecoilControl, tuning);
+    expect(session.drill.variant == nemisis::dev::DevRangeDrillVariant::RecoilControl, "explicit switch selects recoil-control drill");
+    expect(nemisis::dev::devRangeDrillObjectiveLabel(session.drill.variant) == "RECOIL", "recoil-control drill exposes recoil objective");
+    expect(nemisis::dev::devRangeDrillRules(session.drill.variant).recoilPointScale > nemisis::dev::devRangeDrillRules(nemisis::dev::DevRangeDrillVariant::Speed).recoilPointScale, "recoil-control drill weights recoil more than speed drill");
+}
+
 } // namespace
 
 int main() {
@@ -193,6 +225,7 @@ int main() {
     testPlayerDamageRegenAndRespawn();
     testTimedDrillLaneTtkAndRecoilScoring();
     testDrillTimerCompletesAndResetRestarts();
+    testDrillVariantsChangeRulesAndPreserveBestScores();
 
     if (failures > 0) {
         std::cerr << failures << " dev range session test(s) failed\n";

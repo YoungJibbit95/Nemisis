@@ -58,6 +58,7 @@ struct DevRangeRenderSceneStats final {
     std::size_t skippedMeshInstanceCount = 0;
     std::size_t firstPersonMeshCount = 0;
     std::size_t firstPersonBodyPrimitiveCount = 0;
+    std::size_t firstPersonSocketCount = 0;
     std::size_t targetMeshCount = 0;
     std::size_t materialFallbackProfileCount = 0;
 };

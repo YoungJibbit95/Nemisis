@@ -45,6 +45,7 @@ inline constexpr std::string_view SelectTdm = "select_tdm";
 inline constexpr std::string_view SelectControl = "select_control";
 inline constexpr std::string_view SelectMainMenu = "select_main_menu";
 inline constexpr std::string_view ResetRange = "reset_range";
+inline constexpr std::string_view CycleDrillVariant = "cycle_drill_variant";
 
 } // namespace actions
 
@@ -57,6 +58,7 @@ inline constexpr std::uint16_t F = 70;
 inline constexpr std::uint16_t Q = 81;
 inline constexpr std::uint16_t P = 80;
 inline constexpr std::uint16_t S = 83;
+inline constexpr std::uint16_t V = 86;
 inline constexpr std::uint16_t D = 68;
 inline constexpr std::uint16_t R = 82;
 inline constexpr std::uint16_t C = 67;

@@ -228,6 +228,20 @@ void testWeaponInteractionActionsBuildCommand() {
     expect(command.switchWeaponSidearmPressed, "sidearm weapon switch maps to input command");
 }
 
+void testDevRangeUtilityActionsAreBound() {
+    auto actionMap = nemisis::input::createDefaultActionMap();
+    novacore::platform::InputSnapshot snapshot;
+    snapshot.setButton(
+        {novacore::platform::InputControlKind::KeyboardKey, nemisis::input::key_codes::V},
+        true,
+        novacore::platform::InputDeviceKind::KeyboardMouse);
+
+    actionMap.update(snapshot);
+    expect(
+        actionMap.stateOrDefault(nemisis::input::actions::CycleDrillVariant).pressed,
+        "cycle drill variant is bound for dev range gameplay");
+}
+
 void testGameplayInputBufferCarriesEdgesAcrossFrameBeforeFixedTick() {
     auto actionMap = nemisis::input::createDefaultActionMap();
     nemisis::input::GameplayInputBuffer buffer;
@@ -282,6 +296,7 @@ int main() {
     testControllerLookBuildsCommand();
     testLookSensitivitySettingsScaleCommand();
     testWeaponInteractionActionsBuildCommand();
+    testDevRangeUtilityActionsAreBound();
     testGameplayInputBufferCarriesEdgesAcrossFrameBeforeFixedTick();
 
     if (failures > 0) {

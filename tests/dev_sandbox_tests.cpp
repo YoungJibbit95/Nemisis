@@ -106,6 +106,8 @@ void testSummaryIncludesPlayableTelemetry() {
     expect(summary.find("predFix=no") != std::string::npos, "summary includes prediction correction state");
     expect(summary.find("snapStored=3") != std::string::npos, "summary includes snapshot interpolation count");
     expect(summary.find("snapNewest=44") != std::string::npos, "summary includes newest snapshot tick");
+    expect(summary.find("drillVariant=PRECISION") != std::string::npos, "summary includes drill variant");
+    expect(summary.find("drillObjective=ACCURACY") != std::string::npos, "summary includes drill objective");
     expect(summary.find("drillScore=900") != std::string::npos, "summary includes drill score");
     expect(summary.find("recoilControl=82") != std::string::npos, "summary includes recoil control score");
     expect(summary.find("latestTtk=0.42") != std::string::npos, "summary includes latest TTK");
