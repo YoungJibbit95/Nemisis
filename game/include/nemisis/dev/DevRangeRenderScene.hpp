@@ -10,6 +10,7 @@
 #include "nemisis/weapons/WeaponTypes.hpp"
 
 #include "novacore/math/Types.hpp"
+#include "novacore/render/Mesh.hpp"
 #include "novacore/render/Renderer.hpp"
 
 #include <array>
@@ -66,6 +67,8 @@ struct DevRangeRenderSceneStats final {
     std::size_t firstPersonMeshCount = 0;
     std::size_t firstPersonBodyPrimitiveCount = 0;
     std::size_t firstPersonSocketCount = 0;
+    std::size_t firstPersonCookedSocketCount = 0;
+    std::size_t firstPersonSocketAlignedMeshCount = 0;
     std::size_t firstPersonFeedbackPrimitiveCount = 0;
     std::size_t hitFeedbackLineCount = 0;
     std::size_t activeLanePressurePrimitiveCount = 0;
@@ -102,6 +105,7 @@ struct DevRangeRenderSceneDesc final {
     float verticalFovDegrees = 74.0F;
     float nearPlane = 0.03F;
     float farPlane = 120.0F;
+    const novacore::render::MeshCatalog* meshCatalog = nullptr;
 };
 
 class DevRangeRenderSceneBuilder final {

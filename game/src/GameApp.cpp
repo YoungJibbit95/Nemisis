@@ -701,6 +701,7 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
                 renderTuning_.verticalFovDegrees,
                 renderTuning_.nearPlane,
                 renderTuning_.farPlane,
+                &devAssetBindings_.meshCatalog(),
             });
     } else {
         latestDevRangeRenderStats_ = {};

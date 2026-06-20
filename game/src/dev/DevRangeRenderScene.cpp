@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <optional>
 #include <string>
 
 namespace nemisis::dev {
@@ -82,6 +83,111 @@ struct FirstPersonBodyMount final {
 
 [[nodiscard]] float clamp01(float value) {
     return std::clamp(value, 0.0F, 1.0F);
+}
+
+[[nodiscard]] float degreesToRadians(float degrees) {
+    constexpr float kPi = 3.14159265358979323846F;
+    return degrees * (kPi / 180.0F);
+}
+
+[[nodiscard]] novacore::math::Vec3 rotateZ(novacore::math::Vec3 value, float rollDegrees) {
+    const float r = degreesToRadians(rollDegrees);
+    const float s = std::sin(r);
+    const float c = std::cos(r);
+    return {
+        (value.x * c) - (value.y * s),
+        (value.x * s) + (value.y * c),
+        value.z,
+    };
+}
+
+[[nodiscard]] novacore::math::Vec3 rotateX(novacore::math::Vec3 value, float pitchDegrees) {
+    const float p = degreesToRadians(pitchDegrees);
+    const float s = std::sin(p);
+    const float c = std::cos(p);
+    return {
+        value.x,
+        (value.y * c) - (value.z * s),
+        (value.y * s) + (value.z * c),
+    };
+}
+
+[[nodiscard]] novacore::math::Vec3 rotateY(novacore::math::Vec3 value, float yawDegrees) {
+    const float y = degreesToRadians(yawDegrees);
+    const float s = std::sin(y);
+    const float c = std::cos(y);
+    return {
+        (value.x * c) + (value.z * s),
+        value.y,
+        (-value.x * s) + (value.z * c),
+    };
+}
+
+[[nodiscard]] novacore::math::Vec3 mulVec3(
+    novacore::math::Vec3 a,
+    novacore::math::Vec3 b) {
+    return {a.x * b.x, a.y * b.y, a.z * b.z};
+}
+
+[[nodiscard]] novacore::math::Vec3 transformMeshLocalPoint(
+    novacore::math::Vec3 local,
+    novacore::math::Vec3 scale,
+    float yawDegrees,
+    float pitchDegrees,
+    float rollDegrees) {
+    return rotateY(rotateX(rotateZ(mulVec3(local, scale), rollDegrees), pitchDegrees), yawDegrees);
+}
+
+[[nodiscard]] std::optional<novacore::math::Vec3> cookedSocketLocalPosition(
+    const DevRangeRenderSceneDesc& desc,
+    std::string_view assetId,
+    std::string_view socketName) {
+    if (desc.meshCatalog == nullptr) {
+        return std::nullopt;
+    }
+    const auto* source = desc.meshCatalog->findByAssetId(assetId);
+    if (source == nullptr || !source->meshData.has_value()) {
+        return std::nullopt;
+    }
+    for (const auto& marker : source->meshData->nodeMarkers) {
+        if (marker.name == socketName) {
+            return marker.worldPosition;
+        }
+    }
+    return std::nullopt;
+}
+
+[[nodiscard]] std::size_t cookedSocketCount(
+    const DevRangeRenderSceneDesc& desc,
+    std::string_view assetId) {
+    if (desc.meshCatalog == nullptr) {
+        return 0U;
+    }
+    const auto* source = desc.meshCatalog->findByAssetId(assetId);
+    if (source == nullptr || !source->meshData.has_value()) {
+        return 0U;
+    }
+    return static_cast<std::size_t>(std::count_if(
+        source->meshData->nodeMarkers.begin(),
+        source->meshData->nodeMarkers.end(),
+        [](const novacore::assets::GltfNodeMarker& marker) {
+            return marker.name.size() >= 7U && marker.name.compare(0U, 7U, "socket_") == 0;
+        }));
+}
+
+[[nodiscard]] novacore::math::Vec3 alignMeshPositionToSocket(
+    novacore::math::Vec3 targetSocketPosition,
+    novacore::math::Vec3 localSocketPosition,
+    novacore::math::Vec3 scale,
+    float yawDegrees,
+    float pitchDegrees,
+    float rollDegrees) {
+    return targetSocketPosition - transformMeshLocalPoint(
+        localSocketPosition,
+        scale,
+        yawDegrees,
+        pitchDegrees,
+        rollDegrees);
 }
 
 [[nodiscard]] float easeOut01(float value) {
@@ -1089,10 +1195,29 @@ void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
     appendFirstPersonRigPrimitives(frame, rig, stats);
     appendWeaponFeedbackPrimitives(frame, desc, rig, stats);
     const auto& weaponSocket = player::firstPersonRigSocket(rig, player::FirstPersonRigSocket::WeaponRoot);
-    const auto weaponPosition = weaponSocket.valid ? weaponSocket.worldPosition : rig.weapon.position;
+    auto weaponPosition = weaponSocket.valid ? weaponSocket.worldPosition : rig.weapon.position;
     const auto weaponYaw = weaponSocket.valid ? weaponSocket.yawDegrees : rig.weapon.yawDegrees;
     const auto weaponPitch = weaponSocket.valid ? weaponSocket.pitchDegrees : rig.weapon.pitchDegrees;
     const auto weaponRoll = weaponSocket.valid ? weaponSocket.rollDegrees : rig.weapon.rollDegrees;
+    const std::string_view selectedWeaponAssetId = findMesh(desc, mount.assetId).isValid()
+        ? mount.assetId
+        : mount.fallbackAssetId;
+    const auto cookedSockets = cookedSocketCount(desc, selectedWeaponAssetId);
+    stats.firstPersonCookedSocketCount += cookedSockets;
+    if (const auto muzzleLocal = cookedSocketLocalPosition(desc, selectedWeaponAssetId, "socket_muzzle");
+        muzzleLocal.has_value()) {
+        const auto& muzzleSocket = player::firstPersonRigSocket(rig, player::FirstPersonRigSocket::Muzzle);
+        if (muzzleSocket.valid) {
+            weaponPosition = alignMeshPositionToSocket(
+                muzzleSocket.worldPosition,
+                *muzzleLocal,
+                rig.weapon.scale,
+                weaponYaw,
+                weaponPitch,
+                weaponRoll);
+            ++stats.firstPersonSocketAlignedMeshCount;
+        }
+    }
 
     bool weaponMeshAppended = appendMesh(
         frame,

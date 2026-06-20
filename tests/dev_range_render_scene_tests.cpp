@@ -97,6 +97,34 @@ nemisis::dev::MeshResourceLookup registerSceneMeshes(novacore::render::Renderer&
     return lookup;
 }
 
+novacore::render::MeshCatalog makeSocketCatalogForFirstPersonWeapon() {
+    novacore::assets::AssetRecord record{};
+    record.id = "wpn_project_rifle_m4a1";
+    record.kind = novacore::assets::AssetKind::Mesh;
+    record.cookedPath = "assets/processed/normalized/project_assets/wpn_project_rifle_m4a1.glb";
+
+    novacore::assets::GltfAssetMetadata metadata{};
+    metadata.id = record.id;
+    metadata.exportPath = record.cookedPath;
+    metadata.scaleMeters = true;
+    metadata.runtimeUpAxis = "Y";
+    metadata.gameplayForwardAxis = "+Z";
+    metadata.sockets = {"socket_muzzle", "socket_grip_r", "socket_grip_l", "socket_eject"};
+    metadata.license = "original_project_asset";
+
+    auto meshData = makeMesh();
+    meshData.nodeMarkers = {
+        novacore::assets::GltfNodeMarker{"socket_muzzle", {0.0F, 0.15F, -0.44F}, {0.0F, 0.0F, -1.0F}, {0.0F, 1.0F, 0.0F}, -1},
+        novacore::assets::GltfNodeMarker{"socket_grip_r", {0.03F, 0.08F, 0.09F}, {0.0F, 0.0F, -1.0F}, {0.0F, 1.0F, 0.0F}, -1},
+        novacore::assets::GltfNodeMarker{"socket_grip_l", {-0.02F, 0.10F, -0.16F}, {0.0F, 0.0F, -1.0F}, {0.0F, 1.0F, 0.0F}, -1},
+        novacore::assets::GltfNodeMarker{"socket_eject", {0.04F, 0.14F, -0.08F}, {1.0F, 0.0F, 0.0F}, {0.0F, 1.0F, 0.0F}, -1},
+    };
+
+    novacore::render::MeshCatalog catalog;
+    (void)catalog.registerImportedGltfAsset(record, metadata, std::move(meshData));
+    return catalog;
+}
+
 std::optional<novacore::render::RenderMesh3D> findMesh(
     const novacore::render::RenderFrameInfo& frame,
     std::string_view assetId) {
@@ -234,6 +262,43 @@ void testDevRangeRenderSceneMovesWeaponTowardSightlineInAds() {
         expect(std::abs(adsRifle->position.x) < std::abs(hipRifle->position.x), "ADS pulls rifle closer to camera centerline");
         expect(adsRifle->position.z < hipRifle->position.z, "ADS pulls rifle slightly closer to the player");
         expect(adsRifle->position.y > hipRifle->position.y, "ADS raises rifle toward eye line");
+    }
+}
+
+void testDevRangeRenderSceneAlignsWeaponMeshToCookedMuzzleSocket() {
+    novacore::render::Renderer renderer;
+    auto lookup = registerSceneMeshes(renderer);
+    auto socketCatalog = makeSocketCatalogForFirstPersonWeapon();
+    const auto world = nemisis::dev::createDevRangeGreyboxWorld();
+    auto targetRange = nemisis::dev::makeDefaultDevTargetRange();
+
+    nemisis::dev::DevRangePlayerRenderState player{};
+    player.position = world.playerSpawn;
+    player.view.yawDegrees = 0.0F;
+    player.view.pitchDegrees = 0.0F;
+    player.hasMovementState = true;
+    player.activeWeaponId = "ar_01";
+    player.activeWeaponClass = nemisis::weapons::WeaponClass::AssaultRifle;
+
+    novacore::render::RenderFrameInfo fallbackFrame{};
+    (void)nemisis::dev::DevRangeRenderSceneBuilder{}.append(
+        fallbackFrame,
+        nemisis::dev::DevRangeRenderSceneDesc{&world, &targetRange, nullptr, &lookup, player});
+
+    novacore::render::RenderFrameInfo socketFrame{};
+    nemisis::dev::DevRangeRenderSceneDesc desc{&world, &targetRange, nullptr, &lookup, player};
+    desc.meshCatalog = &socketCatalog;
+    const auto stats = nemisis::dev::DevRangeRenderSceneBuilder{}.append(socketFrame, desc);
+
+    const auto fallbackRifle = findLastMesh(fallbackFrame, "wpn_project_rifle_m4a1");
+    const auto socketRifle = findLastMesh(socketFrame, "wpn_project_rifle_m4a1");
+    expect(fallbackRifle.has_value() && socketRifle.has_value(), "socket alignment test submits first-person rifle in both paths");
+    expect(stats.firstPersonCookedSocketCount >= 4U, "first-person scene consumes cooked weapon socket nodes");
+    expect(stats.firstPersonSocketAlignedMeshCount == 1U, "first-person weapon mesh aligns to cooked muzzle socket");
+    if (fallbackRifle.has_value() && socketRifle.has_value()) {
+        expect(socketRifle->position.z > fallbackRifle->position.z + 0.30F, "negative local muzzle socket shifts weapon root forward to keep barrel on the rig muzzle");
+        expect(std::abs(socketRifle->yawDegrees - fallbackRifle->yawDegrees) < 0.01F, "socket alignment keeps normalized asset yaw stable");
+        expect(std::abs(socketRifle->rollDegrees - fallbackRifle->rollDegrees) < 0.01F, "socket alignment keeps normalized asset roll stable");
     }
 }
 
@@ -727,6 +792,7 @@ void testDevRangeRenderSceneDrawsContactDebugLines() {
 int main() {
     testDevRangeRenderSceneBuildsExpectedSubmissions();
     testDevRangeRenderSceneMovesWeaponTowardSightlineInAds();
+    testDevRangeRenderSceneAlignsWeaponMeshToCookedMuzzleSocket();
     testDevRangeRenderSceneUsesPerWeaponImportAxisCorrections();
     testDevRangeRenderScenePlacesA2AssetsInSpawnView();
     testDevRangeRenderSceneHidesLocalWorldBodyWhenCameraRigIsActive();
