@@ -81,6 +81,14 @@ struct FirstPersonBodyMount final {
     std::array<float, 4> color;
 };
 
+struct FirstPersonCookedSocketRig final {
+    std::optional<novacore::math::Vec3> muzzle;
+    std::optional<novacore::math::Vec3> ejection;
+    std::optional<novacore::math::Vec3> rightGrip;
+    std::optional<novacore::math::Vec3> leftGrip;
+    std::size_t socketCount = 0;
+};
+
 [[nodiscard]] float clamp01(float value) {
     return std::clamp(value, 0.0F, 1.0F);
 }
@@ -138,41 +146,33 @@ struct FirstPersonBodyMount final {
     return rotateY(rotateX(rotateZ(mulVec3(local, scale), rollDegrees), pitchDegrees), yawDegrees);
 }
 
-[[nodiscard]] std::optional<novacore::math::Vec3> cookedSocketLocalPosition(
-    const DevRangeRenderSceneDesc& desc,
-    std::string_view assetId,
-    std::string_view socketName) {
-    if (desc.meshCatalog == nullptr) {
-        return std::nullopt;
-    }
-    const auto* source = desc.meshCatalog->findByAssetId(assetId);
-    if (source == nullptr || !source->meshData.has_value()) {
-        return std::nullopt;
-    }
-    for (const auto& marker : source->meshData->nodeMarkers) {
-        if (marker.name == socketName) {
-            return marker.worldPosition;
-        }
-    }
-    return std::nullopt;
-}
-
-[[nodiscard]] std::size_t cookedSocketCount(
+[[nodiscard]] FirstPersonCookedSocketRig cookedSocketRig(
     const DevRangeRenderSceneDesc& desc,
     std::string_view assetId) {
+    FirstPersonCookedSocketRig rig{};
     if (desc.meshCatalog == nullptr) {
-        return 0U;
+        return rig;
     }
     const auto* source = desc.meshCatalog->findByAssetId(assetId);
     if (source == nullptr || !source->meshData.has_value()) {
-        return 0U;
+        return rig;
     }
-    return static_cast<std::size_t>(std::count_if(
-        source->meshData->nodeMarkers.begin(),
-        source->meshData->nodeMarkers.end(),
-        [](const novacore::assets::GltfNodeMarker& marker) {
-            return marker.name.size() >= 7U && marker.name.compare(0U, 7U, "socket_") == 0;
-        }));
+    for (const auto& marker : source->meshData->nodeMarkers) {
+        if (marker.name.size() < 7U || marker.name.compare(0U, 7U, "socket_") != 0) {
+            continue;
+        }
+        ++rig.socketCount;
+        if (marker.name == "socket_muzzle") {
+            rig.muzzle = marker.worldPosition;
+        } else if (marker.name == "socket_eject") {
+            rig.ejection = marker.worldPosition;
+        } else if (marker.name == "socket_grip_r") {
+            rig.rightGrip = marker.worldPosition;
+        } else if (marker.name == "socket_grip_l") {
+            rig.leftGrip = marker.worldPosition;
+        }
+    }
+    return rig;
 }
 
 [[nodiscard]] novacore::math::Vec3 alignMeshPositionToSocket(
@@ -188,6 +188,109 @@ struct FirstPersonBodyMount final {
         yawDegrees,
         pitchDegrees,
         rollDegrees);
+}
+
+[[nodiscard]] novacore::math::Vec3 cookedSocketWorldPosition(
+    novacore::math::Vec3 meshPosition,
+    novacore::math::Vec3 localSocketPosition,
+    novacore::math::Vec3 scale,
+    float yawDegrees,
+    float pitchDegrees,
+    float rollDegrees) {
+    return meshPosition + transformMeshLocalPoint(
+        localSocketPosition,
+        scale,
+        yawDegrees,
+        pitchDegrees,
+        rollDegrees);
+}
+
+void bindRigJointToCookedSocket(
+    player::FirstPersonRigFrame& rig,
+    player::FirstPersonRigJoint joint,
+    novacore::math::Vec3 worldPosition,
+    float yawDegrees,
+    float pitchDegrees,
+    float rollDegrees) {
+    auto& pose = rig.joints[static_cast<std::size_t>(joint)];
+    pose.worldPosition = worldPosition;
+    pose.yawDegrees = yawDegrees;
+    pose.pitchDegrees = pitchDegrees;
+    pose.rollDegrees = rollDegrees;
+}
+
+void bindRigSocketToCookedSocket(
+    player::FirstPersonRigFrame& rig,
+    player::FirstPersonRigSocket socket,
+    player::FirstPersonRigJoint joint,
+    novacore::math::Vec3 worldPosition,
+    float yawDegrees,
+    float pitchDegrees,
+    float rollDegrees) {
+    auto& pose = rig.sockets[static_cast<std::size_t>(socket)];
+    pose.joint = joint;
+    pose.worldPosition = worldPosition;
+    pose.yawDegrees = yawDegrees;
+    pose.pitchDegrees = pitchDegrees;
+    pose.rollDegrees = rollDegrees;
+    pose.valid = true;
+}
+
+std::size_t bindFirstPersonRigToCookedWeaponSockets(
+    player::FirstPersonRigFrame& rig,
+    const FirstPersonCookedSocketRig& cooked,
+    novacore::math::Vec3 weaponPosition,
+    novacore::math::Vec3 weaponScale,
+    float weaponYaw,
+    float weaponPitch,
+    float weaponRoll) {
+    std::size_t boundGrips = 0U;
+    rig.weapon.position = weaponPosition;
+    rig.weapon.scale = weaponScale;
+    rig.weapon.yawDegrees = weaponYaw;
+    rig.weapon.pitchDegrees = weaponPitch;
+    rig.weapon.rollDegrees = weaponRoll;
+
+    const auto toWorld = [&](novacore::math::Vec3 local) {
+        return cookedSocketWorldPosition(weaponPosition, local, weaponScale, weaponYaw, weaponPitch, weaponRoll);
+    };
+
+    if (cooked.muzzle.has_value()) {
+        const auto world = toWorld(*cooked.muzzle);
+        rig.muzzle.position = world;
+        bindRigJointToCookedSocket(rig, player::FirstPersonRigJoint::Muzzle, world, weaponYaw, weaponPitch, weaponRoll);
+        bindRigSocketToCookedSocket(rig, player::FirstPersonRigSocket::Muzzle, player::FirstPersonRigJoint::Muzzle, world, weaponYaw, weaponPitch, weaponRoll);
+    }
+    if (cooked.ejection.has_value()) {
+        bindRigSocketToCookedSocket(
+            rig,
+            player::FirstPersonRigSocket::EjectionPort,
+            player::FirstPersonRigJoint::WeaponRoot,
+            toWorld(*cooked.ejection),
+            weaponYaw,
+            weaponPitch,
+            weaponRoll);
+    }
+    if (cooked.rightGrip.has_value()) {
+        const auto world = toWorld(*cooked.rightGrip);
+        rig.rightHand.position = world;
+        bindRigJointToCookedSocket(rig, player::FirstPersonRigJoint::RightHand, world, weaponYaw, weaponPitch, weaponRoll);
+        bindRigSocketToCookedSocket(rig, player::FirstPersonRigSocket::RightGrip, player::FirstPersonRigJoint::RightHand, world, weaponYaw, weaponPitch, weaponRoll);
+        bindRigSocketToCookedSocket(rig, player::FirstPersonRigSocket::RightHand, player::FirstPersonRigJoint::RightHand, world, weaponYaw, weaponPitch, weaponRoll);
+        ++boundGrips;
+    }
+    if (cooked.leftGrip.has_value()) {
+        const auto world = toWorld(*cooked.leftGrip);
+        rig.leftHand.position = world;
+        const auto leftForearm = player::firstPersonRigJoint(rig, player::FirstPersonRigJoint::LeftForearm).worldPosition;
+        rig.supportElbow.position = (leftForearm + world) * 0.5F;
+        bindRigJointToCookedSocket(rig, player::FirstPersonRigJoint::LeftHand, world, weaponYaw, weaponPitch, weaponRoll);
+        bindRigSocketToCookedSocket(rig, player::FirstPersonRigSocket::LeftGrip, player::FirstPersonRigJoint::LeftHand, world, weaponYaw, weaponPitch, weaponRoll);
+        bindRigSocketToCookedSocket(rig, player::FirstPersonRigSocket::LeftHand, player::FirstPersonRigJoint::LeftHand, world, weaponYaw, weaponPitch, weaponRoll);
+        bindRigSocketToCookedSocket(rig, player::FirstPersonRigSocket::SupportElbow, player::FirstPersonRigJoint::LeftForearm, rig.supportElbow.position, weaponYaw, weaponPitch, weaponRoll);
+        ++boundGrips;
+    }
+    return boundGrips;
 }
 
 [[nodiscard]] float easeOut01(float value) {
@@ -1192,8 +1295,6 @@ void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
     rigInput.hasAnimationFrame = desc.player.hasAnimationFrame;
     const auto rig = player::evaluateFirstPersonRig(rigInput);
 
-    appendFirstPersonRigPrimitives(frame, rig, stats);
-    appendWeaponFeedbackPrimitives(frame, desc, rig, stats);
     const auto& weaponSocket = player::firstPersonRigSocket(rig, player::FirstPersonRigSocket::WeaponRoot);
     auto weaponPosition = weaponSocket.valid ? weaponSocket.worldPosition : rig.weapon.position;
     const auto weaponYaw = weaponSocket.valid ? weaponSocket.yawDegrees : rig.weapon.yawDegrees;
@@ -1202,15 +1303,14 @@ void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
     const std::string_view selectedWeaponAssetId = findMesh(desc, mount.assetId).isValid()
         ? mount.assetId
         : mount.fallbackAssetId;
-    const auto cookedSockets = cookedSocketCount(desc, selectedWeaponAssetId);
-    stats.firstPersonCookedSocketCount += cookedSockets;
-    if (const auto muzzleLocal = cookedSocketLocalPosition(desc, selectedWeaponAssetId, "socket_muzzle");
-        muzzleLocal.has_value()) {
+    const auto cookedRig = cookedSocketRig(desc, selectedWeaponAssetId);
+    stats.firstPersonCookedSocketCount += cookedRig.socketCount;
+    if (cookedRig.muzzle.has_value()) {
         const auto& muzzleSocket = player::firstPersonRigSocket(rig, player::FirstPersonRigSocket::Muzzle);
         if (muzzleSocket.valid) {
             weaponPosition = alignMeshPositionToSocket(
                 muzzleSocket.worldPosition,
-                *muzzleLocal,
+                *cookedRig.muzzle,
                 rig.weapon.scale,
                 weaponYaw,
                 weaponPitch,
@@ -1219,14 +1319,26 @@ void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
         }
     }
 
+    auto presentedRig = rig;
+    stats.firstPersonGripSocketBoundCount += bindFirstPersonRigToCookedWeaponSockets(
+        presentedRig,
+        cookedRig,
+        weaponPosition,
+        rig.weapon.scale,
+        weaponYaw,
+        weaponPitch,
+        weaponRoll);
+    appendFirstPersonRigPrimitives(frame, presentedRig, stats);
+    appendWeaponFeedbackPrimitives(frame, desc, presentedRig, stats);
+
     bool weaponMeshAppended = appendMesh(
         frame,
         desc,
         mount.assetId,
         weaponPosition,
-        rig.weapon.scale,
+        presentedRig.weapon.scale,
         weaponYaw,
-        withAlpha(mount.color, rig.weapon.alpha),
+        withAlpha(mount.color, presentedRig.weapon.alpha),
         stats,
         weaponPitch,
         weaponRoll);
@@ -1236,9 +1348,9 @@ void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
             desc,
             mount.fallbackAssetId,
             weaponPosition,
-            rig.weapon.scale,
+            presentedRig.weapon.scale,
             weaponYaw,
-            withAlpha(mount.color, rig.weapon.alpha),
+            withAlpha(mount.color, presentedRig.weapon.alpha),
             stats,
             weaponPitch,
             weaponRoll);
@@ -1251,13 +1363,13 @@ void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
         frame,
         desc,
         armsMount.assetId,
-        rig.arms.position,
-        rig.arms.scale,
-        rig.arms.yawDegrees,
-        withAlpha(armsMount.color, rig.arms.alpha),
+        presentedRig.arms.position,
+        presentedRig.arms.scale,
+        presentedRig.arms.yawDegrees,
+        withAlpha(armsMount.color, presentedRig.arms.alpha),
         stats,
-        rig.arms.pitchDegrees,
-        rig.arms.rollDegrees);
+        presentedRig.arms.pitchDegrees,
+        presentedRig.arms.rollDegrees);
     if (!armsMeshAppended) {
         armsMeshAppended = appendMesh(
             frame,

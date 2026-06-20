@@ -3,7 +3,7 @@
   "description": "Non-destructive normalization plan for imported Nemisis Project weapon and character GLBs. Source binaries are not edited; tools/blender/normalize_project_assets.py can audit or export reproducible normalized GLBs from this metadata.",
   "coordinate_contract": {
     "blender_target_up_axis": "+Z",
-    "blender_target_forward_axis": "+Y",
+    "blender_target_forward_axis": "-Y",
     "runtime_up_axis": "Y",
     "gameplay_forward_axis": "+Z",
     "gltf_export_yup": true,
@@ -54,7 +54,7 @@
       "target_dimensions_m": [0.85176, 0.39996, 1.78599],
       "normalization": {
         "remove_mesh_names": ["Icosphere"],
-        "rotation_euler_deg": [0.0, 0.0, 0.0],
+        "rotation_euler_deg": [0.0, 0.0, 180.0],
         "origin": {
           "mode": "bounds_floor_center",
           "center_axes": ["X", "Y"],
@@ -63,11 +63,11 @@
         "ensure_root_empty": true,
         "add_sockets": [
           {"name": "socket_root", "location": [0.0, 0.0, 0.0], "display_size": 0.08},
-          {"name": "socket_camera", "location": [0.0, 0.03, 1.68], "display_size": 0.08},
-          {"name": "socket_weapon_root", "location": [0.22, 0.34, 1.28], "display_size": 0.07},
-          {"name": "socket_hand_r", "location": [0.32, 0.27, 1.18], "display_size": 0.06},
-          {"name": "socket_hand_l", "location": [-0.25, 0.34, 1.18], "display_size": 0.06},
-          {"name": "socket_head", "location": [0.0, 0.03, 1.58], "display_size": 0.07},
+          {"name": "socket_camera", "location": [0.0, -0.03, 1.68], "display_size": 0.08},
+          {"name": "socket_weapon_root", "location": [0.22, -0.34, 1.28], "display_size": 0.07},
+          {"name": "socket_hand_r", "location": [0.32, -0.27, 1.18], "display_size": 0.06},
+          {"name": "socket_hand_l", "location": [-0.25, -0.34, 1.18], "display_size": 0.06},
+          {"name": "socket_head", "location": [0.0, -0.03, 1.58], "display_size": 0.07},
           {"name": "socket_vfx", "location": [0.0, 0.0, 1.0], "display_size": 0.06}
         ]
       }
@@ -88,7 +88,7 @@
       "target_dimensions_m": [0.06361, 0.85884, 0.26632],
       "normalization": {
         "remove_mesh_names": ["Icosphere"],
-        "rotation_euler_deg": [0.0, -90.0, 0.0],
+        "rotation_euler_deg": [0.0, -90.0, 180.0],
         "origin": {
           "mode": "bounds_floor_center",
           "center_axes": ["X", "Y"],
@@ -96,11 +96,11 @@
         },
         "ensure_root_empty": true,
         "add_sockets": [
-          {"name": "socket_muzzle", "location": [0.0, 0.435, 0.15], "display_size": 0.035},
-          {"name": "socket_grip_r", "location": [0.022, -0.09, 0.08], "display_size": 0.045},
-          {"name": "socket_grip_l", "location": [-0.012, 0.16, 0.11], "display_size": 0.045},
-          {"name": "socket_eject", "location": [0.036, 0.08, 0.14], "display_size": 0.035},
-          {"name": "socket_vfx", "location": [0.0, 0.435, 0.15], "display_size": 0.04}
+          {"name": "socket_muzzle", "location": [0.0, -0.435, 0.15], "display_size": 0.035},
+          {"name": "socket_grip_r", "location": [0.022, 0.09, 0.08], "display_size": 0.045},
+          {"name": "socket_grip_l", "location": [-0.012, -0.16, 0.11], "display_size": 0.045},
+          {"name": "socket_eject", "location": [0.036, -0.08, 0.14], "display_size": 0.035},
+          {"name": "socket_vfx", "location": [0.0, -0.435, 0.15], "display_size": 0.04}
         ]
       }
     },
@@ -111,14 +111,14 @@
       "output": "assets/processed/normalized/project_assets/wpn_project_rifle_afr120.glb",
       "aliases": ["weapon_rifle_afr120", "afr120"],
       "findings": [
-        "Axis layout already matches Blender +Z up and +Y forward in an isolated import.",
+        "Axis layout is normalized to Blender +Z up and -Y forward so glTF export_yup lands on runtime +Z forward.",
         "Rifle height is large for a shoulder weapon, but this may be intentional sci-fi styling.",
         "No authored socket_muzzle, grip sockets, eject socket, or col_ collision proxy."
       ],
       "target_dimensions_m": [0.07392, 1.17122, 0.50013],
       "normalization": {
         "remove_mesh_names": ["Icosphere"],
-        "rotation_euler_deg": [0.0, 0.0, 0.0],
+        "rotation_euler_deg": [0.0, 0.0, 180.0],
         "origin": {
           "mode": "bounds_floor_center",
           "center_axes": ["X", "Y"],
@@ -126,11 +126,11 @@
         },
         "ensure_root_empty": true,
         "add_sockets": [
-          {"name": "socket_muzzle", "location": [0.0, 0.592, 0.24], "display_size": 0.035},
-          {"name": "socket_grip_r", "location": [0.028, -0.15, 0.14], "display_size": 0.045},
-          {"name": "socket_grip_l", "location": [-0.014, 0.18, 0.18], "display_size": 0.045},
-          {"name": "socket_eject", "location": [0.042, 0.08, 0.22], "display_size": 0.035},
-          {"name": "socket_vfx", "location": [0.0, 0.592, 0.24], "display_size": 0.04}
+          {"name": "socket_muzzle", "location": [0.0, -0.592, 0.24], "display_size": 0.035},
+          {"name": "socket_grip_r", "location": [0.028, 0.15, 0.14], "display_size": 0.045},
+          {"name": "socket_grip_l", "location": [-0.014, -0.18, 0.18], "display_size": 0.045},
+          {"name": "socket_eject", "location": [0.042, -0.08, 0.22], "display_size": 0.035},
+          {"name": "socket_vfx", "location": [0.0, -0.592, 0.24], "display_size": 0.04}
         ]
       }
     },
@@ -148,7 +148,7 @@
       "target_dimensions_m": [0.11385, 0.89978, 0.37238],
       "normalization": {
         "remove_mesh_names": ["Icosphere"],
-        "rotation_euler_deg": [0.0, -90.0, 0.0],
+        "rotation_euler_deg": [0.0, -90.0, 180.0],
         "origin": {
           "mode": "bounds_floor_center",
           "center_axes": ["X", "Y"],
@@ -156,11 +156,11 @@
         },
         "ensure_root_empty": true,
         "add_sockets": [
-          {"name": "socket_muzzle", "location": [0.0, 0.455, 0.19], "display_size": 0.035},
-          {"name": "socket_grip_r", "location": [0.035, -0.12, 0.10], "display_size": 0.045},
-          {"name": "socket_grip_l", "location": [-0.018, 0.17, 0.14], "display_size": 0.045},
-          {"name": "socket_eject", "location": [0.06, 0.06, 0.17], "display_size": 0.035},
-          {"name": "socket_vfx", "location": [0.0, 0.455, 0.19], "display_size": 0.04}
+          {"name": "socket_muzzle", "location": [0.0, -0.455, 0.19], "display_size": 0.035},
+          {"name": "socket_grip_r", "location": [0.035, 0.12, 0.10], "display_size": 0.045},
+          {"name": "socket_grip_l", "location": [-0.018, -0.17, 0.14], "display_size": 0.045},
+          {"name": "socket_eject", "location": [0.06, -0.06, 0.17], "display_size": 0.035},
+          {"name": "socket_vfx", "location": [0.0, -0.455, 0.19], "display_size": 0.04}
         ]
       }
     },
@@ -178,7 +178,7 @@
       "target_dimensions_m": [0.05652, 0.48954, 0.29578],
       "normalization": {
         "remove_mesh_names": ["Icosphere"],
-        "rotation_euler_deg": [0.0, -90.0, 0.0],
+        "rotation_euler_deg": [0.0, -90.0, 180.0],
         "origin": {
           "mode": "bounds_floor_center",
           "center_axes": ["X", "Y"],
@@ -186,11 +186,11 @@
         },
         "ensure_root_empty": true,
         "add_sockets": [
-          {"name": "socket_muzzle", "location": [0.0, 0.25, 0.16], "display_size": 0.032},
-          {"name": "socket_grip_r", "location": [0.02, -0.06, 0.08], "display_size": 0.04},
-          {"name": "socket_grip_l", "location": [-0.01, 0.10, 0.11], "display_size": 0.04},
-          {"name": "socket_eject", "location": [0.032, 0.02, 0.14], "display_size": 0.032},
-          {"name": "socket_vfx", "location": [0.0, 0.25, 0.16], "display_size": 0.038}
+          {"name": "socket_muzzle", "location": [0.0, -0.25, 0.16], "display_size": 0.032},
+          {"name": "socket_grip_r", "location": [0.02, 0.06, 0.08], "display_size": 0.04},
+          {"name": "socket_grip_l", "location": [-0.01, -0.10, 0.11], "display_size": 0.04},
+          {"name": "socket_eject", "location": [0.032, -0.02, 0.14], "display_size": 0.032},
+          {"name": "socket_vfx", "location": [0.0, -0.25, 0.16], "display_size": 0.038}
         ]
       }
     },
@@ -208,7 +208,7 @@
       "target_dimensions_m": [0.02257, 0.187, 0.12885],
       "normalization": {
         "remove_mesh_names": ["Icosphere"],
-        "rotation_euler_deg": [0.0, -90.0, 0.0],
+        "rotation_euler_deg": [0.0, -90.0, 180.0],
         "scale_to_dimension_m": {
           "axis": "Y",
           "size": 0.187
@@ -220,11 +220,11 @@
         },
         "ensure_root_empty": true,
         "add_sockets": [
-          {"name": "socket_muzzle", "location": [0.0, 0.095, 0.08], "display_size": 0.022},
-          {"name": "socket_grip_r", "location": [0.012, -0.04, 0.035], "display_size": 0.028},
-          {"name": "socket_grip_l", "location": [-0.008, -0.035, 0.035], "display_size": 0.028},
-          {"name": "socket_eject", "location": [0.014, 0.015, 0.09], "display_size": 0.022},
-          {"name": "socket_vfx", "location": [0.0, 0.095, 0.08], "display_size": 0.026}
+          {"name": "socket_muzzle", "location": [0.0, -0.095, 0.08], "display_size": 0.022},
+          {"name": "socket_grip_r", "location": [0.012, 0.04, 0.035], "display_size": 0.028},
+          {"name": "socket_grip_l", "location": [-0.008, 0.035, 0.035], "display_size": 0.028},
+          {"name": "socket_eject", "location": [0.014, -0.015, 0.09], "display_size": 0.022},
+          {"name": "socket_vfx", "location": [0.0, -0.095, 0.08], "display_size": 0.026}
         ]
       }
     },
@@ -242,7 +242,7 @@
       "target_dimensions_m": [0.02882, 0.203, 0.14874],
       "normalization": {
         "remove_mesh_names": ["Icosphere"],
-        "rotation_euler_deg": [0.0, -90.0, 0.0],
+        "rotation_euler_deg": [0.0, -90.0, 180.0],
         "scale_to_dimension_m": {
           "axis": "Y",
           "size": 0.203
@@ -254,11 +254,11 @@
         },
         "ensure_root_empty": true,
         "add_sockets": [
-          {"name": "socket_muzzle", "location": [0.0, 0.103, 0.09], "display_size": 0.022},
-          {"name": "socket_grip_r", "location": [0.014, -0.045, 0.04], "display_size": 0.028},
-          {"name": "socket_grip_l", "location": [-0.009, -0.04, 0.04], "display_size": 0.028},
-          {"name": "socket_eject", "location": [0.016, 0.018, 0.10], "display_size": 0.022},
-          {"name": "socket_vfx", "location": [0.0, 0.103, 0.09], "display_size": 0.026}
+          {"name": "socket_muzzle", "location": [0.0, -0.103, 0.09], "display_size": 0.022},
+          {"name": "socket_grip_r", "location": [0.014, 0.045, 0.04], "display_size": 0.028},
+          {"name": "socket_grip_l", "location": [-0.009, 0.04, 0.04], "display_size": 0.028},
+          {"name": "socket_eject", "location": [0.016, -0.018, 0.10], "display_size": 0.022},
+          {"name": "socket_vfx", "location": [0.0, -0.103, 0.09], "display_size": 0.026}
         ]
       }
     }

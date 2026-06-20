@@ -114,11 +114,11 @@ novacore::render::MeshCatalog makeSocketCatalogForFirstPersonWeapon() {
 
     auto meshData = makeMesh();
     meshData.nodeMarkers = {
-        novacore::assets::GltfNodeMarker{"socket_muzzle", {0.0F, 0.15F, -0.44F}, {0.0F, 0.0F, -1.0F}, {0.0F, 1.0F, 0.0F}, -1},
-        novacore::assets::GltfNodeMarker{"socket_grip_r", {0.03F, 0.08F, 0.09F}, {0.0F, 0.0F, -1.0F}, {0.0F, 1.0F, 0.0F}, -1},
-        novacore::assets::GltfNodeMarker{"socket_grip_l", {-0.02F, 0.10F, -0.16F}, {0.0F, 0.0F, -1.0F}, {0.0F, 1.0F, 0.0F}, -1},
-        novacore::assets::GltfNodeMarker{"socket_eject", {0.04F, 0.14F, -0.08F}, {1.0F, 0.0F, 0.0F}, {0.0F, 1.0F, 0.0F}, -1},
-    };
+        novacore::assets::GltfNodeMarker{"socket_muzzle", {0.0F, 0.15F, 0.44F}, {0.0F, 0.0F, 1.0F}, {0.0F, 1.0F, 0.0F}, -1},
+        novacore::assets::GltfNodeMarker{"socket_grip_r", {0.03F, 0.08F, -0.09F}, {0.0F, 0.0F, 1.0F}, {0.0F, 1.0F, 0.0F}, -1},
+        novacore::assets::GltfNodeMarker{"socket_grip_l", {-0.02F, 0.10F, 0.16F}, {0.0F, 0.0F, 1.0F}, {0.0F, 1.0F, 0.0F}, -1},
+        novacore::assets::GltfNodeMarker{"socket_eject", {0.04F, 0.14F, 0.08F}, {1.0F, 0.0F, 0.0F}, {0.0F, 1.0F, 0.0F}, -1},
+     };
 
     novacore::render::MeshCatalog catalog;
     (void)catalog.registerImportedGltfAsset(record, metadata, std::move(meshData));
@@ -295,8 +295,9 @@ void testDevRangeRenderSceneAlignsWeaponMeshToCookedMuzzleSocket() {
     expect(fallbackRifle.has_value() && socketRifle.has_value(), "socket alignment test submits first-person rifle in both paths");
     expect(stats.firstPersonCookedSocketCount >= 4U, "first-person scene consumes cooked weapon socket nodes");
     expect(stats.firstPersonSocketAlignedMeshCount == 1U, "first-person weapon mesh aligns to cooked muzzle socket");
+    expect(stats.firstPersonGripSocketBoundCount == 2U, "first-person hand rig binds to cooked right and left weapon grips");
     if (fallbackRifle.has_value() && socketRifle.has_value()) {
-        expect(socketRifle->position.z > fallbackRifle->position.z + 0.30F, "negative local muzzle socket shifts weapon root forward to keep barrel on the rig muzzle");
+        expect(socketRifle->position.z > fallbackRifle->position.z + 0.25F, "positive runtime muzzle socket keeps the weapon root behind the barrel and in front of the camera");
         expect(std::abs(socketRifle->yawDegrees - fallbackRifle->yawDegrees) < 0.01F, "socket alignment keeps normalized asset yaw stable");
         expect(std::abs(socketRifle->rollDegrees - fallbackRifle->rollDegrees) < 0.01F, "socket alignment keeps normalized asset roll stable");
     }

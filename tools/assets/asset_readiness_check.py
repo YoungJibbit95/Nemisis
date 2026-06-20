@@ -25,6 +25,7 @@ from typing import Any
 ASSET_ID_RE = re.compile(r"^(wpn|chr|map|prop|env|mat)_[a-z0-9_]+$")
 GLB_JSON_CHUNK = 0x4E4F534A
 GLB_BIN_CHUNK = 0x004E4942
+AXES = ["X", "Y", "Z"]
 
 RECOMMENDED_METADATA_FIELDS = (
     "id",
@@ -155,6 +156,107 @@ def gltf_summary(gltf_json: dict[str, Any] | None) -> dict[str, Any]:
             if img.get("uri")
         ],
     }
+
+
+def mat4_identity() -> list[list[float]]:
+    return [
+        [1.0, 0.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0],
+        [0.0, 0.0, 0.0, 1.0],
+    ]
+
+
+def mat4_multiply(a: list[list[float]], b: list[list[float]]) -> list[list[float]]:
+    return [
+        [sum(a[row][k] * b[k][col] for k in range(4)) for col in range(4)]
+        for row in range(4)
+    ]
+
+
+def mat4_transform_origin(matrix: list[list[float]]) -> list[float]:
+    return [matrix[0][3], matrix[1][3], matrix[2][3]]
+
+
+def gltf_matrix_to_row_major(values: list[Any]) -> list[list[float]]:
+    # glTF stores matrices column-major; convert once so parent transforms rotate sockets correctly.
+    return [[float(values[col * 4 + row]) for col in range(4)] for row in range(4)]
+
+
+def gltf_node_local_matrix(node: dict[str, Any]) -> list[list[float]]:
+    matrix = node.get("matrix")
+    if isinstance(matrix, list) and len(matrix) == 16:
+        return gltf_matrix_to_row_major(matrix)
+
+    translation = numeric_triplet(node.get("translation")) or [0.0, 0.0, 0.0]
+    scale = numeric_triplet(node.get("scale")) or [1.0, 1.0, 1.0]
+    rotation = node.get("rotation")
+    if isinstance(rotation, list) and len(rotation) == 4:
+        x, y, z, w = (float(rotation[0]), float(rotation[1]), float(rotation[2]), float(rotation[3]))
+    else:
+        x, y, z, w = 0.0, 0.0, 0.0, 1.0
+
+    xx, yy, zz = x * x, y * y, z * z
+    xy, xz, yz = x * y, x * z, y * z
+    wx, wy, wz = w * x, w * y, w * z
+    rotation_matrix = [
+        [1.0 - 2.0 * (yy + zz), 2.0 * (xy - wz), 2.0 * (xz + wy), 0.0],
+        [2.0 * (xy + wz), 1.0 - 2.0 * (xx + zz), 2.0 * (yz - wx), 0.0],
+        [2.0 * (xz - wy), 2.0 * (yz + wx), 1.0 - 2.0 * (xx + yy), 0.0],
+        [0.0, 0.0, 0.0, 1.0],
+    ]
+    scale_matrix = [
+        [scale[0], 0.0, 0.0, 0.0],
+        [0.0, scale[1], 0.0, 0.0],
+        [0.0, 0.0, scale[2], 0.0],
+        [0.0, 0.0, 0.0, 1.0],
+    ]
+    translation_matrix = mat4_identity()
+    translation_matrix[0][3] = translation[0]
+    translation_matrix[1][3] = translation[1]
+    translation_matrix[2][3] = translation[2]
+    return mat4_multiply(translation_matrix, mat4_multiply(rotation_matrix, scale_matrix))
+
+
+def gltf_socket_world_positions(gltf_json: dict[str, Any] | None) -> dict[str, list[float]]:
+    if not gltf_json:
+        return {}
+    nodes = gltf_json.get("nodes", [])
+    parents: dict[int, int] = {}
+    for index, node in enumerate(nodes):
+        for child in node.get("children", []):
+            if isinstance(child, int):
+                parents[child] = index
+
+    cache: dict[int, list[list[float]]] = {}
+
+    def world_matrix(index: int) -> list[list[float]]:
+        if index in cache:
+            return cache[index]
+        local = gltf_node_local_matrix(nodes[index])
+        parent = parents.get(index)
+        cache[index] = local if parent is None else mat4_multiply(world_matrix(parent), local)
+        return cache[index]
+
+    positions: dict[str, list[float]] = {}
+    for index, node in enumerate(nodes):
+        name = str(node.get("name", ""))
+        if not name.startswith("socket_"):
+            continue
+        positions[name] = [round(value, 5) for value in mat4_transform_origin(world_matrix(index))]
+    return positions
+
+
+def socket_forward_axis_from_positions(positions: dict[str, list[float]]) -> str | None:
+    muzzle = positions.get("socket_muzzle")
+    if muzzle is None:
+        return None
+    base = positions.get("socket_grip_r") or positions.get("socket_weapon_root") or [0.0, 0.0, 0.0]
+    delta = [muzzle[index] - base[index] for index in range(3)]
+    if max(abs(component) for component in delta) <= 0.0001:
+        return None
+    axis_index = max(range(3), key=lambda index: abs(delta[index]))
+    return ("+" if delta[axis_index] >= 0.0 else "-") + AXES[axis_index]
 
 
 def expected_required_sockets(asset_id: str, category: str, tags: list[str]) -> set[str]:
@@ -473,6 +575,8 @@ def audit(root: Path, with_blender: bool, blender_path: str | None) -> dict[str,
         nodes = set(summary["nodes"])
         sockets = sorted(name for name in nodes if name.startswith("socket_"))
         collisions = sorted(name for name in nodes if name.startswith("col_"))
+        socket_positions = gltf_socket_world_positions(gltf_json)
+        cooked_socket_forward = socket_forward_axis_from_positions(socket_positions)
         metadata_sockets = set(metadata.get("sockets", []))
         missing_socket_nodes = sorted(metadata_sockets - nodes)
         if missing_socket_nodes:
@@ -481,6 +585,12 @@ def audit(root: Path, with_blender: bool, blender_path: str | None) -> dict[str,
         missing_required = sorted(required_sockets - nodes)
         if missing_required:
             add_issue(issues, "error", "sockets", f"Required import sockets are missing: {', '.join(missing_required)}")
+
+        metadata_socket_forward = metadata.get("runtime_socket_forward_axis") or metadata.get("socket_forward_axis")
+        if asset_id.startswith("wpn_") and cooked_socket_forward != "+Z":
+            add_issue(issues, "error", "runtime_socket_axis", f"Cooked weapon socket_muzzle points along {cooked_socket_forward}; runtime weapons must point along +Z.")
+        if metadata_socket_forward and cooked_socket_forward and metadata_socket_forward != cooked_socket_forward:
+            add_issue(issues, "warning", "runtime_socket_axis", f"Metadata runtime socket axis {metadata_socket_forward} does not match cooked GLB axis {cooked_socket_forward}.")
 
         collision = str(metadata.get("collision", ""))
         if collision.startswith("col_") and collision not in nodes:
@@ -505,8 +615,8 @@ def audit(root: Path, with_blender: bool, blender_path: str | None) -> dict[str,
                 add_issue(issues, "error", "source_sockets", f"Metadata sockets missing from .blend source: {', '.join(source_missing_sockets)}")
             source_forward = source_scan.get("socket_forward_axis")
             metadata_forward = metadata.get("blender_forward_axis")
-            if asset_id.startswith("wpn_") and source_forward and source_forward != "+Y":
-                add_issue(issues, "manual", "blender_axis", f"Weapon source socket_muzzle points along {source_forward}; normalized Nemisis weapon sources should point along Blender +Y.")
+            if asset_id.startswith("wpn_") and source_forward and source_forward != "-Y":
+                add_issue(issues, "manual", "blender_axis", f"Weapon source socket_muzzle points along {source_forward}; normalized Nemisis weapon sources should point along Blender -Y so runtime export lands on +Z.")
             if metadata_forward and source_forward and metadata_forward != source_forward:
                 add_issue(issues, "warning", "blender_axis", f"Metadata blender_forward_axis {metadata_forward} does not match source socket axis {source_forward}.")
         elif with_blender and blend_key:
@@ -531,6 +641,8 @@ def audit(root: Path, with_blender: bool, blender_path: str | None) -> dict[str,
                     "animation_names": summary["animations"][:20],
                     "animation_channels": summary["animation_channels"],
                     "sockets": sockets,
+                    "socket_positions": socket_positions,
+                    "socket_forward_axis": cooked_socket_forward,
                     "collisions": collisions,
                     "external_buffer_uris": summary["external_buffer_uris"],
                     "external_image_uris": summary["external_image_uris"],
@@ -541,6 +653,8 @@ def audit(root: Path, with_blender: bool, blender_path: str | None) -> dict[str,
                     "runtime_up_axis": metadata.get("runtime_up_axis"),
                     "gameplay_forward_axis": metadata.get("gameplay_forward_axis"),
                     "blender_forward_axis": metadata.get("blender_forward_axis"),
+                    "runtime_socket_forward_axis": metadata.get("runtime_socket_forward_axis") or metadata.get("socket_forward_axis"),
+                    "blender_socket_forward_axis": metadata.get("blender_socket_forward_axis"),
                     "origin": metadata.get("origin"),
                     "dimensions_m": metadata.get("dimensions_m"),
                     "target_dimensions_m": metadata.get("target_dimensions_m"),
@@ -623,6 +737,7 @@ def main() -> int:
     parser.add_argument("--with-blender", action="store_true", help="Inspect .blend source files through Blender CLI.")
     parser.add_argument("--blender", default=None, help="Explicit blender executable path.")
     parser.add_argument("--output", default=None, help="Optional JSON output path.")
+    parser.add_argument("--quiet", action="store_true", help="Suppress stdout JSON when --output is used.")
     parser.add_argument("--fail-on-error", action="store_true", help="Exit non-zero when error-severity issues are found.")
     args = parser.parse_args()
 
@@ -633,7 +748,8 @@ def main() -> int:
         output = (root / args.output).resolve()
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(text + "\n", encoding="utf-8")
-    print(text)
+    if not args.quiet:
+        print(text)
 
     if args.fail_on_error:
         error_count = result["summary"]["by_issue_severity"].get("error", 0)

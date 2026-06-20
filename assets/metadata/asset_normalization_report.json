@@ -5,7 +5,7 @@
   "config": "assets/metadata/asset_normalization_fixups.json",
   "coordinate_contract": {
     "blender_target_up_axis": "+Z",
-    "blender_target_forward_axis": "+Y",
+    "blender_target_forward_axis": "-Y",
     "runtime_up_axis": "Y",
     "gameplay_forward_axis": "+Z",
     "gltf_export_yup": true,
@@ -188,7 +188,7 @@
         "matched_keywords": [
           "chr"
         ],
-        "bytes": 77443096
+        "bytes": 77444692
       },
       {
         "path": "assets/processed/normalized/project_assets/wpn_project_rifle_afr120.glb",
@@ -198,7 +198,7 @@
           "rifle",
           "afr"
         ],
-        "bytes": 8469336
+        "bytes": 8469376
       },
       {
         "path": "assets/processed/normalized/project_assets/wpn_project_rifle_m4a1.glb",
@@ -208,7 +208,7 @@
           "rifle",
           "m4"
         ],
-        "bytes": 5077452
+        "bytes": 5077468
       },
       {
         "path": "assets/processed/normalized/project_assets/wpn_project_rifle_ncar.glb",
@@ -218,7 +218,7 @@
           "rifle",
           "ncar"
         ],
-        "bytes": 66315400
+        "bytes": 66315420
       },
       {
         "path": "assets/processed/normalized/project_assets/wpn_project_sidearm_glock19.glb",
@@ -228,7 +228,7 @@
           "sidearm",
           "glock"
         ],
-        "bytes": 4405332
+        "bytes": 4405352
       },
       {
         "path": "assets/processed/normalized/project_assets/wpn_project_sidearm_p320.glb",
@@ -238,7 +238,7 @@
           "sidearm",
           "p320"
         ],
-        "bytes": 2189984
+        "bytes": 2190008
       },
       {
         "path": "assets/processed/normalized/project_assets/wpn_project_smg_fr17.glb",
@@ -248,7 +248,7 @@
           "smg",
           "fr17"
         ],
-        "bytes": 33297940
+        "bytes": 33297960
       },
       {
         "path": "assets/project_assets/character_male1.glb",
@@ -1098,7 +1098,7 @@
         "rotation_euler_deg": [
           0.0,
           0.0,
-          0.0
+          180.0
         ],
         "origin": {
           "mode": "bounds_floor_center",
@@ -1123,7 +1123,7 @@
             "name": "socket_camera",
             "location": [
               0.0,
-              0.03,
+              -0.03,
               1.68
             ],
             "display_size": 0.08
@@ -1132,7 +1132,7 @@
             "name": "socket_weapon_root",
             "location": [
               0.22,
-              0.34,
+              -0.34,
               1.28
             ],
             "display_size": 0.07
@@ -1141,7 +1141,7 @@
             "name": "socket_hand_r",
             "location": [
               0.32,
-              0.27,
+              -0.27,
               1.18
             ],
             "display_size": 0.06
@@ -1150,7 +1150,7 @@
             "name": "socket_hand_l",
             "location": [
               -0.25,
-              0.34,
+              -0.34,
               1.18
             ],
             "display_size": 0.06
@@ -1159,7 +1159,7 @@
             "name": "socket_head",
             "location": [
               0.0,
-              0.03,
+              -0.03,
               1.58
             ],
             "display_size": 0.07
@@ -1180,8 +1180,8 @@
       ],
       "scale_factor_applied": null,
       "translation_applied": [
-        -0.10315,
-        0.10893,
+        0.10315,
+        -0.10893,
         0.0003
       ],
       "bounds_after_configured_normalization": {
@@ -1206,8 +1206,8 @@
           1.78599
         ],
         "center_xyz_blender": [
-          0.0,
-          0.0,
+          -0.0,
+          -0.0,
           0.89299
         ],
         "runtime_dimensions_m": [
@@ -1234,7 +1234,87 @@
         "socket_head",
         "socket_vfx"
       ],
-      "exported": "assets/processed/normalized/project_assets/chr_project_male1.glb"
+      "runtime_socket_report": {
+        "blender_socket_positions": {
+          "socket_root": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "socket_camera": [
+            0.0,
+            -0.03,
+            1.68
+          ],
+          "socket_weapon_root": [
+            0.22,
+            -0.34,
+            1.28
+          ],
+          "socket_hand_r": [
+            0.32,
+            -0.27,
+            1.18
+          ],
+          "socket_hand_l": [
+            -0.25,
+            -0.34,
+            1.18
+          ],
+          "socket_head": [
+            0.0,
+            -0.03,
+            1.58
+          ],
+          "socket_vfx": [
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "runtime_socket_positions": {
+          "socket_root": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "socket_camera": [
+            0.0,
+            1.68,
+            0.03
+          ],
+          "socket_weapon_root": [
+            0.22,
+            1.28,
+            0.34
+          ],
+          "socket_hand_r": [
+            0.32,
+            1.18,
+            0.27
+          ],
+          "socket_hand_l": [
+            -0.25,
+            1.18,
+            0.34
+          ],
+          "socket_head": [
+            0.0,
+            1.58,
+            0.03
+          ],
+          "socket_vfx": [
+            0.0,
+            1.0,
+            -0.0
+          ]
+        },
+        "blender_socket_forward_axis": null,
+        "runtime_socket_forward_axis": null
+      },
+      "runtime_socket_contract_ok": true,
+      "exported": "assets/processed/normalized/project_assets/chr_project_male1.glb",
+      "metadata_written": "assets/processed/normalized/project_assets/chr_project_male1.metadata.json"
     },
     {
       "id": "wpn_project_rifle_m4a1",
@@ -1321,7 +1401,7 @@
         "rotation_euler_deg": [
           0.0,
           -90.0,
-          0.0
+          180.0
         ],
         "origin": {
           "mode": "bounds_floor_center",
@@ -1337,7 +1417,7 @@
             "name": "socket_muzzle",
             "location": [
               0.0,
-              0.435,
+              -0.435,
               0.15
             ],
             "display_size": 0.035
@@ -1346,7 +1426,7 @@
             "name": "socket_grip_r",
             "location": [
               0.022,
-              -0.09,
+              0.09,
               0.08
             ],
             "display_size": 0.045
@@ -1355,7 +1435,7 @@
             "name": "socket_grip_l",
             "location": [
               -0.012,
-              0.16,
+              -0.16,
               0.11
             ],
             "display_size": 0.045
@@ -1364,7 +1444,7 @@
             "name": "socket_eject",
             "location": [
               0.036,
-              0.08,
+              -0.08,
               0.14
             ],
             "display_size": 0.035
@@ -1373,7 +1453,7 @@
             "name": "socket_vfx",
             "location": [
               0.0,
-              0.435,
+              -0.435,
               0.15
             ],
             "display_size": 0.04
@@ -1383,19 +1463,19 @@
       "removed_meshes": [],
       "scale_factor_applied": null,
       "translation_applied": [
-        0.0318,
-        -0.06681,
+        -0.0318,
+        0.06681,
         0.07353
       ],
       "bounds_after_configured_normalization": {
         "min_xyz_blender": [
-          -0.03181,
-          -0.42943,
+          -0.0318,
+          -0.42942,
           0.0
         ],
         "max_xyz_blender": [
-          0.0318,
-          0.42942,
+          0.03181,
+          0.42943,
           0.26632
         ],
         "size_xyz_blender": [
@@ -1409,8 +1489,8 @@
           0.26632
         ],
         "center_xyz_blender": [
-          -0.0,
-          -0.0,
+          0.0,
+          0.0,
           0.13316
         ],
         "runtime_dimensions_m": [
@@ -1433,7 +1513,67 @@
         "socket_eject",
         "socket_vfx"
       ],
-      "exported": "assets/processed/normalized/project_assets/wpn_project_rifle_m4a1.glb"
+      "runtime_socket_report": {
+        "blender_socket_positions": {
+          "socket_muzzle": [
+            0.0,
+            -0.435,
+            0.15
+          ],
+          "socket_grip_r": [
+            0.022,
+            0.09,
+            0.08
+          ],
+          "socket_grip_l": [
+            -0.012,
+            -0.16,
+            0.11
+          ],
+          "socket_eject": [
+            0.036,
+            -0.08,
+            0.14
+          ],
+          "socket_vfx": [
+            0.0,
+            -0.435,
+            0.15
+          ]
+        },
+        "runtime_socket_positions": {
+          "socket_muzzle": [
+            0.0,
+            0.15,
+            0.435
+          ],
+          "socket_grip_r": [
+            0.022,
+            0.08,
+            -0.09
+          ],
+          "socket_grip_l": [
+            -0.012,
+            0.11,
+            0.16
+          ],
+          "socket_eject": [
+            0.036,
+            0.14,
+            0.08
+          ],
+          "socket_vfx": [
+            0.0,
+            0.15,
+            0.435
+          ]
+        },
+        "blender_socket_forward_axis": "-Y",
+        "runtime_socket_forward_axis": "+Z"
+      },
+      "runtime_socket_contract_ok": true,
+      "exported": "assets/processed/normalized/project_assets/wpn_project_rifle_m4a1.glb",
+      "metadata_written": "assets/processed/normalized/project_assets/wpn_project_rifle_m4a1.metadata.json"
     },
     {
       "id": "wpn_project_rifle_afr120",
@@ -1501,7 +1641,7 @@
         ]
       },
       "configured_findings": [
-        "Axis layout already matches Blender +Z up and +Y forward in an isolated import.",
+        "Axis layout is normalized to Blender +Z up and -Y forward so glTF export_yup lands on runtime +Z forward.",
         "Rifle height is large for a shoulder weapon, but this may be intentional sci-fi styling.",
         "No authored socket_muzzle, grip sockets, eject socket, or col_ collision proxy."
       ],
@@ -1517,7 +1657,7 @@
         "rotation_euler_deg": [
           0.0,
           0.0,
-          0.0
+          180.0
         ],
         "origin": {
           "mode": "bounds_floor_center",
@@ -1533,7 +1673,7 @@
             "name": "socket_muzzle",
             "location": [
               0.0,
-              0.592,
+              -0.592,
               0.24
             ],
             "display_size": 0.035
@@ -1542,7 +1682,7 @@
             "name": "socket_grip_r",
             "location": [
               0.028,
-              -0.15,
+              0.15,
               0.14
             ],
             "display_size": 0.045
@@ -1551,7 +1691,7 @@
             "name": "socket_grip_l",
             "location": [
               -0.014,
-              0.18,
+              -0.18,
               0.18
             ],
             "display_size": 0.045
@@ -1560,7 +1700,7 @@
             "name": "socket_eject",
             "location": [
               0.042,
-              0.08,
+              -0.08,
               0.22
             ],
             "display_size": 0.035
@@ -1569,7 +1709,7 @@
             "name": "socket_vfx",
             "location": [
               0.0,
-              0.592,
+              -0.592,
               0.24
             ],
             "display_size": 0.04
@@ -1579,18 +1719,18 @@
       "removed_meshes": [],
       "scale_factor_applied": null,
       "translation_applied": [
-        0.00164,
-        0.05485,
+        -0.00164,
+        -0.05485,
         -0.00067
       ],
       "bounds_after_configured_normalization": {
         "min_xyz_blender": [
-          -0.03696,
+          -0.03697,
           -0.58561,
           -0.0
         ],
         "max_xyz_blender": [
-          0.03697,
+          0.03696,
           0.58561,
           0.50013
         ],
@@ -1605,8 +1745,8 @@
           0.50013
         ],
         "center_xyz_blender": [
-          0.0,
-          0.0,
+          -0.0,
+          -0.0,
           0.25007
         ],
         "runtime_dimensions_m": [
@@ -1629,7 +1769,67 @@
         "socket_eject",
         "socket_vfx"
       ],
-      "exported": "assets/processed/normalized/project_assets/wpn_project_rifle_afr120.glb"
+      "runtime_socket_report": {
+        "blender_socket_positions": {
+          "socket_muzzle": [
+            0.0,
+            -0.592,
+            0.24
+          ],
+          "socket_grip_r": [
+            0.028,
+            0.15,
+            0.14
+          ],
+          "socket_grip_l": [
+            -0.014,
+            -0.18,
+            0.18
+          ],
+          "socket_eject": [
+            0.042,
+            -0.08,
+            0.22
+          ],
+          "socket_vfx": [
+            0.0,
+            -0.592,
+            0.24
+          ]
+        },
+        "runtime_socket_positions": {
+          "socket_muzzle": [
+            0.0,
+            0.24,
+            0.592
+          ],
+          "socket_grip_r": [
+            0.028,
+            0.14,
+            -0.15
+          ],
+          "socket_grip_l": [
+            -0.014,
+            0.18,
+            0.18
+          ],
+          "socket_eject": [
+            0.042,
+            0.22,
+            0.08
+          ],
+          "socket_vfx": [
+            0.0,
+            0.24,
+            0.592
+          ]
+        },
+        "blender_socket_forward_axis": "-Y",
+        "runtime_socket_forward_axis": "+Z"
+      },
+      "runtime_socket_contract_ok": true,
+      "exported": "assets/processed/normalized/project_assets/wpn_project_rifle_afr120.glb",
+      "metadata_written": "assets/processed/normalized/project_assets/wpn_project_rifle_afr120.metadata.json"
     },
     {
       "id": "wpn_project_rifle_ncar",
@@ -1713,7 +1913,7 @@
         "rotation_euler_deg": [
           0.0,
           -90.0,
-          0.0
+          180.0
         ],
         "origin": {
           "mode": "bounds_floor_center",
@@ -1729,7 +1929,7 @@
             "name": "socket_muzzle",
             "location": [
               0.0,
-              0.455,
+              -0.455,
               0.19
             ],
             "display_size": 0.035
@@ -1738,7 +1938,7 @@
             "name": "socket_grip_r",
             "location": [
               0.035,
-              -0.12,
+              0.12,
               0.1
             ],
             "display_size": 0.045
@@ -1747,7 +1947,7 @@
             "name": "socket_grip_l",
             "location": [
               -0.018,
-              0.17,
+              -0.17,
               0.14
             ],
             "display_size": 0.045
@@ -1756,7 +1956,7 @@
             "name": "socket_eject",
             "location": [
               0.06,
-              0.06,
+              -0.06,
               0.17
             ],
             "display_size": 0.035
@@ -1765,7 +1965,7 @@
             "name": "socket_vfx",
             "location": [
               0.0,
-              0.455,
+              -0.455,
               0.19
             ],
             "display_size": 0.04
@@ -1775,18 +1975,18 @@
       "removed_meshes": [],
       "scale_factor_applied": null,
       "translation_applied": [
-        0.05686,
-        -0.03894,
+        -0.05686,
+        0.03894,
         0.11603
       ],
       "bounds_after_configured_normalization": {
         "min_xyz_blender": [
-          -0.05692,
+          -0.05693,
           -0.44989,
           0.0
         ],
         "max_xyz_blender": [
-          0.05693,
+          0.05692,
           0.44989,
           0.37238
         ],
@@ -1801,8 +2001,8 @@
           0.37238
         ],
         "center_xyz_blender": [
-          0.0,
-          0.0,
+          -0.0,
+          -0.0,
           0.18619
         ],
         "runtime_dimensions_m": [
@@ -1825,7 +2025,67 @@
         "socket_eject",
         "socket_vfx"
       ],
-      "exported": "assets/processed/normalized/project_assets/wpn_project_rifle_ncar.glb"
+      "runtime_socket_report": {
+        "blender_socket_positions": {
+          "socket_muzzle": [
+            0.0,
+            -0.455,
+            0.19
+          ],
+          "socket_grip_r": [
+            0.035,
+            0.12,
+            0.1
+          ],
+          "socket_grip_l": [
+            -0.018,
+            -0.17,
+            0.14
+          ],
+          "socket_eject": [
+            0.06,
+            -0.06,
+            0.17
+          ],
+          "socket_vfx": [
+            0.0,
+            -0.455,
+            0.19
+          ]
+        },
+        "runtime_socket_positions": {
+          "socket_muzzle": [
+            0.0,
+            0.19,
+            0.455
+          ],
+          "socket_grip_r": [
+            0.035,
+            0.1,
+            -0.12
+          ],
+          "socket_grip_l": [
+            -0.018,
+            0.14,
+            0.17
+          ],
+          "socket_eject": [
+            0.06,
+            0.17,
+            0.06
+          ],
+          "socket_vfx": [
+            0.0,
+            0.19,
+            0.455
+          ]
+        },
+        "blender_socket_forward_axis": "-Y",
+        "runtime_socket_forward_axis": "+Z"
+      },
+      "runtime_socket_contract_ok": true,
+      "exported": "assets/processed/normalized/project_assets/wpn_project_rifle_ncar.glb",
+      "metadata_written": "assets/processed/normalized/project_assets/wpn_project_rifle_ncar.metadata.json"
     },
     {
       "id": "wpn_project_smg_fr17",
@@ -1909,7 +2169,7 @@
         "rotation_euler_deg": [
           0.0,
           -90.0,
-          0.0
+          180.0
         ],
         "origin": {
           "mode": "bounds_floor_center",
@@ -1925,7 +2185,7 @@
             "name": "socket_muzzle",
             "location": [
               0.0,
-              0.25,
+              -0.25,
               0.16
             ],
             "display_size": 0.032
@@ -1934,7 +2194,7 @@
             "name": "socket_grip_r",
             "location": [
               0.02,
-              -0.06,
+              0.06,
               0.08
             ],
             "display_size": 0.04
@@ -1943,7 +2203,7 @@
             "name": "socket_grip_l",
             "location": [
               -0.01,
-              0.1,
+              -0.1,
               0.11
             ],
             "display_size": 0.04
@@ -1952,7 +2212,7 @@
             "name": "socket_eject",
             "location": [
               0.032,
-              0.02,
+              -0.02,
               0.14
             ],
             "display_size": 0.032
@@ -1961,7 +2221,7 @@
             "name": "socket_vfx",
             "location": [
               0.0,
-              0.25,
+              -0.25,
               0.16
             ],
             "display_size": 0.038
@@ -1971,19 +2231,19 @@
       "removed_meshes": [],
       "scale_factor_applied": null,
       "translation_applied": [
-        0.0258,
-        -0.02286,
+        -0.0258,
+        0.02286,
         0.11898
       ],
       "bounds_after_configured_normalization": {
         "min_xyz_blender": [
           -0.02826,
-          -0.24478,
+          -0.24477,
           -0.0
         ],
         "max_xyz_blender": [
           0.02826,
-          0.24477,
+          0.24478,
           0.29578
         ],
         "size_xyz_blender": [
@@ -1997,8 +2257,8 @@
           0.29578
         ],
         "center_xyz_blender": [
-          0.0,
           -0.0,
+          0.0,
           0.14789
         ],
         "runtime_dimensions_m": [
@@ -2021,7 +2281,67 @@
         "socket_eject",
         "socket_vfx"
       ],
-      "exported": "assets/processed/normalized/project_assets/wpn_project_smg_fr17.glb"
+      "runtime_socket_report": {
+        "blender_socket_positions": {
+          "socket_muzzle": [
+            0.0,
+            -0.25,
+            0.16
+          ],
+          "socket_grip_r": [
+            0.02,
+            0.06,
+            0.08
+          ],
+          "socket_grip_l": [
+            -0.01,
+            -0.1,
+            0.11
+          ],
+          "socket_eject": [
+            0.032,
+            -0.02,
+            0.14
+          ],
+          "socket_vfx": [
+            0.0,
+            -0.25,
+            0.16
+          ]
+        },
+        "runtime_socket_positions": {
+          "socket_muzzle": [
+            0.0,
+            0.16,
+            0.25
+          ],
+          "socket_grip_r": [
+            0.02,
+            0.08,
+            -0.06
+          ],
+          "socket_grip_l": [
+            -0.01,
+            0.11,
+            0.1
+          ],
+          "socket_eject": [
+            0.032,
+            0.14,
+            0.02
+          ],
+          "socket_vfx": [
+            0.0,
+            0.16,
+            0.25
+          ]
+        },
+        "blender_socket_forward_axis": "-Y",
+        "runtime_socket_forward_axis": "+Z"
+      },
+      "runtime_socket_contract_ok": true,
+      "exported": "assets/processed/normalized/project_assets/wpn_project_smg_fr17.glb",
+      "metadata_written": "assets/processed/normalized/project_assets/wpn_project_smg_fr17.metadata.json"
     },
     {
       "id": "wpn_project_sidearm_glock19",
@@ -2105,7 +2425,7 @@
         "rotation_euler_deg": [
           0.0,
           -90.0,
-          0.0
+          180.0
         ],
         "scale_to_dimension_m": {
           "axis": "Y",
@@ -2125,7 +2445,7 @@
             "name": "socket_muzzle",
             "location": [
               0.0,
-              0.095,
+              -0.095,
               0.08
             ],
             "display_size": 0.022
@@ -2134,7 +2454,7 @@
             "name": "socket_grip_r",
             "location": [
               0.012,
-              -0.04,
+              0.04,
               0.035
             ],
             "display_size": 0.028
@@ -2143,7 +2463,7 @@
             "name": "socket_grip_l",
             "location": [
               -0.008,
-              -0.035,
+              0.035,
               0.035
             ],
             "display_size": 0.028
@@ -2152,7 +2472,7 @@
             "name": "socket_eject",
             "location": [
               0.014,
-              0.015,
+              -0.015,
               0.09
             ],
             "display_size": 0.022
@@ -2161,7 +2481,7 @@
             "name": "socket_vfx",
             "location": [
               0.0,
-              0.095,
+              -0.095,
               0.08
             ],
             "display_size": 0.026
@@ -2171,19 +2491,19 @@
       "removed_meshes": [],
       "scale_factor_applied": 0.644828,
       "translation_applied": [
-        0.01079,
-        0.04574,
+        -0.01079,
+        -0.04574,
         0.07427
       ],
       "bounds_after_configured_normalization": {
         "min_xyz_blender": [
-          -0.01129,
-          -0.09349,
+          -0.01128,
+          -0.0935,
           0.0
         ],
         "max_xyz_blender": [
-          0.01128,
-          0.0935,
+          0.01129,
+          0.09349,
           0.12885
         ],
         "size_xyz_blender": [
@@ -2197,8 +2517,8 @@
           0.12885
         ],
         "center_xyz_blender": [
-          -0.0,
           0.0,
+          -0.0,
           0.06443
         ],
         "runtime_dimensions_m": [
@@ -2221,7 +2541,67 @@
         "socket_eject",
         "socket_vfx"
       ],
-      "exported": "assets/processed/normalized/project_assets/wpn_project_sidearm_glock19.glb"
+      "runtime_socket_report": {
+        "blender_socket_positions": {
+          "socket_muzzle": [
+            0.0,
+            -0.095,
+            0.08
+          ],
+          "socket_grip_r": [
+            0.012,
+            0.04,
+            0.035
+          ],
+          "socket_grip_l": [
+            -0.008,
+            0.035,
+            0.035
+          ],
+          "socket_eject": [
+            0.014,
+            -0.015,
+            0.09
+          ],
+          "socket_vfx": [
+            0.0,
+            -0.095,
+            0.08
+          ]
+        },
+        "runtime_socket_positions": {
+          "socket_muzzle": [
+            0.0,
+            0.08,
+            0.095
+          ],
+          "socket_grip_r": [
+            0.012,
+            0.035,
+            -0.04
+          ],
+          "socket_grip_l": [
+            -0.008,
+            0.035,
+            -0.035
+          ],
+          "socket_eject": [
+            0.014,
+            0.09,
+            0.015
+          ],
+          "socket_vfx": [
+            0.0,
+            0.08,
+            0.095
+          ]
+        },
+        "blender_socket_forward_axis": "-Y",
+        "runtime_socket_forward_axis": "+Z"
+      },
+      "runtime_socket_contract_ok": true,
+      "exported": "assets/processed/normalized/project_assets/wpn_project_sidearm_glock19.glb",
+      "metadata_written": "assets/processed/normalized/project_assets/wpn_project_sidearm_glock19.metadata.json"
     },
     {
       "id": "wpn_project_sidearm_p320",
@@ -2305,7 +2685,7 @@
         "rotation_euler_deg": [
           0.0,
           -90.0,
-          0.0
+          180.0
         ],
         "scale_to_dimension_m": {
           "axis": "Y",
@@ -2325,7 +2705,7 @@
             "name": "socket_muzzle",
             "location": [
               0.0,
-              0.103,
+              -0.103,
               0.09
             ],
             "display_size": 0.022
@@ -2334,7 +2714,7 @@
             "name": "socket_grip_r",
             "location": [
               0.014,
-              -0.045,
+              0.045,
               0.04
             ],
             "display_size": 0.028
@@ -2343,7 +2723,7 @@
             "name": "socket_grip_l",
             "location": [
               -0.009,
-              -0.04,
+              0.04,
               0.04
             ],
             "display_size": 0.028
@@ -2352,7 +2732,7 @@
             "name": "socket_eject",
             "location": [
               0.016,
-              0.018,
+              -0.018,
               0.1
             ],
             "display_size": 0.022
@@ -2361,7 +2741,7 @@
             "name": "socket_vfx",
             "location": [
               0.0,
-              0.103,
+              -0.103,
               0.09
             ],
             "display_size": 0.026
@@ -2371,8 +2751,8 @@
       "removed_meshes": [],
       "scale_factor_applied": 0.753862,
       "translation_applied": [
-        0.01459,
-        -0.01132,
+        -0.01459,
+        0.01132,
         0.0862
       ],
       "bounds_after_configured_normalization": {
@@ -2397,8 +2777,8 @@
           0.14874
         ],
         "center_xyz_blender": [
-          -0.0,
           0.0,
+          -0.0,
           0.07437
         ],
         "runtime_dimensions_m": [
@@ -2421,7 +2801,67 @@
         "socket_eject",
         "socket_vfx"
       ],
-      "exported": "assets/processed/normalized/project_assets/wpn_project_sidearm_p320.glb"
+      "runtime_socket_report": {
+        "blender_socket_positions": {
+          "socket_muzzle": [
+            0.0,
+            -0.103,
+            0.09
+          ],
+          "socket_grip_r": [
+            0.014,
+            0.045,
+            0.04
+          ],
+          "socket_grip_l": [
+            -0.009,
+            0.04,
+            0.04
+          ],
+          "socket_eject": [
+            0.016,
+            -0.018,
+            0.1
+          ],
+          "socket_vfx": [
+            0.0,
+            -0.103,
+            0.09
+          ]
+        },
+        "runtime_socket_positions": {
+          "socket_muzzle": [
+            0.0,
+            0.09,
+            0.103
+          ],
+          "socket_grip_r": [
+            0.014,
+            0.04,
+            -0.045
+          ],
+          "socket_grip_l": [
+            -0.009,
+            0.04,
+            -0.04
+          ],
+          "socket_eject": [
+            0.016,
+            0.1,
+            0.018
+          ],
+          "socket_vfx": [
+            0.0,
+            0.09,
+            0.103
+          ]
+        },
+        "blender_socket_forward_axis": "-Y",
+        "runtime_socket_forward_axis": "+Z"
+      },
+      "runtime_socket_contract_ok": true,
+      "exported": "assets/processed/normalized/project_assets/wpn_project_sidearm_p320.glb",
+      "metadata_written": "assets/processed/normalized/project_assets/wpn_project_sidearm_p320.metadata.json"
     }
   ]
 }

@@ -16,26 +16,26 @@
   "runtime_up_axis": "Y",
   "gameplay_forward_axis": "+Z",
   "blender_up_axis": "+Z",
-  "blender_forward_axis": "+Y",
+  "blender_forward_axis": "-Y",
   "dimensions_m": [
-    0.2359,
+    0.23594,
     1.6385,
-    0.7062
+    0.70619
   ],
   "target_dimensions_m": [
     0.2,
     1.63,
     0.64
   ],
-  "origin": "Origin at approximate right-hand grip/root; Blender forward axis is +Y.",
+  "origin": "Recooked from normalized Blender source; weapon sockets are Blender -Y forward and runtime +Z forward.",
   "sockets": [
-    "socket_muzzle",
-    "socket_grip_r",
+    "socket_eject",
     "socket_grip_l",
+    "socket_grip_r",
+    "socket_mag",
+    "socket_muzzle",
     "socket_optic",
     "socket_underbarrel",
-    "socket_mag",
-    "socket_eject",
     "socket_vfx"
   ],
   "socket_notes": {
@@ -71,5 +71,94 @@
     "polygons": 218,
     "triangles_estimate": 500
   },
-  "bytes": 58972
+  "bytes": 59012,
+  "recooked_by": "tools/blender/recook_blender_catalog_exports.py",
+  "recooked_at_utc": "2026-06-20T07:54:50+00:00",
+  "blender_socket_positions": {
+    "socket_muzzle": [
+      -0.0,
+      -1.025,
+      0.043
+    ],
+    "socket_grip_r": [
+      0.0,
+      0.24,
+      -0.11
+    ],
+    "socket_grip_l": [
+      -0.0,
+      -0.34,
+      -0.082
+    ],
+    "socket_optic": [
+      -0.0,
+      -0.045,
+      0.32
+    ],
+    "socket_underbarrel": [
+      -0.0,
+      -0.455,
+      -0.085
+    ],
+    "socket_mag": [
+      0.0,
+      0.03,
+      -0.365
+    ],
+    "socket_eject": [
+      -0.102,
+      -0.04,
+      0.1
+    ],
+    "socket_vfx": [
+      -0.0,
+      -1.025,
+      0.043
+    ]
+  },
+  "runtime_socket_positions": {
+    "socket_muzzle": [
+      -0.0,
+      0.043,
+      1.025
+    ],
+    "socket_grip_r": [
+      0.0,
+      -0.11,
+      -0.24
+    ],
+    "socket_grip_l": [
+      -0.0,
+      -0.082,
+      0.34
+    ],
+    "socket_optic": [
+      -0.0,
+      0.32,
+      0.045
+    ],
+    "socket_underbarrel": [
+      -0.0,
+      -0.085,
+      0.455
+    ],
+    "socket_mag": [
+      0.0,
+      -0.365,
+      -0.03
+    ],
+    "socket_eject": [
+      -0.102,
+      0.1,
+      0.04
+    ],
+    "socket_vfx": [
+      -0.0,
+      0.043,
+      1.025
+    ]
+  },
+  "blender_socket_forward_axis": "-Y",
+  "runtime_socket_forward_axis": "+Z",
+  "socket_generation": "Recooked from checked-in .blend sockets by tools/blender/recook_blender_catalog_exports.py."
 }

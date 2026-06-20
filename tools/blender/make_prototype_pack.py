@@ -253,6 +253,7 @@ def build_proto_smg() -> None:
     clear_scene()
     configure_scene()
     root = root_empty("wpn_proto_smg_01")
+    root.rotation_euler[2] = math.radians(-90.0)
 
     dark = material("mat_smg_dark_polymer", (0.055, 0.06, 0.065, 1.0))
     metal = material("mat_smg_gunmetal", (0.32, 0.34, 0.35, 1.0))
@@ -276,7 +277,10 @@ def build_proto_smg() -> None:
     cube("geo_front_sight", (0.315, 0.0, 0.284), (0.035, 0.06, 0.055), edge, root)
     cube("geo_mag_release_mark", (0.17, -0.048, 0.118), (0.045, 0.008, 0.032), orange, root)
 
+    empty_socket("socket_root", (0.0, 0.0, 0.0), root)
     empty_socket("socket_grip", (-0.055, 0.0, 0.0), root)
+    empty_socket("socket_grip_r", (-0.055, -0.055, 0.0), root)
+    empty_socket("socket_grip_l", (0.31, 0.055, 0.15), root)
     empty_socket("socket_muzzle", (0.63, 0.0, 0.18), root)
     empty_socket("socket_mag", (0.105, 0.0, -0.16), root)
 
@@ -431,7 +435,7 @@ ASSETS: tuple[AssetSpec, ...] = (
         "weapon",
         ("all", "weapon", "weapons", "smg"),
         (1.07, 0.11, 0.45),
-        "Origin at approximate right-hand grip center; forward axis is +X.",
+        "Origin at approximate right-hand grip center; source is rotated so runtime forward axis is +Z.",
         "Low-poly SMG/rifle proxy with barrel, stock, magazine, sights, and sockets.",
         build_proto_smg,
     ),
@@ -530,6 +534,46 @@ def rel(path: Path) -> str:
         return path.as_posix()
 
 
+def metadata_for(spec: AssetSpec, export_path: Path, stats: dict[str, int]) -> dict[str, object]:
+    metadata: dict[str, object] = {
+        "id": spec.asset_id,
+        "source": "tools/blender/make_prototype_pack.py",
+        "export": rel(export_path),
+        "category": spec.category,
+        "scale_meters": True,
+        "runtime_up_axis": "Y",
+        "gameplay_forward_axis": "+Z",
+        "origin": spec.origin_note,
+        "dimensions_m": list(spec.dimensions_m),
+        "target_dimensions_m": list(spec.dimensions_m),
+        "collision": "none",
+        "lods": [f"{spec.asset_id}_lod0"],
+        "license": "original_project_asset",
+        "external_assets": False,
+        "generated_by": "tools/blender/make_prototype_pack.py",
+        "generated_at_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+        "stats": stats,
+    }
+    if spec.category == "weapon":
+        metadata.update(
+            {
+                "sockets": [
+                    "socket_root",
+                    "socket_muzzle",
+                    "socket_grip",
+                    "socket_grip_r",
+                    "socket_grip_l",
+                    "socket_mag",
+                ],
+                "blender_forward_axis": "-Y",
+                "runtime_socket_forward_axis": "+Z",
+                "blender_socket_forward_axis": "-Y",
+                "socket_generation": "Generated in the procedural prototype pack with runtime +Z weapon forward.",
+            }
+        )
+    return metadata
+
+
 def write_manifest(output_root: Path, records: list[dict[str, object]]) -> None:
     manifest = {
         "pack_id": "nemisis_prototype_pack_01",
@@ -561,7 +605,7 @@ No external assets were downloaded or embedded.
 
 - Units are meters.
 - Mesh transforms are applied; per-asset origins are described in `manifest.json`.
-- Weapon forward axis is `+X`; map parts use floor contact at or near `Z=0`.
+- Weapon forward axis is runtime `+Z`; map parts use floor contact at or near `Z=0`.
 - The floor tile origin is on its top walking plane so it can be snapped at `Z=0`.
 
 ## Regenerate
@@ -604,10 +648,13 @@ def main() -> None:
         stats = mesh_stats()
         export_path = output_root / spec.filename
         export_glb(export_path)
+        metadata_path = export_path.with_suffix(".metadata.json")
+        metadata_path.write_text(json.dumps(metadata_for(spec, export_path, stats), indent=2) + "\n", encoding="utf-8")
         record = {
             "id": spec.asset_id,
             "category": spec.category,
             "file": rel(export_path),
+            "metadata": rel(metadata_path),
             "dimensions_m": spec.dimensions_m,
             "origin": spec.origin_note,
             "description": spec.description,
@@ -615,6 +662,7 @@ def main() -> None:
         }
         records.append(record)
         print(f"Wrote {rel(export_path)}")
+        print(f"Wrote {rel(metadata_path)}")
 
     write_manifest(output_root, records)
     write_readme(output_root, records)

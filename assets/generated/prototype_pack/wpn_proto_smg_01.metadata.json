@@ -5,17 +5,42 @@
   "category": "weapon",
   "scale_meters": true,
   "runtime_up_axis": "Y",
-  "gameplay_forward_axis": "+X",
-  "sockets": [
-    "socket_root",
-    "socket_muzzle",
-    "socket_grip_r",
-    "socket_grip_l"
+  "gameplay_forward_axis": "+Z",
+  "origin": "Origin at approximate right-hand grip center; source is rotated so runtime forward axis is +Z.",
+  "dimensions_m": [
+    1.07,
+    0.11,
+    0.45
+  ],
+  "target_dimensions_m": [
+    1.07,
+    0.11,
+    0.45
   ],
   "collision": "none",
   "lods": [
     "wpn_proto_smg_01_lod0"
   ],
   "license": "original_project_asset",
-  "generated_by": "tools/blender/make_prototype_pack.py"
+  "external_assets": false,
+  "generated_by": "tools/blender/make_prototype_pack.py",
+  "generated_at_utc": "2026-06-20T08:01:19+00:00",
+  "stats": {
+    "mesh_objects": 16,
+    "vertices": 168,
+    "polygons": 116,
+    "triangles_estimate": 272
+  },
+  "sockets": [
+    "socket_root",
+    "socket_muzzle",
+    "socket_grip",
+    "socket_grip_r",
+    "socket_grip_l",
+    "socket_mag"
+  ],
+  "blender_forward_axis": "-Y",
+  "runtime_socket_forward_axis": "+Z",
+  "blender_socket_forward_axis": "-Y",
+  "socket_generation": "Generated in the procedural prototype pack with runtime +Z weapon forward."
 }

@@ -143,6 +143,46 @@ def bounds_for_meshes(meshes: list[bpy.types.Object]) -> dict[str, Any] | None:
     }
 
 
+def rounded_triplet(values: Any) -> list[float]:
+    return [round(float(values[index]), 5) for index in range(3)]
+
+
+def runtime_from_blender_local(value: Vector) -> list[float]:
+    return [round(float(value.x), 5), round(float(value.z), 5), round(-float(value.y), 5)]
+
+
+def dominant_axis(delta: list[float]) -> str | None:
+    if max(abs(component) for component in delta) <= 0.0001:
+        return None
+    axis_index = max(range(3), key=lambda index: abs(delta[index]))
+    axes = ["X", "Y", "Z"]
+    return ("+" if delta[axis_index] >= 0.0 else "-") + axes[axis_index]
+
+
+def socket_report_from_objects(root: bpy.types.Object, socket_objects: list[bpy.types.Object]) -> dict[str, Any]:
+    blender_positions: dict[str, list[float]] = {}
+    runtime_positions: dict[str, list[float]] = {}
+    inverse_root = root.matrix_world.inverted()
+    for obj in socket_objects:
+        local = obj.location.copy() if obj.parent == root else inverse_root @ obj.matrix_world.translation
+        blender_positions[obj.name] = rounded_triplet(local)
+        runtime_positions[obj.name] = runtime_from_blender_local(local)
+
+    def axis_from_positions(positions: dict[str, list[float]]) -> str | None:
+        muzzle = positions.get("socket_muzzle")
+        if muzzle is None:
+            return None
+        base = positions.get("socket_grip_r") or positions.get("socket_weapon_root") or [0.0, 0.0, 0.0]
+        return dominant_axis([muzzle[index] - base[index] for index in range(3)])
+
+    return {
+        "blender_socket_positions": blender_positions,
+        "runtime_socket_positions": runtime_positions,
+        "blender_socket_forward_axis": axis_from_positions(blender_positions),
+        "runtime_socket_forward_axis": axis_from_positions(runtime_positions),
+    }
+
+
 def non_applied_mesh_transforms(meshes: list[bpy.types.Object]) -> list[dict[str, Any]]:
     issues: list[dict[str, Any]] = []
     for obj in meshes:
@@ -295,6 +335,146 @@ def export_glb(path: Path, objects: list[bpy.types.Object]) -> None:
     )
 
 
+def weapon_socket_notes() -> dict[str, str]:
+    return {
+        "socket_muzzle": "Muzzle/VFX point at runtime +Z after Blender -Y forward normalization.",
+        "socket_grip_r": "Right-hand firing grip anchor for first-person and future IK retargeting.",
+        "socket_grip_l": "Left support-hand anchor on the fore-end.",
+        "socket_eject": "Right-side casing ejection reference.",
+        "socket_vfx": "Muzzle flash/tracer fallback, intentionally colocated with socket_muzzle.",
+    }
+
+
+def character_socket_notes() -> dict[str, str]:
+    return {
+        "socket_root": "Feet/root pivot at normalized floor center.",
+        "socket_camera": "Approximate eye reference; exported runtime socket faces +Z forward.",
+        "socket_weapon_root": "Approximate chest/shoulder weapon mount for viewmodel handoff.",
+        "socket_hand_r": "Right hand reference for firing grip retargeting.",
+        "socket_hand_l": "Left hand reference for support grip and traversal cues.",
+        "socket_head": "Head/helmet reference for hit and VFX alignment.",
+        "socket_vfx": "Torso VFX fallback anchor.",
+    }
+
+
+def action_names() -> list[str]:
+    return sorted(action.name for action in bpy.data.actions)
+
+
+def armature_names() -> list[str]:
+    return sorted(obj.name for obj in bpy.data.objects if obj.type == "ARMATURE")
+
+
+def write_asset_metadata(
+    repo_root: Path,
+    config_path: Path,
+    config: dict[str, Any],
+    entry: dict[str, Any],
+    out: Path,
+    bounds_after: dict[str, Any] | None,
+    socket_report: dict[str, Any],
+) -> Path:
+    metadata_path = out.with_name(out.stem + ".metadata.json")
+    metadata = read_json(metadata_path) if metadata_path.exists() else {}
+    contract = config.get("coordinate_contract", {})
+    sockets = [str(socket.get("name")) for socket in entry.get("normalization", {}).get("add_sockets", []) if socket.get("name")]
+    category = str(entry.get("category", "mesh"))
+    target_dimensions = entry.get("target_dimensions_m")
+    if target_dimensions is None and bounds_after:
+        target_dimensions = bounds_after.get("dimensions_m_blender_xyz")
+
+    metadata.update(
+        {
+            "id": entry["id"],
+            "source": entry["source"],
+            "export": rel(repo_root, out),
+            "category": category,
+            "scale_meters": True,
+            "runtime_up_axis": contract.get("runtime_up_axis", "Y"),
+            "gameplay_forward_axis": contract.get("gameplay_forward_axis", "+Z"),
+            "blender_up_axis": contract.get("blender_target_up_axis", "+Z"),
+            "blender_forward_axis": contract.get("blender_target_forward_axis", "-Y"),
+            "dimensions_m": target_dimensions,
+            "target_dimensions_m": target_dimensions,
+            "sockets": sockets,
+            "collision": metadata.get("collision", "none"),
+            "lods": metadata.get("lods", [f"{entry['id']}_lod0"]),
+            "license": metadata.get("license", "original_project_asset"),
+            "external_assets": False,
+            "generated_by": "tools/blender/normalize_project_assets.py",
+            "normalized_export": rel(repo_root, out),
+            "normalization_status": "exported_runtime_y_up_positive_z_forward",
+            "socket_forward_axis": socket_report.get("runtime_socket_forward_axis"),
+            "runtime_socket_forward_axis": socket_report.get("runtime_socket_forward_axis"),
+            "blender_socket_forward_axis": socket_report.get("blender_socket_forward_axis"),
+            "socket_generation": f"Generated by tools/blender/normalize_project_assets.py from {rel(repo_root, config_path)}.",
+        }
+    )
+
+    if category == "weapon":
+        metadata["origin"] = (
+            "Normalized Project weapon GLB; source axes are rotated to Blender +Z up/-Y forward so "
+            "Blender export_yup produces runtime Y-up/+Z-forward sockets."
+        )
+        metadata["socket_notes"] = weapon_socket_notes()
+    elif category == "character":
+        clips = action_names()
+        rigs = armature_names()
+        if rigs:
+            metadata["skin"] = metadata.get("skin") or rigs[0]
+        if clips:
+            metadata["animation_clips"] = clips
+        metadata["origin"] = (
+            "Normalized Project character GLB; helper meshes removed, floor-centered, and rotated to the "
+            "runtime Y-up/+Z-forward contract."
+        )
+        metadata["socket_notes"] = character_socket_notes()
+        metadata["first_person_arms"] = metadata.get(
+            "first_person_arms",
+            "not_separated_from_full_body; runtime uses procedural first-person rig and socket-bound hands",
+        )
+        roles = metadata.get("animation_clip_roles", {})
+        for clip in clips:
+            if "run" in clip.lower():
+                roles.setdefault(clip, "locomotion_run_reference")
+            elif "walk" in clip.lower():
+                roles.setdefault(clip, "locomotion_walk_reference")
+            elif "pose" in clip.lower():
+                roles.setdefault(clip, "retarget_bind_pose_reference")
+            else:
+                roles.setdefault(clip, "idle_stance_reference")
+        metadata["animation_clip_roles"] = roles
+        skeleton = metadata.get("skeleton", {})
+        skeleton.update(
+            {
+                "skin": metadata.get("skin"),
+                "animation_clips": clips,
+                "source_pose": skeleton.get("source_pose", "T_pose"),
+                "retarget_axis_contract": "Blender +Z up/-Y forward; exported runtime Y-up/+Z forward",
+                "retarget_status": "source skin and clips are present; runtime first-person rig now binds hands and weapon feedback to cooked sockets",
+                "runtime_socket_contract": [
+                    "socket_camera",
+                    "socket_weapon_root",
+                    "socket_hand_r",
+                    "socket_hand_l",
+                ],
+            }
+        )
+        metadata["skeleton"] = skeleton
+        metadata["first_person_view"] = {
+            "body_visibility": "hide full local body for camera; use camera-bound torso, hands, and arms only",
+            "arms_source_asset": "chr_a1_fp_arms_01",
+            "weapon_socket": "socket_weapon_root",
+            "right_hand_socket": "socket_hand_r",
+            "left_hand_socket": "socket_hand_l",
+            "camera_socket": "socket_camera",
+            "status": "socket-ready with source skeleton/animation clips; final authored first-person arms split still needed",
+        }
+
+    write_json(metadata_path, metadata)
+    return metadata_path
+
+
 def output_path(repo_root: Path, entry: dict[str, Any], output_root: Path | None) -> Path:
     configured = Path(entry["output"])
     if output_root:
@@ -306,6 +486,7 @@ def output_path(repo_root: Path, entry: dict[str, Any], output_root: Path | None
 
 def inspect_entry(
     repo_root: Path,
+    config_path: Path,
     config: dict[str, Any],
     entry: dict[str, Any],
     export: bool,
@@ -380,17 +561,27 @@ def inspect_entry(
 
     if export:
         root = None
+        runtime_socket_report: dict[str, Any] = {}
         if normalization.get("ensure_root_empty", True):
             root = ensure_root_empty(entry["id"], managed)
             managed = managed_objects(list(bpy.context.scene.objects), set(), ())
         added_sockets = []
         if root and normalization.get("add_sockets"):
             added_sockets = add_socket_empties(root, list(normalization.get("add_sockets", [])))
+            socket_objects = [bpy.data.objects[name] for name in added_sockets if name in bpy.data.objects]
+            runtime_socket_report = socket_report_from_objects(root, socket_objects)
             managed = managed_objects(list(bpy.context.scene.objects), set(), ())
         result["exported_sockets"] = added_sockets
+        result["runtime_socket_report"] = runtime_socket_report
+        result["runtime_socket_contract_ok"] = (
+            entry.get("category") != "weapon"
+            or runtime_socket_report.get("runtime_socket_forward_axis") == "+Z"
+        )
         out = output_path(repo_root, entry, output_root)
         export_glb(out, managed)
+        metadata_path = write_asset_metadata(repo_root, config_path, config, entry, out, after, runtime_socket_report)
         result["exported"] = rel(repo_root, out) if not output_root else str(out)
+        result["metadata_written"] = rel(repo_root, metadata_path) if not output_root else str(metadata_path)
 
     return result
 
@@ -469,7 +660,7 @@ def main() -> int:
         raise SystemExit(f"Unknown --only asset id(s): {', '.join(missing)}")
 
     results = [
-        inspect_entry(repo_root, config, entry, args.export, output_root)
+        inspect_entry(repo_root, config_path, config, entry, args.export, output_root)
         for entry in entries
     ]
     report = {

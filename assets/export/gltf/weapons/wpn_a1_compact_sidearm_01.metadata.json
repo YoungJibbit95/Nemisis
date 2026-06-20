@@ -6,23 +6,23 @@
   "scale_meters": true,
   "runtime_up_axis": "Y",
   "gameplay_forward_axis": "+Z",
-  "blender_forward_axis": "+Y",
+  "blender_forward_axis": "-Y",
   "dimensions_m": [
     0.125,
-    0.4688,
-    0.3842
+    0.46881,
+    0.38424
   ],
   "target_dimensions_m": [
     0.13,
     0.45,
     0.35
   ],
-  "origin": "Origin at approximate right-hand grip/root; Blender forward axis is +Y.",
+  "origin": "Recooked from normalized Blender source; weapon sockets are Blender -Y forward and runtime +Z forward.",
   "sockets": [
-    "socket_muzzle",
-    "socket_grip_r",
-    "socket_grip_l",
     "socket_eject",
+    "socket_grip_l",
+    "socket_grip_r",
+    "socket_muzzle",
     "socket_vfx"
   ],
   "collision": "none",
@@ -41,5 +41,64 @@
     "polygons": 80,
     "triangles_estimate": 188
   },
-  "bytes": 22468
+  "bytes": 22508,
+  "recooked_by": "tools/blender/recook_blender_catalog_exports.py",
+  "recooked_at_utc": "2026-06-20T07:54:50+00:00",
+  "blender_socket_positions": {
+    "socket_muzzle": [
+      -0.0,
+      -0.28,
+      0.063
+    ],
+    "socket_grip_r": [
+      0.0,
+      0.1,
+      -0.115
+    ],
+    "socket_grip_l": [
+      -0.0,
+      -0.015,
+      -0.06
+    ],
+    "socket_eject": [
+      -0.075,
+      -0.06,
+      0.1
+    ],
+    "socket_vfx": [
+      -0.0,
+      -0.28,
+      0.063
+    ]
+  },
+  "runtime_socket_positions": {
+    "socket_muzzle": [
+      -0.0,
+      0.063,
+      0.28
+    ],
+    "socket_grip_r": [
+      0.0,
+      -0.115,
+      -0.1
+    ],
+    "socket_grip_l": [
+      -0.0,
+      -0.06,
+      0.015
+    ],
+    "socket_eject": [
+      -0.075,
+      0.1,
+      0.06
+    ],
+    "socket_vfx": [
+      -0.0,
+      0.063,
+      0.28
+    ]
+  },
+  "blender_socket_forward_axis": "-Y",
+  "runtime_socket_forward_axis": "+Z",
+  "socket_generation": "Recooked from checked-in .blend sockets by tools/blender/recook_blender_catalog_exports.py."
 }
