@@ -1,6 +1,7 @@
 #include "nemisis/dev/DevTargetRange.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 #include <utility>
 
@@ -10,6 +11,40 @@ namespace {
 
 [[nodiscard]] float consume(float value, float deltaSeconds) {
     return std::max(0.0F, value - std::max(0.0F, deltaSeconds));
+}
+
+[[nodiscard]] float clamp01(float value) {
+    return std::clamp(value, 0.0F, 1.0F);
+}
+
+[[nodiscard]] float approach(float current, float target, float rate, float deltaSeconds) {
+    const float maxStep = std::max(0.0F, rate) * std::max(0.0F, deltaSeconds);
+    if (current < target) {
+        return std::min(target, current + maxStep);
+    }
+    return std::max(target, current - maxStep);
+}
+
+[[nodiscard]] float distance(novacore::math::Vec3 a, novacore::math::Vec3 b) {
+    const auto delta = a - b;
+    return std::sqrt(delta.lengthSquared());
+}
+
+[[nodiscard]] float lanePressureTarget(
+    const DevTargetLane& lane,
+    std::size_t laneIndex,
+    std::size_t activeLaneIndex,
+    novacore::math::Vec3 playerPosition) {
+    if (lane.target.eliminated || lane.respawnSeconds > 0.0F) {
+        return 0.0F;
+    }
+
+    const float rangePressure = clamp01((36.0F - distance(playerPosition, lane.target.position)) / 26.0F);
+    const float activeBoost = laneIndex == activeLaneIndex ? 0.16F : 0.0F;
+    const float woundedBoost = lane.target.maxHealth > 0.0F
+        ? (1.0F - clamp01(lane.target.health / lane.target.maxHealth)) * 0.18F
+        : 0.0F;
+    return clamp01((clamp01(rangePressure + woundedBoost) * 0.84F) + activeBoost);
 }
 
 [[nodiscard]] DevTargetLane makeLane(
@@ -81,6 +116,9 @@ void resetDevTargetRange(DevTargetRangeState& range) {
     for (auto& lane : range.lanes) {
         resetDebugTarget(lane.target);
         lane.respawnSeconds = 0.0F;
+        lane.pressure01 = 0.0F;
+        lane.threatSeconds = 0.0F;
+        lane.pressureActive = false;
     }
     range.activeLaneIndex = clampActiveIndex(range);
 }
@@ -195,6 +233,53 @@ std::size_t aliveTargetCount(const DevTargetRangeState& range) {
 
 std::size_t eliminatedTargetCount(const DevTargetRangeState& range) {
     return totalTargetCount(range) - aliveTargetCount(range);
+}
+
+void updateDevTargetRangePressure(
+    DevTargetRangeState& range,
+    novacore::math::Vec3 playerPosition,
+    float deltaSeconds) {
+    ensureDevTargetRange(range);
+
+    const float dt = std::clamp(deltaSeconds, 0.0F, 0.25F);
+    const auto activeIndex = clampActiveIndex(range);
+    for (std::size_t index = 0; index < range.lanes.size(); ++index) {
+        auto& lane = range.lanes[index];
+        const float target = lanePressureTarget(lane, index, activeIndex, playerPosition);
+        const bool activeLane = index == activeIndex;
+        const float riseRate = activeLane ? 3.7F : 2.15F;
+        const float rate = target > lane.pressure01 ? riseRate : 1.65F;
+        lane.pressure01 = approach(lane.pressure01, target, rate, dt);
+        lane.pressureActive = lane.pressure01 > 0.08F;
+        lane.threatSeconds = lane.pressureActive
+            ? lane.threatSeconds + dt
+            : consume(lane.threatSeconds, dt * 2.0F);
+    }
+}
+
+DevTargetLanePressureSample strongestDevTargetRangePressure(const DevTargetRangeState& range) {
+    DevTargetLanePressureSample sample{};
+    float bestPressure = 0.0F;
+    for (std::size_t index = 0; index < range.lanes.size(); ++index) {
+        const auto& lane = range.lanes[index];
+        if (!lane.pressureActive || lane.pressure01 <= bestPressure) {
+            continue;
+        }
+        bestPressure = lane.pressure01;
+        sample.active = true;
+        sample.laneIndex = index;
+        sample.laneId = lane.id;
+        sample.laneName = lane.displayName;
+        sample.targetPosition = lane.target.position;
+        sample.pressure01 = lane.pressure01;
+        sample.threatSeconds = lane.threatSeconds;
+    }
+
+    if (sample.active) {
+        const float lethalBand = clamp01((sample.pressure01 - 0.60F) / 0.40F);
+        sample.damagePerSecond = lethalBand * (8.0F + (sample.threatSeconds * 2.25F));
+    }
+    return sample;
 }
 
 } // namespace nemisis::dev

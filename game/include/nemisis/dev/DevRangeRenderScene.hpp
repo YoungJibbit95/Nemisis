@@ -43,10 +43,17 @@ struct DevRangePlayerRenderState final {
     weapons::WeaponRuntimeState weapon{};
     std::uint16_t effectiveMagazineSize = 0;
     player::CharacterAnimationFrame animation{};
+    novacore::math::Vec3 latestShotOrigin{};
+    novacore::math::Vec3 latestShotEnd{};
+    float hitDistanceMeters = 0.0F;
     bool hasMovementState = false;
     bool hasCameraRig = false;
     bool hasWallRunContact = false;
     bool hasAnimationFrame = false;
+    bool firedThisFrame = false;
+    bool hitThisFrame = false;
+    bool eliminatedThisFrame = false;
+    bool hasLatestShotTrace = false;
 };
 
 struct DevRangeRenderSceneStats final {
@@ -59,6 +66,9 @@ struct DevRangeRenderSceneStats final {
     std::size_t firstPersonMeshCount = 0;
     std::size_t firstPersonBodyPrimitiveCount = 0;
     std::size_t firstPersonSocketCount = 0;
+    std::size_t firstPersonFeedbackPrimitiveCount = 0;
+    std::size_t hitFeedbackLineCount = 0;
+    std::size_t activeLanePressurePrimitiveCount = 0;
     std::size_t targetMeshCount = 0;
     std::size_t materialFallbackProfileCount = 0;
 };

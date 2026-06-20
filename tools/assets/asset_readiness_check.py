@@ -115,17 +115,35 @@ def gltf_summary(gltf_json: dict[str, Any] | None) -> dict[str, Any]:
             "nodes": [],
             "meshes": [],
             "materials": [],
+            "skins": [],
+            "skinned_mesh_nodes": [],
+            "animations": [],
+            "animation_channels": 0,
             "external_buffer_uris": [],
             "external_image_uris": [],
         }
-    nodes = [node.get("name", "") for node in gltf_json.get("nodes", [])]
+    node_objects = gltf_json.get("nodes", [])
+    nodes = [node.get("name", "") for node in node_objects]
     meshes = [mesh.get("name", "") for mesh in gltf_json.get("meshes", [])]
     materials = [mat.get("name", "") for mat in gltf_json.get("materials", [])]
+    skins = [skin.get("name", "") for skin in gltf_json.get("skins", [])]
+    animations = [animation.get("name", "") for animation in gltf_json.get("animations", [])]
     return {
         "asset_version": gltf_json.get("asset", {}).get("version"),
         "nodes": nodes,
         "meshes": meshes,
         "materials": materials,
+        "skins": skins,
+        "skinned_mesh_nodes": [
+            node.get("name", "")
+            for node in node_objects
+            if "skin" in node
+        ],
+        "animations": animations,
+        "animation_channels": sum(
+            len(animation.get("channels", []))
+            for animation in gltf_json.get("animations", [])
+        ),
         "external_buffer_uris": [
             buf.get("uri")
             for buf in gltf_json.get("buffers", [])
@@ -151,6 +169,15 @@ def expected_required_sockets(asset_id: str, category: str, tags: list[str]) -> 
     if "slide" in tags:
         return {"socket_slide_entry", "socket_slide_exit"}
     return set()
+
+
+def numeric_triplet(value: Any) -> list[float] | None:
+    if not isinstance(value, list) or len(value) != 3:
+        return None
+    try:
+        return [float(component) for component in value]
+    except (TypeError, ValueError):
+        return None
 
 
 def classify_status(issues: list[dict[str, str]]) -> str:
@@ -211,10 +238,42 @@ import sys
 from pathlib import Path
 
 import bpy
+from mathutils import Vector
 
 out_path = Path(sys.argv[sys.argv.index("--") + 1])
 blend_paths = [Path(p) for p in sys.argv[sys.argv.index("--") + 2:]]
 results = {}
+
+AXES = ["X", "Y", "Z"]
+
+def mesh_bounds(mesh_objects):
+    points = []
+    for obj in mesh_objects:
+        for corner in obj.bound_box:
+            points.append(obj.matrix_world @ Vector(corner))
+    if not points:
+        return None
+    mins = [min(point[i] for point in points) for i in range(3)]
+    maxs = [max(point[i] for point in points) for i in range(3)]
+    size = [maxs[i] - mins[i] for i in range(3)]
+    return {
+        "min_xyz_blender": [round(v, 5) for v in mins],
+        "max_xyz_blender": [round(v, 5) for v in maxs],
+        "size_xyz_blender": [round(v, 5) for v in size],
+    }
+
+def socket_forward_axis(socket_objects):
+    by_name = {obj.name: obj for obj in socket_objects}
+    muzzle = by_name.get("socket_muzzle")
+    if muzzle is None:
+        return None
+    base = by_name.get("socket_grip_r") or by_name.get("socket_weapon_root")
+    base_location = base.matrix_world.translation if base else Vector((0.0, 0.0, 0.0))
+    delta = muzzle.matrix_world.translation - base_location
+    if delta.length <= 0.0001:
+        return None
+    axis_index = max(range(3), key=lambda index: abs(delta[index]))
+    return ("+" if delta[axis_index] >= 0.0 else "-") + AXES[axis_index]
 
 for blend_path in blend_paths:
     try:
@@ -250,8 +309,14 @@ for blend_path in blend_paths:
             "mesh_count": len(mesh_objects),
             "material_count": len(material_names),
             "materials": material_names,
+            "bounds": mesh_bounds(mesh_objects),
             "sockets": sorted(obj.name for obj in socket_objects),
             "socket_types": {obj.name: obj.type for obj in socket_objects},
+            "socket_locations": {
+                obj.name: [round(v, 5) for v in obj.matrix_world.translation]
+                for obj in socket_objects
+            },
+            "socket_forward_axis": socket_forward_axis(socket_objects),
             "collisions": sorted(obj.name for obj in collision_objects),
             "root_objects": roots_at_origin,
             "non_applied_mesh_transforms": non_applied[:50],
@@ -389,6 +454,21 @@ def audit(root: Path, with_blender: bool, blender_path: str | None) -> dict[str,
             add_issue(issues, "warning", "orientation", f"runtime_up_axis should be Y for current importer expectations: {metadata.get('runtime_up_axis')}")
         if metadata.get("gameplay_forward_axis") != "+Z":
             add_issue(issues, "manual", "orientation", f"gameplay_forward_axis is {metadata.get('gameplay_forward_axis')}; current asset plan expects +Z.")
+        dimensions = numeric_triplet(metadata.get("dimensions_m"))
+        if dimensions and asset_id.startswith("wpn_") and dimensions[1] < dimensions[2]:
+            add_issue(
+                issues,
+                "warning",
+                "dimensions",
+                "Weapon dimensions_m should use Blender/source semantic order [width, forward length, height]; second component is shorter than height.",
+            )
+        if dimensions and asset_id.startswith("chr_") and "first_person_arms" not in tags and dimensions[2] < dimensions[1]:
+            add_issue(
+                issues,
+                "warning",
+                "dimensions",
+                "Character dimensions_m should use Blender/source semantic order [width, depth, height]; third component is shorter than depth.",
+            )
 
         nodes = set(summary["nodes"])
         sockets = sorted(name for name in nodes if name.startswith("socket_"))
@@ -423,6 +503,12 @@ def audit(root: Path, with_blender: bool, blender_path: str | None) -> dict[str,
             source_missing_sockets = sorted(metadata_sockets - source_sockets)
             if source_missing_sockets:
                 add_issue(issues, "error", "source_sockets", f"Metadata sockets missing from .blend source: {', '.join(source_missing_sockets)}")
+            source_forward = source_scan.get("socket_forward_axis")
+            metadata_forward = metadata.get("blender_forward_axis")
+            if asset_id.startswith("wpn_") and source_forward and source_forward != "+Y":
+                add_issue(issues, "manual", "blender_axis", f"Weapon source socket_muzzle points along {source_forward}; normalized Nemisis weapon sources should point along Blender +Y.")
+            if metadata_forward and source_forward and metadata_forward != source_forward:
+                add_issue(issues, "warning", "blender_axis", f"Metadata blender_forward_axis {metadata_forward} does not match source socket axis {source_forward}.")
         elif with_blender and blend_key:
             add_issue(issues, "warning", "blender_scan", "No Blender scan data was produced for this source .blend.")
 
@@ -438,6 +524,12 @@ def audit(root: Path, with_blender: bool, blender_path: str | None) -> dict[str,
                     "nodes": len(summary["nodes"]),
                     "meshes": len(summary["meshes"]),
                     "materials": len(summary["materials"]),
+                    "skins": len(summary["skins"]),
+                    "skin_names": summary["skins"][:20],
+                    "skinned_mesh_nodes": summary["skinned_mesh_nodes"][:20],
+                    "animations": len(summary["animations"]),
+                    "animation_names": summary["animations"][:20],
+                    "animation_channels": summary["animation_channels"],
                     "sockets": sockets,
                     "collisions": collisions,
                     "external_buffer_uris": summary["external_buffer_uris"],
@@ -451,8 +543,19 @@ def audit(root: Path, with_blender: bool, blender_path: str | None) -> dict[str,
                     "blender_forward_axis": metadata.get("blender_forward_axis"),
                     "origin": metadata.get("origin"),
                     "dimensions_m": metadata.get("dimensions_m"),
+                    "target_dimensions_m": metadata.get("target_dimensions_m"),
                     "collision": metadata.get("collision"),
                     "sockets": metadata.get("sockets", []),
+                    "socket_notes": metadata.get("socket_notes"),
+                    "socket_generation": metadata.get("socket_generation"),
+                    "socket_hints": metadata.get("socket_hints"),
+                    "normalized_export": metadata.get("normalized_export"),
+                    "normalization_status": metadata.get("normalization_status"),
+                    "skin": metadata.get("skin"),
+                    "animation_clips": metadata.get("animation_clips"),
+                    "animation_clip_roles": metadata.get("animation_clip_roles"),
+                    "skeleton": metadata.get("skeleton"),
+                    "first_person_view": metadata.get("first_person_view"),
                     "license": metadata.get("license"),
                     "external_assets": metadata.get("external_assets"),
                 },
@@ -465,7 +568,9 @@ def audit(root: Path, with_blender: bool, blender_path: str | None) -> dict[str,
                 "object_count": source_scan.get("object_count"),
                 "mesh_count": source_scan.get("mesh_count"),
                 "material_count": source_scan.get("material_count"),
+                "bounds": source_scan.get("bounds"),
                 "sockets": source_scan.get("sockets", []),
+                "socket_forward_axis": source_scan.get("socket_forward_axis"),
                 "collisions": source_scan.get("collisions", []),
                 "root_objects": source_scan.get("root_objects", []),
                 "non_applied_mesh_transform_count": source_scan.get("non_applied_mesh_transform_count", 0),

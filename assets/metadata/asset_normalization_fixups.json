@@ -47,9 +47,11 @@
       "aliases": ["character_male1"],
       "findings": [
         "Contains exported Icosphere helper mesh that distorts whole-file bounds.",
-        "No authored Nemisis socket_root, socket_camera, socket_weapon_root, hand sockets, or col_ collision proxy.",
+        "Contains one GLB skin named rig and four source animation clips: Hard stand, Run (1_18), T_pose, and Walk (1_24).",
+        "No authored Nemisis socket_root, socket_camera, socket_weapon_root, hand sockets, first-person arms split, or col_ collision proxy.",
         "Visible character mesh is offset from origin by roughly +0.103m X and -0.109m Y in Blender space."
       ],
+      "target_dimensions_m": [0.85176, 0.39996, 1.78599],
       "normalization": {
         "remove_mesh_names": ["Icosphere"],
         "rotation_euler_deg": [0.0, 0.0, 0.0],
@@ -58,7 +60,16 @@
           "center_axes": ["X", "Y"],
           "floor_axis": "Z"
         },
-        "ensure_root_empty": true
+        "ensure_root_empty": true,
+        "add_sockets": [
+          {"name": "socket_root", "location": [0.0, 0.0, 0.0], "display_size": 0.08},
+          {"name": "socket_camera", "location": [0.0, 0.03, 1.68], "display_size": 0.08},
+          {"name": "socket_weapon_root", "location": [0.22, 0.34, 1.28], "display_size": 0.07},
+          {"name": "socket_hand_r", "location": [0.32, 0.27, 1.18], "display_size": 0.06},
+          {"name": "socket_hand_l", "location": [-0.25, 0.34, 1.18], "display_size": 0.06},
+          {"name": "socket_head", "location": [0.0, 0.03, 1.58], "display_size": 0.07},
+          {"name": "socket_vfx", "location": [0.0, 0.0, 1.0], "display_size": 0.06}
+        ]
       }
     },
     {
@@ -69,10 +80,12 @@
       "aliases": ["weapon_rifle_m4a1", "m4a1", "hk416_candidate_no_explicit_hk416_match"],
       "findings": [
         "No explicit HK416 path, metadata, material, or object-name match was found; this M4A1 asset is the closest rifle candidate.",
-        "Current sidecar dimensions understate actual weapon length because only part of the model appears to have been measured.",
+        "Old sidecar dimensions understated actual weapon length because only part of the model appears to have been measured.",
         "Weapon height is on Blender +X while Nemisis target assets use Blender +Z up, so the configured fix rolls source +X to target +Z.",
+        "Normalized semantic dimensions are [width, forward length, height] = [0.06361, 0.85884, 0.26632] meters.",
         "No authored socket_muzzle, grip sockets, eject socket, or col_ collision proxy."
       ],
+      "target_dimensions_m": [0.06361, 0.85884, 0.26632],
       "normalization": {
         "remove_mesh_names": ["Icosphere"],
         "rotation_euler_deg": [0.0, -90.0, 0.0],
@@ -81,7 +94,14 @@
           "center_axes": ["X", "Y"],
           "floor_axis": "Z"
         },
-        "ensure_root_empty": true
+        "ensure_root_empty": true,
+        "add_sockets": [
+          {"name": "socket_muzzle", "location": [0.0, 0.435, 0.15], "display_size": 0.035},
+          {"name": "socket_grip_r", "location": [0.022, -0.09, 0.08], "display_size": 0.045},
+          {"name": "socket_grip_l", "location": [-0.012, 0.16, 0.11], "display_size": 0.045},
+          {"name": "socket_eject", "location": [0.036, 0.08, 0.14], "display_size": 0.035},
+          {"name": "socket_vfx", "location": [0.0, 0.435, 0.15], "display_size": 0.04}
+        ]
       }
     },
     {
@@ -95,6 +115,7 @@
         "Rifle height is large for a shoulder weapon, but this may be intentional sci-fi styling.",
         "No authored socket_muzzle, grip sockets, eject socket, or col_ collision proxy."
       ],
+      "target_dimensions_m": [0.07392, 1.17122, 0.50013],
       "normalization": {
         "remove_mesh_names": ["Icosphere"],
         "rotation_euler_deg": [0.0, 0.0, 0.0],
@@ -103,7 +124,14 @@
           "center_axes": ["X", "Y"],
           "floor_axis": "Z"
         },
-        "ensure_root_empty": true
+        "ensure_root_empty": true,
+        "add_sockets": [
+          {"name": "socket_muzzle", "location": [0.0, 0.592, 0.24], "display_size": 0.035},
+          {"name": "socket_grip_r", "location": [0.028, -0.15, 0.14], "display_size": 0.045},
+          {"name": "socket_grip_l", "location": [-0.014, 0.18, 0.18], "display_size": 0.045},
+          {"name": "socket_eject", "location": [0.042, 0.08, 0.22], "display_size": 0.035},
+          {"name": "socket_vfx", "location": [0.0, 0.592, 0.24], "display_size": 0.04}
+        ]
       }
     },
     {
@@ -114,8 +142,10 @@
       "aliases": ["weapon_rifle_ncar", "ncar"],
       "findings": [
         "Weapon height is on Blender +X while Nemisis target assets use Blender +Z up, so the configured fix rolls source +X to target +Z.",
+        "Normalized semantic dimensions are [width, forward length, height] = [0.11385, 0.89978, 0.37238] meters.",
         "No authored socket_muzzle, grip sockets, eject socket, or col_ collision proxy."
       ],
+      "target_dimensions_m": [0.11385, 0.89978, 0.37238],
       "normalization": {
         "remove_mesh_names": ["Icosphere"],
         "rotation_euler_deg": [0.0, -90.0, 0.0],
@@ -124,7 +154,14 @@
           "center_axes": ["X", "Y"],
           "floor_axis": "Z"
         },
-        "ensure_root_empty": true
+        "ensure_root_empty": true,
+        "add_sockets": [
+          {"name": "socket_muzzle", "location": [0.0, 0.455, 0.19], "display_size": 0.035},
+          {"name": "socket_grip_r", "location": [0.035, -0.12, 0.10], "display_size": 0.045},
+          {"name": "socket_grip_l", "location": [-0.018, 0.17, 0.14], "display_size": 0.045},
+          {"name": "socket_eject", "location": [0.06, 0.06, 0.17], "display_size": 0.035},
+          {"name": "socket_vfx", "location": [0.0, 0.455, 0.19], "display_size": 0.04}
+        ]
       }
     },
     {
@@ -135,8 +172,10 @@
       "aliases": ["weapon_smg_fr17", "fr17"],
       "findings": [
         "Weapon height is on Blender +X while Nemisis target assets use Blender +Z up, so the configured fix rolls source +X to target +Z.",
+        "Normalized semantic dimensions are [width, forward length, height] = [0.05652, 0.48954, 0.29578] meters.",
         "No authored socket_muzzle, grip sockets, eject socket, or col_ collision proxy."
       ],
+      "target_dimensions_m": [0.05652, 0.48954, 0.29578],
       "normalization": {
         "remove_mesh_names": ["Icosphere"],
         "rotation_euler_deg": [0.0, -90.0, 0.0],
@@ -145,7 +184,14 @@
           "center_axes": ["X", "Y"],
           "floor_axis": "Z"
         },
-        "ensure_root_empty": true
+        "ensure_root_empty": true,
+        "add_sockets": [
+          {"name": "socket_muzzle", "location": [0.0, 0.25, 0.16], "display_size": 0.032},
+          {"name": "socket_grip_r", "location": [0.02, -0.06, 0.08], "display_size": 0.04},
+          {"name": "socket_grip_l", "location": [-0.01, 0.10, 0.11], "display_size": 0.04},
+          {"name": "socket_eject", "location": [0.032, 0.02, 0.14], "display_size": 0.032},
+          {"name": "socket_vfx", "location": [0.0, 0.25, 0.16], "display_size": 0.038}
+        ]
       }
     },
     {
@@ -159,6 +205,7 @@
         "Source length is about 0.29m before scaling; configured normalization scales uniformly to a 0.187m Glock 19 reference length.",
         "No authored socket_muzzle, grip sockets, eject socket, or col_ collision proxy."
       ],
+      "target_dimensions_m": [0.02257, 0.187, 0.12885],
       "normalization": {
         "remove_mesh_names": ["Icosphere"],
         "rotation_euler_deg": [0.0, -90.0, 0.0],
@@ -171,7 +218,14 @@
           "center_axes": ["X", "Y"],
           "floor_axis": "Z"
         },
-        "ensure_root_empty": true
+        "ensure_root_empty": true,
+        "add_sockets": [
+          {"name": "socket_muzzle", "location": [0.0, 0.095, 0.08], "display_size": 0.022},
+          {"name": "socket_grip_r", "location": [0.012, -0.04, 0.035], "display_size": 0.028},
+          {"name": "socket_grip_l", "location": [-0.008, -0.035, 0.035], "display_size": 0.028},
+          {"name": "socket_eject", "location": [0.014, 0.015, 0.09], "display_size": 0.022},
+          {"name": "socket_vfx", "location": [0.0, 0.095, 0.08], "display_size": 0.026}
+        ]
       }
     },
     {
@@ -185,6 +239,7 @@
         "Source length is about 0.269m before scaling; configured normalization scales uniformly to a 0.203m P320 reference length.",
         "No authored socket_muzzle, grip sockets, eject socket, or col_ collision proxy."
       ],
+      "target_dimensions_m": [0.02882, 0.203, 0.14874],
       "normalization": {
         "remove_mesh_names": ["Icosphere"],
         "rotation_euler_deg": [0.0, -90.0, 0.0],
@@ -197,7 +252,14 @@
           "center_axes": ["X", "Y"],
           "floor_axis": "Z"
         },
-        "ensure_root_empty": true
+        "ensure_root_empty": true,
+        "add_sockets": [
+          {"name": "socket_muzzle", "location": [0.0, 0.103, 0.09], "display_size": 0.022},
+          {"name": "socket_grip_r", "location": [0.014, -0.045, 0.04], "display_size": 0.028},
+          {"name": "socket_grip_l", "location": [-0.009, -0.04, 0.04], "display_size": 0.028},
+          {"name": "socket_eject", "location": [0.016, 0.018, 0.10], "display_size": 0.022},
+          {"name": "socket_vfx", "location": [0.0, 0.103, 0.09], "display_size": 0.026}
+        ]
       }
     }
   ]

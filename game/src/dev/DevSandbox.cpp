@@ -189,7 +189,17 @@ std::string DevSandbox::latestSummary() const {
            << latest_.target.health
            << " targetHits=" << latest_.target.hitsTaken
            << " hit=" << (latest_.targetHit.hit ? "yes" : "no")
-           << " eliminated=" << (latest_.targetHit.eliminated ? "yes" : "no")
+           << " eliminated=" << (latest_.targetHit.eliminated ? "yes" : "no");
+    const auto pressure = strongestDevTargetRangePressure(latest_.targetRange);
+    if (pressure.active) {
+        stream << " pressure=" << pressure.laneName
+               << ':' << std::setprecision(2) << pressure.pressure01
+               << " threat=" << pressure.threatSeconds
+               << " dps=" << pressure.damagePerSecond;
+    } else {
+        stream << " pressure=none";
+    }
+    stream
            << " collisionHits=" << latest_.collision.hitCount
            << " contacts=" << latest_.collision.contacts.size()
            << " contactRoles=";

@@ -883,11 +883,13 @@ void renderDevRangeHud(
         ? 0U
         : std::min(sample.targetRange.activeLaneIndex, sample.targetRange.lanes.size() - 1U);
     const auto* activeLaneScore = dev::activeDevRangeLaneScore(sample.rangeSession, activeLaneIndex);
+    const auto* activeLane = dev::activeTargetLane(sample.targetRange);
     const auto laneLabel = activeLaneScore != nullptr && !activeLaneScore->laneName.empty()
         ? activeLaneScore->laneName
-        : (dev::activeTargetLane(sample.targetRange) != nullptr
-            ? dev::activeTargetLane(sample.targetRange)->displayName
+        : (activeLane != nullptr
+            ? activeLane->displayName
             : std::string("NO LANE"));
+    const float lanePressure = activeLane != nullptr ? activeLane->pressure01 : 0.0F;
     addHudText(
         frame,
         layout,
@@ -898,6 +900,7 @@ void renderDevRangeHud(
         "LANE " + laneLabel +
             "  ACC " + (activeLaneScore != nullptr ? percent(dev::devRangeLaneAccuracy(*activeLaneScore)) : "0%") +
             "  BEST " + (activeLaneScore != nullptr ? secondsOrDash(activeLaneScore->bestTtkSeconds) : "--") +
+            "  PRESS " + percent(lanePressure) +
             "  LIVE " + std::to_string(dev::aliveTargetCount(sample.targetRange)) + "/" +
             std::to_string(dev::totalTargetCount(sample.targetRange)));
 
@@ -1065,8 +1068,23 @@ void renderDebugOverlay(
                 std::to_string(backendFrameStats.lastWorldBoxCount) + "B " +
                 std::to_string(backendFrameStats.lastWorldMeshCount) + "M");
         addHudMetric(frame, layout, x + 190.0F, y + 108.0F, "UI", std::to_string(backendFrameStats.lastUiRectCount) + "R " + std::to_string(backendFrameStats.lastUiTextCount) + "T");
-        addHudMetric(frame, layout, x + 190.0F, y + 128.0F, "MAT", std::to_string(sceneStats.materialFallbackProfileCount) + "f");
-        addHudMetric(frame, layout, x + 14.0F, y + 128.0F, "QUEUE", std::to_string(meshStats.uploadQueueLength + queuedAssets));
+        addHudMetric(
+            frame,
+            layout,
+            x + 190.0F,
+            y + 128.0F,
+            "MAT",
+            std::to_string(sceneStats.materialFallbackProfileCount) + "f " +
+                std::to_string(sceneStats.activeLanePressurePrimitiveCount) + "p");
+        addHudMetric(
+            frame,
+            layout,
+            x + 14.0F,
+            y + 128.0F,
+            "QUEUE",
+            std::to_string(meshStats.uploadQueueLength + queuedAssets) + " q " +
+                std::to_string(meshStats.gpuUploadSuccessCount) + "/" +
+                std::to_string(meshStats.gpuUploadAttemptCount) + " up");
         break;
     }
 }

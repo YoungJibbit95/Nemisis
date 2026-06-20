@@ -24,6 +24,32 @@ except ModuleNotFoundError as exc:
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SOURCE_ROOT = REPO_ROOT / "assets" / "source" / "blender"
 EXPORT_ROOT = REPO_ROOT / "assets" / "export" / "gltf"
+METADATA_OVERRIDES = {
+    "wpn_ar_01": {
+        "blender_up_axis": "+Z",
+        "blender_forward_axis": "+Y",
+        "dimensions_m": [0.26, 1.17, 0.4425],
+        "target_dimensions_m": [0.26, 1.17, 0.4425],
+        "origin": "Origin at the receiver center; muzzle and weapon sockets point along Blender +Y.",
+        "external_assets": False,
+    },
+    "wpn_smg_01": {
+        "blender_up_axis": "+Z",
+        "blender_forward_axis": "+Y",
+        "dimensions_m": [0.22, 0.77, 0.3825],
+        "target_dimensions_m": [0.22, 0.77, 0.3825],
+        "origin": "Origin at the receiver center; muzzle and weapon sockets point along Blender +Y.",
+        "external_assets": False,
+    },
+    "wpn_sidearm_01": {
+        "blender_up_axis": "+Z",
+        "blender_forward_axis": "+Y",
+        "dimensions_m": [0.13, 0.49503, 0.35259],
+        "target_dimensions_m": [0.13, 0.49503, 0.35259],
+        "origin": "Origin near the slide/frame center; muzzle and weapon sockets point along Blender +Y.",
+        "external_assets": False,
+    },
+}
 
 
 def ensure_dirs(*paths: Path) -> None:
@@ -230,6 +256,7 @@ def write_metadata(
         "license": "original_project_asset",
         "generated_by": "tools/blender/make_dev_primitives.py",
     }
+    metadata.update(METADATA_OVERRIDES.get(asset_id, {}))
     export_dir = EXPORT_ROOT / category
     ensure_dirs(export_dir)
     (export_dir / f"{asset_id}.metadata.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")

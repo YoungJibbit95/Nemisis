@@ -6,14 +6,35 @@
   "scale_meters": true,
   "runtime_up_axis": "Y",
   "gameplay_forward_axis": "+Z",
-  "blender_up_axis": "+Y",
-  "blender_forward_axis": "+Z",
-  "dimensions_m": [0.3724, 0.1139, 0.8998],
-  "origin": "Imported Project/Assets weapon GLB; first-person placement is handled by DevRangeRenderScene.",
+  "blender_up_axis": "+X",
+  "blender_forward_axis": "+Y",
+  "dimensions_m": [
+    0.11385,
+    0.89978,
+    0.37238
+  ],
+  "target_dimensions_m": [
+    0.11385,
+    0.89978,
+    0.37238
+  ],
+  "origin": "Imported Project/Assets rifle GLB; source height is authored on Blender +X and is rotated to +Z up by tools/blender/normalize_project_assets.py.",
   "sockets": [],
   "collision": "none",
-  "lods": ["wpn_project_rifle_ncar_lod0"],
+  "lods": [
+    "wpn_project_rifle_ncar_lod0"
+  ],
   "license": "original_project_asset",
   "external_assets": false,
-  "generated_by": "manual_project_assets_import"
+  "generated_by": "manual_project_assets_import",
+  "normalized_export": "assets/processed/normalized/project_assets/wpn_project_rifle_ncar.glb",
+  "normalization_status": "source preserved; runtime uses normalized_export for +Z up/+Y forward and generated socket nodes",
+  "socket_hints": {
+    "socket_muzzle": "Muzzle/VFX point at forward +Y end after +X-height to +Z-up normalization.",
+    "socket_grip_r": "Right-hand firing grip anchor for first-person and world-model IK.",
+    "socket_grip_l": "Left support-hand anchor on the fore-end.",
+    "socket_eject": "Right-side casing ejection reference.",
+    "socket_vfx": "Muzzle flash/tracer fallback, intentionally colocated with socket_muzzle."
+  },
+  "socket_forward_axis_after_normalization": "+Y"
 }

@@ -1,29 +1,29 @@
 {
-  "generated_at_utc": "2026-06-13T12:08:39+00:00",
+  "generated_at_utc": "2026-06-20T06:21:10+00:00",
   "repo_root": "F:\\Coding\\Project\\Nemisis",
   "catalog": "configs/assets/nemisis_assets.json",
   "summary": {
     "catalog_entries": 38,
     "runtime_mesh_or_scene_entries": 36,
-    "glb_files_under_assets": 36,
-    "orphan_glbs": 0,
+    "glb_files_under_assets": 43,
+    "orphan_glbs": 7,
     "uncataloged_blends": 0,
     "by_status": {
-      "needs_manual_work": 16,
-      "ready_with_notes": 9,
-      "game_ready": 9,
+      "needs_manual_work": 9,
+      "ready_with_notes": 13,
+      "game_ready": 12,
       "needs_collision_or_metadata_work": 4
     },
     "by_issue_severity": {
-      "error": 16,
-      "warning": 92,
+      "error": 9,
+      "warning": 66,
       "manual": 16
     }
   },
   "blender": {
-    "requested": false,
-    "path": null,
-    "version": null,
+    "requested": true,
+    "path": "F:\\Program Files\\Blender Foundation\\Blender 5.1\\blender.EXE",
+    "version": "Blender 5.1.2",
     "scan_error": null
   },
   "records": [
@@ -105,6 +105,12 @@
         "nodes": 8,
         "meshes": 5,
         "materials": 5,
+        "skins": 0,
+        "skin_names": [],
+        "skinned_mesh_nodes": [],
+        "animations": 0,
+        "animation_names": [],
+        "animation_channels": 0,
         "sockets": [
           "socket_head_center",
           "socket_hit_center",
@@ -124,14 +130,60 @@
         "blender_forward_axis": null,
         "origin": null,
         "dimensions_m": null,
+        "target_dimensions_m": null,
         "collision": "col_prop_target_dummy_01",
         "sockets": [
           "socket_hit_center",
           "socket_head_center",
           "socket_vfx"
         ],
+        "socket_notes": null,
+        "socket_generation": null,
+        "socket_hints": null,
+        "normalized_export": null,
+        "normalization_status": null,
+        "skin": null,
+        "animation_clips": null,
+        "animation_clip_roles": null,
+        "skeleton": null,
+        "first_person_view": null,
         "license": "original_project_asset",
         "external_assets": null
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 8,
+        "mesh_count": 5,
+        "material_count": 5,
+        "bounds": {
+          "min_xyz_blender": [
+            -0.42,
+            -0.42,
+            0.0
+          ],
+          "max_xyz_blender": [
+            0.42,
+            0.42,
+            1.94
+          ],
+          "size_xyz_blender": [
+            0.84,
+            0.84,
+            1.94
+          ]
+        },
+        "sockets": [
+          "socket_head_center",
+          "socket_hit_center",
+          "socket_vfx"
+        ],
+        "socket_forward_axis": null,
+        "collisions": [
+          "col_prop_target_dummy_01"
+        ],
+        "root_objects": [],
+        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -145,31 +197,10 @@
         "dev_sandbox"
       ],
       "source": "assets/source/blender/weapons/wpn_ar_01.blend",
-      "issues": [
-        {
-          "severity": "warning",
-          "check": "metadata_field",
-          "message": "Readiness metadata field is missing: origin"
-        },
-        {
-          "severity": "warning",
-          "check": "metadata_field",
-          "message": "Readiness metadata field is missing: dimensions_m"
-        },
-        {
-          "severity": "warning",
-          "check": "metadata_field",
-          "message": "Readiness metadata field is missing: target_dimensions_m"
-        },
-        {
-          "severity": "warning",
-          "check": "metadata_field",
-          "message": "Readiness metadata field is missing: external_assets"
-        }
-      ],
+      "issues": [],
       "cooked": "assets/export/gltf/weapons/wpn_ar_01.glb",
       "metadata": "assets/export/gltf/weapons/wpn_ar_01.metadata.json",
-      "status": "ready_with_notes",
+      "status": "game_ready",
       "glb": {
         "valid": true,
         "asset_version": "2.0",
@@ -177,6 +208,12 @@
         "nodes": 13,
         "meshes": 8,
         "materials": 3,
+        "skins": 0,
+        "skin_names": [],
+        "skinned_mesh_nodes": [],
+        "animations": 0,
+        "animation_names": [],
+        "animation_channels": 0,
         "sockets": [
           "socket_eject",
           "socket_grip_l",
@@ -193,9 +230,18 @@
         "scale_meters": true,
         "runtime_up_axis": "Y",
         "gameplay_forward_axis": "+Z",
-        "blender_forward_axis": null,
-        "origin": null,
-        "dimensions_m": null,
+        "blender_forward_axis": "+Y",
+        "origin": "Origin at the receiver center; muzzle and weapon sockets point along Blender +Y.",
+        "dimensions_m": [
+          0.26,
+          1.17,
+          0.4425
+        ],
+        "target_dimensions_m": [
+          0.26,
+          1.17,
+          0.4425
+        ],
         "collision": "none",
         "sockets": [
           "socket_muzzle",
@@ -204,8 +250,53 @@
           "socket_eject",
           "socket_vfx"
         ],
+        "socket_notes": null,
+        "socket_generation": null,
+        "socket_hints": null,
+        "normalized_export": null,
+        "normalization_status": null,
+        "skin": null,
+        "animation_clips": null,
+        "animation_clip_roles": null,
+        "skeleton": null,
+        "first_person_view": null,
         "license": "original_project_asset",
-        "external_assets": null
+        "external_assets": false
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 13,
+        "mesh_count": 8,
+        "material_count": 3,
+        "bounds": {
+          "min_xyz_blender": [
+            -0.13,
+            -0.42,
+            -0.28
+          ],
+          "max_xyz_blender": [
+            0.13,
+            0.75,
+            0.1625
+          ],
+          "size_xyz_blender": [
+            0.26,
+            1.17,
+            0.4425
+          ]
+        },
+        "sockets": [
+          "socket_eject",
+          "socket_grip_l",
+          "socket_grip_r",
+          "socket_muzzle",
+          "socket_vfx"
+        ],
+        "socket_forward_axis": "+Y",
+        "collisions": [],
+        "root_objects": [],
+        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -219,31 +310,10 @@
         "dev_sandbox"
       ],
       "source": "assets/source/blender/weapons/wpn_smg_01.blend",
-      "issues": [
-        {
-          "severity": "warning",
-          "check": "metadata_field",
-          "message": "Readiness metadata field is missing: origin"
-        },
-        {
-          "severity": "warning",
-          "check": "metadata_field",
-          "message": "Readiness metadata field is missing: dimensions_m"
-        },
-        {
-          "severity": "warning",
-          "check": "metadata_field",
-          "message": "Readiness metadata field is missing: target_dimensions_m"
-        },
-        {
-          "severity": "warning",
-          "check": "metadata_field",
-          "message": "Readiness metadata field is missing: external_assets"
-        }
-      ],
+      "issues": [],
       "cooked": "assets/export/gltf/weapons/wpn_smg_01.glb",
       "metadata": "assets/export/gltf/weapons/wpn_smg_01.metadata.json",
-      "status": "ready_with_notes",
+      "status": "game_ready",
       "glb": {
         "valid": true,
         "asset_version": "2.0",
@@ -251,6 +321,12 @@
         "nodes": 13,
         "meshes": 8,
         "materials": 3,
+        "skins": 0,
+        "skin_names": [],
+        "skinned_mesh_nodes": [],
+        "animations": 0,
+        "animation_names": [],
+        "animation_channels": 0,
         "sockets": [
           "socket_eject",
           "socket_grip_l",
@@ -267,9 +343,18 @@
         "scale_meters": true,
         "runtime_up_axis": "Y",
         "gameplay_forward_axis": "+Z",
-        "blender_forward_axis": null,
-        "origin": null,
-        "dimensions_m": null,
+        "blender_forward_axis": "+Y",
+        "origin": "Origin at the receiver center; muzzle and weapon sockets point along Blender +Y.",
+        "dimensions_m": [
+          0.22,
+          0.77,
+          0.3825
+        ],
+        "target_dimensions_m": [
+          0.22,
+          0.77,
+          0.3825
+        ],
         "collision": "none",
         "sockets": [
           "socket_muzzle",
@@ -278,8 +363,53 @@
           "socket_eject",
           "socket_vfx"
         ],
+        "socket_notes": null,
+        "socket_generation": null,
+        "socket_hints": null,
+        "normalized_export": null,
+        "normalization_status": null,
+        "skin": null,
+        "animation_clips": null,
+        "animation_clip_roles": null,
+        "skeleton": null,
+        "first_person_view": null,
         "license": "original_project_asset",
-        "external_assets": null
+        "external_assets": false
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 13,
+        "mesh_count": 8,
+        "material_count": 3,
+        "bounds": {
+          "min_xyz_blender": [
+            -0.11,
+            -0.28,
+            -0.25
+          ],
+          "max_xyz_blender": [
+            0.11,
+            0.49,
+            0.1325
+          ],
+          "size_xyz_blender": [
+            0.22,
+            0.77,
+            0.3825
+          ]
+        },
+        "sockets": [
+          "socket_eject",
+          "socket_grip_l",
+          "socket_grip_r",
+          "socket_muzzle",
+          "socket_vfx"
+        ],
+        "socket_forward_axis": "+Y",
+        "collisions": [],
+        "root_objects": [],
+        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -293,31 +423,10 @@
         "dev_sandbox"
       ],
       "source": "assets/source/blender/weapons/wpn_sidearm_01.blend",
-      "issues": [
-        {
-          "severity": "warning",
-          "check": "metadata_field",
-          "message": "Readiness metadata field is missing: origin"
-        },
-        {
-          "severity": "warning",
-          "check": "metadata_field",
-          "message": "Readiness metadata field is missing: dimensions_m"
-        },
-        {
-          "severity": "warning",
-          "check": "metadata_field",
-          "message": "Readiness metadata field is missing: target_dimensions_m"
-        },
-        {
-          "severity": "warning",
-          "check": "metadata_field",
-          "message": "Readiness metadata field is missing: external_assets"
-        }
-      ],
+      "issues": [],
       "cooked": "assets/export/gltf/weapons/wpn_sidearm_01.glb",
       "metadata": "assets/export/gltf/weapons/wpn_sidearm_01.metadata.json",
-      "status": "ready_with_notes",
+      "status": "game_ready",
       "glb": {
         "valid": true,
         "asset_version": "2.0",
@@ -325,6 +434,12 @@
         "nodes": 13,
         "meshes": 8,
         "materials": 3,
+        "skins": 0,
+        "skin_names": [],
+        "skinned_mesh_nodes": [],
+        "animations": 0,
+        "animation_names": [],
+        "animation_channels": 0,
         "sockets": [
           "socket_eject",
           "socket_grip_l",
@@ -341,9 +456,18 @@
         "scale_meters": true,
         "runtime_up_axis": "Y",
         "gameplay_forward_axis": "+Z",
-        "blender_forward_axis": null,
-        "origin": null,
-        "dimensions_m": null,
+        "blender_forward_axis": "+Y",
+        "origin": "Origin near the slide/frame center; muzzle and weapon sockets point along Blender +Y.",
+        "dimensions_m": [
+          0.13,
+          0.49503,
+          0.35259
+        ],
+        "target_dimensions_m": [
+          0.13,
+          0.49503,
+          0.35259
+        ],
         "collision": "none",
         "sockets": [
           "socket_muzzle",
@@ -352,8 +476,53 @@
           "socket_eject",
           "socket_vfx"
         ],
+        "socket_notes": null,
+        "socket_generation": null,
+        "socket_hints": null,
+        "normalized_export": null,
+        "normalization_status": null,
+        "skin": null,
+        "animation_clips": null,
+        "animation_clip_roles": null,
+        "skeleton": null,
+        "first_person_view": null,
         "license": "original_project_asset",
-        "external_assets": null
+        "external_assets": false
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 13,
+        "mesh_count": 8,
+        "material_count": 3,
+        "bounds": {
+          "min_xyz_blender": [
+            -0.065,
+            -0.13503,
+            -0.23509
+          ],
+          "max_xyz_blender": [
+            0.065,
+            0.36,
+            0.1175
+          ],
+          "size_xyz_blender": [
+            0.13,
+            0.49503,
+            0.35259
+          ]
+        },
+        "sockets": [
+          "socket_eject",
+          "socket_grip_l",
+          "socket_grip_r",
+          "socket_muzzle",
+          "socket_vfx"
+        ],
+        "socket_forward_axis": "+Y",
+        "collisions": [],
+        "root_objects": [],
+        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -401,6 +570,12 @@
         "nodes": 84,
         "meshes": 81,
         "materials": 7,
+        "skins": 0,
+        "skin_names": [],
+        "skinned_mesh_nodes": [],
+        "animations": 0,
+        "animation_names": [],
+        "animation_channels": 0,
         "sockets": [
           "socket_control_point",
           "socket_spawn_alpha",
@@ -427,14 +602,67 @@
         "blender_forward_axis": null,
         "origin": null,
         "dimensions_m": null,
+        "target_dimensions_m": null,
         "collision": "per_piece_col_prefix",
         "sockets": [
           "socket_spawn_alpha",
           "socket_spawn_bravo",
           "socket_control_point"
         ],
+        "socket_notes": null,
+        "socket_generation": null,
+        "socket_hints": null,
+        "normalized_export": null,
+        "normalization_status": null,
+        "skin": null,
+        "animation_clips": null,
+        "animation_clip_roles": null,
+        "skeleton": null,
+        "first_person_view": null,
         "license": "original_project_asset",
         "external_assets": null
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 84,
+        "mesh_count": 81,
+        "material_count": 7,
+        "bounds": {
+          "min_xyz_blender": [
+            -10.0275,
+            -10.0275,
+            -0.045
+          ],
+          "max_xyz_blender": [
+            10.0275,
+            10.0275,
+            2.025
+          ],
+          "size_xyz_blender": [
+            20.055,
+            20.055,
+            2.07
+          ]
+        },
+        "sockets": [
+          "socket_control_point",
+          "socket_spawn_alpha",
+          "socket_spawn_bravo"
+        ],
+        "socket_forward_axis": null,
+        "collisions": [
+          "col_env_test_cover_crate_stack_01",
+          "col_env_test_cover_high_01",
+          "col_env_test_cover_low_01",
+          "col_env_test_floor_grid_01",
+          "col_env_test_slide_ramp_01",
+          "col_env_test_wall_back_01",
+          "col_env_test_wall_lane_left_01",
+          "col_env_test_wall_lane_right_01"
+        ],
+        "root_objects": [],
+        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -480,6 +708,12 @@
         "nodes": 14,
         "meshes": 9,
         "materials": 4,
+        "skins": 0,
+        "skin_names": [],
+        "skinned_mesh_nodes": [],
+        "animations": 0,
+        "animation_names": [],
+        "animation_channels": 0,
         "sockets": [
           "socket_camera",
           "socket_hit_head",
@@ -501,6 +735,7 @@
         "blender_forward_axis": null,
         "origin": null,
         "dimensions_m": null,
+        "target_dimensions_m": null,
         "collision": "col_chr_player_capsule_proxy_01",
         "sockets": [
           "socket_root",
@@ -509,8 +744,55 @@
           "socket_hit_head",
           "socket_hit_torso"
         ],
+        "socket_notes": null,
+        "socket_generation": null,
+        "socket_hints": null,
+        "normalized_export": null,
+        "normalization_status": null,
+        "skin": null,
+        "animation_clips": null,
+        "animation_clip_roles": null,
+        "skeleton": null,
+        "first_person_view": null,
         "license": "original_project_asset",
         "external_assets": null
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 14,
+        "mesh_count": 9,
+        "material_count": 4,
+        "bounds": {
+          "min_xyz_blender": [
+            -0.38,
+            -0.38,
+            0.0
+          ],
+          "max_xyz_blender": [
+            0.38,
+            0.38,
+            1.8
+          ],
+          "size_xyz_blender": [
+            0.76,
+            0.76,
+            1.8
+          ]
+        },
+        "sockets": [
+          "socket_camera",
+          "socket_hit_head",
+          "socket_hit_torso",
+          "socket_root",
+          "socket_weapon_root"
+        ],
+        "socket_forward_axis": null,
+        "collisions": [
+          "col_chr_player_capsule_proxy_01"
+        ],
+        "root_objects": [],
+        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -555,6 +837,14 @@
         "nodes": 23,
         "meshes": 11,
         "materials": 4,
+        "skins": 1,
+        "skin_names": [
+          "rig_chr_dev_arms_a"
+        ],
+        "skinned_mesh_nodes": [],
+        "animations": 0,
+        "animation_names": [],
+        "animation_channels": 0,
         "sockets": [
           "socket_camera",
           "socket_hand_l",
@@ -573,6 +863,7 @@
         "blender_forward_axis": null,
         "origin": null,
         "dimensions_m": null,
+        "target_dimensions_m": null,
         "collision": "none",
         "sockets": [
           "socket_camera",
@@ -580,8 +871,52 @@
           "socket_hand_r",
           "socket_hand_l"
         ],
+        "socket_notes": null,
+        "socket_generation": null,
+        "socket_hints": null,
+        "normalized_export": null,
+        "normalization_status": null,
+        "skin": null,
+        "animation_clips": null,
+        "animation_clip_roles": null,
+        "skeleton": null,
+        "first_person_view": null,
         "license": "original_project_asset",
         "external_assets": null
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 16,
+        "mesh_count": 11,
+        "material_count": 4,
+        "bounds": {
+          "min_xyz_blender": [
+            -0.32,
+            0.05815,
+            -0.47761
+          ],
+          "max_xyz_blender": [
+            0.2949,
+            0.825,
+            -0.14795
+          ],
+          "size_xyz_blender": [
+            0.6149,
+            0.76685,
+            0.32966
+          ]
+        },
+        "sockets": [
+          "socket_camera",
+          "socket_hand_l",
+          "socket_hand_r",
+          "socket_weapon_root"
+        ],
+        "socket_forward_axis": null,
+        "collisions": [],
+        "root_objects": [],
+        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -626,6 +961,14 @@
         "nodes": 47,
         "meshes": 22,
         "materials": 5,
+        "skins": 1,
+        "skin_names": [
+          "rig_chr_dev_soldier_a"
+        ],
+        "skinned_mesh_nodes": [],
+        "animations": 0,
+        "animation_names": [],
+        "animation_channels": 0,
         "sockets": [
           "socket_camera",
           "socket_hand_l",
@@ -649,6 +992,7 @@
         "blender_forward_axis": null,
         "origin": null,
         "dimensions_m": null,
+        "target_dimensions_m": null,
         "collision": "col_chr_dev_soldier_a_capsule",
         "sockets": [
           "socket_root",
@@ -659,8 +1003,57 @@
           "socket_head",
           "socket_vfx"
         ],
+        "socket_notes": null,
+        "socket_generation": null,
+        "socket_hints": null,
+        "normalized_export": null,
+        "normalization_status": null,
+        "skin": null,
+        "animation_clips": null,
+        "animation_clip_roles": null,
+        "skeleton": null,
+        "first_person_view": null,
         "license": "original_project_asset",
         "external_assets": null
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 30,
+        "mesh_count": 22,
+        "material_count": 5,
+        "bounds": {
+          "min_xyz_blender": [
+            -0.56569,
+            -0.4,
+            0.0
+          ],
+          "max_xyz_blender": [
+            0.56569,
+            0.4,
+            1.9
+          ],
+          "size_xyz_blender": [
+            1.13137,
+            0.8,
+            1.9
+          ]
+        },
+        "sockets": [
+          "socket_camera",
+          "socket_hand_l",
+          "socket_hand_r",
+          "socket_head",
+          "socket_root",
+          "socket_vfx",
+          "socket_weapon_root"
+        ],
+        "socket_forward_axis": null,
+        "collisions": [
+          "col_chr_dev_soldier_a_capsule"
+        ],
+        "root_objects": [],
+        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -722,6 +1115,12 @@
         "nodes": 20,
         "meshes": 16,
         "materials": 4,
+        "skins": 0,
+        "skin_names": [],
+        "skinned_mesh_nodes": [],
+        "animations": 0,
+        "animation_names": [],
+        "animation_channels": 0,
         "sockets": [
           "socket_grip",
           "socket_mag",
@@ -739,6 +1138,7 @@
         "blender_forward_axis": null,
         "origin": null,
         "dimensions_m": null,
+        "target_dimensions_m": null,
         "collision": "none",
         "sockets": [
           "socket_root",
@@ -746,6 +1146,16 @@
           "socket_grip_r",
           "socket_grip_l"
         ],
+        "socket_notes": null,
+        "socket_generation": null,
+        "socket_hints": null,
+        "normalized_export": null,
+        "normalization_status": null,
+        "skin": null,
+        "animation_clips": null,
+        "animation_clip_roles": null,
+        "skeleton": null,
+        "first_person_view": null,
         "license": "original_project_asset",
         "external_assets": null
       }
@@ -807,6 +1217,12 @@
         "nodes": 22,
         "meshes": 19,
         "materials": 4,
+        "skins": 0,
+        "skin_names": [],
+        "skinned_mesh_nodes": [],
+        "animations": 0,
+        "animation_names": [],
+        "animation_channels": 0,
         "sockets": [
           "socket_head",
           "socket_root"
@@ -823,11 +1239,22 @@
         "blender_forward_axis": null,
         "origin": null,
         "dimensions_m": null,
+        "target_dimensions_m": null,
         "collision": "col_chr_proto_humanoid_01_capsule",
         "sockets": [
           "socket_root",
           "socket_head"
         ],
+        "socket_notes": null,
+        "socket_generation": null,
+        "socket_hints": null,
+        "normalized_export": null,
+        "normalization_status": null,
+        "skin": null,
+        "animation_clips": null,
+        "animation_clip_roles": null,
+        "skeleton": null,
+        "first_person_view": null,
         "license": "original_project_asset",
         "external_assets": null
       }
@@ -895,6 +1322,12 @@
         "nodes": 10,
         "meshes": 9,
         "materials": 3,
+        "skins": 0,
+        "skin_names": [],
+        "skinned_mesh_nodes": [],
+        "animations": 0,
+        "animation_names": [],
+        "animation_channels": 0,
         "sockets": [],
         "collisions": [],
         "external_buffer_uris": [],
@@ -908,12 +1341,23 @@
         "blender_forward_axis": null,
         "origin": null,
         "dimensions_m": null,
+        "target_dimensions_m": null,
         "collision": "box",
         "sockets": [
           "socket_root",
           "socket_snap_left",
           "socket_snap_right"
         ],
+        "socket_notes": null,
+        "socket_generation": null,
+        "socket_hints": null,
+        "normalized_export": null,
+        "normalization_status": null,
+        "skin": null,
+        "animation_clips": null,
+        "animation_clip_roles": null,
+        "skeleton": null,
+        "first_person_view": null,
         "license": "original_project_asset",
         "external_assets": null
       }
@@ -981,6 +1425,12 @@
         "nodes": 9,
         "meshes": 8,
         "materials": 3,
+        "skins": 0,
+        "skin_names": [],
+        "skinned_mesh_nodes": [],
+        "animations": 0,
+        "animation_names": [],
+        "animation_channels": 0,
         "sockets": [],
         "collisions": [],
         "external_buffer_uris": [],
@@ -994,6 +1444,7 @@
         "blender_forward_axis": null,
         "origin": null,
         "dimensions_m": null,
+        "target_dimensions_m": null,
         "collision": "walkable_box",
         "sockets": [
           "socket_root",
@@ -1002,6 +1453,16 @@
           "socket_snap_east",
           "socket_snap_west"
         ],
+        "socket_notes": null,
+        "socket_generation": null,
+        "socket_hints": null,
+        "normalized_export": null,
+        "normalization_status": null,
+        "skin": null,
+        "animation_clips": null,
+        "animation_clip_roles": null,
+        "skeleton": null,
+        "first_person_view": null,
         "license": "original_project_asset",
         "external_assets": null
       }
@@ -1069,6 +1530,12 @@
         "nodes": 11,
         "meshes": 10,
         "materials": 3,
+        "skins": 0,
+        "skin_names": [],
+        "skinned_mesh_nodes": [],
+        "animations": 0,
+        "animation_names": [],
+        "animation_channels": 0,
         "sockets": [],
         "collisions": [],
         "external_buffer_uris": [],
@@ -1082,11 +1549,22 @@
         "blender_forward_axis": null,
         "origin": null,
         "dimensions_m": null,
+        "target_dimensions_m": null,
         "collision": "box",
         "sockets": [
           "socket_root",
           "socket_cover_top"
         ],
+        "socket_notes": null,
+        "socket_generation": null,
+        "socket_hints": null,
+        "normalized_export": null,
+        "normalization_status": null,
+        "skin": null,
+        "animation_clips": null,
+        "animation_clip_roles": null,
+        "skeleton": null,
+        "first_person_view": null,
         "license": "original_project_asset",
         "external_assets": null
       }
@@ -1155,6 +1633,12 @@
         "nodes": 7,
         "meshes": 6,
         "materials": 3,
+        "skins": 0,
+        "skin_names": [],
+        "skinned_mesh_nodes": [],
+        "animations": 0,
+        "animation_names": [],
+        "animation_channels": 0,
         "sockets": [],
         "collisions": [],
         "external_buffer_uris": [],
@@ -1168,12 +1652,23 @@
         "blender_forward_axis": null,
         "origin": null,
         "dimensions_m": null,
+        "target_dimensions_m": null,
         "collision": "ramp_wedge",
         "sockets": [
           "socket_root",
           "socket_low_edge",
           "socket_high_edge"
         ],
+        "socket_notes": null,
+        "socket_generation": null,
+        "socket_hints": null,
+        "normalized_export": null,
+        "normalization_status": null,
+        "skin": null,
+        "animation_clips": null,
+        "animation_clip_roles": null,
+        "skeleton": null,
+        "first_person_view": null,
         "license": "original_project_asset",
         "external_assets": null
       }
@@ -1241,6 +1736,12 @@
         "nodes": 9,
         "meshes": 8,
         "materials": 4,
+        "skins": 0,
+        "skin_names": [],
+        "skinned_mesh_nodes": [],
+        "animations": 0,
+        "animation_names": [],
+        "animation_channels": 0,
         "sockets": [],
         "collisions": [],
         "external_buffer_uris": [],
@@ -1254,11 +1755,22 @@
         "blender_forward_axis": null,
         "origin": null,
         "dimensions_m": null,
+        "target_dimensions_m": null,
         "collision": "box",
         "sockets": [
           "socket_root",
           "socket_target_center"
         ],
+        "socket_notes": null,
+        "socket_generation": null,
+        "socket_hints": null,
+        "normalized_export": null,
+        "normalization_status": null,
+        "skin": null,
+        "animation_clips": null,
+        "animation_clip_roles": null,
+        "skeleton": null,
+        "first_person_view": null,
         "license": "original_project_asset",
         "external_assets": null
       }
@@ -1288,6 +1800,12 @@
         "nodes": 21,
         "meshes": 15,
         "materials": 5,
+        "skins": 0,
+        "skin_names": [],
+        "skinned_mesh_nodes": [],
+        "animations": 0,
+        "animation_names": [],
+        "animation_channels": 0,
         "sockets": [
           "socket_eject",
           "socket_grip_l",
@@ -1311,6 +1829,11 @@
           1.14,
           0.5324
         ],
+        "target_dimensions_m": [
+          0.19,
+          1.13,
+          0.49
+        ],
         "collision": "none",
         "sockets": [
           "socket_muzzle",
@@ -1319,8 +1842,63 @@
           "socket_eject",
           "socket_vfx"
         ],
+        "socket_notes": null,
+        "socket_generation": null,
+        "socket_hints": null,
+        "normalized_export": null,
+        "normalization_status": null,
+        "skin": null,
+        "animation_clips": null,
+        "animation_clip_roles": null,
+        "skeleton": null,
+        "first_person_view": null,
         "license": "original_project_asset",
         "external_assets": false
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 21,
+        "mesh_count": 15,
+        "material_count": 5,
+        "bounds": {
+          "min_xyz_blender": [
+            -0.095,
+            -0.4425,
+            -0.32236
+          ],
+          "max_xyz_blender": [
+            0.0925,
+            0.6975,
+            0.21
+          ],
+          "size_xyz_blender": [
+            0.1875,
+            1.14,
+            0.53236
+          ]
+        },
+        "sockets": [
+          "socket_eject",
+          "socket_grip_l",
+          "socket_grip_r",
+          "socket_muzzle",
+          "socket_vfx"
+        ],
+        "socket_forward_axis": "+Y",
+        "collisions": [],
+        "root_objects": [
+          {
+            "name": "wpn_a1_compact_rifle_01",
+            "type": "EMPTY",
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ],
+        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -1348,6 +1926,12 @@
         "nodes": 21,
         "meshes": 15,
         "materials": 5,
+        "skins": 0,
+        "skin_names": [],
+        "skinned_mesh_nodes": [],
+        "animations": 0,
+        "animation_names": [],
+        "animation_channels": 0,
         "sockets": [
           "socket_eject",
           "socket_grip_l",
@@ -1371,6 +1955,11 @@
           1.4525,
           0.645
         ],
+        "target_dimensions_m": [
+          0.19,
+          1.45,
+          0.57
+        ],
         "collision": "none",
         "sockets": [
           "socket_muzzle",
@@ -1379,8 +1968,63 @@
           "socket_eject",
           "socket_vfx"
         ],
+        "socket_notes": null,
+        "socket_generation": null,
+        "socket_hints": null,
+        "normalized_export": null,
+        "normalization_status": null,
+        "skin": null,
+        "animation_clips": null,
+        "animation_clip_roles": null,
+        "skeleton": null,
+        "first_person_view": null,
         "license": "original_project_asset",
         "external_assets": false
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 21,
+        "mesh_count": 15,
+        "material_count": 5,
+        "bounds": {
+          "min_xyz_blender": [
+            -0.0925,
+            -0.5425,
+            -0.35001
+          ],
+          "max_xyz_blender": [
+            0.0925,
+            0.91,
+            0.295
+          ],
+          "size_xyz_blender": [
+            0.185,
+            1.4525,
+            0.64501
+          ]
+        },
+        "sockets": [
+          "socket_eject",
+          "socket_grip_l",
+          "socket_grip_r",
+          "socket_muzzle",
+          "socket_vfx"
+        ],
+        "socket_forward_axis": "+Y",
+        "collisions": [],
+        "root_objects": [
+          {
+            "name": "wpn_a1_modern_rifle_01",
+            "type": "EMPTY",
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ],
+        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -1407,6 +2051,12 @@
         "nodes": 17,
         "meshes": 11,
         "materials": 4,
+        "skins": 0,
+        "skin_names": [],
+        "skinned_mesh_nodes": [],
+        "animations": 0,
+        "animation_names": [],
+        "animation_channels": 0,
         "sockets": [
           "socket_eject",
           "socket_grip_l",
@@ -1430,6 +2080,11 @@
           0.4688,
           0.3842
         ],
+        "target_dimensions_m": [
+          0.13,
+          0.45,
+          0.35
+        ],
         "collision": "none",
         "sockets": [
           "socket_muzzle",
@@ -1438,8 +2093,63 @@
           "socket_eject",
           "socket_vfx"
         ],
+        "socket_notes": null,
+        "socket_generation": null,
+        "socket_hints": null,
+        "normalized_export": null,
+        "normalization_status": null,
+        "skin": null,
+        "animation_clips": null,
+        "animation_clip_roles": null,
+        "skeleton": null,
+        "first_person_view": null,
         "license": "original_project_asset",
         "external_assets": false
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 17,
+        "mesh_count": 11,
+        "material_count": 4,
+        "bounds": {
+          "min_xyz_blender": [
+            -0.0625,
+            -0.20781,
+            -0.26624
+          ],
+          "max_xyz_blender": [
+            0.0625,
+            0.261,
+            0.118
+          ],
+          "size_xyz_blender": [
+            0.125,
+            0.46881,
+            0.38424
+          ]
+        },
+        "sockets": [
+          "socket_eject",
+          "socket_grip_l",
+          "socket_grip_r",
+          "socket_muzzle",
+          "socket_vfx"
+        ],
+        "socket_forward_axis": "+Y",
+        "collisions": [],
+        "root_objects": [
+          {
+            "name": "wpn_a1_compact_sidearm_01",
+            "type": "EMPTY",
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ],
+        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -1466,6 +2176,14 @@
         "nodes": 61,
         "meshes": 34,
         "materials": 8,
+        "skins": 1,
+        "skin_names": [
+          "rig_chr_a1_stylized_operator_01"
+        ],
+        "skinned_mesh_nodes": [],
+        "animations": 0,
+        "animation_names": [],
+        "animation_channels": 0,
         "sockets": [
           "socket_backpack",
           "socket_camera",
@@ -1494,6 +2212,11 @@
           0.8,
           1.885
         ],
+        "target_dimensions_m": [
+          1.02,
+          0.56,
+          1.84
+        ],
         "collision": "col_chr_a1_stylized_operator_01_capsule",
         "sockets": [
           "socket_root",
@@ -1505,8 +2228,68 @@
           "socket_backpack",
           "socket_vfx"
         ],
+        "socket_notes": null,
+        "socket_generation": null,
+        "socket_hints": null,
+        "normalized_export": null,
+        "normalization_status": null,
+        "skin": null,
+        "animation_clips": null,
+        "animation_clip_roles": null,
+        "skeleton": null,
+        "first_person_view": null,
         "license": "original_project_asset",
         "external_assets": false
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 44,
+        "mesh_count": 34,
+        "material_count": 8,
+        "bounds": {
+          "min_xyz_blender": [
+            -0.56773,
+            -0.4,
+            0.0
+          ],
+          "max_xyz_blender": [
+            0.56773,
+            0.4,
+            1.885
+          ],
+          "size_xyz_blender": [
+            1.13545,
+            0.8,
+            1.885
+          ]
+        },
+        "sockets": [
+          "socket_backpack",
+          "socket_camera",
+          "socket_hand_l",
+          "socket_hand_r",
+          "socket_head",
+          "socket_root",
+          "socket_vfx",
+          "socket_weapon_root"
+        ],
+        "socket_forward_axis": null,
+        "collisions": [
+          "col_chr_a1_stylized_operator_01_capsule"
+        ],
+        "root_objects": [
+          {
+            "name": "chr_a1_stylized_operator_01",
+            "type": "EMPTY",
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ],
+        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -1532,6 +2315,14 @@
         "nodes": 24,
         "meshes": 10,
         "materials": 4,
+        "skins": 1,
+        "skin_names": [
+          "rig_chr_a1_fp_arms_01"
+        ],
+        "skinned_mesh_nodes": [],
+        "animations": 0,
+        "animation_names": [],
+        "animation_channels": 0,
         "sockets": [
           "socket_camera",
           "socket_hand_l",
@@ -1555,6 +2346,11 @@
           0.8221,
           0.3355
         ],
+        "target_dimensions_m": [
+          0.58,
+          0.89,
+          0.44
+        ],
         "collision": "none",
         "sockets": [
           "socket_camera",
@@ -1563,8 +2359,63 @@
           "socket_hand_l",
           "socket_vfx"
         ],
+        "socket_notes": null,
+        "socket_generation": null,
+        "socket_hints": null,
+        "normalized_export": null,
+        "normalization_status": null,
+        "skin": null,
+        "animation_clips": null,
+        "animation_clip_roles": null,
+        "skeleton": null,
+        "first_person_view": null,
         "license": "original_project_asset",
         "external_assets": false
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 17,
+        "mesh_count": 10,
+        "material_count": 4,
+        "bounds": {
+          "min_xyz_blender": [
+            -0.3153,
+            0.0339,
+            -0.47114
+          ],
+          "max_xyz_blender": [
+            0.30532,
+            0.856,
+            -0.13562
+          ],
+          "size_xyz_blender": [
+            0.62061,
+            0.8221,
+            0.33552
+          ]
+        },
+        "sockets": [
+          "socket_camera",
+          "socket_hand_l",
+          "socket_hand_r",
+          "socket_vfx",
+          "socket_weapon_root"
+        ],
+        "socket_forward_axis": null,
+        "collisions": [],
+        "root_objects": [
+          {
+            "name": "chr_a1_fp_arms_01",
+            "type": "EMPTY",
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ],
+        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -1592,6 +2443,12 @@
         "nodes": 40,
         "meshes": 32,
         "materials": 7,
+        "skins": 0,
+        "skin_names": [],
+        "skinned_mesh_nodes": [],
+        "animations": 0,
+        "animation_names": [],
+        "animation_channels": 0,
         "sockets": [
           "socket_eject",
           "socket_grip_l",
@@ -1617,6 +2474,11 @@
           1.395,
           0.6178
         ],
+        "target_dimensions_m": [
+          0.19,
+          1.31,
+          0.55
+        ],
         "collision": "none",
         "sockets": [
           "socket_muzzle",
@@ -1627,8 +2489,73 @@
           "socket_eject",
           "socket_vfx"
         ],
+        "socket_notes": {
+          "socket_muzzle": "Visual muzzle/VFX reference, points along Blender +Y.",
+          "socket_grip_r": "Approximate right-hand grip anchor for first-person/world-model tests.",
+          "socket_grip_l": "Front support hand anchor.",
+          "socket_optic": "Top attachment/reference point for sight alignment.",
+          "socket_mag": "Magazine pickup/reload reference point.",
+          "socket_eject": "Right-side casing/VFX reference.",
+          "socket_vfx": "Alias for muzzle effect placement."
+        },
+        "socket_generation": null,
+        "socket_hints": null,
+        "normalized_export": null,
+        "normalization_status": null,
+        "skin": null,
+        "animation_clips": null,
+        "animation_clip_roles": null,
+        "skeleton": null,
+        "first_person_view": null,
         "license": "original_project_asset",
         "external_assets": false
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 40,
+        "mesh_count": 32,
+        "material_count": 7,
+        "bounds": {
+          "min_xyz_blender": [
+            -0.105,
+            -0.6,
+            -0.33776
+          ],
+          "max_xyz_blender": [
+            0.105,
+            0.795,
+            0.28
+          ],
+          "size_xyz_blender": [
+            0.21,
+            1.395,
+            0.61776
+          ]
+        },
+        "sockets": [
+          "socket_eject",
+          "socket_grip_l",
+          "socket_grip_r",
+          "socket_mag",
+          "socket_muzzle",
+          "socket_optic",
+          "socket_vfx"
+        ],
+        "socket_forward_axis": "+Y",
+        "collisions": [],
+        "root_objects": [
+          {
+            "name": "wpn_a2_blackout_carbine_01",
+            "type": "EMPTY",
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ],
+        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -1657,6 +2584,12 @@
         "nodes": 40,
         "meshes": 31,
         "materials": 6,
+        "skins": 0,
+        "skin_names": [],
+        "skinned_mesh_nodes": [],
+        "animations": 0,
+        "animation_names": [],
+        "animation_channels": 0,
         "sockets": [
           "socket_eject",
           "socket_grip_l",
@@ -1683,6 +2616,11 @@
           1.6385,
           0.7062
         ],
+        "target_dimensions_m": [
+          0.2,
+          1.63,
+          0.64
+        ],
         "collision": "none",
         "sockets": [
           "socket_muzzle",
@@ -1694,8 +2632,75 @@
           "socket_eject",
           "socket_vfx"
         ],
+        "socket_notes": {
+          "socket_muzzle": "Visual muzzle/VFX reference, points along Blender +Y.",
+          "socket_grip_r": "Approximate right-hand grip anchor.",
+          "socket_grip_l": "Angled foregrip/support hand anchor.",
+          "socket_optic": "Optic/sight alignment reference.",
+          "socket_underbarrel": "Generic lower attachment test socket.",
+          "socket_mag": "Magazine pickup/reload reference point.",
+          "socket_eject": "Right-side casing/VFX reference.",
+          "socket_vfx": "Alias for muzzle effect placement."
+        },
+        "socket_generation": null,
+        "socket_hints": null,
+        "normalized_export": null,
+        "normalization_status": null,
+        "skin": null,
+        "animation_clips": null,
+        "animation_clip_roles": null,
+        "skeleton": null,
+        "first_person_view": null,
         "license": "original_project_asset",
         "external_assets": false
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 40,
+        "mesh_count": 31,
+        "material_count": 6,
+        "bounds": {
+          "min_xyz_blender": [
+            -0.115,
+            -0.626,
+            -0.37019
+          ],
+          "max_xyz_blender": [
+            0.12094,
+            1.0125,
+            0.336
+          ],
+          "size_xyz_blender": [
+            0.23594,
+            1.6385,
+            0.70619
+          ]
+        },
+        "sockets": [
+          "socket_eject",
+          "socket_grip_l",
+          "socket_grip_r",
+          "socket_mag",
+          "socket_muzzle",
+          "socket_optic",
+          "socket_underbarrel",
+          "socket_vfx"
+        ],
+        "socket_forward_axis": "+Y",
+        "collisions": [],
+        "root_objects": [
+          {
+            "name": "wpn_a2_modular_rifle_01",
+            "type": "EMPTY",
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ],
+        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -1724,6 +2729,12 @@
         "nodes": 27,
         "meshes": 19,
         "materials": 5,
+        "skins": 0,
+        "skin_names": [],
+        "skinned_mesh_nodes": [],
+        "animations": 0,
+        "animation_names": [],
+        "animation_channels": 0,
         "sockets": [
           "socket_eject",
           "socket_grip_l",
@@ -1749,6 +2760,11 @@
           0.4937,
           0.397
         ],
+        "target_dimensions_m": [
+          0.13,
+          0.47,
+          0.38
+        ],
         "collision": "none",
         "sockets": [
           "socket_muzzle",
@@ -1759,8 +2775,73 @@
           "socket_eject",
           "socket_vfx"
         ],
+        "socket_notes": {
+          "socket_muzzle": "Visual muzzle/VFX reference, points along Blender +Y.",
+          "socket_grip_r": "Right-hand grip anchor.",
+          "socket_grip_l": "Support hand or inspection anchor.",
+          "socket_optic": "Tiny top sight/optic alignment reference.",
+          "socket_rail": "Lower rail attachment test socket.",
+          "socket_eject": "Right-side casing/VFX reference.",
+          "socket_vfx": "Alias for muzzle effect placement."
+        },
+        "socket_generation": null,
+        "socket_hints": null,
+        "normalized_export": null,
+        "normalization_status": null,
+        "skin": null,
+        "animation_clips": null,
+        "animation_clip_roles": null,
+        "skeleton": null,
+        "first_person_view": null,
         "license": "original_project_asset",
         "external_assets": false
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 27,
+        "mesh_count": 19,
+        "material_count": 5,
+        "bounds": {
+          "min_xyz_blender": [
+            -0.064,
+            -0.22568,
+            -0.27696
+          ],
+          "max_xyz_blender": [
+            0.064,
+            0.268,
+            0.12
+          ],
+          "size_xyz_blender": [
+            0.128,
+            0.49368,
+            0.39696
+          ]
+        },
+        "sockets": [
+          "socket_eject",
+          "socket_grip_l",
+          "socket_grip_r",
+          "socket_muzzle",
+          "socket_optic",
+          "socket_rail",
+          "socket_vfx"
+        ],
+        "socket_forward_axis": "+Y",
+        "collisions": [],
+        "root_objects": [
+          {
+            "name": "wpn_a2_striker_sidearm_01",
+            "type": "EMPTY",
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ],
+        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -1788,6 +2869,14 @@
         "nodes": 69,
         "meshes": 42,
         "materials": 9,
+        "skins": 1,
+        "skin_names": [
+          "rig_chr_a2_pilot_operator_01"
+        ],
+        "skinned_mesh_nodes": [],
+        "animations": 0,
+        "animation_names": [],
+        "animation_channels": 0,
         "sockets": [
           "socket_backpack",
           "socket_camera",
@@ -1816,6 +2905,11 @@
           0.8,
           1.885
         ],
+        "target_dimensions_m": [
+          1.02,
+          0.61,
+          1.84
+        ],
         "collision": "col_chr_a2_pilot_operator_01_capsule",
         "sockets": [
           "socket_root",
@@ -1827,8 +2921,77 @@
           "socket_backpack",
           "socket_vfx"
         ],
+        "socket_notes": {
+          "socket_root": "Feet/root placement point.",
+          "socket_camera": "Approximate eye/camera reference.",
+          "socket_weapon_root": "Weapon attachment reference.",
+          "socket_hand_r": "Right hand reference point.",
+          "socket_hand_l": "Left hand reference point.",
+          "socket_head": "Head target/attachment reference.",
+          "socket_backpack": "Mobility pack attachment/VFX reference.",
+          "socket_vfx": "Pack thruster/VFX reference."
+        },
+        "socket_generation": null,
+        "socket_hints": null,
+        "normalized_export": null,
+        "normalization_status": null,
+        "skin": null,
+        "animation_clips": null,
+        "animation_clip_roles": null,
+        "skeleton": null,
+        "first_person_view": null,
         "license": "original_project_asset",
         "external_assets": false
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 52,
+        "mesh_count": 42,
+        "material_count": 9,
+        "bounds": {
+          "min_xyz_blender": [
+            -0.56773,
+            -0.4,
+            0.0
+          ],
+          "max_xyz_blender": [
+            0.56773,
+            0.4,
+            1.885
+          ],
+          "size_xyz_blender": [
+            1.13545,
+            0.8,
+            1.885
+          ]
+        },
+        "sockets": [
+          "socket_backpack",
+          "socket_camera",
+          "socket_hand_l",
+          "socket_hand_r",
+          "socket_head",
+          "socket_root",
+          "socket_vfx",
+          "socket_weapon_root"
+        ],
+        "socket_forward_axis": null,
+        "collisions": [
+          "col_chr_a2_pilot_operator_01_capsule"
+        ],
+        "root_objects": [
+          {
+            "name": "chr_a2_pilot_operator_01",
+            "type": "EMPTY",
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ],
+        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -1862,6 +3025,12 @@
         "nodes": 19,
         "meshes": 13,
         "materials": 4,
+        "skins": 0,
+        "skin_names": [],
+        "skinned_mesh_nodes": [],
+        "animations": 0,
+        "animation_names": [],
+        "animation_channels": 0,
         "sockets": [
           "socket_snap_left",
           "socket_snap_right",
@@ -1885,6 +3054,11 @@
           0.292,
           2.66
         ],
+        "target_dimensions_m": [
+          4.08,
+          0.22,
+          2.66
+        ],
         "collision": "visual_only_use_simple_wall_collision",
         "sockets": [
           "socket_snap_left",
@@ -1893,8 +3067,69 @@
           "socket_wallrun_end",
           "socket_vfx"
         ],
+        "socket_notes": {
+          "socket_snap_left": "Left grid connection point.",
+          "socket_snap_right": "Right grid connection point.",
+          "socket_wallrun_start": "Suggested wall-run entry reference.",
+          "socket_wallrun_end": "Suggested wall-run exit reference.",
+          "socket_vfx": "Center lane effect/reference point."
+        },
+        "socket_generation": null,
+        "socket_hints": null,
+        "normalized_export": null,
+        "normalization_status": null,
+        "skin": null,
+        "animation_clips": null,
+        "animation_clip_roles": null,
+        "skeleton": null,
+        "first_person_view": null,
         "license": "original_project_asset",
         "external_assets": false
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 19,
+        "mesh_count": 13,
+        "material_count": 4,
+        "bounds": {
+          "min_xyz_blender": [
+            -2.04,
+            -0.182,
+            0.0
+          ],
+          "max_xyz_blender": [
+            2.04,
+            0.11,
+            2.66
+          ],
+          "size_xyz_blender": [
+            4.08,
+            0.292,
+            2.66
+          ]
+        },
+        "sockets": [
+          "socket_snap_left",
+          "socket_snap_right",
+          "socket_vfx",
+          "socket_wallrun_end",
+          "socket_wallrun_start"
+        ],
+        "socket_forward_axis": null,
+        "collisions": [],
+        "root_objects": [
+          {
+            "name": "map_a2_wallrun_panel_01",
+            "type": "EMPTY",
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ],
+        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -1928,6 +3163,12 @@
         "nodes": 17,
         "meshes": 11,
         "materials": 4,
+        "skins": 0,
+        "skin_names": [],
+        "skinned_mesh_nodes": [],
+        "animations": 0,
+        "animation_names": [],
+        "animation_channels": 0,
         "sockets": [
           "socket_slide_entry",
           "socket_slide_exit",
@@ -1951,6 +3192,11 @@
           2.355,
           1.0454
         ],
+        "target_dimensions_m": [
+          4.08,
+          2.35,
+          0.98
+        ],
         "collision": "visual_only_use_simple_ramp_collision",
         "sockets": [
           "socket_snap_bottom",
@@ -1959,8 +3205,69 @@
           "socket_slide_exit",
           "socket_vfx"
         ],
+        "socket_notes": {
+          "socket_snap_bottom": "Lower grid connection point.",
+          "socket_snap_top": "Upper grid connection point.",
+          "socket_slide_entry": "Suggested slide entry reference.",
+          "socket_slide_exit": "Suggested slide exit reference.",
+          "socket_vfx": "Center movement effect/reference point."
+        },
+        "socket_generation": null,
+        "socket_hints": null,
+        "normalized_export": null,
+        "normalization_status": null,
+        "skin": null,
+        "animation_clips": null,
+        "animation_clip_roles": null,
+        "skeleton": null,
+        "first_person_view": null,
         "license": "original_project_asset",
         "external_assets": false
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 17,
+        "mesh_count": 11,
+        "material_count": 4,
+        "bounds": {
+          "min_xyz_blender": [
+            -2.0,
+            -1.1775,
+            -0.04677
+          ],
+          "max_xyz_blender": [
+            2.09762,
+            1.1775,
+            0.99868
+          ],
+          "size_xyz_blender": [
+            4.09762,
+            2.355,
+            1.04545
+          ]
+        },
+        "sockets": [
+          "socket_slide_entry",
+          "socket_slide_exit",
+          "socket_snap_bottom",
+          "socket_snap_top",
+          "socket_vfx"
+        ],
+        "socket_forward_axis": null,
+        "collisions": [],
+        "root_objects": [
+          {
+            "name": "map_a2_slide_ramp_01",
+            "type": "EMPTY",
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ],
+        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -1993,6 +3300,12 @@
         "nodes": 19,
         "meshes": 15,
         "materials": 4,
+        "skins": 0,
+        "skin_names": [],
+        "skinned_mesh_nodes": [],
+        "animations": 0,
+        "animation_names": [],
+        "animation_channels": 0,
         "sockets": [
           "socket_cover_peak",
           "socket_snap_center",
@@ -2014,14 +3327,76 @@
           1.3335,
           1.31
         ],
+        "target_dimensions_m": [
+          1.7,
+          1.3,
+          1.31
+        ],
         "collision": "visual_only_use_box_collision",
         "sockets": [
           "socket_snap_center",
           "socket_cover_peak",
           "socket_vfx"
         ],
+        "socket_notes": {
+          "socket_snap_center": "Grid placement reference.",
+          "socket_cover_peak": "Peek/cover height reference on the front face.",
+          "socket_vfx": "Front cover mark effect/reference point."
+        },
+        "socket_generation": null,
+        "socket_hints": null,
+        "normalized_export": null,
+        "normalization_status": null,
+        "skin": null,
+        "animation_clips": null,
+        "animation_clip_roles": null,
+        "skeleton": null,
+        "first_person_view": null,
         "license": "original_project_asset",
         "external_assets": false
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 19,
+        "mesh_count": 15,
+        "material_count": 4,
+        "bounds": {
+          "min_xyz_blender": [
+            -0.875,
+            -0.681,
+            0.0
+          ],
+          "max_xyz_blender": [
+            0.875,
+            0.6525,
+            1.31
+          ],
+          "size_xyz_blender": [
+            1.75,
+            1.3335,
+            1.31
+          ]
+        },
+        "sockets": [
+          "socket_cover_peak",
+          "socket_snap_center",
+          "socket_vfx"
+        ],
+        "socket_forward_axis": null,
+        "collisions": [],
+        "root_objects": [
+          {
+            "name": "map_a2_cover_crate_01",
+            "type": "EMPTY",
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ],
+        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -2054,6 +3429,12 @@
         "nodes": 18,
         "meshes": 13,
         "materials": 5,
+        "skins": 0,
+        "skin_names": [],
+        "skinned_mesh_nodes": [],
+        "animations": 0,
+        "animation_names": [],
+        "animation_channels": 0,
         "sockets": [
           "socket_interact",
           "socket_snap_center",
@@ -2076,6 +3457,11 @@
           0.76,
           1.47
         ],
+        "target_dimensions_m": [
+          0.78,
+          0.5,
+          1.47
+        ],
         "collision": "visual_only_use_simple_cylinder_or_box_collision",
         "sockets": [
           "socket_interact",
@@ -2083,8 +3469,67 @@
           "socket_vfx",
           "socket_snap_center"
         ],
+        "socket_notes": {
+          "socket_interact": "Player interaction/UI reference.",
+          "socket_target_center": "Hitscan target center reference.",
+          "socket_vfx": "Holographic panel effect/reference point.",
+          "socket_snap_center": "Grid placement reference."
+        },
+        "socket_generation": null,
+        "socket_hints": null,
+        "normalized_export": null,
+        "normalization_status": null,
+        "skin": null,
+        "animation_clips": null,
+        "animation_clip_roles": null,
+        "skeleton": null,
+        "first_person_view": null,
         "license": "original_project_asset",
         "external_assets": false
+      },
+      "blender_source": {
+        "unit_system": "METRIC",
+        "scale_length": 1.0,
+        "object_count": 18,
+        "mesh_count": 13,
+        "material_count": 5,
+        "bounds": {
+          "min_xyz_blender": [
+            -0.38,
+            -0.38,
+            0.0
+          ],
+          "max_xyz_blender": [
+            0.38,
+            0.38,
+            1.47
+          ],
+          "size_xyz_blender": [
+            0.76,
+            0.76,
+            1.47
+          ]
+        },
+        "sockets": [
+          "socket_interact",
+          "socket_snap_center",
+          "socket_target_center",
+          "socket_vfx"
+        ],
+        "socket_forward_axis": null,
+        "collisions": [],
+        "root_objects": [
+          {
+            "name": "prop_a2_range_hero_01",
+            "type": "EMPTY",
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ],
+        "non_applied_mesh_transform_count": 0
       }
     },
     {
@@ -2101,36 +3546,44 @@
       "issues": [
         {
           "severity": "warning",
-          "check": "naming",
-          "message": "GLB filename stem 'character_male1' does not match asset id 'chr_project_male1'."
-        },
-        {
-          "severity": "warning",
-          "check": "metadata_field",
-          "message": "Readiness metadata field is missing: target_dimensions_m"
-        },
-        {
-          "severity": "error",
-          "check": "sockets",
-          "message": "Required import sockets are missing: socket_camera, socket_root, socket_weapon_root"
-        },
-        {
-          "severity": "warning",
           "check": "lods",
           "message": "Declared LOD names are not visible in GLB node names."
         }
       ],
-      "cooked": "assets/project_assets/character_male1.glb",
-      "metadata": "assets/project_assets/character_male1.metadata.json",
-      "status": "needs_manual_work",
+      "cooked": "assets/processed/normalized/project_assets/chr_project_male1.glb",
+      "metadata": "assets/processed/normalized/project_assets/chr_project_male1.metadata.json",
+      "status": "ready_with_notes",
       "glb": {
         "valid": true,
         "asset_version": "2.0",
-        "bin_chunk_bytes": 74800832,
-        "nodes": 929,
+        "bin_chunk_bytes": 75515316,
+        "nodes": 937,
         "meshes": 1,
         "materials": 7,
-        "sockets": [],
+        "skins": 1,
+        "skin_names": [
+          "rig"
+        ],
+        "skinned_mesh_nodes": [
+          "Character"
+        ],
+        "animations": 4,
+        "animation_names": [
+          "Hard stand",
+          "Run (1_18)",
+          "T_pose",
+          "Walk (1_24)"
+        ],
+        "animation_channels": 8472,
+        "sockets": [
+          "socket_camera",
+          "socket_hand_l",
+          "socket_hand_r",
+          "socket_head",
+          "socket_root",
+          "socket_vfx",
+          "socket_weapon_root"
+        ],
         "collisions": [],
         "external_buffer_uris": [],
         "external_image_uris": []
@@ -2140,15 +3593,86 @@
         "scale_meters": true,
         "runtime_up_axis": "Y",
         "gameplay_forward_axis": "+Z",
-        "blender_forward_axis": "+Z",
-        "origin": "Imported Project/Assets character GLB; no authored Nemisis sockets or collision proxies.",
+        "blender_forward_axis": "+Y",
+        "origin": "Normalized Project character GLB; Icosphere helper removed and visible mesh recentered to floor origin.",
         "dimensions_m": [
-          1.8975,
-          1.8124,
-          0.3942
+          0.85176,
+          0.39996,
+          1.78599
+        ],
+        "target_dimensions_m": [
+          0.85176,
+          0.39996,
+          1.78599
         ],
         "collision": "none",
-        "sockets": [],
+        "sockets": [
+          "socket_root",
+          "socket_camera",
+          "socket_weapon_root",
+          "socket_hand_r",
+          "socket_hand_l",
+          "socket_head",
+          "socket_vfx"
+        ],
+        "socket_notes": {
+          "socket_root": "Feet/root pivot at normalized floor center.",
+          "socket_camera": "Approximate first-person/third-person eye reference, local +Y forward.",
+          "socket_weapon_root": "Approximate chest/shoulder weapon mount for viewmodel handoff.",
+          "socket_hand_r": "Right hand reference for firing grip retargeting.",
+          "socket_hand_l": "Left hand reference for support grip and wall-run arm cues.",
+          "socket_head": "Head/helmet reference for hit/VFX alignment.",
+          "socket_vfx": "Torso VFX fallback anchor."
+        },
+        "socket_generation": "Generated by tools/blender/normalize_project_assets.py from assets/metadata/asset_normalization_fixups.json.",
+        "socket_hints": null,
+        "normalized_export": null,
+        "normalization_status": null,
+        "skin": "rig",
+        "animation_clips": [
+          "Hard stand",
+          "Run (1_18)",
+          "T_pose",
+          "Walk (1_24)"
+        ],
+        "animation_clip_roles": {
+          "Hard stand": "idle_stance_reference",
+          "Run (1_18)": "locomotion_run_reference",
+          "T_pose": "retarget_bind_pose_reference",
+          "Walk (1_24)": "locomotion_walk_reference"
+        },
+        "skeleton": {
+          "skin": "rig",
+          "skinned_mesh_nodes": [
+            "Character"
+          ],
+          "source_pose": "T_pose",
+          "retarget_axis_contract": "+Z up, +Y forward after normalized export",
+          "retarget_status": "source skin and clips are present; authored Nemisis first-person arms split is still required for final viewmodel animation",
+          "required_first_person_bones": [
+            "upper_arm.R",
+            "forearm.R",
+            "hand.R",
+            "upper_arm.L",
+            "forearm.L",
+            "hand.L"
+          ],
+          "runtime_socket_contract": [
+            "socket_camera",
+            "socket_weapon_root",
+            "socket_hand_r",
+            "socket_hand_l"
+          ]
+        },
+        "first_person_view": {
+          "body_visibility": "hide full local body for camera; use torso/legs only when body masking exists",
+          "arms_source_asset": "chr_a1_fp_arms_01",
+          "weapon_socket": "socket_weapon_root",
+          "right_hand_socket": "socket_hand_r",
+          "left_hand_socket": "socket_hand_l",
+          "camera_socket": "socket_camera",
+          "status": "metadata/socket-ready; source model is not separated into first-person arms yet"
+        },
         "license": "original_project_asset",
         "external_assets": false
       }
@@ -2169,36 +3693,33 @@
       "issues": [
         {
           "severity": "warning",
-          "check": "naming",
-          "message": "GLB filename stem 'weapon_rifle_m4a1' does not match asset id 'wpn_project_rifle_m4a1'."
-        },
-        {
-          "severity": "warning",
-          "check": "metadata_field",
-          "message": "Readiness metadata field is missing: target_dimensions_m"
-        },
-        {
-          "severity": "error",
-          "check": "sockets",
-          "message": "Required import sockets are missing: socket_muzzle"
-        },
-        {
-          "severity": "warning",
           "check": "lods",
           "message": "Declared LOD names are not visible in GLB node names."
         }
       ],
-      "cooked": "assets/project_assets/weapon_rifle_m4a1.glb",
-      "metadata": "assets/project_assets/weapon_rifle_m4a1.metadata.json",
-      "status": "needs_manual_work",
+      "cooked": "assets/processed/normalized/project_assets/wpn_project_rifle_m4a1.glb",
+      "metadata": "assets/processed/normalized/project_assets/wpn_project_rifle_m4a1.metadata.json",
+      "status": "ready_with_notes",
       "glb": {
         "valid": true,
         "asset_version": "2.0",
-        "bin_chunk_bytes": 5061780,
-        "nodes": 14,
+        "bin_chunk_bytes": 5064116,
+        "nodes": 20,
         "meshes": 13,
         "materials": 1,
-        "sockets": [],
+        "skins": 0,
+        "skin_names": [],
+        "skinned_mesh_nodes": [],
+        "animations": 0,
+        "animation_names": [],
+        "animation_channels": 0,
+        "sockets": [
+          "socket_eject",
+          "socket_grip_l",
+          "socket_grip_r",
+          "socket_muzzle",
+          "socket_vfx"
+        ],
         "collisions": [],
         "external_buffer_uris": [],
         "external_image_uris": []
@@ -2208,15 +3729,42 @@
         "scale_meters": true,
         "runtime_up_axis": "Y",
         "gameplay_forward_axis": "+Z",
-        "blender_forward_axis": "+Z",
-        "origin": "Imported Project/Assets weapon GLB; first-person placement is handled by DevRangeRenderScene.",
+        "blender_forward_axis": "+Y",
+        "origin": "Normalized Project rifle GLB; source +X height rotated to target +Z up, +Y forward, and bounds recentered.",
         "dimensions_m": [
-          0.239,
-          0.0618,
-          0.4362
+          0.06361,
+          0.85884,
+          0.26632
+        ],
+        "target_dimensions_m": [
+          0.06361,
+          0.85884,
+          0.26632
         ],
         "collision": "none",
-        "sockets": [],
+        "sockets": [
+          "socket_muzzle",
+          "socket_grip_r",
+          "socket_grip_l",
+          "socket_eject",
+          "socket_vfx"
+        ],
+        "socket_notes": {
+          "socket_muzzle": "Muzzle/VFX point at forward +Y end after +X-height to +Z-up normalization.",
+          "socket_grip_r": "Right-hand firing grip anchor for first-person and world-model IK.",
+          "socket_grip_l": "Left support-hand anchor on the fore-end.",
+          "socket_eject": "Right-side casing ejection reference.",
+          "socket_vfx": "Muzzle flash/tracer fallback, intentionally colocated with socket_muzzle."
+        },
+        "socket_generation": "Generated by tools/blender/normalize_project_assets.py from assets/metadata/asset_normalization_fixups.json.",
+        "socket_hints": null,
+        "normalized_export": null,
+        "normalization_status": null,
+        "skin": null,
+        "animation_clips": null,
+        "animation_clip_roles": null,
+        "skeleton": null,
+        "first_person_view": null,
         "license": "original_project_asset",
         "external_assets": false
       }
@@ -2237,36 +3785,33 @@
       "issues": [
         {
           "severity": "warning",
-          "check": "naming",
-          "message": "GLB filename stem 'weapon_rifle_afr120' does not match asset id 'wpn_project_rifle_afr120'."
-        },
-        {
-          "severity": "warning",
-          "check": "metadata_field",
-          "message": "Readiness metadata field is missing: target_dimensions_m"
-        },
-        {
-          "severity": "error",
-          "check": "sockets",
-          "message": "Required import sockets are missing: socket_muzzle"
-        },
-        {
-          "severity": "warning",
           "check": "lods",
           "message": "Declared LOD names are not visible in GLB node names."
         }
       ],
-      "cooked": "assets/project_assets/weapon_rifle_afr120.glb",
-      "metadata": "assets/project_assets/weapon_rifle_afr120.metadata.json",
-      "status": "needs_manual_work",
+      "cooked": "assets/processed/normalized/project_assets/wpn_project_rifle_afr120.glb",
+      "metadata": "assets/processed/normalized/project_assets/wpn_project_rifle_afr120.metadata.json",
+      "status": "ready_with_notes",
       "glb": {
         "valid": true,
         "asset_version": "2.0",
-        "bin_chunk_bytes": 8443940,
-        "nodes": 1,
+        "bin_chunk_bytes": 8466948,
+        "nodes": 7,
         "meshes": 1,
         "materials": 1,
-        "sockets": [],
+        "skins": 0,
+        "skin_names": [],
+        "skinned_mesh_nodes": [],
+        "animations": 0,
+        "animation_names": [],
+        "animation_channels": 0,
+        "sockets": [
+          "socket_eject",
+          "socket_grip_l",
+          "socket_grip_r",
+          "socket_muzzle",
+          "socket_vfx"
+        ],
         "collisions": [],
         "external_buffer_uris": [],
         "external_image_uris": []
@@ -2276,15 +3821,42 @@
         "scale_meters": true,
         "runtime_up_axis": "Y",
         "gameplay_forward_axis": "+Z",
-        "blender_forward_axis": "+Z",
-        "origin": "Imported Project/Assets weapon GLB; first-person placement is handled by DevRangeRenderScene.",
+        "blender_forward_axis": "+Y",
+        "origin": "Normalized Project rifle GLB; bounds recentered and floor aligned.",
         "dimensions_m": [
-          0.0739,
-          0.5001,
-          1.1712
+          0.07392,
+          1.17122,
+          0.50013
+        ],
+        "target_dimensions_m": [
+          0.07392,
+          1.17122,
+          0.50013
         ],
         "collision": "none",
-        "sockets": [],
+        "sockets": [
+          "socket_muzzle",
+          "socket_grip_r",
+          "socket_grip_l",
+          "socket_eject",
+          "socket_vfx"
+        ],
+        "socket_notes": {
+          "socket_muzzle": "Muzzle/VFX point at forward +Y end; source already matches +Z up/+Y forward.",
+          "socket_grip_r": "Right-hand firing grip anchor for first-person and world-model IK.",
+          "socket_grip_l": "Left support-hand anchor on the long sci-fi fore-end.",
+          "socket_eject": "Right-side casing ejection reference.",
+          "socket_vfx": "Muzzle flash/tracer fallback, intentionally colocated with socket_muzzle."
+        },
+        "socket_generation": "Generated by tools/blender/normalize_project_assets.py from assets/metadata/asset_normalization_fixups.json.",
+        "socket_hints": null,
+        "normalized_export": null,
+        "normalization_status": null,
+        "skin": null,
+        "animation_clips": null,
+        "animation_clip_roles": null,
+        "skeleton": null,
+        "first_person_view": null,
         "license": "original_project_asset",
         "external_assets": false
       }
@@ -2305,36 +3877,33 @@
       "issues": [
         {
           "severity": "warning",
-          "check": "naming",
-          "message": "GLB filename stem 'weapon_rifle_ncar' does not match asset id 'wpn_project_rifle_ncar'."
-        },
-        {
-          "severity": "warning",
-          "check": "metadata_field",
-          "message": "Readiness metadata field is missing: target_dimensions_m"
-        },
-        {
-          "severity": "error",
-          "check": "sockets",
-          "message": "Required import sockets are missing: socket_muzzle"
-        },
-        {
-          "severity": "warning",
           "check": "lods",
           "message": "Declared LOD names are not visible in GLB node names."
         }
       ],
-      "cooked": "assets/project_assets/weapon_rifle_ncar.glb",
-      "metadata": "assets/project_assets/weapon_rifle_ncar.metadata.json",
-      "status": "needs_manual_work",
+      "cooked": "assets/processed/normalized/project_assets/wpn_project_rifle_ncar.glb",
+      "metadata": "assets/processed/normalized/project_assets/wpn_project_rifle_ncar.metadata.json",
+      "status": "ready_with_notes",
       "glb": {
         "valid": true,
         "asset_version": "2.0",
-        "bin_chunk_bytes": 66144088,
-        "nodes": 78,
+        "bin_chunk_bytes": 66235840,
+        "nodes": 84,
         "meshes": 77,
         "materials": 20,
-        "sockets": [],
+        "skins": 0,
+        "skin_names": [],
+        "skinned_mesh_nodes": [],
+        "animations": 0,
+        "animation_names": [],
+        "animation_channels": 0,
+        "sockets": [
+          "socket_eject",
+          "socket_grip_l",
+          "socket_grip_r",
+          "socket_muzzle",
+          "socket_vfx"
+        ],
         "collisions": [],
         "external_buffer_uris": [],
         "external_image_uris": []
@@ -2344,15 +3913,42 @@
         "scale_meters": true,
         "runtime_up_axis": "Y",
         "gameplay_forward_axis": "+Z",
-        "blender_forward_axis": "+Z",
-        "origin": "Imported Project/Assets weapon GLB; first-person placement is handled by DevRangeRenderScene.",
+        "blender_forward_axis": "+Y",
+        "origin": "Normalized Project rifle GLB; source +X height rotated to target +Z up, +Y forward, and bounds recentered.",
         "dimensions_m": [
-          0.3724,
-          0.1139,
-          0.8998
+          0.11385,
+          0.89978,
+          0.37238
+        ],
+        "target_dimensions_m": [
+          0.11385,
+          0.89978,
+          0.37238
         ],
         "collision": "none",
-        "sockets": [],
+        "sockets": [
+          "socket_muzzle",
+          "socket_grip_r",
+          "socket_grip_l",
+          "socket_eject",
+          "socket_vfx"
+        ],
+        "socket_notes": {
+          "socket_muzzle": "Muzzle/VFX point at forward +Y end after +X-height to +Z-up normalization.",
+          "socket_grip_r": "Right-hand firing grip anchor for first-person and world-model IK.",
+          "socket_grip_l": "Left support-hand anchor on the fore-end.",
+          "socket_eject": "Right-side casing ejection reference.",
+          "socket_vfx": "Muzzle flash/tracer fallback, intentionally colocated with socket_muzzle."
+        },
+        "socket_generation": "Generated by tools/blender/normalize_project_assets.py from assets/metadata/asset_normalization_fixups.json.",
+        "socket_hints": null,
+        "normalized_export": null,
+        "normalization_status": null,
+        "skin": null,
+        "animation_clips": null,
+        "animation_clip_roles": null,
+        "skeleton": null,
+        "first_person_view": null,
         "license": "original_project_asset",
         "external_assets": false
       }
@@ -2373,36 +3969,33 @@
       "issues": [
         {
           "severity": "warning",
-          "check": "naming",
-          "message": "GLB filename stem 'weapon_smg_fr17' does not match asset id 'wpn_project_smg_fr17'."
-        },
-        {
-          "severity": "warning",
-          "check": "metadata_field",
-          "message": "Readiness metadata field is missing: target_dimensions_m"
-        },
-        {
-          "severity": "error",
-          "check": "sockets",
-          "message": "Required import sockets are missing: socket_muzzle"
-        },
-        {
-          "severity": "warning",
           "check": "lods",
           "message": "Declared LOD names are not visible in GLB node names."
         }
       ],
-      "cooked": "assets/project_assets/weapon_smg_fr17.glb",
-      "metadata": "assets/project_assets/weapon_smg_fr17.metadata.json",
-      "status": "needs_manual_work",
+      "cooked": "assets/processed/normalized/project_assets/wpn_project_smg_fr17.glb",
+      "metadata": "assets/processed/normalized/project_assets/wpn_project_smg_fr17.metadata.json",
+      "status": "ready_with_notes",
       "glb": {
         "valid": true,
         "asset_version": "2.0",
-        "bin_chunk_bytes": 33165648,
-        "nodes": 57,
+        "bin_chunk_bytes": 33244324,
+        "nodes": 63,
         "meshes": 56,
         "materials": 11,
-        "sockets": [],
+        "skins": 0,
+        "skin_names": [],
+        "skinned_mesh_nodes": [],
+        "animations": 0,
+        "animation_names": [],
+        "animation_channels": 0,
+        "sockets": [
+          "socket_eject",
+          "socket_grip_l",
+          "socket_grip_r",
+          "socket_muzzle",
+          "socket_vfx"
+        ],
         "collisions": [],
         "external_buffer_uris": [],
         "external_image_uris": []
@@ -2412,15 +4005,42 @@
         "scale_meters": true,
         "runtime_up_axis": "Y",
         "gameplay_forward_axis": "+Z",
-        "blender_forward_axis": "+Z",
-        "origin": "Imported Project/Assets weapon GLB; first-person placement is handled by DevRangeRenderScene.",
+        "blender_forward_axis": "+Y",
+        "origin": "Normalized Project SMG GLB; source +X height rotated to target +Z up, +Y forward, and bounds recentered.",
         "dimensions_m": [
-          0.2958,
-          0.0565,
-          0.4895
+          0.05652,
+          0.48954,
+          0.29578
+        ],
+        "target_dimensions_m": [
+          0.05652,
+          0.48954,
+          0.29578
         ],
         "collision": "none",
-        "sockets": [],
+        "sockets": [
+          "socket_muzzle",
+          "socket_grip_r",
+          "socket_grip_l",
+          "socket_eject",
+          "socket_vfx"
+        ],
+        "socket_notes": {
+          "socket_muzzle": "Muzzle/VFX point at forward +Y end after +X-height to +Z-up normalization.",
+          "socket_grip_r": "Right-hand firing grip anchor for compact first-person placement.",
+          "socket_grip_l": "Left support-hand anchor near the front receiver.",
+          "socket_eject": "Right-side casing ejection reference.",
+          "socket_vfx": "Muzzle flash/tracer fallback, intentionally colocated with socket_muzzle."
+        },
+        "socket_generation": "Generated by tools/blender/normalize_project_assets.py from assets/metadata/asset_normalization_fixups.json.",
+        "socket_hints": null,
+        "normalized_export": null,
+        "normalization_status": null,
+        "skin": null,
+        "animation_clips": null,
+        "animation_clip_roles": null,
+        "skeleton": null,
+        "first_person_view": null,
         "license": "original_project_asset",
         "external_assets": false
       }
@@ -2441,36 +4061,33 @@
       "issues": [
         {
           "severity": "warning",
-          "check": "naming",
-          "message": "GLB filename stem 'weapon_sidearm_glock19' does not match asset id 'wpn_project_sidearm_glock19'."
-        },
-        {
-          "severity": "warning",
-          "check": "metadata_field",
-          "message": "Readiness metadata field is missing: target_dimensions_m"
-        },
-        {
-          "severity": "error",
-          "check": "sockets",
-          "message": "Required import sockets are missing: socket_muzzle"
-        },
-        {
-          "severity": "warning",
           "check": "lods",
           "message": "Declared LOD names are not visible in GLB node names."
         }
       ],
-      "cooked": "assets/project_assets/weapon_sidearm_glock19.glb",
-      "metadata": "assets/project_assets/weapon_sidearm_glock19.metadata.json",
-      "status": "needs_manual_work",
+      "cooked": "assets/processed/normalized/project_assets/wpn_project_sidearm_glock19.glb",
+      "metadata": "assets/processed/normalized/project_assets/wpn_project_sidearm_glock19.metadata.json",
+      "status": "ready_with_notes",
       "glb": {
         "valid": true,
         "asset_version": "2.0",
-        "bin_chunk_bytes": 4179308,
-        "nodes": 2,
+        "bin_chunk_bytes": 4402504,
+        "nodes": 8,
         "meshes": 1,
         "materials": 1,
-        "sockets": [],
+        "skins": 0,
+        "skin_names": [],
+        "skinned_mesh_nodes": [],
+        "animations": 0,
+        "animation_names": [],
+        "animation_channels": 0,
+        "sockets": [
+          "socket_eject",
+          "socket_grip_l",
+          "socket_grip_r",
+          "socket_muzzle",
+          "socket_vfx"
+        ],
         "collisions": [],
         "external_buffer_uris": [],
         "external_image_uris": []
@@ -2480,15 +4097,42 @@
         "scale_meters": true,
         "runtime_up_axis": "Y",
         "gameplay_forward_axis": "+Z",
-        "blender_forward_axis": "+Z",
-        "origin": "Imported Project/Assets sidearm GLB; first-person placement is handled by DevRangeRenderScene.",
+        "blender_forward_axis": "+Y",
+        "origin": "Normalized Project sidearm GLB; source +X height rotated to target +Z up, scaled to Glock 19 reference length, and bounds recentered.",
         "dimensions_m": [
-          0.1998,
-          0.035,
-          0.29
+          0.02257,
+          0.187,
+          0.12885
+        ],
+        "target_dimensions_m": [
+          0.02257,
+          0.187,
+          0.12885
         ],
         "collision": "none",
-        "sockets": [],
+        "sockets": [
+          "socket_muzzle",
+          "socket_grip_r",
+          "socket_grip_l",
+          "socket_eject",
+          "socket_vfx"
+        ],
+        "socket_notes": {
+          "socket_muzzle": "Muzzle/VFX point at forward +Y end after normalization and Glock-length scaling.",
+          "socket_grip_r": "Right-hand pistol grip anchor.",
+          "socket_grip_l": "Optional off-hand/two-hand support anchor.",
+          "socket_eject": "Right-side casing ejection reference.",
+          "socket_vfx": "Muzzle flash/tracer fallback, intentionally colocated with socket_muzzle."
+        },
+        "socket_generation": "Generated by tools/blender/normalize_project_assets.py from assets/metadata/asset_normalization_fixups.json.",
+        "socket_hints": null,
+        "normalized_export": null,
+        "normalization_status": null,
+        "skin": null,
+        "animation_clips": null,
+        "animation_clip_roles": null,
+        "skeleton": null,
+        "first_person_view": null,
         "license": "original_project_asset",
         "external_assets": false
       }
@@ -2509,36 +4153,33 @@
       "issues": [
         {
           "severity": "warning",
-          "check": "naming",
-          "message": "GLB filename stem 'weapon_sidearm_p320' does not match asset id 'wpn_project_sidearm_p320'."
-        },
-        {
-          "severity": "warning",
-          "check": "metadata_field",
-          "message": "Readiness metadata field is missing: target_dimensions_m"
-        },
-        {
-          "severity": "error",
-          "check": "sockets",
-          "message": "Required import sockets are missing: socket_muzzle"
-        },
-        {
-          "severity": "warning",
           "check": "lods",
           "message": "Declared LOD names are not visible in GLB node names."
         }
       ],
-      "cooked": "assets/project_assets/weapon_sidearm_p320.glb",
-      "metadata": "assets/project_assets/weapon_sidearm_p320.metadata.json",
-      "status": "needs_manual_work",
+      "cooked": "assets/processed/normalized/project_assets/wpn_project_sidearm_p320.glb",
+      "metadata": "assets/processed/normalized/project_assets/wpn_project_sidearm_p320.metadata.json",
+      "status": "ready_with_notes",
       "glb": {
         "valid": true,
         "asset_version": "2.0",
-        "bin_chunk_bytes": 2184364,
-        "nodes": 2,
+        "bin_chunk_bytes": 2187364,
+        "nodes": 8,
         "meshes": 1,
         "materials": 1,
-        "sockets": [],
+        "skins": 0,
+        "skin_names": [],
+        "skinned_mesh_nodes": [],
+        "animations": 0,
+        "animation_names": [],
+        "animation_channels": 0,
+        "sockets": [
+          "socket_eject",
+          "socket_grip_l",
+          "socket_grip_r",
+          "socket_muzzle",
+          "socket_vfx"
+        ],
         "collisions": [],
         "external_buffer_uris": [],
         "external_image_uris": []
@@ -2548,15 +4189,42 @@
         "scale_meters": true,
         "runtime_up_axis": "Y",
         "gameplay_forward_axis": "+Z",
-        "blender_forward_axis": "+Z",
-        "origin": "Imported Project/Assets sidearm GLB; first-person placement is handled by DevRangeRenderScene.",
+        "blender_forward_axis": "+Y",
+        "origin": "Normalized Project sidearm GLB; source +X height rotated to target +Z up, scaled to P320 reference length, and bounds recentered.",
         "dimensions_m": [
-          0.1973,
-          0.0382,
-          0.2693
+          0.02882,
+          0.203,
+          0.14874
+        ],
+        "target_dimensions_m": [
+          0.02882,
+          0.203,
+          0.14874
         ],
         "collision": "none",
-        "sockets": [],
+        "sockets": [
+          "socket_muzzle",
+          "socket_grip_r",
+          "socket_grip_l",
+          "socket_eject",
+          "socket_vfx"
+        ],
+        "socket_notes": {
+          "socket_muzzle": "Muzzle/VFX point at forward +Y end after normalization and P320-length scaling.",
+          "socket_grip_r": "Right-hand pistol grip anchor.",
+          "socket_grip_l": "Optional off-hand/two-hand support anchor.",
+          "socket_eject": "Right-side casing ejection reference.",
+          "socket_vfx": "Muzzle flash/tracer fallback, intentionally colocated with socket_muzzle."
+        },
+        "socket_generation": "Generated by tools/blender/normalize_project_assets.py from assets/metadata/asset_normalization_fixups.json.",
+        "socket_hints": null,
+        "normalized_export": null,
+        "normalization_status": null,
+        "skin": null,
+        "animation_clips": null,
+        "animation_clip_roles": null,
+        "skeleton": null,
+        "first_person_view": null,
         "license": "original_project_asset",
         "external_assets": false
       }
@@ -2605,6 +4273,12 @@
         "nodes": 4,
         "meshes": 3,
         "materials": 3,
+        "skins": 0,
+        "skin_names": [],
+        "skinned_mesh_nodes": [],
+        "animations": 0,
+        "animation_names": [],
+        "animation_channels": 0,
         "sockets": [],
         "collisions": [],
         "external_buffer_uris": [],
@@ -2618,13 +4292,32 @@
         "blender_forward_axis": "+Z",
         "origin": "Imported Project/Assets skybox GLB; rendered as a large first-pass environment mesh until NovaCore gains a dedicated cubemap sky pass.",
         "dimensions_m": null,
+        "target_dimensions_m": null,
         "collision": "none",
         "sockets": [],
+        "socket_notes": null,
+        "socket_generation": null,
+        "socket_hints": null,
+        "normalized_export": null,
+        "normalization_status": null,
+        "skin": null,
+        "animation_clips": null,
+        "animation_clip_roles": null,
+        "skeleton": null,
+        "first_person_view": null,
         "license": "original_project_asset",
         "external_assets": false
       }
     }
   ],
-  "orphan_glbs": [],
+  "orphan_glbs": [
+    "assets/project_assets/character_male1.glb",
+    "assets/project_assets/weapon_rifle_afr120.glb",
+    "assets/project_assets/weapon_rifle_m4a1.glb",
+    "assets/project_assets/weapon_rifle_ncar.glb",
+    "assets/project_assets/weapon_sidearm_glock19.glb",
+    "assets/project_assets/weapon_sidearm_p320.glb",
+    "assets/project_assets/weapon_smg_fr17.glb"
+  ],
   "uncataloged_blends": []
 }

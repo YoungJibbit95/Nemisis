@@ -6,6 +6,19 @@
   "scale_meters": true,
   "runtime_up_axis": "Y",
   "gameplay_forward_axis": "+Z",
+  "blender_up_axis": "+Z",
+  "blender_forward_axis": "+Y",
+  "dimensions_m": [
+    0.22,
+    0.77,
+    0.3825
+  ],
+  "target_dimensions_m": [
+    0.22,
+    0.77,
+    0.3825
+  ],
+  "origin": "Origin at the receiver center; muzzle and weapon sockets point along Blender +Y.",
   "sockets": [
     "socket_muzzle",
     "socket_grip_r",
@@ -19,5 +32,6 @@
     "wpn_smg_01_lod1"
   ],
   "license": "original_project_asset",
+  "external_assets": false,
   "generated_by": "tools/blender/make_dev_primitives.py"
 }

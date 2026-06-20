@@ -446,6 +446,66 @@ void testDevRangeRenderSceneRigsFirstPersonBodyForLookDown() {
     }
 }
 
+void testDevRangeRenderSceneDrawsSocketDrivenShotFeedback() {
+    novacore::render::Renderer renderer;
+    auto lookup = registerSceneMeshes(renderer);
+    const auto world = nemisis::dev::createDevRangeGreyboxWorld();
+    auto targetRange = nemisis::dev::makeDefaultDevTargetRange();
+
+    nemisis::dev::DevRangePlayerRenderState player{};
+    player.position = world.playerSpawn;
+    player.hasMovementState = true;
+    player.hasCameraRig = true;
+    player.cameraPosition = world.playerSpawn + novacore::math::Vec3{0.0F, 1.66F, 0.0F};
+    player.cameraView.yawDegrees = 0.0F;
+    player.cameraView.pitchDegrees = -4.0F;
+    player.activeWeaponId = "ar_01";
+    player.activeWeaponClass = nemisis::weapons::WeaponClass::AssaultRifle;
+    player.weapon.shotIndex = 2;
+    player.weapon.timeSinceLastShotSeconds = 0.02F;
+    player.animation.fireAlpha = 1.0F;
+    player.hasAnimationFrame = true;
+    player.firedThisFrame = true;
+    player.hitThisFrame = true;
+    player.hasLatestShotTrace = true;
+    player.latestShotOrigin = player.cameraPosition;
+    player.latestShotEnd = targetRange.lanes[1].target.position;
+    player.hitDistanceMeters = 18.0F;
+
+    novacore::render::RenderFrameInfo frame{};
+    const auto stats = nemisis::dev::DevRangeRenderSceneBuilder{}.append(
+        frame,
+        nemisis::dev::DevRangeRenderSceneDesc{&world, &targetRange, nullptr, &lookup, player});
+
+    expect(stats.firstPersonFeedbackPrimitiveCount >= 4U, "first-person shot feedback emits muzzle, casing, and hit primitives");
+    expect(stats.hitFeedbackLineCount == 1U, "first-person shot feedback emits a socket-driven trace line");
+    expect(frame.worldLines.size() == stats.worldLineCount, "shot feedback line contributes to world line stats");
+}
+
+void testDevRangeRenderSceneDrawsLanePressure() {
+    novacore::render::Renderer renderer;
+    auto lookup = registerSceneMeshes(renderer);
+    const auto world = nemisis::dev::createDevRangeGreyboxWorld();
+    auto targetRange = nemisis::dev::makeDefaultDevTargetRange();
+    targetRange.lanes[1].pressure01 = 0.82F;
+    targetRange.lanes[1].threatSeconds = 1.4F;
+    targetRange.lanes[1].pressureActive = true;
+
+    nemisis::dev::DevRangePlayerRenderState player{};
+    player.position = world.playerSpawn;
+    player.view.yawDegrees = 0.0F;
+    player.view.pitchDegrees = 0.0F;
+
+    novacore::render::RenderFrameInfo frame{};
+    const auto stats = nemisis::dev::DevRangeRenderSceneBuilder{}.append(
+        frame,
+        nemisis::dev::DevRangeRenderSceneDesc{&world, &targetRange, nullptr, &lookup, player});
+
+    expect(stats.activeLanePressurePrimitiveCount == 3U, "lane pressure emits ring, beam, and threat line");
+    expect(stats.worldBoxCount == (world.primitives.size() - 1U) + targetRange.lanes.size() + 19U, "lane pressure adds two world-box primitives");
+    expect(stats.worldLineCount == 2U, "lane pressure adds one threat line plus aim line");
+}
+
 void testDevRangeRenderSceneCountsMissingMeshHandles() {
     novacore::render::Renderer renderer;
     auto lookup = registerSceneMeshes(renderer);
@@ -671,6 +731,8 @@ int main() {
     testDevRangeRenderScenePlacesA2AssetsInSpawnView();
     testDevRangeRenderSceneHidesLocalWorldBodyWhenCameraRigIsActive();
     testDevRangeRenderSceneRigsFirstPersonBodyForLookDown();
+    testDevRangeRenderSceneDrawsSocketDrivenShotFeedback();
+    testDevRangeRenderSceneDrawsLanePressure();
     testDevRangeRenderSceneCountsMissingMeshHandles();
     testDevRangeRenderSceneKeepsSkyboxMeshFallbackWhenSkyPassDisabled();
     testDevRangeRenderSceneHandlesMissingInputs();

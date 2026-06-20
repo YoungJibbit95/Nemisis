@@ -79,6 +79,9 @@ void testResetRestoresAllLanes() {
     range.lanes[0].target.health = 1.0F;
     range.lanes[0].target.eliminated = true;
     range.lanes[0].respawnSeconds = 4.0F;
+    range.lanes[0].pressure01 = 1.0F;
+    range.lanes[0].threatSeconds = 2.0F;
+    range.lanes[0].pressureActive = true;
     range.lanes[2].target.health = 60.0F;
     range.activeLaneIndex = 99U;
 
@@ -87,7 +90,27 @@ void testResetRestoresAllLanes() {
     expect(range.activeLaneIndex < range.lanes.size(), "reset clamps active lane");
     expect(nemisis::dev::aliveTargetCount(range) == range.lanes.size(), "reset revives all lanes");
     expect(nemisis::dev::nextTargetRespawnSeconds(range) == 0.0F, "reset clears respawn timers");
+    expect(range.lanes[0].pressure01 == 0.0F, "reset clears lane pressure");
+    expect(!range.lanes[0].pressureActive, "reset clears lane pressure active state");
     expect(range.lanes[2].target.health == range.lanes[2].target.maxHealth, "reset restores damaged lane health");
+}
+
+void testLanePressureBuildsAndDecays() {
+    auto range = nemisis::dev::makeDefaultDevTargetRange();
+    const auto centerPosition = range.lanes[1].target.position;
+
+    nemisis::dev::updateDevTargetRangePressure(range, centerPosition + novacore::math::Vec3{0.0F, 0.0F, -2.0F}, 0.25F);
+    const auto pressure = nemisis::dev::strongestDevTargetRangePressure(range);
+
+    expect(pressure.active, "near target player activates lane pressure");
+    expect(pressure.laneId == "center_20m", "active center lane produces strongest pressure");
+    expect(pressure.pressure01 > 0.60F, "lane pressure rises near an active target");
+    expect(pressure.damagePerSecond > 0.0F, "high lane pressure exposes player damage budget");
+
+    range.lanes[pressure.laneIndex].target.eliminated = true;
+    const auto eliminatedLaneIndex = pressure.laneIndex;
+    nemisis::dev::updateDevTargetRangePressure(range, centerPosition + novacore::math::Vec3{0.0F, 0.0F, -2.0F}, 1.0F);
+    expect(range.lanes[eliminatedLaneIndex].pressure01 < pressure.pressure01, "eliminated lane pressure decays");
 }
 
 } // namespace
@@ -97,6 +120,7 @@ int main() {
     testShotSelectsNearestHitLane();
     testLaneEliminatesAndRespawnsIndependently();
     testResetRestoresAllLanes();
+    testLanePressureBuildsAndDecays();
 
     if (failures > 0) {
         std::cerr << failures << " dev target range test(s) failed\n";

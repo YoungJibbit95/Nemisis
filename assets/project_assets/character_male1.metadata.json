@@ -6,14 +6,82 @@
   "scale_meters": true,
   "runtime_up_axis": "Y",
   "gameplay_forward_axis": "+Z",
-  "blender_up_axis": "+Y",
-  "blender_forward_axis": "+Z",
-  "dimensions_m": [1.8975, 1.8124, 0.3942],
-  "origin": "Imported Project/Assets character GLB; no authored Nemisis sockets or collision proxies.",
+  "blender_up_axis": "+Z",
+  "blender_forward_axis": "+Y",
+  "dimensions_m": [
+    0.85176,
+    0.39996,
+    1.78599
+  ],
+  "target_dimensions_m": [
+    0.85176,
+    0.39996,
+    1.78599
+  ],
+  "origin": "Imported Project/Assets character GLB; visible mesh is floor-aligned but offset from origin before normalization.",
+  "skin": "rig",
+  "animation_clips": [
+    "Hard stand",
+    "Run (1_18)",
+    "T_pose",
+    "Walk (1_24)"
+  ],
+  "first_person_arms": "not_separated_from_full_body; runtime uses procedural first-person rig with chr_a1_fp_arms_01 fallback arms",
   "sockets": [],
   "collision": "none",
-  "lods": ["chr_project_male1_lod0"],
+  "lods": [
+    "chr_project_male1_lod0"
+  ],
   "license": "original_project_asset",
   "external_assets": false,
-  "generated_by": "manual_project_assets_import"
+  "generated_by": "manual_project_assets_import",
+  "normalized_export": "assets/processed/normalized/project_assets/chr_project_male1.glb",
+  "normalization_status": "source preserved; runtime uses normalized_export for +Z up/+Y forward and generated socket nodes",
+  "socket_hints": {
+    "socket_root": "Feet/root pivot at normalized floor center.",
+    "socket_camera": "Approximate first-person/third-person eye reference, local +Y forward.",
+    "socket_weapon_root": "Approximate chest/shoulder weapon mount for viewmodel handoff.",
+    "socket_hand_r": "Right hand reference for firing grip retargeting.",
+    "socket_hand_l": "Left hand reference for support grip and wall-run arm cues.",
+    "socket_head": "Head/helmet reference for hit/VFX alignment.",
+    "socket_vfx": "Torso VFX fallback anchor."
+  },
+  "animation_clip_roles": {
+    "Hard stand": "idle_stance_reference",
+    "Run (1_18)": "locomotion_run_reference",
+    "T_pose": "retarget_bind_pose_reference",
+    "Walk (1_24)": "locomotion_walk_reference"
+  },
+  "skeleton": {
+    "skin": "rig",
+    "skinned_mesh_nodes": [
+      "Character"
+    ],
+    "source_pose": "T_pose",
+    "retarget_axis_contract": "+Z up, +Y forward after normalized export",
+    "retarget_status": "source skin and clips are present; authored Nemisis first-person arms split is still required for final viewmodel animation",
+    "required_first_person_bones": [
+      "upper_arm.R",
+      "forearm.R",
+      "hand.R",
+      "upper_arm.L",
+      "forearm.L",
+      "hand.L"
+    ],
+    "runtime_socket_contract": [
+      "socket_camera",
+      "socket_weapon_root",
+      "socket_hand_r",
+      "socket_hand_l"
+    ]
+  },
+  "first_person_view": {
+    "body_visibility": "hide full local body for camera; use torso/legs only when body masking exists",
+    "arms_source_asset": "chr_a1_fp_arms_01",
+    "weapon_socket": "socket_weapon_root",
+    "right_hand_socket": "socket_hand_r",
+    "left_hand_socket": "socket_hand_l",
+    "camera_socket": "socket_camera",
+    "status": "metadata/socket-ready; source model is not separated into first-person arms yet"
+  }
 }

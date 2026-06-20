@@ -619,6 +619,119 @@ void appendFirstPersonRigPrimitives(
     ++stats.firstPersonBodyPrimitiveCount;
 }
 
+void appendWeaponFeedbackPrimitives(
+    novacore::render::RenderFrameInfo& frame,
+    const DevRangeRenderSceneDesc& desc,
+    const player::FirstPersonRigFrame& rig,
+    DevRangeRenderSceneStats& stats) {
+    const bool recentFire = desc.player.firedThisFrame ||
+        desc.player.animation.fireAlpha > 0.08F ||
+        (desc.player.weapon.shotIndex > 0U && desc.player.weapon.timeSinceLastShotSeconds < 0.075F);
+    if (!recentFire && !desc.player.hitThisFrame) {
+        return;
+    }
+
+    const auto& muzzle = player::firstPersonRigSocket(rig, player::FirstPersonRigSocket::Muzzle);
+    const auto& ejection = player::firstPersonRigSocket(rig, player::FirstPersonRigSocket::EjectionPort);
+    const auto muzzlePosition = muzzle.valid ? muzzle.worldPosition : rig.muzzle.position;
+    const auto flashAlpha = std::max(0.34F, desc.player.animation.fireAlpha);
+    if (recentFire) {
+        appendBox(
+            frame,
+            muzzlePosition,
+            {0.070F + (0.025F * flashAlpha), 0.050F, 0.110F + (0.040F * flashAlpha)},
+            {1.0F, 0.72F, 0.18F, 0.88F},
+            stats);
+        ++stats.firstPersonFeedbackPrimitiveCount;
+        appendBox(
+            frame,
+            muzzlePosition + novacore::math::Vec3{0.0F, 0.018F, 0.075F},
+            {0.028F, 0.024F, 0.150F},
+            {1.0F, 0.94F, 0.52F, 0.74F},
+            stats);
+        ++stats.firstPersonFeedbackPrimitiveCount;
+        if (ejection.valid) {
+            appendBox(
+                frame,
+                ejection.worldPosition + novacore::math::Vec3{0.045F, 0.018F, -0.010F},
+                {0.026F, 0.012F, 0.010F},
+                {0.98F, 0.78F, 0.32F, 0.92F},
+                stats);
+            ++stats.firstPersonFeedbackPrimitiveCount;
+        }
+    }
+
+    if (!desc.player.hasLatestShotTrace) {
+        return;
+    }
+
+    const auto lineColor = desc.player.hitThisFrame
+        ? std::array<float, 4>{1.0F, 0.28F, 0.18F, 0.92F}
+        : std::array<float, 4>{1.0F, 0.78F, 0.22F, 0.58F};
+    frame.worldLines.push_back(novacore::render::RenderLine3D{
+        muzzlePosition,
+        desc.player.latestShotEnd,
+        lineColor,
+    });
+    ++stats.worldLineCount;
+    ++stats.hitFeedbackLineCount;
+
+    if (desc.player.hitThisFrame) {
+        appendBox(
+            frame,
+            desc.player.latestShotEnd,
+            desc.player.eliminatedThisFrame
+                ? novacore::math::Vec3{0.22F, 0.22F, 0.22F}
+                : novacore::math::Vec3{0.14F, 0.14F, 0.14F},
+            desc.player.eliminatedThisFrame
+                ? std::array<float, 4>{1.0F, 0.36F, 0.18F, 0.96F}
+                : std::array<float, 4>{1.0F, 0.84F, 0.24F, 0.90F},
+            stats);
+        ++stats.firstPersonFeedbackPrimitiveCount;
+    }
+}
+
+void appendLanePressureVisuals(
+    novacore::render::RenderFrameInfo& frame,
+    const DevRangeRenderSceneDesc& desc,
+    const DevTargetLane& lane,
+    DevRangeRenderSceneStats& stats) {
+    if (!lane.pressureActive || lane.pressure01 <= 0.02F) {
+        return;
+    }
+
+    const float pressure = clamp01(lane.pressure01);
+    const auto target = lane.target.position;
+    const auto pressureColor = std::array<float, 4>{
+        0.94F,
+        0.18F + (0.30F * (1.0F - pressure)),
+        0.10F,
+        0.28F + (pressure * 0.42F),
+    };
+    appendBox(
+        frame,
+        {target.x, 0.035F, target.z},
+        {lane.target.radiusMeters + (pressure * 0.55F), 0.028F, lane.target.radiusMeters + (pressure * 0.55F)},
+        pressureColor,
+        stats);
+    ++stats.activeLanePressurePrimitiveCount;
+    appendBox(
+        frame,
+        target + novacore::math::Vec3{0.0F, 0.18F + (pressure * 0.40F), 0.0F},
+        {0.052F + (pressure * 0.038F), 0.24F + (pressure * 0.34F), 0.052F + (pressure * 0.038F)},
+        {pressureColor[0], pressureColor[1] * 1.20F, pressureColor[2], pressureColor[3] * 0.72F},
+        stats);
+    ++stats.activeLanePressurePrimitiveCount;
+
+    frame.worldLines.push_back(novacore::render::RenderLine3D{
+        target,
+        playerEyePosition(desc),
+        {1.0F, 0.20F, 0.14F, 0.30F + (pressure * 0.40F)},
+    });
+    ++stats.worldLineCount;
+    ++stats.activeLanePressurePrimitiveCount;
+}
+
 void appendAssetStageGuides(
     novacore::render::RenderFrameInfo& frame,
     DevRangeRenderSceneStats& stats) {
@@ -675,7 +788,7 @@ DevRangeRenderSceneStats DevRangeRenderSceneBuilder::append(
     frame.camera3D.farPlane = desc.farPlane;
 
     const auto targetLaneCount = desc.targetRange == nullptr ? 0U : desc.targetRange->lanes.size();
-    frame.worldBoxes.reserve(frame.worldBoxes.size() + desc.greyboxWorld->primitives.size() + targetLaneCount + 21U);
+    frame.worldBoxes.reserve(frame.worldBoxes.size() + desc.greyboxWorld->primitives.size() + (targetLaneCount * 3U) + 29U);
     frame.worldMeshes.reserve(frame.worldMeshes.size() + 13U + (targetLaneCount * 2U));
 
     appendSkyboxMesh(frame, desc, stats);
@@ -829,6 +942,7 @@ void DevRangeRenderSceneBuilder::appendTargetLaneMeshes(
             {lane.target.radiusMeters, 0.95F, lane.target.radiusMeters},
             {color[0] * 0.55F, color[1] * 0.55F, color[2] * 0.55F, 0.75F},
             stats);
+        appendLanePressureVisuals(frame, desc, lane, stats);
 
         const auto actorAsset = eliminated ? std::string_view("prop_target_dummy_01") : std::string_view("chr_project_male1");
         if (appendMesh(
@@ -973,6 +1087,7 @@ void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
     const auto rig = player::evaluateFirstPersonRig(rigInput);
 
     appendFirstPersonRigPrimitives(frame, rig, stats);
+    appendWeaponFeedbackPrimitives(frame, desc, rig, stats);
     const auto& weaponSocket = player::firstPersonRigSocket(rig, player::FirstPersonRigSocket::WeaponRoot);
     const auto weaponPosition = weaponSocket.valid ? weaponSocket.worldPosition : rig.weapon.position;
     const auto weaponYaw = weaponSocket.valid ? weaponSocket.yawDegrees : rig.weapon.yawDegrees;

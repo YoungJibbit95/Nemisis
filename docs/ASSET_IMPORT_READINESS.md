@@ -50,7 +50,7 @@ Recommended first import IDs for runtime smoke tests:
 
 ## Runtime-Active Project Assets
 
-These Project GLBs have been moved into `assets/project_assets`, cataloged, bound by `DevAssetBindings`, registered as renderer mesh resources, and submitted by the Dev Range render scene. They are not yet full production-ready imports because the source GLBs do not contain authored Nemisis `socket_*` empties, exported `col_` proxies, or filename stems matching their runtime IDs.
+These Project GLBs have been moved into `assets/project_assets`, cataloged, normalized under `assets/processed/normalized/project_assets`, bound by `DevAssetBindings`, registered as renderer mesh resources, and submitted by the Dev Range render scene. The source GLBs remain preserved; the cooked normalized Project GLBs now carry generated Nemisis `socket_*` empties, +Z-up/+Y-forward orientation, floor/centered origins, and corrected dimensions. They still need exported `col_` proxies and stable filename stems before they should be treated as final production imports. Project weapon and character `dimensions_m` metadata uses source/Blender semantic order `[width, forward length/depth, height]`.
 
 | Import ID | File | Ingame use |
 | --- | --- | --- |
@@ -63,16 +63,22 @@ These Project GLBs have been moved into `assets/project_assets`, cataloged, boun
 | `wpn_project_sidearm_p320` | `assets/project_assets/weapon_sidearm_p320.glb` | Showcase rack sidearm |
 | `env_project_skybox1` | `assets/project_assets/skybox1.glb` | Disabled-sky fallback mesh; normal Dev Range sky now uses NovaCore's renderer sky pass |
 
+Normalized cooked Project asset status:
+
+- `wpn_project_rifle_m4a1`, `wpn_project_rifle_afr120`, `wpn_project_rifle_ncar`, `wpn_project_smg_fr17`, `wpn_project_sidearm_glock19`, and `wpn_project_sidearm_p320` export `socket_muzzle`, `socket_grip_r`, `socket_grip_l`, `socket_eject`, and `socket_vfx` nodes in normalized +Y-forward local space.
+- `chr_project_male1` exports `socket_root`, `socket_camera`, `socket_weapon_root`, `socket_hand_r`, `socket_hand_l`, `socket_head`, and `socket_vfx`. Its GLB contains skin `rig`, skinned mesh node `Character`, and clips `Hard stand`, `Run (1_18)`, `T_pose`, and `Walk (1_24)`.
+- `chr_project_male1` is not a separated first-person-arms asset. Its metadata now records the first-person handoff contract: use `chr_a1_fp_arms_01` as the current arms fallback, bind the weapon at `socket_weapon_root`, and retarget final authored arms to `socket_hand_r`/`socket_hand_l`.
+
 ## Ready With Notes
 
-The A0/dev primitive set is importable for dev sandbox use. The main gap is older metadata: these entries are missing `origin`, `dimensions_m`, `target_dimensions_m`, and `external_assets`. Their GLBs are valid, sockets exist, and Blender source transforms are applied.
+The A0/dev primitive set is importable for dev sandbox use. The A0 weapon metadata now declares `blender_up_axis: "+Z"`, `blender_forward_axis: "+Y"`, origin notes, dimensions, target dimensions, and `external_assets: false`. The remaining A0 prop/character/environment entries still have older metadata gaps around `origin`, `dimensions_m`, `target_dimensions_m`, and `external_assets`. Their GLBs are valid, sockets exist, and Blender source transforms are applied.
 
 | Import ID | Status note |
 | --- | --- |
 | `prop_target_dummy_01` | Has hit/vfx sockets and `col_prop_target_dummy_01`; add rich metadata before relying on automated placement. |
-| `wpn_ar_01` | Has muzzle/grip/eject/vfx sockets; add origin/dimensions metadata. |
-| `wpn_smg_01` | Has muzzle/grip/eject/vfx sockets; add origin/dimensions metadata. |
-| `wpn_sidearm_01` | Has muzzle/grip/eject/vfx sockets; add origin/dimensions metadata. |
+| `wpn_ar_01` | Has muzzle/grip/eject/vfx sockets and +Y-forward/+Z-up metadata. |
+| `wpn_smg_01` | Has muzzle/grip/eject/vfx sockets and +Y-forward/+Z-up metadata. |
+| `wpn_sidearm_01` | Has muzzle/grip/eject/vfx sockets and +Y-forward/+Z-up metadata. |
 | `env_test_arena_kit_01` | Has spawn/control sockets and per-piece `col_` meshes; add kit dimensions/origin metadata. |
 | `chr_player_capsule_proxy_01` | Has root/camera/weapon/hit sockets and `col_chr_player_capsule_proxy_01`; add dimensions/origin metadata. |
 | `chr_dev_arms_a` | Has camera/weapon/hand sockets; add dimensions/origin metadata. |
@@ -94,7 +100,7 @@ Current runtime bridge:
 - These proxies make the current smoke-test scene playable, but they are not a replacement for authored `col_` nodes or collision metadata in production assets.
 - The game asset catalog now resolves Project asset IDs from committed repo-local paths under `assets/project_assets`. Future asset-agent work should add authored sockets/collision/animation data instead of relying on runtime placement heuristics.
 - Current Project preview IDs are `chr_project_male1`, `wpn_project_rifle_m4a1`, `wpn_project_rifle_afr120`, `wpn_project_rifle_ncar`, `wpn_project_smg_fr17`, `wpn_project_sidearm_glock19`, `wpn_project_sidearm_p320`, and `env_project_skybox1`.
-- Project assets `chr_project_male1`, `wpn_project_rifle_m4a1`, `wpn_project_rifle_afr120`, `wpn_project_rifle_ncar`, `wpn_project_smg_fr17`, `wpn_project_sidearm_glock19`, and `wpn_project_sidearm_p320` are runtime-active but need a future non-destructive normalization pass with stable filename stems, `socket_muzzle`/grip sockets for weapons, root/camera/weapon sockets for the character, and optional `col_` proxies. `env_project_skybox1` remains cataloged as a fallback for disabled sky-pass testing, while normal Dev Range rendering now uses NovaCore's renderer sky pass.
+- Project assets `chr_project_male1`, `wpn_project_rifle_m4a1`, `wpn_project_rifle_afr120`, `wpn_project_rifle_ncar`, `wpn_project_smg_fr17`, `wpn_project_sidearm_glock19`, and `wpn_project_sidearm_p320` are runtime-active and have a reproducible non-destructive normalization/export pass. The cooked GLBs now include generated gameplay sockets and fixed +Z-up/+Y-forward dimensions. They still need stable filename stems, authored rather than generated sockets in source files, optional `col_` proxies, and a separated first-person arms mesh if the Project character should replace `chr_a1_fp_arms_01`. `env_project_skybox1` remains cataloged as a fallback for disabled sky-pass testing, while normal Dev Range rendering now uses NovaCore's renderer sky pass.
 
 ## Import Metadata Contract
 

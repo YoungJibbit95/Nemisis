@@ -2,6 +2,8 @@
 
 #include "nemisis/dev/DebugTarget.hpp"
 
+#include "novacore/math/Types.hpp"
+
 #include <cstddef>
 #include <cstdint>
 #include <string>
@@ -14,11 +16,25 @@ struct DevTargetLane final {
     std::string displayName;
     DebugTargetState target{};
     float respawnSeconds = 0.0F;
+    float pressure01 = 0.0F;
+    float threatSeconds = 0.0F;
+    bool pressureActive = false;
 };
 
 struct DevTargetRangeState final {
     std::vector<DevTargetLane> lanes;
     std::size_t activeLaneIndex = 0;
+};
+
+struct DevTargetLanePressureSample final {
+    bool active = false;
+    std::size_t laneIndex = 0;
+    std::string laneId;
+    std::string laneName;
+    novacore::math::Vec3 targetPosition{};
+    float pressure01 = 0.0F;
+    float threatSeconds = 0.0F;
+    float damagePerSecond = 0.0F;
 };
 
 struct DevTargetRangeHitResult final {
@@ -55,5 +71,10 @@ void beginTargetLaneRespawn(
 [[nodiscard]] std::size_t totalTargetCount(const DevTargetRangeState& range);
 [[nodiscard]] std::size_t aliveTargetCount(const DevTargetRangeState& range);
 [[nodiscard]] std::size_t eliminatedTargetCount(const DevTargetRangeState& range);
+void updateDevTargetRangePressure(
+    DevTargetRangeState& range,
+    novacore::math::Vec3 playerPosition,
+    float deltaSeconds);
+[[nodiscard]] DevTargetLanePressureSample strongestDevTargetRangePressure(const DevTargetRangeState& range);
 
 } // namespace nemisis::dev

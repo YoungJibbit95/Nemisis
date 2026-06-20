@@ -213,6 +213,8 @@ void testDevRangeHudUsesPlayableResponsiveLayout() {
     sample.weapon.ammoInMagazine = 24;
     sample.weapon.adsAlpha = 0.35F;
     sample.targetRange = nemisis::dev::makeDefaultDevTargetRange();
+    sample.targetRange.lanes[1].pressure01 = 0.64F;
+    sample.targetRange.lanes[1].pressureActive = true;
     sample.rangeSession.score.targetsEliminated = 3;
     sample.rangeSession.score.shotsFired = 10;
     sample.rangeSession.score.shotsHit = 7;
@@ -268,6 +270,7 @@ void testDevRangeHudUsesPlayableResponsiveLayout() {
     expect(hasText("CTRL"), "dev range HUD exposes recoil-control scoring");
     expect(hasText("TTK"), "dev range HUD exposes measured TTK panel data");
     expect(hasText("CENTER 20M"), "dev range HUD exposes active lane breakdown");
+    expect(hasText("PRESS 64%"), "dev range HUD exposes active lane pressure");
     expect(hasText("DEBUG Gameplay"), "debug overlay renders as compact gameplay panel");
     expect(!hasText("TARGET LANE"), "normal dev range HUD no longer renders the large target lane debug panel");
     expect(

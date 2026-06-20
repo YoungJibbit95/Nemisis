@@ -6,14 +6,35 @@
   "scale_meters": true,
   "runtime_up_axis": "Y",
   "gameplay_forward_axis": "+Z",
-  "blender_up_axis": "+Y",
-  "blender_forward_axis": "+Z",
-  "dimensions_m": [0.1998, 0.0350, 0.2900],
-  "origin": "Imported Project/Assets sidearm GLB; first-person placement is handled by DevRangeRenderScene.",
+  "blender_up_axis": "+X",
+  "blender_forward_axis": "+Y",
+  "dimensions_m": [
+    0.035,
+    0.29,
+    0.19982
+  ],
+  "target_dimensions_m": [
+    0.02257,
+    0.187,
+    0.12885
+  ],
+  "origin": "Imported Project/Assets sidearm GLB; source height is authored on Blender +X, then normalized to +Z up and scaled to Glock 19 reference length.",
   "sockets": [],
   "collision": "none",
-  "lods": ["wpn_project_sidearm_glock19_lod0"],
+  "lods": [
+    "wpn_project_sidearm_glock19_lod0"
+  ],
   "license": "original_project_asset",
   "external_assets": false,
-  "generated_by": "manual_project_assets_import"
+  "generated_by": "manual_project_assets_import",
+  "normalized_export": "assets/processed/normalized/project_assets/wpn_project_sidearm_glock19.glb",
+  "normalization_status": "source preserved; runtime uses normalized_export for +Z up/+Y forward and generated socket nodes",
+  "socket_hints": {
+    "socket_muzzle": "Muzzle/VFX point at forward +Y end after normalization and Glock-length scaling.",
+    "socket_grip_r": "Right-hand pistol grip anchor.",
+    "socket_grip_l": "Optional off-hand/two-hand support anchor.",
+    "socket_eject": "Right-side casing ejection reference.",
+    "socket_vfx": "Muzzle flash/tracer fallback, intentionally colocated with socket_muzzle."
+  },
+  "socket_forward_axis_after_normalization": "+Y"
 }

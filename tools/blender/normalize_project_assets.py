@@ -137,6 +137,7 @@ def bounds_for_meshes(meshes: list[bpy.types.Object]) -> dict[str, Any] | None:
         "min_xyz_blender": [round(v, 5) for v in mins],
         "max_xyz_blender": [round(v, 5) for v in maxs],
         "size_xyz_blender": [round(v, 5) for v in size],
+        "dimensions_m_blender_xyz": [round(v, 5) for v in size],
         "center_xyz_blender": [round(v, 5) for v in center],
         "runtime_dimensions_m": [round(size[0], 5), round(size[2], 5), round(size[1], 5)],
     }
@@ -245,15 +246,39 @@ def remove_ignored_meshes(objects: list[bpy.types.Object], names: set[str], pref
     return removed
 
 
-def ensure_root_empty(asset_id: str, objects: list[bpy.types.Object]) -> None:
+def ensure_root_empty(asset_id: str, objects: list[bpy.types.Object]) -> bpy.types.Object:
     roots = transform_roots(objects)
     if len(roots) == 1 and roots[0].name == asset_id:
-        return
+        return roots[0]
     root = bpy.data.objects.new(asset_id, None)
     bpy.context.collection.objects.link(root)
     for obj in roots:
         obj.parent = root
         obj.matrix_parent_inverse = root.matrix_world.inverted()
+    return root
+
+
+def add_socket_empties(root: bpy.types.Object, sockets: list[dict[str, Any]]) -> list[str]:
+    created: list[str] = []
+    for socket in sockets:
+        name = str(socket.get("name", "")).strip()
+        if not name:
+            continue
+        obj = bpy.data.objects.get(name)
+        if obj is None:
+            obj = bpy.data.objects.new(name, None)
+            bpy.context.collection.objects.link(obj)
+        obj.empty_display_type = str(socket.get("display", "PLAIN_AXES"))
+        obj.empty_display_size = float(socket.get("display_size", 0.045))
+        obj.parent = root
+        obj.matrix_parent_inverse.identity()
+        obj.location = Vector(socket.get("location", [0.0, 0.0, 0.0]))
+        rotation = socket.get("rotation_euler_deg", [0.0, 0.0, 0.0])
+        obj.rotation_euler = Euler([math.radians(float(value)) for value in rotation], "XYZ")
+        obj.scale = (1.0, 1.0, 1.0)
+        created.append(name)
+    bpy.context.view_layer.update()
+    return created
 
 
 def export_glb(path: Path, objects: list[bpy.types.Object]) -> None:
@@ -314,6 +339,7 @@ def inspect_entry(
         "non_applied_mesh_transforms": non_applied_mesh_transforms(meshes)[:50],
         "bounds_before": before,
         "configured_findings": entry.get("findings", []),
+        "target_dimensions_m": entry.get("target_dimensions_m"),
         "normalization": entry.get("normalization", {}),
     }
 
@@ -350,11 +376,18 @@ def inspect_entry(
     result["scale_factor_applied"] = round(scale_applied, 6) if scale_applied else None
     result["translation_applied"] = translation
     result["bounds_after_configured_normalization"] = after
+    result["configured_sockets"] = [socket.get("name") for socket in normalization.get("add_sockets", [])]
 
     if export:
+        root = None
         if normalization.get("ensure_root_empty", True):
-            ensure_root_empty(entry["id"], managed)
+            root = ensure_root_empty(entry["id"], managed)
             managed = managed_objects(list(bpy.context.scene.objects), set(), ())
+        added_sockets = []
+        if root and normalization.get("add_sockets"):
+            added_sockets = add_socket_empties(root, list(normalization.get("add_sockets", [])))
+            managed = managed_objects(list(bpy.context.scene.objects), set(), ())
+        result["exported_sockets"] = added_sockets
         out = output_path(repo_root, entry, output_root)
         export_glb(out, managed)
         result["exported"] = rel(repo_root, out) if not output_root else str(out)

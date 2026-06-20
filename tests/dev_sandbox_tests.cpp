@@ -44,6 +44,9 @@ void testSummaryIncludesPlayableTelemetry() {
     sample.snapshots.newestServerTick = 44;
     sample.snapshots.hasNewestServerTick = true;
     sample.targetRange = nemisis::dev::makeDefaultDevTargetRange();
+    sample.targetRange.lanes[1].pressure01 = 0.74F;
+    sample.targetRange.lanes[1].threatSeconds = 1.5F;
+    sample.targetRange.lanes[1].pressureActive = true;
     sample.target.health = 122.0F;
     sample.target.hitsTaken = 2;
     sample.targetHit.hit = true;
@@ -114,6 +117,7 @@ void testSummaryIncludesPlayableTelemetry() {
     expect(summary.find("targetsAlive=4/4") != std::string::npos, "summary includes target lane count");
     expect(summary.find("targetHp=122.0") != std::string::npos, "summary includes target health");
     expect(summary.find("hit=yes") != std::string::npos, "summary includes target hit");
+    expect(summary.find("pressure=CENTER 20M") != std::string::npos, "summary includes strongest lane pressure");
     expect(summary.find("wallrunSurface=yes") != std::string::npos, "summary includes wallrun surface state");
     expect(summary.find("mantle=ledge_training_mid") != std::string::npos, "summary includes mantle candidate id");
     expect(summary.find("wall=wallrun_left_panel_a") != std::string::npos, "summary includes wall contact id");

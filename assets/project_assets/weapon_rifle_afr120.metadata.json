@@ -6,14 +6,35 @@
   "scale_meters": true,
   "runtime_up_axis": "Y",
   "gameplay_forward_axis": "+Z",
-  "blender_up_axis": "+Y",
-  "blender_forward_axis": "+Z",
-  "dimensions_m": [0.0739, 0.5001, 1.1712],
-  "origin": "Imported Project/Assets weapon GLB; first-person placement is handled by DevRangeRenderScene.",
+  "blender_up_axis": "+Z",
+  "blender_forward_axis": "+Y",
+  "dimensions_m": [
+    0.07392,
+    1.17122,
+    0.50013
+  ],
+  "target_dimensions_m": [
+    0.07392,
+    1.17122,
+    0.50013
+  ],
+  "origin": "Imported Project/Assets rifle GLB; source already matches Blender +Z up and +Y forward.",
   "sockets": [],
   "collision": "none",
-  "lods": ["wpn_project_rifle_afr120_lod0"],
+  "lods": [
+    "wpn_project_rifle_afr120_lod0"
+  ],
   "license": "original_project_asset",
   "external_assets": false,
-  "generated_by": "manual_project_assets_import"
+  "generated_by": "manual_project_assets_import",
+  "normalized_export": "assets/processed/normalized/project_assets/wpn_project_rifle_afr120.glb",
+  "normalization_status": "source preserved; runtime uses normalized_export for +Z up/+Y forward and generated socket nodes",
+  "socket_hints": {
+    "socket_muzzle": "Muzzle/VFX point at forward +Y end; source already matches +Z up/+Y forward.",
+    "socket_grip_r": "Right-hand firing grip anchor for first-person and world-model IK.",
+    "socket_grip_l": "Left support-hand anchor on the long sci-fi fore-end.",
+    "socket_eject": "Right-side casing ejection reference.",
+    "socket_vfx": "Muzzle flash/tracer fallback, intentionally colocated with socket_muzzle."
+  },
+  "socket_forward_axis_after_normalization": "+Y"
 }
