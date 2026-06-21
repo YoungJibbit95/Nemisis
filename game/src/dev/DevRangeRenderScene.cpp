@@ -89,6 +89,14 @@ struct FirstPersonCookedSocketRig final {
     std::size_t socketCount = 0;
 };
 
+struct FirstPersonCookedArmsRig final {
+    std::optional<novacore::math::Vec3> camera;
+    std::optional<novacore::math::Vec3> weaponRoot;
+    std::optional<novacore::math::Vec3> rightHand;
+    std::optional<novacore::math::Vec3> leftHand;
+    std::size_t socketCount = 0;
+};
+
 [[nodiscard]] float clamp01(float value) {
     return std::clamp(value, 0.0F, 1.0F);
 }
@@ -170,6 +178,35 @@ struct FirstPersonCookedSocketRig final {
             rig.rightGrip = marker.worldPosition;
         } else if (marker.name == "socket_grip_l") {
             rig.leftGrip = marker.worldPosition;
+        }
+    }
+    return rig;
+}
+
+[[nodiscard]] FirstPersonCookedArmsRig cookedArmsSocketRig(
+    const DevRangeRenderSceneDesc& desc,
+    std::string_view assetId) {
+    FirstPersonCookedArmsRig rig{};
+    if (desc.meshCatalog == nullptr) {
+        return rig;
+    }
+    const auto* source = desc.meshCatalog->findByAssetId(assetId);
+    if (source == nullptr || !source->meshData.has_value()) {
+        return rig;
+    }
+    for (const auto& marker : source->meshData->nodeMarkers) {
+        if (marker.name.size() < 7U || marker.name.compare(0U, 7U, "socket_") != 0) {
+            continue;
+        }
+        ++rig.socketCount;
+        if (marker.name == "socket_camera") {
+            rig.camera = marker.worldPosition;
+        } else if (marker.name == "socket_weapon_root") {
+            rig.weaponRoot = marker.worldPosition;
+        } else if (marker.name == "socket_hand_r") {
+            rig.rightHand = marker.worldPosition;
+        } else if (marker.name == "socket_hand_l") {
+            rig.leftHand = marker.worldPosition;
         }
     }
     return rig;
@@ -291,6 +328,45 @@ std::size_t bindFirstPersonRigToCookedWeaponSockets(
         ++boundGrips;
     }
     return boundGrips;
+}
+
+std::size_t bindFirstPersonArmsMeshToRigSockets(
+    player::FirstPersonRigFrame& rig,
+    const FirstPersonCookedArmsRig& cooked) {
+    std::size_t boundSockets = 0U;
+    const auto anchorMeshSocket = [&](novacore::math::Vec3 local, novacore::math::Vec3 target, float weight) {
+        const auto current = cookedSocketWorldPosition(
+            rig.arms.position,
+            local,
+            rig.arms.scale,
+            rig.arms.yawDegrees,
+            rig.arms.pitchDegrees,
+            rig.arms.rollDegrees);
+        rig.arms.position = rig.arms.position + ((target - current) * weight);
+    };
+
+    if (cooked.rightHand.has_value()) {
+        rig.arms.position = alignMeshPositionToSocket(
+            rig.rightHand.position,
+            *cooked.rightHand,
+            rig.arms.scale,
+            rig.arms.yawDegrees,
+            rig.arms.pitchDegrees,
+            rig.arms.rollDegrees);
+        ++boundSockets;
+    }
+    if (cooked.leftHand.has_value()) {
+        anchorMeshSocket(*cooked.leftHand, rig.leftHand.position, 0.45F);
+        ++boundSockets;
+    }
+    if (cooked.weaponRoot.has_value()) {
+        const auto& weaponRoot = player::firstPersonRigSocket(rig, player::FirstPersonRigSocket::WeaponRoot);
+        if (weaponRoot.valid) {
+            anchorMeshSocket(*cooked.weaponRoot, weaponRoot.worldPosition, 0.25F);
+            ++boundSockets;
+        }
+    }
+    return boundSockets;
 }
 
 [[nodiscard]] float easeOut01(float value) {
@@ -1328,6 +1404,9 @@ void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
         weaponYaw,
         weaponPitch,
         weaponRoll);
+    const auto cookedArmsRig = cookedArmsSocketRig(desc, armsMount.assetId);
+    stats.firstPersonCookedSocketCount += cookedArmsRig.socketCount;
+    stats.firstPersonArmsSocketBoundCount += bindFirstPersonArmsMeshToRigSockets(presentedRig, cookedArmsRig);
     appendFirstPersonRigPrimitives(frame, presentedRig, stats);
     appendWeaponFeedbackPrimitives(frame, desc, presentedRig, stats);
 

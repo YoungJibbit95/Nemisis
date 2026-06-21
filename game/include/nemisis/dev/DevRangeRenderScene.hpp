@@ -70,6 +70,7 @@ struct DevRangeRenderSceneStats final {
     std::size_t firstPersonCookedSocketCount = 0;
     std::size_t firstPersonSocketAlignedMeshCount = 0;
     std::size_t firstPersonGripSocketBoundCount = 0;
+    std::size_t firstPersonArmsSocketBoundCount = 0;
     std::size_t firstPersonFeedbackPrimitiveCount = 0;
     std::size_t hitFeedbackLineCount = 0;
     std::size_t activeLanePressurePrimitiveCount = 0;

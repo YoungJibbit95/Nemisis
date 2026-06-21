@@ -122,6 +122,29 @@ novacore::render::MeshCatalog makeSocketCatalogForFirstPersonWeapon() {
 
     novacore::render::MeshCatalog catalog;
     (void)catalog.registerImportedGltfAsset(record, metadata, std::move(meshData));
+
+    novacore::assets::AssetRecord armsRecord{};
+    armsRecord.id = "chr_a1_fp_arms_01";
+    armsRecord.kind = novacore::assets::AssetKind::Mesh;
+    armsRecord.cookedPath = "assets/export/gltf/characters/chr_a1_fp_arms_01.glb";
+
+    novacore::assets::GltfAssetMetadata armsMetadata{};
+    armsMetadata.id = armsRecord.id;
+    armsMetadata.exportPath = armsRecord.cookedPath;
+    armsMetadata.scaleMeters = true;
+    armsMetadata.runtimeUpAxis = "Y";
+    armsMetadata.gameplayForwardAxis = "+Z";
+    armsMetadata.sockets = {"socket_camera", "socket_weapon_root", "socket_hand_r", "socket_hand_l"};
+    armsMetadata.license = "original_project_asset";
+
+    auto armsMeshData = makeMesh();
+    armsMeshData.nodeMarkers = {
+        novacore::assets::GltfNodeMarker{"socket_camera", {0.0F, 0.0F, 0.0F}, {0.0F, 0.0F, 1.0F}, {0.0F, 1.0F, 0.0F}, -1},
+        novacore::assets::GltfNodeMarker{"socket_weapon_root", {0.0F, -0.39F, -0.645F}, {0.0F, 0.0F, 1.0F}, {0.0F, 1.0F, 0.0F}, -1},
+        novacore::assets::GltfNodeMarker{"socket_hand_r", {0.122F, -0.42F, -0.81F}, {0.0F, 0.0F, 1.0F}, {0.0F, 1.0F, 0.0F}, -1},
+        novacore::assets::GltfNodeMarker{"socket_hand_l", {-0.122F, -0.424F, -0.69F}, {0.0F, 0.0F, 1.0F}, {0.0F, 1.0F, 0.0F}, -1},
+    };
+    (void)catalog.registerImportedGltfAsset(armsRecord, armsMetadata, std::move(armsMeshData));
     return catalog;
 }
 
@@ -296,6 +319,7 @@ void testDevRangeRenderSceneAlignsWeaponMeshToCookedMuzzleSocket() {
     expect(stats.firstPersonCookedSocketCount >= 4U, "first-person scene consumes cooked weapon socket nodes");
     expect(stats.firstPersonSocketAlignedMeshCount == 1U, "first-person weapon mesh aligns to cooked muzzle socket");
     expect(stats.firstPersonGripSocketBoundCount == 2U, "first-person hand rig binds to cooked right and left weapon grips");
+    expect(stats.firstPersonArmsSocketBoundCount >= 2U, "first-person arms mesh binds to cooked hand sockets instead of floating from a static mount");
     if (fallbackRifle.has_value() && socketRifle.has_value()) {
         expect(socketRifle->position.z > fallbackRifle->position.z + 0.25F, "positive runtime muzzle socket keeps the weapon root behind the barrel and in front of the camera");
         expect(std::abs(socketRifle->yawDegrees - fallbackRifle->yawDegrees) < 0.01F, "socket alignment keeps normalized asset yaw stable");
@@ -509,6 +533,7 @@ void testDevRangeRenderSceneRigsFirstPersonBodyForLookDown() {
     if (firstPersonArms.has_value() && firstPersonWeapon.has_value()) {
         expect(firstPersonArms->position.y < frame.camera3D.position.y, "first-person arms stay below the camera while looking down");
         expect(firstPersonWeapon->position.y < frame.camera3D.position.y, "first-person weapon stays below the camera while looking down");
+        expect(firstPersonArms->position.z > firstPersonWeapon->position.z - 1.2F, "first-person arms are socket-bound near the held weapon instead of left at the old static mount");
     }
 }
 
