@@ -21,8 +21,8 @@ enum class DevRangeDrillStatus {
 
 enum class DevRangeDrillVariant : std::uint8_t {
     Precision,
-    Speed,
     RecoilControl,
+    SpeedClear,
     Count
 };
 
@@ -43,6 +43,38 @@ struct DevRangeDrillRules final {
     float ttkBonusScale = 80.0F;
     float recoilPointScale = 0.20F;
     float missPenaltyPoints = 0.0F;
+    float minScoreMultiplier = 1.0F;
+    float maxScoreMultiplier = 1.0F;
+    float accuracyMultiplierScale = 0.0F;
+    float recoilMultiplierScale = 0.0F;
+    float speedMultiplierScale = 0.0F;
+    float streakMultiplierScale = 0.0F;
+    float recoilErrorSoftCapDegrees = 4.0F;
+};
+
+struct DevRangeDrillScoreTelemetry final {
+    float scoreMultiplier = 1.0F;
+    float accuracyFactor = 0.0F;
+    float recoilFactor = 1.0F;
+    float speedFactor = 1.0F;
+    float streakFactor = 0.0F;
+    float latestRawPoints = 0.0F;
+    float latestBonusPoints = 0.0F;
+    float latestScaledPoints = 0.0F;
+    float latestPenaltyPoints = 0.0F;
+    int latestScoreDelta = 0;
+};
+
+struct DevRangeRecoilHudTelemetry final {
+    bool valid = false;
+    bool hit = false;
+    std::uint32_t shotIndex = 0;
+    float pitchDegrees = 0.0F;
+    float yawDegrees = 0.0F;
+    float spreadDegrees = 0.0F;
+    float errorDegrees = 0.0F;
+    float averageErrorDegrees = 0.0F;
+    float control01 = 1.0F;
 };
 
 struct DevRangeScoreboard final {
@@ -92,6 +124,8 @@ struct DevRangeDrillState final {
     float latestRecoilErrorDegrees = 0.0F;
     float averageRecoilErrorDegrees = 0.0F;
     float recoilControlScore = 100.0F;
+    DevRangeDrillScoreTelemetry scoring{};
+    DevRangeRecoilHudTelemetry recoilHud{};
 };
 
 struct DevRangeSessionState final {
@@ -193,6 +227,8 @@ void tickSessionFeedback(DevRangeSessionState& session, float deltaSeconds);
 [[nodiscard]] float devRangeDrillAccuracy(const DevRangeDrillState& drill);
 [[nodiscard]] float devRangeLaneAccuracy(const DevRangeLaneScore& lane);
 [[nodiscard]] float devRangeDrillProgress(const DevRangeDrillState& drill);
+[[nodiscard]] float devRangeDrillScoreMultiplier(const DevRangeDrillState& drill);
+[[nodiscard]] float devRangeRecoilControl01(const DevRangeDrillState& drill);
 [[nodiscard]] std::string_view devRangeDrillStatusName(DevRangeDrillStatus status);
 [[nodiscard]] std::string_view devRangeDrillVariantName(DevRangeDrillVariant variant);
 [[nodiscard]] std::string_view devRangeDrillObjectiveLabel(DevRangeDrillVariant variant);

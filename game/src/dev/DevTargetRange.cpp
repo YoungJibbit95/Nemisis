@@ -1,5 +1,7 @@
 #include "nemisis/dev/DevTargetRange.hpp"
 
+#include "nemisis/dev/DevRangeSession.hpp"
+
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -103,6 +105,75 @@ DevTargetRangeState makeDefaultDevTargetRange() {
     return range;
 }
 
+DevTargetRangeState makeDevTargetRangeForDrillVariant(DevRangeDrillVariant variant) {
+    switch (variant) {
+    case DevRangeDrillVariant::RecoilControl: {
+        DevTargetRangeState range{};
+        range.lanes.reserve(3U);
+        range.lanes.push_back(makeLane(
+            "control_low_18m",
+            "CONTROL LOW 18M",
+            {-1.95F, 1.18F, 17.5F},
+            225.0F,
+            0.66F));
+        range.lanes.push_back(makeLane(
+            "control_center_20m",
+            "CONTROL CENTER 20M",
+            {0.0F, 1.62F, 18.75F},
+            250.0F,
+            0.70F));
+        range.lanes.push_back(makeLane(
+            "control_high_22m",
+            "CONTROL HIGH 22M",
+            {1.95F, 2.08F, 19.5F},
+            225.0F,
+            0.62F));
+        range.activeLaneIndex = 1U;
+        return range;
+    }
+    case DevRangeDrillVariant::SpeedClear: {
+        DevTargetRangeState range{};
+        range.lanes.reserve(5U);
+        range.lanes.push_back(makeLane(
+            "speed_left_close_12m",
+            "SPEED L 12M",
+            {-6.3F, 1.34F, 12.5F},
+            95.0F,
+            0.78F));
+        range.lanes.push_back(makeLane(
+            "speed_left_mid_16m",
+            "SPEED LM 16M",
+            {-3.0F, 1.55F, 15.75F},
+            100.0F,
+            0.74F));
+        range.lanes.push_back(makeLane(
+            "speed_center_18m",
+            "SPEED C 18M",
+            {0.0F, 1.62F, 17.75F},
+            105.0F,
+            0.76F));
+        range.lanes.push_back(makeLane(
+            "speed_right_mid_16m",
+            "SPEED RM 16M",
+            {3.0F, 1.55F, 15.75F},
+            100.0F,
+            0.74F));
+        range.lanes.push_back(makeLane(
+            "speed_right_close_12m",
+            "SPEED R 12M",
+            {6.3F, 1.34F, 12.5F},
+            95.0F,
+            0.78F));
+        range.activeLaneIndex = 2U;
+        return range;
+    }
+    case DevRangeDrillVariant::Precision:
+    case DevRangeDrillVariant::Count:
+        break;
+    }
+    return makeDefaultDevTargetRange();
+}
+
 void ensureDevTargetRange(DevTargetRangeState& range) {
     if (range.lanes.empty()) {
         range = makeDefaultDevTargetRange();
@@ -121,6 +192,10 @@ void resetDevTargetRange(DevTargetRangeState& range) {
         lane.pressureActive = false;
     }
     range.activeLaneIndex = clampActiveIndex(range);
+}
+
+void configureDevTargetRangeForDrillVariant(DevTargetRangeState& range, DevRangeDrillVariant variant) {
+    range = makeDevTargetRangeForDrillVariant(variant);
 }
 
 const DevTargetLane* activeTargetLane(const DevTargetRangeState& range) {

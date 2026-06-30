@@ -1,4 +1,5 @@
 #include "nemisis/dev/DevRangeRenderScene.hpp"
+#include "nemisis/dev/DevRangeSession.hpp"
 #include "nemisis/dev/GreyboxWorld.hpp"
 #include "nemisis/player/PlayerFirstPersonRig.hpp"
 
@@ -597,6 +598,28 @@ void testDevRangeRenderSceneDrawsLanePressure() {
     expect(stats.worldLineCount == 2U, "lane pressure adds one threat line plus aim line");
 }
 
+void testDevRangeRenderSceneAcceptsSpeedClearTargetLayout() {
+    novacore::render::Renderer renderer;
+    auto lookup = registerSceneMeshes(renderer);
+    const auto world = nemisis::dev::createDevRangeGreyboxWorld();
+    auto targetRange = nemisis::dev::makeDevTargetRangeForDrillVariant(nemisis::dev::DevRangeDrillVariant::SpeedClear);
+
+    nemisis::dev::DevRangePlayerRenderState player{};
+    player.position = world.playerSpawn;
+    player.view.yawDegrees = 0.0F;
+    player.view.pitchDegrees = 0.0F;
+
+    novacore::render::RenderFrameInfo frame{};
+    const auto stats = nemisis::dev::DevRangeRenderSceneBuilder{}.append(
+        frame,
+        nemisis::dev::DevRangeRenderSceneDesc{&world, &targetRange, nullptr, &lookup, player});
+
+    expect(targetRange.lanes.size() == 5U, "speed-clear drill configures five target lanes");
+    expect(stats.targetMeshCount == targetRange.lanes.size(), "render scene emits one actor mesh per speed-clear target lane");
+    expect(stats.worldBoxCount >= targetRange.lanes.size(), "render scene emits lane target boxes for speed-clear layout");
+    expect(nemisis::dev::activeTargetLane(targetRange) != nullptr, "speed-clear target layout exposes an active lane");
+}
+
 void testDevRangeRenderSceneCountsMissingMeshHandles() {
     novacore::render::Renderer renderer;
     auto lookup = registerSceneMeshes(renderer);
@@ -825,6 +848,7 @@ int main() {
     testDevRangeRenderSceneRigsFirstPersonBodyForLookDown();
     testDevRangeRenderSceneDrawsSocketDrivenShotFeedback();
     testDevRangeRenderSceneDrawsLanePressure();
+    testDevRangeRenderSceneAcceptsSpeedClearTargetLayout();
     testDevRangeRenderSceneCountsMissingMeshHandles();
     testDevRangeRenderSceneKeepsSkyboxMeshFallbackWhenSkyPassDisabled();
     testDevRangeRenderSceneHandlesMissingInputs();

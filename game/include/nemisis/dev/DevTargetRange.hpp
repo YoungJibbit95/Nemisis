@@ -11,6 +11,8 @@
 
 namespace nemisis::dev {
 
+enum class DevRangeDrillVariant : std::uint8_t;
+
 struct DevTargetLane final {
     std::string id;
     std::string displayName;
@@ -46,9 +48,11 @@ struct DevTargetRangeHitResult final {
 };
 
 [[nodiscard]] DevTargetRangeState makeDefaultDevTargetRange();
+[[nodiscard]] DevTargetRangeState makeDevTargetRangeForDrillVariant(DevRangeDrillVariant variant);
 
 void ensureDevTargetRange(DevTargetRangeState& range);
 void resetDevTargetRange(DevTargetRangeState& range);
+void configureDevTargetRangeForDrillVariant(DevTargetRangeState& range, DevRangeDrillVariant variant);
 
 [[nodiscard]] const DevTargetLane* activeTargetLane(const DevTargetRangeState& range);
 [[nodiscard]] DevTargetLane* activeTargetLane(DevTargetRangeState& range);

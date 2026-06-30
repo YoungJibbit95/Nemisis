@@ -158,6 +158,13 @@ void testTimedDrillLaneTtkAndRecoilScoring() {
     expect(session.drill.score > 0U, "drill accumulates score");
     expect(session.drill.bestScore == session.drill.score, "drill best score tracks current score");
     expect(session.drill.recoilControlScore < 100.0F, "drill recoil control reacts to recoil and spread");
+    expect(session.drill.recoilHud.valid, "drill exposes latest recoil HUD sample");
+    expect(session.drill.recoilHud.shotIndex == 2U, "recoil HUD tracks latest shot index");
+    expect(session.drill.recoilHud.hit, "recoil HUD tracks hit state");
+    expect(session.drill.recoilHud.pitchDegrees > 0.54F && session.drill.recoilHud.pitchDegrees < 0.56F, "recoil HUD tracks pitch offset");
+    expect(session.drill.scoring.scoreMultiplier > 1.0F, "drill exposes active score multiplier");
+    expect(session.drill.scoring.latestScoreDelta > 0, "drill exposes latest score delta");
+    expect(session.drill.scoring.latestScaledPoints >= session.drill.scoring.latestRawPoints, "drill exposes scaled score points");
     expect(nemisis::dev::devRangeDrillAccuracy(session.drill) == 1.0F, "drill accuracy uses drill shots");
 }
 
@@ -198,23 +205,54 @@ void testDrillVariantsChangeRulesAndPreserveBestScores() {
     session.drill.score = 420U;
     session.drill.bestScore = 420U;
     nemisis::dev::cycleDevRangeDrillVariant(session, tuning);
-    expect(session.drill.variant == nemisis::dev::DevRangeDrillVariant::Speed, "cycling moves precision drill to speed");
-    expect(session.drill.timeLimitSeconds > 44.9F && session.drill.timeLimitSeconds < 45.1F, "speed drill uses shorter time limit");
+    expect(session.drill.variant == nemisis::dev::DevRangeDrillVariant::RecoilControl, "cycling moves precision drill to recoil control");
+    expect(session.drill.timeLimitSeconds > 59.9F && session.drill.timeLimitSeconds < 60.1F, "recoil-control drill uses control time limit");
     expect(session.drill.score == 0U, "variant switch restarts current drill score");
     expect(session.drill.bestScoreByVariant[0] == 420U, "variant switch preserves precision best score");
-    expect(session.eventText.find("SPEED") != std::string::npos, "variant switch writes HUD feedback");
+    expect(session.drill.bestScoreByVariant[1] == 0U, "variant switch does not leak precision score into recoil-control best");
+    expect(session.eventText.find("RECOIL CONTROL") != std::string::npos, "variant switch writes HUD feedback");
 
     auto fire = firedShot();
     fire.recoilPitchOffsetDegrees = 2.0F;
     fire.recoilYawOffsetDegrees = 1.0F;
     nemisis::dev::DebugTargetHitResult miss{};
     nemisis::dev::recordShotResult(session, fire, miss, tuning);
-    expect(session.drill.score == 0U, "speed drill miss penalty cannot underflow score");
+    expect(session.drill.score == 0U, "recoil-control miss penalty cannot underflow score");
+    expect(session.drill.scoring.latestPenaltyPoints == 0.0F, "miss penalty reports applied points and avoids underflow");
+    expect(session.drill.scoring.latestScoreDelta == 0, "miss score delta reflects clamped score");
 
-    nemisis::dev::setDevRangeDrillVariant(session, nemisis::dev::DevRangeDrillVariant::RecoilControl, tuning);
-    expect(session.drill.variant == nemisis::dev::DevRangeDrillVariant::RecoilControl, "explicit switch selects recoil-control drill");
-    expect(nemisis::dev::devRangeDrillObjectiveLabel(session.drill.variant) == "RECOIL", "recoil-control drill exposes recoil objective");
-    expect(nemisis::dev::devRangeDrillRules(session.drill.variant).recoilPointScale > nemisis::dev::devRangeDrillRules(nemisis::dev::DevRangeDrillVariant::Speed).recoilPointScale, "recoil-control drill weights recoil more than speed drill");
+    nemisis::dev::cycleDevRangeDrillVariant(session, tuning);
+    expect(session.drill.variant == nemisis::dev::DevRangeDrillVariant::SpeedClear, "cycling moves recoil control drill to speed clear");
+    expect(session.drill.timeLimitSeconds > 41.9F && session.drill.timeLimitSeconds < 42.1F, "speed-clear drill uses shorter time limit");
+    expect(nemisis::dev::devRangeDrillObjectiveLabel(session.drill.variant) == "TTK", "speed-clear drill exposes TTK objective");
+    expect(nemisis::dev::devRangeDrillRules(nemisis::dev::DevRangeDrillVariant::RecoilControl).recoilMultiplierScale > nemisis::dev::devRangeDrillRules(nemisis::dev::DevRangeDrillVariant::SpeedClear).recoilMultiplierScale, "recoil-control drill weights recoil multiplier more than speed clear");
+    expect(nemisis::dev::devRangeDrillRules(nemisis::dev::DevRangeDrillVariant::SpeedClear).speedMultiplierScale > nemisis::dev::devRangeDrillRules(nemisis::dev::DevRangeDrillVariant::Precision).speedMultiplierScale, "speed-clear drill weights timer multiplier more than precision");
+}
+
+void testVariantMultiplierBreakdownIsDeterministic() {
+    nemisis::dev::DevRangeSessionState session{};
+    nemisis::dev::DevRangeSessionTuning tuning{};
+    nemisis::dev::setDevRangeDrillVariant(session, nemisis::dev::DevRangeDrillVariant::SpeedClear, tuning);
+    nemisis::dev::tickDevRangeDrill(session, 4.2F, tuning);
+
+    auto fire = firedShot();
+    fire.recoilPitchOffsetDegrees = 0.20F;
+    fire.recoilYawOffsetDegrees = 0.05F;
+    fire.movementSpreadDegrees = 0.10F;
+
+    nemisis::dev::DebugTargetHitResult hit{};
+    hit.hit = true;
+    hit.damageApplied = 45.0F;
+    hit.healthRemaining = 60.0F;
+    hit.distanceMeters = 16.0F;
+    nemisis::dev::recordShotResult(session, fire, hit, centerLaneContext(), tuning);
+
+    expect(session.drill.scoring.accuracyFactor == 1.0F, "multiplier telemetry records drill accuracy factor");
+    expect(session.drill.scoring.speedFactor > 0.89F && session.drill.scoring.speedFactor < 0.91F, "multiplier telemetry records timer factor");
+    expect(session.drill.scoring.recoilFactor > 0.89F, "multiplier telemetry records recoil-control factor");
+    expect(session.drill.scoring.streakFactor > 0.09F && session.drill.scoring.streakFactor < 0.11F, "multiplier telemetry records streak factor");
+    expect(nemisis::dev::devRangeDrillScoreMultiplier(session.drill) > 1.58F, "speed-clear hit receives deterministic multiplier");
+    expect(nemisis::dev::devRangeRecoilControl01(session.drill) == session.drill.recoilHud.control01, "recoil HUD exposes normalized control value");
 }
 
 } // namespace
@@ -226,6 +264,7 @@ int main() {
     testTimedDrillLaneTtkAndRecoilScoring();
     testDrillTimerCompletesAndResetRestarts();
     testDrillVariantsChangeRulesAndPreserveBestScores();
+    testVariantMultiplierBreakdownIsDeterministic();
 
     if (failures > 0) {
         std::cerr << failures << " dev range session test(s) failed\n";

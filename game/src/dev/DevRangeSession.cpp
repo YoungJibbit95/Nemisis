@@ -4,6 +4,7 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <iomanip>
 #include <sstream>
 #include <utility>
 
@@ -28,25 +29,17 @@ constexpr std::array<DevRangeDrillRules, kDevRangeDrillVariantCount> kDrillRules
         80.0F,
         0.20F,
         60.0F,
-    },
-    DevRangeDrillRules{
-        DevRangeDrillVariant::Speed,
-        "SPEED",
-        "TTK",
-        45.0F,
-        65.0F,
-        0.65F,
-        6.0F,
-        520.0F,
-        150.0F,
-        1.2F,
-        160.0F,
-        0.12F,
-        25.0F,
+        1.0F,
+        1.72F,
+        0.42F,
+        0.08F,
+        0.04F,
+        0.18F,
+        3.8F,
     },
     DevRangeDrillRules{
         DevRangeDrillVariant::RecoilControl,
-        "CONTROL",
+        "RECOIL CONTROL",
         "RECOIL",
         60.0F,
         55.0F,
@@ -58,6 +51,35 @@ constexpr std::array<DevRangeDrillRules, kDevRangeDrillVariantCount> kDrillRules
         70.0F,
         0.85F,
         90.0F,
+        1.0F,
+        1.78F,
+        0.12F,
+        0.58F,
+        0.04F,
+        0.10F,
+        2.9F,
+    },
+    DevRangeDrillRules{
+        DevRangeDrillVariant::SpeedClear,
+        "SPEED CLEAR",
+        "TTK",
+        42.0F,
+        62.0F,
+        0.62F,
+        6.0F,
+        540.0F,
+        150.0F,
+        1.15F,
+        170.0F,
+        0.12F,
+        35.0F,
+        1.0F,
+        1.86F,
+        0.08F,
+        0.06F,
+        0.58F,
+        0.14F,
+        4.6F,
     },
 };
 
@@ -107,17 +129,21 @@ void setEvent(DevRangeSessionState& session, std::string text, const DevRangeSes
     return recoil + spread + missPenalty;
 }
 
-[[nodiscard]] float recoilControlFromAverage(float averageErrorDegrees) {
-    return std::clamp(100.0F - (std::max(0.0F, averageErrorDegrees) * 14.0F), 0.0F, 100.0F);
+[[nodiscard]] float recoilControlFromAverage(float averageErrorDegrees, const DevRangeDrillRules& rules) {
+    const float softCap = std::max(0.25F, rules.recoilErrorSoftCapDegrees);
+    return std::clamp(100.0F * (1.0F - (std::max(0.0F, averageErrorDegrees) / softCap)), 0.0F, 100.0F);
+}
+
+void preserveCurrentVariantBest(DevRangeDrillState& drill) {
+    const auto index = variantIndex(drill.variant);
+    drill.bestScoreByVariant[index] = std::max(drill.bestScoreByVariant[index], drill.score);
+    drill.bestScore = std::max(drill.bestScore, drill.score);
 }
 
 void restartDrill(DevRangeSessionState& session, const DevRangeSessionTuning& tuning) {
     const auto variant = safeVariant(session.drill.variant);
     const auto bestScore = session.drill.bestScore;
     auto bestScoreByVariant = session.drill.bestScoreByVariant;
-    auto& variantBest = bestScoreByVariant[variantIndex(variant)];
-    variantBest = std::max(variantBest, session.drill.bestScore);
-    variantBest = std::max(variantBest, session.drill.score);
     const auto bestTtk = session.drill.bestTtkSeconds;
     session.drill = {};
     session.drill.variant = variant;
@@ -161,7 +187,19 @@ void resetLaneTargetWindow(DevRangeLaneScore& lane) {
     lane.currentTargetFirstHitSeconds = -1.0F;
 }
 
-void updateRecoilControl(DevRangeDrillState& drill, const weapons::FireResult& fire, bool hit) {
+void resetLatestScoreTelemetry(DevRangeDrillState& drill) {
+    drill.scoring.latestRawPoints = 0.0F;
+    drill.scoring.latestBonusPoints = 0.0F;
+    drill.scoring.latestScaledPoints = 0.0F;
+    drill.scoring.latestPenaltyPoints = 0.0F;
+    drill.scoring.latestScoreDelta = 0;
+}
+
+void updateRecoilControl(
+    DevRangeDrillState& drill,
+    const weapons::FireResult& fire,
+    bool hit,
+    const DevRangeDrillRules& rules) {
     drill.latestRecoilErrorDegrees = shotErrorDegrees(fire, hit);
     if (drill.shotsFired == 0U) {
         drill.averageRecoilErrorDegrees = drill.latestRecoilErrorDegrees;
@@ -171,10 +209,38 @@ void updateRecoilControl(DevRangeDrillState& drill, const weapons::FireResult& f
             ((drill.averageRecoilErrorDegrees * previousWeight) + drill.latestRecoilErrorDegrees) /
             static_cast<float>(drill.shotsFired);
     }
-    drill.recoilControlScore = recoilControlFromAverage(drill.averageRecoilErrorDegrees);
+    drill.recoilControlScore = recoilControlFromAverage(drill.averageRecoilErrorDegrees, rules);
+    drill.recoilHud.valid = true;
+    drill.recoilHud.hit = hit;
+    drill.recoilHud.shotIndex = fire.shotIndex;
+    drill.recoilHud.pitchDegrees = fire.recoilPitchOffsetDegrees;
+    drill.recoilHud.yawDegrees = fire.recoilYawOffsetDegrees;
+    drill.recoilHud.spreadDegrees = fire.movementSpreadDegrees;
+    drill.recoilHud.errorDegrees = drill.latestRecoilErrorDegrees;
+    drill.recoilHud.averageErrorDegrees = drill.averageRecoilErrorDegrees;
+    drill.recoilHud.control01 = std::clamp(drill.recoilControlScore / 100.0F, 0.0F, 1.0F);
 }
 
-void addDrillScore(DevRangeDrillState& drill, int points) {
+void updateScoreMultiplierTelemetry(DevRangeSessionState& session, const DevRangeDrillRules& rules) {
+    auto& scoring = session.drill.scoring;
+    scoring.accuracyFactor = devRangeDrillAccuracy(session.drill);
+    scoring.recoilFactor = std::clamp(session.drill.recoilControlScore / 100.0F, 0.0F, 1.0F);
+    scoring.speedFactor = session.drill.timeLimitSeconds > 0.0F
+        ? std::clamp(session.drill.timeRemainingSeconds / session.drill.timeLimitSeconds, 0.0F, 1.0F)
+        : 0.0F;
+    scoring.streakFactor = std::clamp(static_cast<float>(session.score.currentStreak) / 10.0F, 0.0F, 1.0F);
+    scoring.scoreMultiplier = std::clamp(
+        rules.minScoreMultiplier +
+            (scoring.accuracyFactor * rules.accuracyMultiplierScale) +
+            (scoring.recoilFactor * rules.recoilMultiplierScale) +
+            (scoring.speedFactor * rules.speedMultiplierScale) +
+            (scoring.streakFactor * rules.streakMultiplierScale),
+        rules.minScoreMultiplier,
+        rules.maxScoreMultiplier);
+}
+
+[[nodiscard]] int addDrillScore(DevRangeDrillState& drill, int points) {
+    const auto previousScore = drill.score;
     if (points < 0) {
         const auto penalty = static_cast<std::uint32_t>(-points);
         drill.score = penalty >= drill.score ? 0U : drill.score - penalty;
@@ -184,6 +250,39 @@ void addDrillScore(DevRangeDrillState& drill, int points) {
     drill.bestScore = std::max(drill.bestScore, drill.score);
     drill.bestScoreByVariant[variantIndex(drill.variant)] =
         std::max(drill.bestScoreByVariant[variantIndex(drill.variant)], drill.score);
+    return static_cast<int>(drill.score) - static_cast<int>(previousScore);
+}
+
+void addDrillPenalty(DevRangeDrillState& drill, float points) {
+    const int penalty = static_cast<int>(std::round(std::max(0.0F, points)));
+    const int delta = addDrillScore(drill, -penalty);
+    drill.scoring.latestPenaltyPoints += static_cast<float>(-delta);
+    drill.scoring.latestScoreDelta += delta;
+}
+
+void addPositiveDrillScore(DevRangeDrillState& drill, float rawPoints, bool bonus) {
+    const float safeRaw = std::max(0.0F, rawPoints);
+    const int scaledPoints = static_cast<int>(roundedScore(safeRaw * drill.scoring.scoreMultiplier));
+    const int delta = addDrillScore(drill, scaledPoints);
+    if (bonus) {
+        drill.scoring.latestBonusPoints += safeRaw;
+    } else {
+        drill.scoring.latestRawPoints += safeRaw;
+    }
+    drill.scoring.latestScaledPoints += static_cast<float>(scaledPoints);
+    drill.scoring.latestScoreDelta += delta;
+}
+
+void appendScoreDelta(std::ostringstream& stream, const DevRangeDrillState& drill) {
+    if (drill.scoring.latestScoreDelta == 0) {
+        return;
+    }
+    stream << ' ';
+    if (drill.scoring.latestScoreDelta > 0) {
+        stream << '+';
+    }
+    stream << drill.scoring.latestScoreDelta
+           << " x" << std::fixed << std::setprecision(2) << drill.scoring.scoreMultiplier;
 }
 
 void recordLaneTtk(
@@ -215,6 +314,7 @@ void recordRangeReset(DevRangeSessionState& session, const DevRangeSessionTuning
     session.playerRespawnSeconds = 0.0F;
     session.playerRegenDelaySeconds = 0.0F;
     session.score.currentStreak = 0;
+    preserveCurrentVariantBest(session.drill);
     restartDrill(session, tuning);
     setEvent(session, "Range reset", tuning);
 }
@@ -224,9 +324,7 @@ void setDevRangeDrillVariant(
     DevRangeDrillVariant variant,
     const DevRangeSessionTuning& tuning) {
     const auto nextVariant = safeVariant(variant);
-    session.drill.bestScoreByVariant[variantIndex(session.drill.variant)] = std::max(
-        session.drill.bestScoreByVariant[variantIndex(session.drill.variant)],
-        std::max(session.drill.bestScore, session.drill.score));
+    preserveCurrentVariantBest(session.drill);
     session.drill.variant = nextVariant;
     restartDrill(session, tuning);
     setEvent(session, "Drill " + std::string(devRangeDrillVariantName(nextVariant)), tuning);
@@ -282,9 +380,11 @@ void recordShotResult(
         return;
     }
 
+    const auto& rules = rulesForVariant(session.drill.variant);
+    resetLatestScoreTelemetry(session.drill);
     ++session.score.shotsFired;
     ++session.drill.shotsFired;
-    updateRecoilControl(session.drill, fire, hit.hit);
+    updateRecoilControl(session.drill, fire, hit.hit, rules);
 
     DevRangeLaneScore* lane = nullptr;
     if (context.laneKnown) {
@@ -300,10 +400,14 @@ void recordShotResult(
     if (!hit.hit) {
         session.score.currentStreak = 0;
         ++session.drill.misses;
+        updateScoreMultiplierTelemetry(session, rules);
         if (session.drill.status == DevRangeDrillStatus::Active) {
-            addDrillScore(session.drill, -static_cast<int>(std::round(rulesForVariant(session.drill.variant).missPenaltyPoints)));
+            addDrillPenalty(session.drill, rules.missPenaltyPoints);
         }
-        setEvent(session, "Miss", tuning);
+        std::ostringstream stream;
+        stream << "Miss";
+        appendScoreDelta(stream, session.drill);
+        setEvent(session, stream.str(), tuning);
         return;
     }
 
@@ -312,6 +416,7 @@ void recordShotResult(
     session.score.damageDealt += hit.damageApplied;
     ++session.score.currentStreak;
     session.score.bestStreak = std::max(session.score.bestStreak, session.score.currentStreak);
+    updateScoreMultiplierTelemetry(session, rules);
 
     if (lane != nullptr) {
         ++lane->shotsHit;
@@ -325,13 +430,12 @@ void recordShotResult(
     }
 
     if (session.drill.status == DevRangeDrillStatus::Active) {
-        const auto& rules = rulesForVariant(session.drill.variant);
         const float hitPoints =
             rules.hitBasePoints +
             (std::min(110.0F, std::max(0.0F, hit.damageApplied)) * rules.damagePointScale) +
             (static_cast<float>(session.score.currentStreak) * rules.streakPointScale) +
             (session.drill.recoilControlScore * rules.recoilPointScale);
-        addDrillScore(session.drill, static_cast<int>(roundedScore(hitPoints)));
+        addPositiveDrillScore(session.drill, hitPoints, false);
     }
 
     if (hit.eliminated) {
@@ -346,34 +450,31 @@ void recordShotResult(
             if (perfectClear) {
                 ++session.drill.perfectLaneClears;
                 if (session.drill.status == DevRangeDrillStatus::Active) {
-                    addDrillScore(
-                        session.drill,
-                        static_cast<int>(roundedScore(rulesForVariant(session.drill.variant).perfectClearBonus)));
+                    addPositiveDrillScore(session.drill, rules.perfectClearBonus, true);
                 }
             }
             resetLaneTargetWindow(*lane);
         }
         if (session.drill.status == DevRangeDrillStatus::Active) {
-            const auto& rules = rulesForVariant(session.drill.variant);
             float ttkBonus = 0.0F;
             if (session.drill.latestTtkSeconds >= 0.0F) {
                 ttkBonus = std::max(
                     0.0F,
                     (rules.ttkBonusWindowSeconds - session.drill.latestTtkSeconds) * rules.ttkBonusScale);
             }
-            addDrillScore(
-                session.drill,
-                static_cast<int>(roundedScore(rules.eliminationBasePoints + ttkBonus)));
+            addPositiveDrillScore(session.drill, rules.eliminationBasePoints + ttkBonus, true);
         }
         std::ostringstream stream;
         stream << "Target eliminated  streak " << session.score.currentStreak;
         if (session.drill.latestTtkSeconds >= 0.0F) {
             stream << "  TTK " << session.drill.latestTtkSeconds << "s";
         }
+        appendScoreDelta(stream, session.drill);
         setEvent(session, stream.str(), tuning);
     } else {
         std::ostringstream stream;
         stream << "Hit -" << static_cast<int>(hit.damageApplied);
+        appendScoreDelta(stream, session.drill);
         setEvent(session, stream.str(), tuning);
     }
 }
@@ -478,9 +579,7 @@ void tickDevRangeDrill(
 
     session.drill.timeRemainingSeconds = 0.0F;
     session.drill.status = DevRangeDrillStatus::Complete;
-    session.drill.bestScore = std::max(session.drill.bestScore, session.drill.score);
-    session.drill.bestScoreByVariant[variantIndex(session.drill.variant)] =
-        std::max(session.drill.bestScoreByVariant[variantIndex(session.drill.variant)], session.drill.score);
+    preserveCurrentVariantBest(session.drill);
     std::ostringstream stream;
     stream << "Drill complete " << devRangeDrillVariantName(session.drill.variant) << " score " << session.drill.score;
     setEvent(session, stream.str(), tuning);
@@ -519,6 +618,14 @@ float devRangeDrillProgress(const DevRangeDrillState& drill) {
         return 0.0F;
     }
     return std::clamp(1.0F - (drill.timeRemainingSeconds / drill.timeLimitSeconds), 0.0F, 1.0F);
+}
+
+float devRangeDrillScoreMultiplier(const DevRangeDrillState& drill) {
+    return drill.scoring.scoreMultiplier;
+}
+
+float devRangeRecoilControl01(const DevRangeDrillState& drill) {
+    return std::clamp(drill.recoilControlScore / 100.0F, 0.0F, 1.0F);
 }
 
 std::string_view devRangeDrillStatusName(DevRangeDrillStatus status) {

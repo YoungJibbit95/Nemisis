@@ -661,7 +661,7 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
     }
     if (menu_.gameplayActive() && actionPressed(actions_, input::actions::CycleDrillVariant)) {
         dev::cycleDevRangeDrillVariant(devRangeSession_, devRangeTuning_);
-        dev::resetDevTargetRange(targetRange_);
+        dev::configureDevTargetRangeForDrillVariant(targetRange_, devRangeSession_.drill.variant);
     }
     if (options_.lockDevRange && !menu_.gameplayActive()) {
         menu_.showDevRange();
@@ -990,8 +990,8 @@ void GameApp::ensureLocalPlayer() {
 void GameApp::resetDevRangeState() {
     ensureLocalPlayer();
     rebuildActiveAttachmentSummary();
-    dev::resetDevTargetRange(targetRange_);
     dev::recordRangeReset(devRangeSession_, devRangeTuning_);
+    dev::configureDevTargetRangeForDrillVariant(targetRange_, devRangeSession_.drill.variant);
 
     if (auto* movementState = world_.getComponent<movement::PlayerMovementState>(localPlayerEntity_);
         movementState != nullptr) {

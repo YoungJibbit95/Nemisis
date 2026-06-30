@@ -158,7 +158,10 @@ std::string DevSandbox::latestSummary() const {
            << " drillScore=" << latest_.rangeSession.drill.score
            << " drillTime=" << latest_.rangeSession.drill.timeRemainingSeconds
            << " drillAccuracy=" << devRangeDrillAccuracy(latest_.rangeSession.drill)
+           << " drillMult=" << devRangeDrillScoreMultiplier(latest_.rangeSession.drill)
+           << " drillDelta=" << latest_.rangeSession.drill.scoring.latestScoreDelta
            << " recoilControl=" << latest_.rangeSession.drill.recoilControlScore
+           << " recoilErr=" << latest_.rangeSession.drill.latestRecoilErrorDegrees
            << " latestTtk=" << latest_.rangeSession.drill.latestTtkSeconds
            << " targetsAlive=" << aliveTargetCount(latest_.targetRange)
            << "/" << totalTargetCount(latest_.targetRange)
