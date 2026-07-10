@@ -332,7 +332,47 @@ def export_glb(path: Path, objects: list[bpy.types.Object]) -> None:
         export_format="GLB",
         use_selection=True,
         export_yup=True,
+        export_skins=True,
+        export_animations=True,
+        export_animation_mode="ACTIONS",
     )
+
+
+def parent_sockets_to_bones(socket_objects: list[bpy.types.Object], socket_bones: dict[str, str]) -> dict[str, str]:
+    armature = next((obj for obj in bpy.context.scene.objects if obj.type == "ARMATURE"), None)
+    if armature is None:
+        return {}
+    parented: dict[str, str] = {}
+    for socket in socket_objects:
+        bone_name = socket_bones.get(socket.name)
+        if not bone_name or bone_name not in armature.data.bones:
+            continue
+        world = socket.matrix_world.copy()
+        socket.parent = armature
+        socket.parent_type = "BONE"
+        socket.parent_bone = bone_name
+        socket.matrix_world = world
+        parented[socket.name] = bone_name
+    bpy.context.view_layer.update()
+    return parented
+
+
+def recenter_root_to_socket(root: bpy.types.Object, socket: bpy.types.Object) -> None:
+    bpy.context.view_layer.update()
+    offset = root.matrix_world.inverted() @ socket.matrix_world.translation
+    for child in list(root.children):
+        child.location -= offset
+    bpy.context.view_layer.update()
+
+
+def ensure_lod0_node(asset_id: str, meshes: list[bpy.types.Object]) -> str | None:
+    if not meshes:
+        return None
+    name = f"{asset_id}_lod0"
+    primary = max(meshes, key=lambda obj: len(obj.data.polygons))
+    primary.name = name
+    primary.data.name = f"{name}_mesh"
+    return name
 
 
 def weapon_socket_notes() -> dict[str, str]:
@@ -413,7 +453,7 @@ def write_asset_metadata(
 
     if category == "weapon":
         metadata["origin"] = (
-            "Normalized Project weapon GLB; source axes are rotated to Blender +Z up/-Y forward so "
+            "Root origin is socket_grip_r; source axes are normalized to Blender +Z up/-Y forward so "
             "Blender export_yup produces runtime Y-up/+Z-forward sockets."
         )
         metadata["socket_notes"] = weapon_socket_notes()
@@ -422,6 +462,13 @@ def write_asset_metadata(
         rigs = armature_names()
         if rigs:
             metadata["skin"] = metadata.get("skin") or rigs[0]
+            metadata["rig_type"] = "deforming_armature"
+            metadata["skinned_meshes"] = sorted(
+                obj.name
+                for obj in bpy.context.scene.objects
+                if obj.type == "MESH"
+                and any(modifier.type == "ARMATURE" for modifier in obj.modifiers)
+            )
         if clips:
             metadata["animation_clips"] = clips
         metadata["origin"] = (
@@ -448,6 +495,7 @@ def write_asset_metadata(
         skeleton.update(
             {
                 "skin": metadata.get("skin"),
+                "skinned_mesh_nodes": metadata.get("skinned_meshes", []),
                 "animation_clips": clips,
                 "source_pose": skeleton.get("source_pose", "T_pose"),
                 "retarget_axis_contract": "Blender +Z up/-Y forward; exported runtime Y-up/+Z forward",
@@ -552,6 +600,7 @@ def inspect_entry(
         origin.get("floor_axis"),
     )
     after = bounds_for_meshes(meshes)
+    result["lod0_node"] = ensure_lod0_node(entry["id"], meshes)
 
     result["removed_meshes"] = removed
     result["scale_factor_applied"] = round(scale_applied, 6) if scale_applied else None
@@ -569,6 +618,12 @@ def inspect_entry(
         if root and normalization.get("add_sockets"):
             added_sockets = add_socket_empties(root, list(normalization.get("add_sockets", [])))
             socket_objects = [bpy.data.objects[name] for name in added_sockets if name in bpy.data.objects]
+            if entry.get("category") == "weapon" and "socket_grip_r" in bpy.data.objects:
+                recenter_root_to_socket(root, bpy.data.objects["socket_grip_r"])
+            result["bone_parented_sockets"] = parent_sockets_to_bones(
+                socket_objects,
+                dict(normalization.get("socket_bones", {})),
+            )
             runtime_socket_report = socket_report_from_objects(root, socket_objects)
             managed = managed_objects(list(bpy.context.scene.objects), set(), ())
         result["exported_sockets"] = added_sockets

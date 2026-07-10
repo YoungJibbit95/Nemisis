@@ -20,6 +20,9 @@ try:
 except ModuleNotFoundError as exc:
     raise SystemExit("Run this script with Blender, not plain Python.") from exc
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from rigging_helpers import normalize_asset_root, rig_procedural_character, scene_rig_metadata
+
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SOURCE_ROOT = REPO_ROOT / "assets" / "source" / "blender"
@@ -27,28 +30,36 @@ EXPORT_ROOT = REPO_ROOT / "assets" / "export" / "gltf"
 METADATA_OVERRIDES = {
     "wpn_ar_01": {
         "blender_up_axis": "+Z",
-        "blender_forward_axis": "+Y",
+        "blender_forward_axis": "-Y",
         "dimensions_m": [0.26, 1.17, 0.4425],
         "target_dimensions_m": [0.26, 1.17, 0.4425],
-        "origin": "Origin at the receiver center; muzzle and weapon sockets point along Blender +Y.",
+        "origin": "Root origin is socket_grip_r; muzzle and weapon sockets point along Blender -Y.",
         "external_assets": False,
     },
     "wpn_smg_01": {
         "blender_up_axis": "+Z",
-        "blender_forward_axis": "+Y",
+        "blender_forward_axis": "-Y",
         "dimensions_m": [0.22, 0.77, 0.3825],
         "target_dimensions_m": [0.22, 0.77, 0.3825],
-        "origin": "Origin at the receiver center; muzzle and weapon sockets point along Blender +Y.",
+        "origin": "Root origin is socket_grip_r; muzzle and weapon sockets point along Blender -Y.",
         "external_assets": False,
     },
     "wpn_sidearm_01": {
         "blender_up_axis": "+Z",
-        "blender_forward_axis": "+Y",
+        "blender_forward_axis": "-Y",
         "dimensions_m": [0.13, 0.49503, 0.35259],
         "target_dimensions_m": [0.13, 0.49503, 0.35259],
-        "origin": "Origin near the slide/frame center; muzzle and weapon sockets point along Blender +Y.",
+        "origin": "Root origin is socket_grip_r; muzzle and weapon sockets point along Blender -Y.",
         "external_assets": False,
     },
+}
+
+ORIGIN_NOTES = {
+    "prop_target_dummy_01": "Root at floor center; Blender +Z up.",
+    "chr_player_capsule_proxy_01": "Root at floor center; character faces Blender -Y.",
+    "chr_dev_arms_a": "Root at socket_camera; first-person arms extend along Blender -Y.",
+    "chr_dev_soldier_a": "Root at floor center; character faces Blender -Y.",
+    "env_test_arena_kit_01": "Root at arena floor center; Blender +Z up.",
 }
 
 
@@ -71,6 +82,8 @@ def clear_scene() -> None:
         for item in list(data_block):
             if item.users == 0:
                 data_block.remove(item)
+    for action in list(bpy.data.actions):
+        bpy.data.actions.remove(action)
 
 
 def material(name: str, color: tuple[float, float, float, float]) -> bpy.types.Material:
@@ -241,6 +254,7 @@ def write_metadata(
     sockets: list[str],
     collision: str,
     lods: list[str],
+    dimensions_m: list[float],
 ) -> None:
     metadata = {
         "id": asset_id,
@@ -250,13 +264,20 @@ def write_metadata(
         "scale_meters": True,
         "runtime_up_axis": "Y",
         "gameplay_forward_axis": "+Z",
+        "blender_up_axis": "+Z",
+        "blender_forward_axis": "-Y",
+        "dimensions_m": dimensions_m,
+        "target_dimensions_m": dimensions_m,
+        "origin": ORIGIN_NOTES.get(asset_id, "Root at the authored asset origin."),
         "sockets": sockets,
         "collision": collision,
         "lods": lods,
         "license": "original_project_asset",
+        "external_assets": False,
         "generated_by": "tools/blender/make_dev_primitives.py",
     }
     metadata.update(METADATA_OVERRIDES.get(asset_id, {}))
+    metadata.update(scene_rig_metadata(asset_id))
     export_dir = EXPORT_ROOT / category
     ensure_dirs(export_dir)
     (export_dir / f"{asset_id}.metadata.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
@@ -267,15 +288,44 @@ def save_and_export(asset_id: str, category: str, sockets: list[str], collision:
     export_dir = EXPORT_ROOT / category
     ensure_dirs(source_dir, export_dir)
 
+    is_weapon = category == "weapons"
+    is_first_person = "arms" in asset_id
+    normalize_asset_root(
+        asset_id,
+        origin_socket="socket_grip_r" if is_weapon else "socket_camera" if is_first_person else None,
+        rotate_positive_y_to_negative_y=is_weapon or is_first_person,
+    )
+    dimensions_m = scene_dimensions()
+
     blend_path = source_dir / f"{asset_id}.blend"
     export_path = export_dir / f"{asset_id}.glb"
     if hasattr(bpy.context.preferences.filepaths, "save_version"):
         bpy.context.preferences.filepaths.save_version = 0
     bpy.ops.wm.save_as_mainfile(filepath=str(blend_path))
-    bpy.ops.export_scene.gltf(filepath=str(export_path), export_format="GLB")
-    write_metadata(asset_id, category, sockets, collision, lods)
+    bpy.ops.export_scene.gltf(
+        filepath=str(export_path),
+        export_format="GLB",
+        export_yup=True,
+        export_skins=True,
+        export_animations=True,
+        export_animation_mode="ACTIONS",
+    )
+    write_metadata(asset_id, category, sockets, collision, lods, dimensions_m)
     print(f"Wrote {blend_path.relative_to(REPO_ROOT)}")
     print(f"Wrote {export_path.relative_to(REPO_ROOT)}")
+
+
+def scene_dimensions() -> list[float]:
+    points: list[Vector] = []
+    for obj in bpy.context.scene.objects:
+        if obj.type != "MESH" or obj.name.startswith("col_"):
+            continue
+        points.extend(obj.matrix_world @ Vector(corner) for corner in obj.bound_box)
+    if not points:
+        return [0.0, 0.0, 0.0]
+    mins = [min(point[index] for point in points) for index in range(3)]
+    maxs = [max(point[index] for point in points) for index in range(3)]
+    return [round(maxs[index] - mins[index], 5) for index in range(3)]
 
 
 def build_target_dummy() -> None:
@@ -359,7 +409,7 @@ def build_first_person_arms() -> None:
     cube("chr_dev_arms_a_lod0_wrist_wrap_l", (-0.15, 0.61, -0.40), (0.13, 0.04, 0.09), skin)
     cube("chr_dev_arms_a_lod0_weapon_alignment_bar", (0.0, 0.62, -0.39), (0.30, 0.02, 0.015), accent)
 
-    armature(
+    rig = armature(
         "rig_chr_dev_arms_a",
         [
             ("root", (0.0, 0.0, 0.0), (0.0, 0.08, -0.05), None),
@@ -376,11 +426,13 @@ def build_first_person_arms() -> None:
     empty("socket_weapon_root", (0.0, 0.62, -0.38))
     empty("socket_hand_r", (0.13, 0.78, -0.42))
     empty("socket_hand_l", (-0.12, 0.66, -0.42))
+    empty("socket_vfx", (0.0, 0.84, -0.39))
+    rig_procedural_character("chr_dev_arms_a", rig, first_person=True)
 
     save_and_export(
         "chr_dev_arms_a",
         "characters",
-        ["socket_camera", "socket_weapon_root", "socket_hand_r", "socket_hand_l"],
+        ["socket_camera", "socket_weapon_root", "socket_hand_r", "socket_hand_l", "socket_vfx"],
         "none",
         ["chr_dev_arms_a_lod0"],
     )
@@ -422,7 +474,7 @@ def build_soldier_proxy() -> None:
     cube("hitbox_chr_dev_soldier_a_pelvis", (0.0, 0.0, 0.70), (0.48, 0.36, 0.28), hitbox)
     cylinder("col_chr_dev_soldier_a_capsule", (0.0, 0.0, 0.90), 0.40, 1.80, collision, vertices=20)
 
-    armature(
+    rig = armature(
         "rig_chr_dev_soldier_a",
         [
             ("root", (0.0, 0.0, 0.0), (0.0, 0.0, 0.18), None),
@@ -452,6 +504,7 @@ def build_soldier_proxy() -> None:
     empty("socket_hand_l", (-0.38, -0.08, 0.60))
     empty("socket_head", (0.0, -0.20, 1.66))
     empty("socket_vfx", (0.0, -0.26, 1.20))
+    rig_procedural_character("chr_dev_soldier_a", rig, first_person=False)
 
     save_and_export(
         "chr_dev_soldier_a",

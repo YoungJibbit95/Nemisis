@@ -18,7 +18,7 @@
     0.48954,
     0.29578
   ],
-  "origin": "Normalized Project weapon GLB; source axes are rotated to Blender +Z up/-Y forward so Blender export_yup produces runtime Y-up/+Z-forward sockets.",
+  "origin": "Root origin is socket_grip_r; source axes are normalized to Blender +Z up/-Y forward so Blender export_yup produces runtime Y-up/+Z-forward sockets.",
   "sockets": [
     "socket_muzzle",
     "socket_grip_r",

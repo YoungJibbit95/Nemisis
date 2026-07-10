@@ -6,6 +6,12 @@ No external assets were downloaded or embedded.
 ## Contents
 
 - `assets/generated/prototype_pack/wpn_proto_smg_01.glb` - Low-poly SMG/rifle proxy with barrel, stock, magazine, sights, and sockets.
+- `assets/generated/prototype_pack/chr_proto_humanoid_01.glb` - Simplified humanoid proxy with clear forward marker and head/root sockets.
+- `assets/generated/prototype_pack/map_wall_panel_01.glb` - Straight wall module for greybox corridors and cover lanes.
+- `assets/generated/prototype_pack/map_floor_tile_01.glb` - Four-meter floor tile with shallow grid grooves and a blue front edge.
+- `assets/generated/prototype_pack/map_cover_crate_01.glb` - Chest-high cover crate with readable trim and front marking.
+- `assets/generated/prototype_pack/map_ramp_01.glb` - Simple one-meter-rise ramp wedge with edge rails and traction marks.
+- `assets/generated/prototype_pack/map_target_stand_01.glb` - Portable target stand for weapon and hit-test staging.
 
 ## Scale And Origins
 

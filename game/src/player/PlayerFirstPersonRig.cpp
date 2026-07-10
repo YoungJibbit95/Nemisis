@@ -23,10 +23,6 @@ struct ViewBasis final {
     return degrees * (kPi / 180.0F);
 }
 
-[[nodiscard]] float lerp(float a, float b, float t) {
-    return a + ((b - a) * t);
-}
-
 [[nodiscard]] novacore::math::Vec3 makeVec(float x, float y, float z) {
     return novacore::math::Vec3{x, y, z};
 }
@@ -54,37 +50,61 @@ struct ViewBasis final {
     return value * invLength;
 }
 
-[[nodiscard]] novacore::math::Vec3 cross(
-    novacore::math::Vec3 a,
-    novacore::math::Vec3 b) {
+[[nodiscard]] novacore::math::Vec3 rotateZ(novacore::math::Vec3 value, float rollDegrees) {
+    const float roll = degreesToRadians(rollDegrees);
+    const float sine = std::sin(roll);
+    const float cosine = std::cos(roll);
     return {
-        (a.y * b.z) - (a.z * b.y),
-        (a.z * b.x) - (a.x * b.z),
-        (a.x * b.y) - (a.y * b.x),
+        (value.x * cosine) - (value.y * sine),
+        (value.x * sine) + (value.y * cosine),
+        value.z,
+    };
+}
+
+[[nodiscard]] novacore::math::Vec3 rotateX(novacore::math::Vec3 value, float pitchDegrees) {
+    const float pitch = degreesToRadians(pitchDegrees);
+    const float sine = std::sin(pitch);
+    const float cosine = std::cos(pitch);
+    return {
+        value.x,
+        (value.y * cosine) - (value.z * sine),
+        (value.y * sine) + (value.z * cosine),
+    };
+}
+
+[[nodiscard]] novacore::math::Vec3 rotateY(novacore::math::Vec3 value, float yawDegrees) {
+    const float yaw = degreesToRadians(yawDegrees);
+    const float sine = std::sin(yaw);
+    const float cosine = std::cos(yaw);
+    return {
+        (value.x * cosine) + (value.z * sine),
+        value.y,
+        (-value.x * sine) + (value.z * cosine),
+    };
+}
+
+[[nodiscard]] novacore::math::Vec3 rotateMeshLocal(
+    novacore::math::Vec3 value,
+    float yawDegrees,
+    float pitchDegrees,
+    float rollDegrees) {
+    return rotateY(rotateX(rotateZ(value, rollDegrees), pitchDegrees), yawDegrees);
+}
+
+[[nodiscard]] ViewBasis basisFromMeshRotation(
+    float yawDegrees,
+    float pitchDegrees,
+    float rollDegrees) {
+    return ViewBasis{
+        normalized(rotateMeshLocal({1.0F, 0.0F, 0.0F}, yawDegrees, pitchDegrees, rollDegrees)),
+        normalized(rotateMeshLocal({0.0F, 1.0F, 0.0F}, yawDegrees, pitchDegrees, rollDegrees)),
+        normalized(rotateMeshLocal({0.0F, 0.0F, 1.0F}, yawDegrees, pitchDegrees, rollDegrees)),
     };
 }
 
 [[nodiscard]] ViewBasis basisFromView(PlayerViewComponent view, float rollDegrees) {
-    const float yaw = degreesToRadians(view.yawDegrees);
-    const float pitch = degreesToRadians(view.pitchDegrees);
-    const float roll = degreesToRadians(rollDegrees);
-    const float cosPitch = std::cos(pitch);
-
-    ViewBasis basis{};
-    basis.forward = normalized({
-        std::sin(yaw) * cosPitch,
-        std::sin(pitch),
-        std::cos(yaw) * cosPitch,
-    });
-    const auto flatRight = normalized({
-        std::cos(yaw),
-        0.0F,
-        -std::sin(yaw),
-    });
-    const auto flatUp = normalized(cross(basis.forward, flatRight));
-    basis.right = normalized((flatRight * std::cos(roll)) + (flatUp * std::sin(roll)));
-    basis.up = normalized((flatUp * std::cos(roll)) - (flatRight * std::sin(roll)));
-    return basis;
+    // RenderMesh3D pitch rotates in the opposite direction to camera pitch.
+    return basisFromMeshRotation(view.yawDegrees, -view.pitchDegrees, rollDegrees);
 }
 
 [[nodiscard]] novacore::math::Vec3 toWorld(
@@ -257,28 +277,18 @@ void buildBodyJoints(
 void buildArmJoints(
     FirstPersonRigFrame& frame,
     const FirstPersonRigInput& input,
-    const ViewBasis& weaponBasis,
     const ViewBasis& armsBasis,
     novacore::math::Vec3 armsRoot,
-    novacore::math::Vec3 weaponRoot,
+    novacore::math::Vec3 rightGripWorld,
+    novacore::math::Vec3 leftGripWorld,
     float armsYaw,
     float armsPitch,
     float armsRoll) {
     const auto& animation = input.animation;
-    const float ads = std::max(clamp01(input.adsAlpha), clamp01(input.weapon.adsAlpha));
     const float reload = frame.reloadArc;
     const bool sidearm = isSidearm(input.weaponClass);
-    const float stance = sidearm ? 0.78F : 1.0F;
-
-    const auto rightHandLocal =
-        animation.rightHandLocalOffset +
-        makeVec(0.04F * (1.0F - ads), 0.01F - (reload * 0.035F), 0.05F * stance);
-    const auto leftHandLocal =
-        animation.leftHandLocalOffset +
-        makeVec(sidearm ? -0.05F : -0.02F, -0.02F - (reload * 0.035F), sidearm ? -0.10F : 0.04F);
-    const auto supportElbowLocal =
-        animation.supportElbowLocalOffset +
-        makeVec(-0.03F * reload, -0.02F * reload, 0.03F * reload);
+    const auto rightHandLocal = input.weaponSockets.rightGrip;
+    const auto leftHandLocal = input.weaponSockets.leftGrip;
 
     const auto rightClavicleLocal = makeVec(0.16F, -0.04F, 0.10F);
     const auto leftClavicleLocal = makeVec(-0.16F, -0.04F, 0.10F);
@@ -291,11 +301,20 @@ void buildArmJoints(
     const auto leftClavicleWorld = armsRoot + toWorld(armsBasis, leftClavicleLocal);
     const auto rightUpperArmWorld = rightClavicleWorld + toWorld(armsBasis, rightUpperArmLocal);
     const auto leftUpperArmWorld = leftClavicleWorld + toWorld(armsBasis, leftUpperArmLocal);
-    const auto rightForearmWorld = rightUpperArmWorld + toWorld(armsBasis, rightForearmLocal);
-    const auto leftForearmWorld = leftUpperArmWorld + toWorld(armsBasis, leftForearmLocal);
-    const auto rightHandWorld = weaponRoot + toWorld(weaponBasis, rightHandLocal);
-    const auto leftHandWorld = weaponRoot + toWorld(weaponBasis, leftHandLocal);
-    const auto supportElbowWorld = armsRoot + toWorld(armsBasis, supportElbowLocal);
+    const auto rightForearmWorld =
+        rightUpperArmWorld +
+        toWorld(armsBasis, rightForearmLocal + (animation.rightHandLocalOffset * 0.35F));
+    const auto leftForearmWorld =
+        leftUpperArmWorld +
+        toWorld(armsBasis, leftForearmLocal + (animation.leftHandLocalOffset * 0.35F));
+    const auto rightHandWorld = rightGripWorld;
+    const auto leftHandWorld = leftGripWorld;
+    const auto supportElbowBias =
+        animation.supportElbowLocalOffset +
+        makeVec(sidearm ? -0.01F : -0.03F, -0.025F - (reload * 0.02F), 0.02F * reload);
+    const auto supportElbowWorld =
+        ((leftForearmWorld + leftHandWorld) * 0.5F) +
+        toWorld(armsBasis, supportElbowBias);
 
     setJoint(
         frame,
@@ -468,12 +487,11 @@ FirstPersonRigFrame evaluateFirstPersonRig(const FirstPersonRigInput& input) {
     const float reloadProgress = input.weapon.reloading ? clamp01(input.weapon.reloadProgress) : 0.0F;
     frame.reloadArc = std::max(normalizedReloadArc(input.weapon, animation.reloadAlpha), reloadProgress * animation.reloadAlpha);
     frame.lookDownBodyAlpha = bodyLookDownAlpha(input.view.pitchDegrees);
-    frame.wallRunRollDegrees = input.hasWallRunContact ? input.cameraRollDegrees * 0.32F : 0.0F;
+    frame.wallRunRollDegrees = input.hasWallRunContact ? input.cameraRollDegrees : 0.0F;
 
-    PlayerViewComponent cameraView = input.view;
     PlayerViewComponent bodyView = input.view;
     bodyView.pitchDegrees = std::clamp(input.view.pitchDegrees * 0.10F, -7.5F, 4.5F);
-    const auto cameraBasis = basisFromView(cameraView, input.cameraRollDegrees * 0.18F);
+    const auto cameraBasis = basisFromView(input.view, input.cameraRollDegrees);
     const auto bodyBasis = basisFromView(bodyView, bodyRollForView(input.cameraRollDegrees, animation) * 0.35F);
 
     const auto weaponOffset =
@@ -495,51 +513,52 @@ FirstPersonRigFrame evaluateFirstPersonRig(const FirstPersonRigInput& input) {
 
     const auto weaponPosition =
         input.cameraPosition +
-        toWorld(cameraBasis, weaponOffset) +
-        (cameraBasis.right * recoilSide) +
-        makeVec(0.0F, recoilLift - (frame.reloadArc * 0.12F) + mantleLift, 0.0F) +
-        weaponSway;
+        toWorld(
+            cameraBasis,
+            weaponOffset +
+                weaponSway +
+                makeVec(recoilSide, recoilLift - (frame.reloadArc * 0.12F) + mantleLift, 0.0F));
     const auto armsPosition =
         input.cameraPosition +
-        toWorld(cameraBasis, armsOffset) +
-        (cameraBasis.right * (-frame.reloadArc * 0.05F)) +
-        makeVec(0.0F, (-frame.reloadArc * 0.11F) + mantleLift, 0.0F) +
-        armsSway;
+        toWorld(
+            cameraBasis,
+            armsOffset +
+                armsSway +
+                makeVec(-frame.reloadArc * 0.05F, (-frame.reloadArc * 0.11F) + mantleLift, 0.0F));
     const auto bodyPosition =
         input.cameraPosition +
         toWorld(bodyBasis, bodyOffset) +
         (input.headBobOffset * 0.22F);
 
-    const float weaponPitchFollow = lerp(input.weaponMount.hipPitchFollow, input.weaponMount.adsPitchFollow, ads);
     const float weaponYaw =
         input.view.yawDegrees +
         input.weaponMount.yawCorrectionDegrees +
         animation.firstPersonWeaponYawAddDegrees +
         (input.weapon.recoilYawOffsetDegrees * input.weaponMount.recoilYawScale);
     const float weaponPitch =
-        (input.view.pitchDegrees * weaponPitchFollow) +
+        -input.view.pitchDegrees +
         input.weaponMount.pitchCorrectionDegrees +
         animation.firstPersonWeaponPitchAddDegrees +
         (input.weapon.recoilPitchOffsetDegrees * input.weaponMount.recoilPitchScale) +
         (frame.reloadArc * input.weaponMount.reloadPitchDegrees);
     const float weaponRoll =
+        input.cameraRollDegrees +
         input.weaponMount.rollCorrectionDegrees +
-        animation.firstPersonWeaponRollAddDegrees +
-        frame.wallRunRollDegrees -
+        animation.firstPersonWeaponRollAddDegrees -
         (frame.reloadArc * input.weaponMount.reloadRollDegrees);
     const float armsYaw =
         input.view.yawDegrees +
         input.armsMount.yawCorrectionDegrees +
         animation.firstPersonArmsYawAddDegrees;
     const float armsPitch =
-        (input.view.pitchDegrees * 0.46F) +
+        -input.view.pitchDegrees +
         input.armsMount.pitchCorrectionDegrees +
         animation.firstPersonArmsPitchAddDegrees +
         (frame.reloadArc * 8.0F);
     const float armsRoll =
+        input.cameraRollDegrees +
         input.armsMount.rollCorrectionDegrees +
-        animation.firstPersonArmsRollAddDegrees +
-        frame.wallRunRollDegrees -
+        animation.firstPersonArmsRollAddDegrees -
         (frame.reloadArc * 12.0F);
     const float bodyPitch = bodyPitchForView(input.view.pitchDegrees, animation);
     const float bodyRoll = bodyRollForView(input.cameraRollDegrees, animation);
@@ -566,33 +585,26 @@ FirstPersonRigFrame evaluateFirstPersonRig(const FirstPersonRigInput& input) {
         bodyAlpha);
 
     buildBodyJoints(frame, input, bodyBasis, bodyPosition, bodyPitch, bodyRoll);
+    const auto weaponBasis = basisFromMeshRotation(weaponYaw, weaponPitch, weaponRoll);
+    const auto armsBasis = basisFromMeshRotation(armsYaw, armsPitch, armsRoll);
+    const auto socketWorldPosition = [&](novacore::math::Vec3 localPosition) {
+        return weaponPosition + toWorld(weaponBasis, mulVec3(localPosition, frame.weapon.scale));
+    };
+    const auto muzzlePosition = socketWorldPosition(input.weaponSockets.muzzle);
+    const auto ejectionPortPosition = socketWorldPosition(input.weaponSockets.ejectionPort);
+    const auto rightGripPosition = socketWorldPosition(input.weaponSockets.rightGrip);
+    const auto leftGripPosition = socketWorldPosition(input.weaponSockets.leftGrip);
+
     buildArmJoints(
         frame,
         input,
-        cameraBasis,
-        cameraBasis,
+        armsBasis,
         armsPosition,
-        weaponPosition,
+        rightGripPosition,
+        leftGripPosition,
         armsYaw,
         armsPitch,
         armsRoll);
-
-    const auto muzzleLocal = sidearm
-        ? makeVec(0.0F, 0.015F, 0.46F)
-        : makeVec(0.0F, 0.028F, 0.78F);
-    const auto ejectionPortLocal = sidearm
-        ? makeVec(0.070F, 0.030F, 0.22F)
-        : makeVec(0.105F, 0.052F, 0.34F);
-    const auto rightGripLocal = sidearm
-        ? makeVec(0.050F, -0.020F, 0.070F)
-        : makeVec(0.060F, -0.030F, 0.145F);
-    const auto leftGripLocal = sidearm
-        ? makeVec(-0.055F, -0.035F, -0.045F)
-        : makeVec(-0.090F, -0.055F, 0.380F);
-    const auto muzzlePosition = weaponPosition + toWorld(cameraBasis, muzzleLocal);
-    const auto ejectionPortPosition = weaponPosition + toWorld(cameraBasis, ejectionPortLocal);
-    const auto rightGripPosition = weaponPosition + toWorld(cameraBasis, rightGripLocal);
-    const auto leftGripPosition = weaponPosition + toWorld(cameraBasis, leftGripLocal);
     setJoint(
         frame,
         FirstPersonRigJoint::WeaponRoot,
@@ -606,7 +618,7 @@ FirstPersonRigFrame evaluateFirstPersonRig(const FirstPersonRigInput& input) {
         frame,
         FirstPersonRigJoint::Muzzle,
         FirstPersonRigJoint::WeaponRoot,
-        muzzleLocal,
+        input.weaponSockets.muzzle,
         muzzlePosition,
         weaponYaw,
         weaponPitch,
@@ -644,7 +656,7 @@ FirstPersonRigFrame evaluateFirstPersonRig(const FirstPersonRigInput& input) {
         frame,
         FirstPersonRigSocket::Muzzle,
         FirstPersonRigJoint::Muzzle,
-        muzzleLocal,
+        input.weaponSockets.muzzle,
         muzzlePosition,
         weaponYaw,
         weaponPitch,
@@ -653,7 +665,7 @@ FirstPersonRigFrame evaluateFirstPersonRig(const FirstPersonRigInput& input) {
         frame,
         FirstPersonRigSocket::EjectionPort,
         FirstPersonRigJoint::WeaponRoot,
-        ejectionPortLocal,
+        input.weaponSockets.ejectionPort,
         ejectionPortPosition,
         weaponYaw,
         weaponPitch,
@@ -662,20 +674,20 @@ FirstPersonRigFrame evaluateFirstPersonRig(const FirstPersonRigInput& input) {
         frame,
         FirstPersonRigSocket::RightGrip,
         FirstPersonRigJoint::RightHand,
-        rightGripLocal,
+        input.weaponSockets.rightGrip,
         rightGripPosition,
-        armsYaw,
-        armsPitch,
-        armsRoll);
+        weaponYaw,
+        weaponPitch,
+        weaponRoll);
     setSocket(
         frame,
         FirstPersonRigSocket::LeftGrip,
         FirstPersonRigJoint::LeftHand,
-        leftGripLocal,
+        input.weaponSockets.leftGrip,
         leftGripPosition,
-        armsYaw,
-        armsPitch,
-        armsRoll);
+        weaponYaw,
+        weaponPitch,
+        weaponRoll);
     setSocket(
         frame,
         FirstPersonRigSocket::RightHand,

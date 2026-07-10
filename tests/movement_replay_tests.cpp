@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <string_view>
+#include <vector>
 
 namespace {
 
@@ -311,7 +312,8 @@ void testWallRunContactAndWallJumpReplay() {
     expect(state.mode == nemisis::movement::MovementMode::WallRunning, "wallrun contact enters wallrunning mode");
     expect(state.hasWallRunContact, "wallrun contact marks telemetry flag");
     expect(state.wallRunTimeRemaining > 1.0F, "wallrun contact starts timer");
-    expect(state.velocity.z >= movement.tuning().wallRunSpeed, "wallrun contact aligns speed to wall tangent");
+    expect(state.velocity.z > 4.0F, "wallrun contact accelerates along wall tangent");
+    expect(state.velocity.z < movement.tuning().wallRunSpeed, "wallrun entry avoids an instant speed snap");
     expect(state.tech.wallRunArmTriggerPressed, "wallrun contact presses arm gravity trigger cue");
     expect(state.tech.gravityInvertersActive, "wallrun contact activates gravity boot cue");
 
@@ -398,24 +400,160 @@ void testMantleCandidateReplay() {
     expect(state.velocity.lengthSquared() <= 0.0001F, "mantle exit clears interpolation velocity");
 }
 
+void testCrouchTransitionReplay() {
+    nemisis::movement::MovementSystem movement;
+    nemisis::movement::PlayerMovementState state{};
+    nemisis::player::PlayerInputCommand command{};
+    command.move = {0.0F, 1.0F};
+    command.crouchHeld = true;
+    constexpr float dt = 1.0F / 60.0F;
+
+    state = movement.simulate(state, command, dt);
+    expect(state.crouched, "crouch press starts crouch state immediately");
+    expect(state.crouchFraction > 0.0F && state.crouchFraction < 1.0F, "crouch height blends over fixed ticks");
+    for (int tick = 0; tick < 12; ++tick) {
+        state = movement.simulate(state, command, dt);
+    }
+    expectNear(state.crouchFraction, 1.0F, 0.001F, "crouch transition reaches deterministic full crouch");
+    expect(state.lastHorizontalSpeed <= movement.tuning().crouchSpeed + 0.05F, "crouch transition uses crouched speed cap");
+
+    command.crouchHeld = false;
+    state = movement.simulate(state, command, dt);
+    expect(state.crouchFraction > 0.0F && state.crouchFraction < 1.0F, "crouch release does not pop height in one tick");
+    for (int tick = 0; tick < 12; ++tick) {
+        state = movement.simulate(state, command, dt);
+    }
+    expectNear(state.crouchFraction, 0.0F, 0.001F, "crouch exit converges on fixed-tick boundary");
+    expect(!state.crouched, "crouch state clears after exit blend");
+}
+
+void testAirControlPreservesMomentumReplay() {
+    nemisis::movement::MovementSystem movement;
+    nemisis::movement::PlayerMovementState state{};
+    state.position = {0.0F, 2.0F, 0.0F};
+    state.velocity = {6.0F, 0.0F, 0.0F};
+    state.mode = nemisis::movement::MovementMode::Airborne;
+    state.groundJumpAvailable = false;
+
+    nemisis::player::PlayerInputCommand command{};
+    command.move = {0.0F, 1.0F};
+    constexpr float dt = 1.0F / 60.0F;
+    for (int tick = 0; tick < 20; ++tick) {
+        state = movement.simulate(state, command, dt);
+    }
+
+    expect(state.velocity.z > 3.0F, "air acceleration adds deliberate forward authority");
+    expect(state.velocity.x > 4.0F, "air control preserves meaningful inherited lateral momentum");
+    expect(state.lastHorizontalSpeed <= movement.tuning().maxValidatedHorizontalSpeed + 0.001F,
+           "air control remains inside validation speed envelope");
+}
+
+void testLandingAndBufferedSlideTransitionReplay() {
+    nemisis::movement::MovementSystem movement;
+    nemisis::movement::PlayerMovementState hardLanding{};
+    hardLanding.position = {0.0F, 0.05F, 0.0F};
+    hardLanding.velocity = {0.0F, -10.0F, 0.0F};
+    hardLanding.mode = nemisis::movement::MovementMode::Airborne;
+
+    hardLanding = movement.simulate(hardLanding, {}, 1.0F / 60.0F);
+    expect(hardLanding.landedThisTick, "floor crossing emits one deterministic landing tick");
+    expect(hardLanding.lastLandingSpeed >= 10.0F, "landing records pre-resolution impact speed");
+    expect(hardLanding.landingRecoveryRemaining > 0.0F, "hard landing starts bounded control recovery");
+    hardLanding = movement.simulate(hardLanding, {}, 1.0F / 60.0F);
+    expect(!hardLanding.landedThisTick, "landing pulse does not repeat while grounded");
+
+    nemisis::movement::PlayerMovementState slideLanding{};
+    slideLanding.position = {0.0F, 0.03F, 0.0F};
+    slideLanding.velocity = {0.0F, -2.5F, movement.tuning().sprintSpeed};
+    slideLanding.mode = nemisis::movement::MovementMode::Airborne;
+    nemisis::player::PlayerInputCommand slide{};
+    slide.move = {0.0F, 1.0F};
+    slide.sprintHeld = true;
+    slide.slidePressed = true;
+    slide.slideHeld = true;
+    slideLanding = movement.simulate(slideLanding, slide, 1.0F / 60.0F);
+    expect(slideLanding.landedThisTick, "buffered slide landing records landing transition");
+    expect(slideLanding.mode == nemisis::movement::MovementMode::Sliding,
+           "buffered slide is consumed on the landing tick without grounded jitter");
+    expect(slideLanding.lastHorizontalSpeed <= movement.tuning().slideMaxSpeed + 0.001F,
+           "slide entry uses deterministic maximum speed");
+}
+
+void testWallRunTransitionDoesNotRetriggerReplay() {
+    nemisis::movement::MovementSystem movement;
+    nemisis::movement::PlayerMovementState state{};
+    state.position = {0.0F, 1.2F, 0.0F};
+    state.velocity = {0.0F, -0.5F, 5.0F};
+    state.mode = nemisis::movement::MovementMode::Airborne;
+    nemisis::player::PlayerInputCommand command{};
+    command.move = {0.0F, 1.0F};
+    const nemisis::movement::WallRunContact contact{true, {1.0F, 0.0F, 0.0F}, {0.0F, 0.0F, 1.0F}};
+    constexpr float dt = 1.0F / 60.0F;
+
+    state = movement.applyWallRunContact(state, command, contact, dt);
+    expect(state.tech.wallRunArmTriggerPressed, "first wallrun contact emits entry cue");
+    state = movement.simulate(state, command, dt);
+    expect(!state.tech.wallRunArmTriggerPressed, "wallrun entry cue clears on following simulation tick");
+    state = movement.applyWallRunContact(state, command, contact, dt);
+    expect(!state.tech.wallRunArmTriggerPressed, "persistent wall contact does not retrigger entry cue");
+    expect(state.mode == nemisis::movement::MovementMode::WallRunning, "persistent contact keeps stable wallrun mode");
+}
+
+void testIdenticalCommandReplayIsStable() {
+    nemisis::movement::MovementSystem movement;
+    std::vector<nemisis::player::PlayerInputCommand> commands(180);
+    for (std::size_t tick = 0; tick < commands.size(); ++tick) {
+        auto& command = commands[tick];
+        command.tick = static_cast<std::uint64_t>(tick);
+        command.move = tick < 120 ? novacore::math::Vec2{0.35F, 0.94F} : novacore::math::Vec2{-0.8F, 0.2F};
+        command.sprintHeld = tick < 55;
+        command.jumpPressed = tick == 32;
+        command.doubleJumpPressed = tick == 58;
+        command.slidePressed = tick == 110;
+        command.slideHeld = tick >= 110 && tick < 126;
+        command.crouchHeld = tick >= 125 && tick < 145;
+        command.dashPressed = tick == 150;
+    }
+
+    const auto replay = [&](nemisis::movement::PlayerMovementState state) {
+        for (const auto& command : commands) {
+            state = movement.simulate(state, command, 1.0F / 60.0F);
+        }
+        return state;
+    };
+    const auto first = replay({});
+    const auto second = replay({});
+    expectNear(first.position.x, second.position.x, 0.000001F, "replayed x position is bit-stable within float epsilon");
+    expectNear(first.position.y, second.position.y, 0.000001F, "replayed y position is bit-stable within float epsilon");
+    expectNear(first.position.z, second.position.z, 0.000001F, "replayed z position is bit-stable within float epsilon");
+    expectNear(first.velocity.x, second.velocity.x, 0.000001F, "replayed x velocity is stable");
+    expectNear(first.velocity.z, second.velocity.z, 0.000001F, "replayed z velocity is stable");
+    expect(first.mode == second.mode, "replayed movement mode is stable");
+    expectNear(first.crouchFraction, second.crouchFraction, 0.000001F, "replayed crouch transition is stable");
+}
+
 void testMovementTuningConfigReplay() {
     constexpr std::string_view json = R"({
         "sprint_speed": 10.0,
-        "ground": { "acceleration": 55.0, "friction": 12.0 },
-        "slide": { "max_duration": 1.1, "steering_acceleration": 9.0, "jump_boost": 3.0, "buffer_time": 0.18 },
+        "ground": { "acceleration": 55.0, "turn_acceleration": 71.0, "friction": 12.0 },
+        "slide": { "max_duration": 1.1, "min_entry_speed": 4.6, "max_speed": 12.0, "steering_acceleration": 9.0, "jump_boost": 3.0, "buffer_time": 0.18 },
         "dash": { "impulse": 12.0, "cooldown": 1.25 },
-        "air": { "max_speed": 8.75, "drag": 0.2 },
+        "air": { "max_speed": 8.75, "drag": 0.2, "counter_acceleration": 29.0, "control": 0.5 },
         "double_jump": { "min_airborne_time": 0.04, "buffer_time": 0.19 },
         "jump": { "coyote_time": 0.12, "buffer_time": 0.14 },
         "wall_run": {
             "speed": 9.0,
+            "max_speed": 11.0,
+            "acceleration": 27.0,
             "max_duration": 1.5,
             "wall_jump_impulse": 7.0,
             "min_height": 0.7,
             "probe_distance": 0.6,
             "contact_grace": 0.11,
             "detach_cooldown": 0.18
-        }
+        },
+        "crouch": { "enter_time": 0.07, "exit_time": 0.13 },
+        "landing": { "hard_speed": 9.0, "recovery_time": 0.2, "control_scale": 0.6 }
     })";
 
     novacore::core::ConfigDocument document;
@@ -425,12 +563,19 @@ void testMovementTuningConfigReplay() {
     const auto tuning = nemisis::movement::movementTuningFromConfig(document);
     expectNear(tuning.sprintSpeed, 10.0F, 0.001F, "sprint speed loads from config");
     expectNear(tuning.groundAcceleration, 55.0F, 0.001F, "ground acceleration loads from config");
+    expectNear(tuning.groundTurnAcceleration, 71.0F, 0.001F, "ground turn acceleration loads from config");
     expectNear(tuning.slideMaxDurationSeconds, 1.1F, 0.001F, "slide duration loads from config");
     expectNear(tuning.slideJumpBoost, 3.0F, 0.001F, "slide jump boost loads from config");
     expectNear(tuning.slideBufferSeconds, 0.18F, 0.001F, "slide buffer loads from config");
+    expectNear(tuning.slideMinEntrySpeed, 4.6F, 0.001F, "slide minimum entry speed loads from config");
+    expectNear(tuning.slideMaxSpeed, 12.0F, 0.001F, "slide maximum speed loads from config");
     expectNear(tuning.dashImpulse, 12.0F, 0.001F, "dash impulse loads from config");
     expectNear(tuning.airMaxSpeed, 8.75F, 0.001F, "air max speed loads from config");
+    expectNear(tuning.airCounterAcceleration, 29.0F, 0.001F, "air counter acceleration loads from config");
+    expectNear(tuning.airControl, 0.5F, 0.001F, "air control loads from config");
     expectNear(tuning.wallRunSpeed, 9.0F, 0.001F, "wall run speed loads from config");
+    expectNear(tuning.wallRunMaxSpeed, 11.0F, 0.001F, "wall run max speed loads from config");
+    expectNear(tuning.wallRunAcceleration, 27.0F, 0.001F, "wall run acceleration loads from config");
     expectNear(tuning.coyoteTimeSeconds, 0.12F, 0.001F, "coyote time loads from config");
     expectNear(tuning.jumpBufferSeconds, 0.14F, 0.001F, "jump buffer loads from config");
     expectNear(tuning.doubleJumpMinAirborneSeconds, 0.04F, 0.001F, "double jump min airborne time loads from config");
@@ -439,6 +584,9 @@ void testMovementTuningConfigReplay() {
     expectNear(tuning.wallRunProbeDistance, 0.6F, 0.001F, "wall run probe distance loads from config");
     expectNear(tuning.wallRunContactGraceSeconds, 0.11F, 0.001F, "wall run contact grace loads from config");
     expectNear(tuning.wallRunDetachCooldownSeconds, 0.18F, 0.001F, "wall run detach cooldown loads from config");
+    expectNear(tuning.crouchEnterSeconds, 0.07F, 0.001F, "crouch enter time loads from config");
+    expectNear(tuning.crouchExitSeconds, 0.13F, 0.001F, "crouch exit time loads from config");
+    expectNear(tuning.hardLandingRecoverySeconds, 0.2F, 0.001F, "landing recovery loads from config");
 }
 
 } // namespace
@@ -458,6 +606,11 @@ int main() {
     testWallRunContactAndWallJumpReplay();
     testWallRunContactGraceReplay();
     testMantleCandidateReplay();
+    testCrouchTransitionReplay();
+    testAirControlPreservesMomentumReplay();
+    testLandingAndBufferedSlideTransitionReplay();
+    testWallRunTransitionDoesNotRetriggerReplay();
+    testIdenticalCommandReplayIsStable();
     testMovementTuningConfigReplay();
 
     if (failures > 0) {

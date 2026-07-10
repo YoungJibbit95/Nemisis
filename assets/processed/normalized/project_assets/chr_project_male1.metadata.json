@@ -62,7 +62,7 @@
   "skeleton": {
     "skin": "rig",
     "skinned_mesh_nodes": [
-      "Character"
+      "chr_project_male1_lod0"
     ],
     "source_pose": "T_pose",
     "retarget_axis_contract": "Blender +Z up/-Y forward; exported runtime Y-up/+Z forward",
@@ -101,5 +101,9 @@
   "normalization_status": "exported_runtime_y_up_positive_z_forward",
   "socket_forward_axis": null,
   "runtime_socket_forward_axis": null,
-  "blender_socket_forward_axis": null
+  "blender_socket_forward_axis": null,
+  "rig_type": "deforming_armature",
+  "skinned_meshes": [
+    "chr_project_male1_lod0"
+  ]
 }

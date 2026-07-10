@@ -171,6 +171,12 @@ std::optional<novacore::render::RenderMesh3D> findLastMesh(
     return std::nullopt;
 }
 
+void useFirstPersonCamera(nemisis::dev::DevRangePlayerRenderState& player) {
+    player.hasCameraRig = true;
+    player.cameraPosition = player.position + novacore::math::Vec3{0.0F, 1.65F, 0.0F};
+    player.cameraView = player.view;
+}
+
 void testDevRangeRenderSceneBuildsExpectedSubmissions() {
     novacore::render::Renderer renderer;
     auto lookup = registerSceneMeshes(renderer);
@@ -182,6 +188,7 @@ void testDevRangeRenderSceneBuildsExpectedSubmissions() {
     player.view.yawDegrees = 32.0F;
     player.view.pitchDegrees = -7.0F;
     player.hasMovementState = true;
+    useFirstPersonCamera(player);
     nemisis::dev::GreyboxCollisionResult collision{};
     collision.grounded = true;
     collision.groundPrimitiveId = "floor_main";
@@ -227,8 +234,8 @@ void testDevRangeRenderSceneBuildsExpectedSubmissions() {
     expect(!world.primitives.empty(), "greybox world fixture has primitives");
     expect(stats.worldBoxCount == (world.primitives.size() - 1U) + targetRange.lanes.size() + 17U, "dev range render scene emits world, lane, asset stage, pickup pads, and first-person rig primitives");
     expect(frame.worldBoxes.size() == stats.worldBoxCount, "world box count matches frame");
-    expect(stats.meshInstanceCount == 35, "dev range render scene emits static, player body, target lane, imported Project asset, A2 showcase, weapon, and arms without first-person T-pose mesh");
-    expect(frame.worldMeshes.size() == 35, "frame receives all mesh instances");
+    expect(stats.meshInstanceCount == 34, "first-person scene emits world, target, showcase, weapon, and arms meshes without a duplicate local world model");
+    expect(frame.worldMeshes.size() == 34, "frame receives all world and exclusive viewmodel mesh instances");
     expect(stats.skyFallbackMeshCount == 0, "dev range render scene skips legacy skybox mesh while sky pass is active");
     expect(stats.skippedMeshInstanceCount == 0, "dev range render scene skips no mesh when lookup is complete");
     expect(stats.materialFallbackProfileCount == stats.meshInstanceCount, "dev range render scene assigns material fallback profiles to submitted GLB meshes");
@@ -265,6 +272,7 @@ void testDevRangeRenderSceneMovesWeaponTowardSightlineInAds() {
     hipPlayer.hasMovementState = true;
     hipPlayer.activeWeaponId = "ar_01";
     hipPlayer.activeWeaponClass = nemisis::weapons::WeaponClass::AssaultRifle;
+    useFirstPersonCamera(hipPlayer);
 
     auto adsPlayer = hipPlayer;
     adsPlayer.adsAlpha = 1.0F;
@@ -289,6 +297,40 @@ void testDevRangeRenderSceneMovesWeaponTowardSightlineInAds() {
     }
 }
 
+void testDevRangeRenderSceneViewmodelFollowsCameraAngles() {
+    novacore::render::Renderer renderer;
+    auto lookup = registerSceneMeshes(renderer);
+    const auto world = nemisis::dev::createDevRangeGreyboxWorld();
+    auto targetRange = nemisis::dev::makeDefaultDevTargetRange();
+
+    nemisis::dev::DevRangePlayerRenderState player{};
+    player.position = world.playerSpawn;
+    player.view.yawDegrees = 47.0F;
+    player.view.pitchDegrees = 28.0F;
+    player.cameraRollDegrees = 13.0F;
+    player.hasMovementState = true;
+    player.activeWeaponId = "ar_01";
+    useFirstPersonCamera(player);
+
+    novacore::render::RenderFrameInfo frame{};
+    const auto stats = nemisis::dev::DevRangeRenderSceneBuilder{}.append(
+        frame,
+        nemisis::dev::DevRangeRenderSceneDesc{&world, &targetRange, nullptr, &lookup, player});
+
+    const auto weapon = findLastMesh(frame, "wpn_project_rifle_m4a1");
+    const auto arms = findLastMesh(frame, "chr_a1_fp_arms_01");
+    expect(stats.firstPersonViewmodelActive, "camera angles test uses the viewmodel path");
+    expect(weapon.has_value() && arms.has_value(), "camera angles test submits weapon and arms meshes");
+    if (weapon.has_value() && arms.has_value()) {
+        expect(std::abs(weapon->yawDegrees - 47.0F) < 0.01F, "weapon mesh follows camera yaw");
+        expect(std::abs(weapon->pitchDegrees + 28.0F) < 0.01F, "weapon mesh converts camera pitch to renderer pitch");
+        expect(std::abs(weapon->rollDegrees - 13.0F) < 0.01F, "weapon mesh follows camera roll");
+        expect(std::abs(arms->yawDegrees - 47.0F) < 0.01F, "arms mesh follows camera yaw");
+        expect(std::abs(arms->pitchDegrees + 28.0F) < 0.01F, "arms mesh converts camera pitch to renderer pitch");
+        expect(std::abs(arms->rollDegrees - 13.0F) < 0.01F, "arms mesh follows camera roll");
+    }
+}
+
 void testDevRangeRenderSceneAlignsWeaponMeshToCookedMuzzleSocket() {
     novacore::render::Renderer renderer;
     auto lookup = registerSceneMeshes(renderer);
@@ -303,6 +345,7 @@ void testDevRangeRenderSceneAlignsWeaponMeshToCookedMuzzleSocket() {
     player.hasMovementState = true;
     player.activeWeaponId = "ar_01";
     player.activeWeaponClass = nemisis::weapons::WeaponClass::AssaultRifle;
+    useFirstPersonCamera(player);
 
     novacore::render::RenderFrameInfo fallbackFrame{};
     (void)nemisis::dev::DevRangeRenderSceneBuilder{}.append(
@@ -340,6 +383,7 @@ void testDevRangeRenderSceneUsesPerWeaponImportAxisCorrections() {
     smgPlayer.view.pitchDegrees = 0.0F;
     smgPlayer.activeWeaponId = "smg_01";
     smgPlayer.activeWeaponClass = nemisis::weapons::WeaponClass::Smg;
+    useFirstPersonCamera(smgPlayer);
 
     novacore::render::RenderFrameInfo smgFrame{};
     (void)nemisis::dev::DevRangeRenderSceneBuilder{}.append(
@@ -351,6 +395,7 @@ void testDevRangeRenderSceneUsesPerWeaponImportAxisCorrections() {
     if (smgMesh.has_value()) {
         expect(std::abs(smgMesh->yawDegrees) < 1.0F, "SMG uses normalized forward axis without legacy yaw correction");
         expect(std::abs(smgMesh->rollDegrees) < 5.0F, "SMG uses upright normalized roll");
+        expect(std::abs(smgMesh->scale.x - 1.15F) < 0.01F, "SMG keeps its asset-specific viewmodel scale");
     }
 
     auto sidearmPlayer = smgPlayer;
@@ -367,6 +412,7 @@ void testDevRangeRenderSceneUsesPerWeaponImportAxisCorrections() {
     if (sidearmMesh.has_value()) {
         expect(std::abs(sidearmMesh->yawDegrees) < 1.0F, "sidearm uses normalized forward axis without legacy yaw correction");
         expect(std::abs(sidearmMesh->rollDegrees) < 5.0F, "sidearm uses upright normalized roll");
+        expect(std::abs(sidearmMesh->scale.x - 1.35F) < 0.01F, "sidearm keeps its asset-specific viewmodel scale");
     }
 }
 
@@ -380,6 +426,7 @@ void testDevRangeRenderScenePlacesA2AssetsInSpawnView() {
     player.position = world.playerSpawn;
     player.view.yawDegrees = 0.0F;
     player.view.pitchDegrees = 0.0F;
+    useFirstPersonCamera(player);
 
     novacore::render::RenderFrameInfo frame{};
     const auto stats = nemisis::dev::DevRangeRenderSceneBuilder{}.append(
@@ -480,9 +527,14 @@ void testDevRangeRenderSceneHidesLocalWorldBodyWhenCameraRigIsActive() {
         cameraRigFrame,
         nemisis::dev::DevRangeRenderSceneDesc{&world, &targetRange, nullptr, &lookup, cameraRigPlayer});
 
-    expect(worldBodyStats.meshInstanceCount == cameraRigStats.meshInstanceCount + 1U, "camera rig skips only the full local third-person body mesh");
-    expect(cameraRigStats.firstPersonMeshCount == worldBodyStats.firstPersonMeshCount, "camera rig keeps the first-person arms and weapon rig visible");
-    expect(cameraRigStats.firstPersonBodyPrimitiveCount == worldBodyStats.firstPersonBodyPrimitiveCount, "camera rig keeps procedural first-person body primitives visible");
+    expect(worldBodyStats.localWorldModelActive, "world presentation enables the local third-person model");
+    expect(!worldBodyStats.firstPersonViewmodelActive, "world presentation does not submit a first-person viewmodel");
+    expect(worldBodyStats.firstPersonMeshCount == 0U, "world presentation has no first-person weapon or arms meshes");
+    expect(worldBodyStats.firstPersonBodyPrimitiveCount == 0U, "world presentation has no camera-linked arm primitives");
+    expect(cameraRigStats.firstPersonViewmodelActive, "camera rig enables the first-person viewmodel");
+    expect(!cameraRigStats.localWorldModelActive, "camera rig suppresses the duplicate local world model");
+    expect(cameraRigStats.firstPersonMeshCount == 2U, "camera rig submits one weapon and one arms viewmodel mesh");
+    expect(cameraRigStats.meshInstanceCount == worldBodyStats.meshInstanceCount + 1U, "exclusive first-person weapon and arms replace the single local world body");
     expect(cameraRigFrame.camera3D.position.y > world.playerSpawn.y + 1.60F, "camera rig still drives the render camera eye height");
 }
 
@@ -587,6 +639,7 @@ void testDevRangeRenderSceneDrawsLanePressure() {
     player.position = world.playerSpawn;
     player.view.yawDegrees = 0.0F;
     player.view.pitchDegrees = 0.0F;
+    useFirstPersonCamera(player);
 
     novacore::render::RenderFrameInfo frame{};
     const auto stats = nemisis::dev::DevRangeRenderSceneBuilder{}.append(
@@ -608,6 +661,7 @@ void testDevRangeRenderSceneAcceptsSpeedClearTargetLayout() {
     player.position = world.playerSpawn;
     player.view.yawDegrees = 0.0F;
     player.view.pitchDegrees = 0.0F;
+    useFirstPersonCamera(player);
 
     novacore::render::RenderFrameInfo frame{};
     const auto stats = nemisis::dev::DevRangeRenderSceneBuilder{}.append(
@@ -635,6 +689,7 @@ void testDevRangeRenderSceneCountsMissingMeshHandles() {
     nemisis::dev::DevRangePlayerRenderState player{};
     player.position = world.playerSpawn;
     player.view.yawDegrees = 180.0F;
+    useFirstPersonCamera(player);
 
     novacore::render::RenderFrameInfo frame{};
     const auto stats = nemisis::dev::DevRangeRenderSceneBuilder{}.append(
@@ -841,6 +896,7 @@ void testDevRangeRenderSceneDrawsContactDebugLines() {
 int main() {
     testDevRangeRenderSceneBuildsExpectedSubmissions();
     testDevRangeRenderSceneMovesWeaponTowardSightlineInAds();
+    testDevRangeRenderSceneViewmodelFollowsCameraAngles();
     testDevRangeRenderSceneAlignsWeaponMeshToCookedMuzzleSocket();
     testDevRangeRenderSceneUsesPerWeaponImportAxisCorrections();
     testDevRangeRenderScenePlacesA2AssetsInSpawnView();

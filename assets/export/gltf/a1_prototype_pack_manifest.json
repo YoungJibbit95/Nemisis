@@ -1,6 +1,6 @@
 {
   "pack_id": "nemisis_a1_prototype_pack",
-  "generated_at_utc": "2026-06-12T06:53:23+00:00",
+  "generated_at_utc": "2026-07-10T14:40:51+00:00",
   "generator": "tools/blender/make_a1_prototype_pack.py",
   "blender_version": "5.1.2",
   "units": "meters",
@@ -36,7 +36,7 @@
         "wpn_a1_compact_rifle_01_lod0",
         "wpn_a1_compact_rifle_01_lod1"
       ],
-      "bytes": 31692,
+      "bytes": 31632,
       "stats": {
         "mesh_objects": 15,
         "vertices": 176,
@@ -73,7 +73,7 @@
         "wpn_a1_modern_rifle_01_lod0",
         "wpn_a1_modern_rifle_01_lod1"
       ],
-      "bytes": 32644,
+      "bytes": 32600,
       "stats": {
         "mesh_objects": 15,
         "vertices": 184,
@@ -110,7 +110,7 @@
         "wpn_a1_compact_sidearm_01_lod0",
         "wpn_a1_compact_sidearm_01_lod1"
       ],
-      "bytes": 22468,
+      "bytes": 22444,
       "stats": {
         "mesh_objects": 11,
         "vertices": 116,
@@ -149,7 +149,7 @@
       "lods": [
         "chr_a1_stylized_operator_01_lod0"
       ],
-      "bytes": 127772,
+      "bytes": 211280,
       "stats": {
         "mesh_objects": 34,
         "vertices": 752,
@@ -186,7 +186,7 @@
         "chr_a1_fp_arms_01_lod0",
         "chr_a1_fp_arms_01_lod1"
       ],
-      "bytes": 29076,
+      "bytes": 51820,
       "stats": {
         "mesh_objects": 10,
         "vertices": 160,

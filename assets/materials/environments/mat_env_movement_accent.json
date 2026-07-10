@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "id": "mat_env_movement_accent",
+  "shader": "pbr_metallic_roughness",
+  "base_color": [0.045, 0.31, 0.42, 1.0],
+  "metallic": 0.18,
+  "roughness": 0.46,
+  "normal_scale": 0.6,
+  "emissive": [0.015, 0.28, 0.42],
+  "emissive_strength": 1.35,
+  "texture_slots": {
+    "base_color": "textures/environments/movement_accent_basecolor.png",
+    "normal": "textures/environments/movement_accent_normal.png",
+    "metallic_roughness": "textures/environments/movement_accent_mr.png",
+    "emissive": "textures/environments/movement_accent_emissive.png"
+  },
+  "fallback": {
+    "rim_scale": 1.2,
+    "specular_scale": 0.75,
+    "contrast_scale": 1.12,
+    "saturation_scale": 1.15
+  }
+}

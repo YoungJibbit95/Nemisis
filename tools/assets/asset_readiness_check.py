@@ -395,6 +395,11 @@ for blend_path in blend_paths:
                     "rotation_euler": [round(v, 5) for v in obj.rotation_euler],
                 })
         material_names = sorted({slot.material.name for obj in mesh_objects for slot in obj.material_slots if slot.material})
+        armatures = [obj for obj in objects if obj.type == "ARMATURE"]
+        skinned_meshes = sorted(
+            obj.name for obj in mesh_objects
+            if any(modifier.type == "ARMATURE" and modifier.object in armatures for modifier in obj.modifiers)
+        )
         asset_root_name = blend_path.stem
         root_objects = [obj for obj in objects if obj.name == asset_root_name]
         roots_at_origin = []
@@ -420,6 +425,9 @@ for blend_path in blend_paths:
             },
             "socket_forward_axis": socket_forward_axis(socket_objects),
             "collisions": sorted(obj.name for obj in collision_objects),
+            "armatures": sorted(obj.name for obj in armatures),
+            "skinned_meshes": skinned_meshes,
+            "actions": sorted(action.name for action in bpy.data.actions),
             "root_objects": roots_at_origin,
             "non_applied_mesh_transforms": non_applied[:50],
             "non_applied_mesh_transform_count": len(non_applied),
@@ -572,6 +580,18 @@ def audit(root: Path, with_blender: bool, blender_path: str | None) -> dict[str,
                 "Character dimensions_m should use Blender/source semantic order [width, depth, height]; third component is shorter than depth.",
             )
 
+        if metadata.get("rig_type") == "deforming_armature":
+            if not summary["skins"]:
+                add_issue(issues, "error", "rig", "Deforming character metadata requires an exported glTF skin.")
+            if not summary["skinned_mesh_nodes"]:
+                add_issue(issues, "error", "rig", "Deforming character has no GLB mesh node bound to a skin.")
+            declared_clips = set(metadata.get("animation_clips", []))
+            missing_clips = sorted(declared_clips - set(summary["animations"]))
+            if missing_clips:
+                add_issue(issues, "error", "animations", f"Declared animation clips missing from GLB: {', '.join(missing_clips)}")
+            if not summary["animations"]:
+                add_issue(issues, "error", "animations", "Deforming character has no exported animation clips.")
+
         nodes = set(summary["nodes"])
         sockets = sorted(name for name in nodes if name.startswith("socket_"))
         collisions = sorted(name for name in nodes if name.startswith("col_"))
@@ -609,6 +629,13 @@ def audit(root: Path, with_blender: bool, blender_path: str | None) -> dict[str,
                 add_issue(issues, "warning", "blender_units", f"Unexpected Blender unit settings: {source_scan.get('unit_system')} scale {source_scan.get('scale_length')}")
             if source_scan.get("non_applied_mesh_transform_count", 0):
                 add_issue(issues, "manual", "blender_transforms", f"{source_scan.get('non_applied_mesh_transform_count')} mesh objects have non-applied scale or rotation in source .blend.")
+            if metadata.get("rig_type") == "deforming_armature":
+                if not source_scan.get("armatures"):
+                    add_issue(issues, "error", "source_rig", "Deforming character source has no Armature object.")
+                if not source_scan.get("skinned_meshes"):
+                    add_issue(issues, "error", "source_rig", "Deforming character source has no mesh with an Armature modifier.")
+                if not source_scan.get("actions"):
+                    add_issue(issues, "error", "source_animations", "Deforming character source has no Blender actions.")
             source_sockets = set(source_scan.get("sockets", []))
             source_missing_sockets = sorted(metadata_sockets - source_sockets)
             if source_missing_sockets:
@@ -666,6 +693,8 @@ def audit(root: Path, with_blender: bool, blender_path: str | None) -> dict[str,
                     "normalized_export": metadata.get("normalized_export"),
                     "normalization_status": metadata.get("normalization_status"),
                     "skin": metadata.get("skin"),
+                    "rig_type": metadata.get("rig_type"),
+                    "skinned_meshes": metadata.get("skinned_meshes"),
                     "animation_clips": metadata.get("animation_clips"),
                     "animation_clip_roles": metadata.get("animation_clip_roles"),
                     "skeleton": metadata.get("skeleton"),
@@ -686,6 +715,9 @@ def audit(root: Path, with_blender: bool, blender_path: str | None) -> dict[str,
                 "sockets": source_scan.get("sockets", []),
                 "socket_forward_axis": source_scan.get("socket_forward_axis"),
                 "collisions": source_scan.get("collisions", []),
+                "armatures": source_scan.get("armatures", []),
+                "skinned_meshes": source_scan.get("skinned_meshes", []),
+                "actions": source_scan.get("actions", []),
                 "root_objects": source_scan.get("root_objects", []),
                 "non_applied_mesh_transform_count": source_scan.get("non_applied_mesh_transform_count", 0),
             }

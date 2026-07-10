@@ -69,7 +69,16 @@
           {"name": "socket_hand_l", "location": [-0.25, -0.34, 1.18], "display_size": 0.06},
           {"name": "socket_head", "location": [0.0, -0.03, 1.58], "display_size": 0.07},
           {"name": "socket_vfx", "location": [0.0, 0.0, 1.0], "display_size": 0.06}
-        ]
+        ],
+        "socket_bones": {
+          "socket_root": "root",
+          "socket_camera": "head",
+          "socket_weapon_root": "DEF-hand.R",
+          "socket_hand_r": "DEF-hand.R",
+          "socket_hand_l": "DEF-hand.L",
+          "socket_head": "head",
+          "socket_vfx": "DEF-spine.003"
+        }
       }
     },
     {

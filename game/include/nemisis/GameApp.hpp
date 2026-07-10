@@ -17,6 +17,7 @@
 #include "nemisis/player/PlayerCameraRig.hpp"
 #include "nemisis/player/PlayerCommandQueue.hpp"
 #include "nemisis/player/PlayerProfile.hpp"
+#include "nemisis/player/PlayerSkeletalAnimator.hpp"
 #include "nemisis/render/RenderTuning.hpp"
 #include "nemisis/settings/GameSettings.hpp"
 #include "nemisis/settings/UserSettingsPersistence.hpp"
@@ -112,6 +113,8 @@ private:
     player::PlayerCommandQueue localCommandQueue_;
     player::CharacterAnimationState characterAnimation_;
     player::CharacterAnimationFrame latestCharacterAnimationFrame_;
+    player::PlayerSkeletalAnimator skeletalBodyAnimator_;
+    player::PlayerSkeletalAnimator skeletalArmsAnimator_;
     player::CameraRigState cameraRig_;
     player::AccountStats accountStats_ = player::prototypeAccountStats();
     novacore::ecs::EntityId localPlayerEntity_;

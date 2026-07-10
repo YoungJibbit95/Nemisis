@@ -6,6 +6,19 @@
   "scale_meters": true,
   "runtime_up_axis": "Y",
   "gameplay_forward_axis": "+Z",
+  "blender_up_axis": "+Z",
+  "blender_forward_axis": "-Y",
+  "dimensions_m": [
+    1.13137,
+    0.44,
+    1.89
+  ],
+  "target_dimensions_m": [
+    1.13137,
+    0.44,
+    1.89
+  ],
+  "origin": "Root at floor center; character faces Blender -Y.",
   "sockets": [
     "socket_root",
     "socket_camera",
@@ -20,5 +33,38 @@
     "chr_dev_soldier_a_lod0"
   ],
   "license": "original_project_asset",
-  "generated_by": "tools/blender/make_dev_primitives.py"
+  "external_assets": false,
+  "generated_by": "tools/blender/make_dev_primitives.py",
+  "skin": "rig_chr_dev_soldier_a",
+  "skinned_meshes": [
+    "chr_dev_soldier_a_lod0_boot_l",
+    "chr_dev_soldier_a_lod0_boot_r",
+    "chr_dev_soldier_a_lod0_chest_accent",
+    "chr_dev_soldier_a_lod0_hand_l",
+    "chr_dev_soldier_a_lod0_hand_r",
+    "chr_dev_soldier_a_lod0_head",
+    "chr_dev_soldier_a_lod0_lower_arm_l",
+    "chr_dev_soldier_a_lod0_lower_arm_r",
+    "chr_dev_soldier_a_lod0_lower_leg_l",
+    "chr_dev_soldier_a_lod0_lower_leg_r",
+    "chr_dev_soldier_a_lod0_neck",
+    "chr_dev_soldier_a_lod0_pelvis",
+    "chr_dev_soldier_a_lod0_torso",
+    "chr_dev_soldier_a_lod0_upper_arm_l",
+    "chr_dev_soldier_a_lod0_upper_arm_r",
+    "chr_dev_soldier_a_lod0_upper_leg_l",
+    "chr_dev_soldier_a_lod0_upper_leg_r",
+    "chr_dev_soldier_a_lod0_visor"
+  ],
+  "animation_clips": [
+    "chr_dev_soldier_a_aim",
+    "chr_dev_soldier_a_idle",
+    "chr_dev_soldier_a_walk"
+  ],
+  "animation_clip_roles": {
+    "chr_dev_soldier_a_aim": "aim",
+    "chr_dev_soldier_a_idle": "idle",
+    "chr_dev_soldier_a_walk": "walk"
+  },
+  "rig_type": "deforming_armature"
 }

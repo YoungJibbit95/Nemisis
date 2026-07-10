@@ -6,7 +6,8 @@
   "scale_meters": true,
   "runtime_up_axis": "Y",
   "gameplay_forward_axis": "+Z",
-  "blender_forward_axis": "+Y",
+  "blender_up_axis": "+Z",
+  "blender_forward_axis": "-Y",
   "dimensions_m": [
     1.1355,
     0.8,
@@ -36,12 +37,56 @@
   "external_assets": false,
   "visual_reference_note": "Original procedural blockout inspired by broad sci-fi shooter silhouettes; no protected marks, copied geometry, or real functional implementation details.",
   "generated_by": "tools/blender/make_a1_prototype_pack.py",
-  "generated_at_utc": "2026-06-12T06:53:23+00:00",
+  "generated_at_utc": "2026-07-10T14:40:51+00:00",
   "stats": {
     "mesh_objects": 34,
     "vertices": 752,
     "polygons": 630,
     "triangles_estimate": 1368
   },
-  "bytes": 127772
+  "skin": "rig_chr_a1_stylized_operator_01",
+  "skinned_meshes": [
+    "chr_a1_stylized_operator_01_lod0_back_pack",
+    "chr_a1_stylized_operator_01_lod0_boot_l",
+    "chr_a1_stylized_operator_01_lod0_boot_r",
+    "chr_a1_stylized_operator_01_lod0_chest_accent",
+    "chr_a1_stylized_operator_01_lod0_chest_plate",
+    "chr_a1_stylized_operator_01_lod0_elbow_l",
+    "chr_a1_stylized_operator_01_lod0_elbow_r",
+    "chr_a1_stylized_operator_01_lod0_forearm_l",
+    "chr_a1_stylized_operator_01_lod0_forearm_r",
+    "chr_a1_stylized_operator_01_lod0_hand_l",
+    "chr_a1_stylized_operator_01_lod0_hand_r",
+    "chr_a1_stylized_operator_01_lod0_helmet",
+    "chr_a1_stylized_operator_01_lod0_helmet_brow",
+    "chr_a1_stylized_operator_01_lod0_knee_pad_l",
+    "chr_a1_stylized_operator_01_lod0_knee_pad_r",
+    "chr_a1_stylized_operator_01_lod0_neck",
+    "chr_a1_stylized_operator_01_lod0_pack_left_mark",
+    "chr_a1_stylized_operator_01_lod0_pack_right_mark",
+    "chr_a1_stylized_operator_01_lod0_pelvis_armor",
+    "chr_a1_stylized_operator_01_lod0_shin_l",
+    "chr_a1_stylized_operator_01_lod0_shin_r",
+    "chr_a1_stylized_operator_01_lod0_shoulder_bar",
+    "chr_a1_stylized_operator_01_lod0_shoulder_pad_l",
+    "chr_a1_stylized_operator_01_lod0_shoulder_pad_r",
+    "chr_a1_stylized_operator_01_lod0_thigh_l",
+    "chr_a1_stylized_operator_01_lod0_thigh_r",
+    "chr_a1_stylized_operator_01_lod0_torso_suit",
+    "chr_a1_stylized_operator_01_lod0_upper_arm_l",
+    "chr_a1_stylized_operator_01_lod0_upper_arm_r",
+    "chr_a1_stylized_operator_01_lod0_visor"
+  ],
+  "animation_clips": [
+    "chr_a1_stylized_operator_01_aim",
+    "chr_a1_stylized_operator_01_idle",
+    "chr_a1_stylized_operator_01_walk"
+  ],
+  "animation_clip_roles": {
+    "chr_a1_stylized_operator_01_aim": "aim",
+    "chr_a1_stylized_operator_01_idle": "idle",
+    "chr_a1_stylized_operator_01_walk": "walk"
+  },
+  "rig_type": "deforming_armature",
+  "bytes": 211280
 }

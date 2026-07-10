@@ -6,6 +6,19 @@
   "scale_meters": true,
   "runtime_up_axis": "Y",
   "gameplay_forward_axis": "+Z",
+  "blender_up_axis": "+Z",
+  "blender_forward_axis": "-Y",
+  "dimensions_m": [
+    0.68,
+    0.695,
+    1.8
+  ],
+  "target_dimensions_m": [
+    0.68,
+    0.695,
+    1.8
+  ],
+  "origin": "Root at floor center; character faces Blender -Y.",
   "sockets": [
     "socket_root",
     "socket_camera",
@@ -18,5 +31,6 @@
     "chr_player_capsule_proxy_01_lod0"
   ],
   "license": "original_project_asset",
+  "external_assets": false,
   "generated_by": "tools/blender/make_dev_primitives.py"
 }

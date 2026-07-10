@@ -18,12 +18,12 @@
     1.17,
     0.4425
   ],
-  "origin": "Recooked from normalized Blender source; weapon sockets are Blender -Y forward and runtime +Z forward.",
+  "origin": "Root origin is socket_grip_r; muzzle and weapon sockets point along Blender -Y.",
   "sockets": [
-    "socket_eject",
-    "socket_grip_l",
-    "socket_grip_r",
     "socket_muzzle",
+    "socket_grip_r",
+    "socket_grip_l",
+    "socket_eject",
     "socket_vfx"
   ],
   "collision": "none",
@@ -33,65 +33,5 @@
   ],
   "license": "original_project_asset",
   "external_assets": false,
-  "generated_by": "tools/blender/make_dev_primitives.py",
-  "recooked_by": "tools/blender/recook_blender_catalog_exports.py",
-  "recooked_at_utc": "2026-06-20T07:54:49+00:00",
-  "bytes": 18528,
-  "blender_socket_positions": {
-    "socket_muzzle": [
-      -0.0,
-      -0.78,
-      0.02
-    ],
-    "socket_grip_r": [
-      0.0,
-      0.15,
-      -0.1
-    ],
-    "socket_grip_l": [
-      -0.0,
-      -0.25,
-      -0.03
-    ],
-    "socket_eject": [
-      -0.14,
-      -0.04,
-      0.07
-    ],
-    "socket_vfx": [
-      -0.0,
-      -0.78,
-      0.02
-    ]
-  },
-  "runtime_socket_positions": {
-    "socket_muzzle": [
-      -0.0,
-      0.02,
-      0.78
-    ],
-    "socket_grip_r": [
-      0.0,
-      -0.1,
-      -0.15
-    ],
-    "socket_grip_l": [
-      -0.0,
-      -0.03,
-      0.25
-    ],
-    "socket_eject": [
-      -0.14,
-      0.07,
-      0.04
-    ],
-    "socket_vfx": [
-      -0.0,
-      0.02,
-      0.78
-    ]
-  },
-  "blender_socket_forward_axis": "-Y",
-  "runtime_socket_forward_axis": "+Z",
-  "socket_generation": "Recooked from checked-in .blend sockets by tools/blender/recook_blender_catalog_exports.py."
+  "generated_by": "tools/blender/make_dev_primitives.py"
 }

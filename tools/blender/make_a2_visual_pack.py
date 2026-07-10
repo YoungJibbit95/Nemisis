@@ -25,6 +25,9 @@ try:
 except ModuleNotFoundError as exc:
     raise SystemExit("Run this script with Blender, not plain Python.") from exc
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from rigging_helpers import normalize_asset_root, rig_procedural_character, scene_rig_metadata
+
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SOURCE_ROOT = REPO_ROOT / "assets" / "source" / "blender" / "a2_visual_pack"
@@ -85,6 +88,8 @@ def clear_scene() -> None:
         for item in list(data_block):
             if item.users == 0:
                 data_block.remove(item)
+    for action in list(bpy.data.actions):
+        bpy.data.actions.remove(action)
 
 
 def configure_scene() -> None:
@@ -383,7 +388,7 @@ def metadata_for(
         "runtime_up_axis": "Y",
         "gameplay_forward_axis": "+Z",
         "blender_up_axis": "+Z",
-        "blender_forward_axis": "+Y",
+        "blender_forward_axis": "-Y" if spec.category in {"weapon", "character"} else "+Y",
         "dimensions_m": dimensions_m,
         "target_dimensions_m": spec.target_dimensions_m,
         "origin": spec.origin_note,
@@ -408,14 +413,28 @@ def save_and_export(spec: AssetSpec) -> dict[str, object]:
     export_path = OUTPUT_ROOT / f"{spec.asset_id}.glb"
     metadata_path = OUTPUT_ROOT / f"{spec.asset_id}.metadata.json"
 
+    normalize_asset_root(
+        spec.asset_id,
+        origin_socket="socket_grip_r" if spec.category == "weapon" else None,
+        rotate_positive_y_to_negative_y=spec.category == "weapon",
+    )
+
     if hasattr(bpy.context.preferences.filepaths, "save_version"):
         bpy.context.preferences.filepaths.save_version = 0
     bpy.ops.wm.save_as_mainfile(filepath=str(source_path))
     stats = mesh_stats()
     dimensions_m = scene_dimensions()
-    bpy.ops.export_scene.gltf(filepath=str(export_path), export_format="GLB")
+    bpy.ops.export_scene.gltf(
+        filepath=str(export_path),
+        export_format="GLB",
+        export_yup=True,
+        export_skins=True,
+        export_animations=True,
+        export_animation_mode="ACTIONS",
+    )
 
     metadata = metadata_for(spec, source_path, export_path, stats, dimensions_m)
+    metadata.update(scene_rig_metadata(spec.asset_id))
     metadata["bytes"] = export_path.stat().st_size
     metadata_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
 
@@ -680,7 +699,7 @@ def build_pilot_operator() -> None:
     cube("hitbox_chr_a2_pilot_operator_01_pelvis", (0.0, 0.0, 0.70), (0.48, 0.36, 0.28), hitbox, root)
     cylinder("col_chr_a2_pilot_operator_01_capsule", (0.0, 0.0, 0.90), 0.40, 1.80, collision, root, vertices=20)
 
-    armature(
+    rig = armature(
         "rig_chr_a2_pilot_operator_01",
         [
             ("root", (0.0, 0.0, 0.0), (0.0, 0.0, 0.18), None),
@@ -712,6 +731,7 @@ def build_pilot_operator() -> None:
     empty_socket("socket_head", (0.0, -0.180, 1.660), root)
     empty_socket("socket_backpack", (0.0, 0.315, 1.100), root)
     empty_socket("socket_vfx", (0.0, 0.360, 0.980), root)
+    rig_procedural_character("chr_a2_pilot_operator_01", rig, first_person=False)
 
 
 def build_wallrun_panel() -> None:
@@ -857,7 +877,7 @@ ASSETS: tuple[AssetSpec, ...] = (
         category="weapon",
         tags=("all", "weapon", "weapons", "carbine", "blackout", "wpn_a2_blackout_carbine_01"),
         target_dimensions_m=(0.19, 1.31, 0.55),
-        origin_note="Origin at approximate right-hand grip/root; Blender forward axis is +Y.",
+        origin_note="Root origin is socket_grip_r; Blender forward axis is -Y.",
         description="Grounded compact carbine blockout with a short barrel, linear muzzle device, buffer tube, M-LOK-like side slots, magazine ribs, micro optic, and muted inspection marks.",
         sockets=("socket_muzzle", "socket_grip_r", "socket_grip_l", "socket_optic", "socket_mag", "socket_eject", "socket_vfx"),
         socket_notes={
@@ -879,7 +899,7 @@ ASSETS: tuple[AssetSpec, ...] = (
         category="weapon",
         tags=("all", "weapon", "weapons", "rifle", "assault_rifle", "modular", "wpn_a2_modular_rifle_01"),
         target_dimensions_m=(0.20, 1.63, 0.64),
-        origin_note="Origin at approximate right-hand grip/root; Blender forward axis is +Y.",
+        origin_note="Root origin is socket_grip_r; Blender forward axis is -Y.",
         description="Grounded modular rifle silhouette with long rail, charging handle, dust-cover details, side slots, backup sights, foregrip, optic mass, and readable attachment sockets.",
         sockets=("socket_muzzle", "socket_grip_r", "socket_grip_l", "socket_optic", "socket_underbarrel", "socket_mag", "socket_eject", "socket_vfx"),
         socket_notes={
@@ -902,7 +922,7 @@ ASSETS: tuple[AssetSpec, ...] = (
         category="weapon",
         tags=("all", "weapon", "weapons", "sidearm", "striker", "pistol", "wpn_a2_striker_sidearm_01"),
         target_dimensions_m=(0.13, 0.47, 0.38),
-        origin_note="Origin at approximate right-hand grip/root; Blender forward axis is +Y.",
+        origin_note="Root origin is socket_grip_r; Blender forward axis is -Y.",
         description="Compact generic striker-style sidearm blockout with slide/frame separation, ejection-port and serration details, underbarrel rail, grip texture, and subdued sights.",
         sockets=("socket_muzzle", "socket_grip_r", "socket_grip_l", "socket_optic", "socket_rail", "socket_eject", "socket_vfx"),
         socket_notes={

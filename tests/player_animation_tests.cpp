@@ -1,5 +1,6 @@
 #include "nemisis/player/PlayerAnimation.hpp"
 
+#include <cmath>
 #include <cstdlib>
 #include <iostream>
 #include <string_view>
@@ -15,6 +16,10 @@ void expect(bool condition, std::string_view message) {
 
     ++failures;
     std::cerr << "[fail] " << message << '\n';
+}
+
+bool nearlyEqual(float lhs, float rhs, float epsilon = 0.0001F) {
+    return std::abs(lhs - rhs) <= epsilon;
 }
 
 nemisis::player::CharacterAnimationInput baseInput() {
@@ -171,6 +176,206 @@ void testResetClearsTransientAnimationState() {
     expect(resetFrame.wallRunAlpha == 0.0F, "reset clears wallrun alpha");
 }
 
+void testDeterministicTransitionsAndNormalizedClipTime() {
+    nemisis::player::CharacterAnimationState firstState{};
+    nemisis::player::CharacterAnimationState secondState{};
+    auto input = baseInput();
+    input.velocity = {6.5F, 0.0F, 1.0F};
+    input.speed01 = 0.84F;
+    input.sprintHeld = true;
+
+    float previousTransition = 0.0F;
+    for (int tick = 0; tick < 16; ++tick) {
+        const auto first = nemisis::player::updateCharacterAnimation(firstState, input);
+        const auto second = nemisis::player::updateCharacterAnimation(secondState, input);
+        expect(first.locomotionClip == second.locomotionClip, "identical fixed-tick input selects identical clips");
+        expect(nearlyEqual(first.gaitPhase, second.gaitPhase), "identical fixed-tick input advances identical gait phase");
+        expect(nearlyEqual(first.locomotionTransitionAlpha, second.locomotionTransitionAlpha),
+            "identical fixed-tick input advances identical transition alpha");
+        expect(first.locomotionNormalizedTime >= 0.0F && first.locomotionNormalizedTime < 1.0F,
+            "looping locomotion time remains normalized");
+        expect(first.locomotionTransitionAlpha >= previousTransition,
+            "locomotion transition advances monotonically");
+        previousTransition = first.locomotionTransitionAlpha;
+    }
+
+    expect(firstState.locomotionClip == nemisis::player::CharacterAnimationClip::Sprint,
+        "deterministic state transition reaches sprint");
+    expect(firstState.locomotionTransitionAlpha > 0.99F, "sprint transition reaches full weight");
+}
+
+void testJumpFallLandStateAndEvents() {
+    nemisis::player::CharacterAnimationState state{};
+    auto grounded = baseInput();
+    (void)evaluate(state, grounded, 2);
+
+    auto jumping = grounded;
+    jumping.movementMode = nemisis::movement::MovementMode::Airborne;
+    jumping.velocity = {1.0F, 5.5F, 0.0F};
+    const auto jumpFrame = evaluate(state, jumping);
+    expect(jumpFrame.locomotionClip == nemisis::player::CharacterAnimationClip::Jump,
+        "positive airborne velocity selects jump clip");
+    expect(jumpFrame.jumpAlpha > 0.95F, "jump alpha follows upward velocity");
+    expect(nemisis::player::hasCharacterAnimationEvent(
+        jumpFrame, nemisis::player::CharacterAnimationEvent::JumpStart),
+        "ground-to-air transition emits jump marker");
+
+    auto falling = jumping;
+    falling.velocity.y = -4.0F;
+    const auto fallFrame = evaluate(state, falling);
+    expect(fallFrame.locomotionClip == nemisis::player::CharacterAnimationClip::Fall,
+        "negative airborne velocity selects fall clip");
+    expect(fallFrame.fallAlpha > 0.70F, "fall alpha follows downward velocity");
+    expect(nemisis::player::hasCharacterAnimationEvent(
+        fallFrame, nemisis::player::CharacterAnimationEvent::Apex),
+        "vertical velocity sign change emits apex marker");
+
+    auto landed = grounded;
+    landed.velocity = {1.0F, 0.0F, 0.0F};
+    const auto landFrame = evaluate(state, landed);
+    expect(landFrame.locomotionClip == nemisis::player::CharacterAnimationClip::Land,
+        "air-to-ground transition selects land clip");
+    expect(landFrame.landAlpha > 0.20F, "landing pose starts blending on contact");
+    expect(nemisis::player::hasCharacterAnimationEvent(
+        landFrame, nemisis::player::CharacterAnimationEvent::Land),
+        "air-to-ground transition emits land marker");
+    expect(landFrame.locomotionPhase == nemisis::player::CharacterClipPhase::Enter,
+        "new land clip reports enter phase");
+}
+
+void testCrouchDirectionAndTurnLean() {
+    nemisis::player::CharacterAnimationState state{};
+    auto input = baseInput();
+    input.crouchHeld = true;
+    input.velocity = {2.5F, 0.0F, 0.0F};
+    input.speed01 = 0.35F;
+    input.facingForward = {0.0F, 0.0F, 1.0F};
+    input.facingRight = {1.0F, 0.0F, 0.0F};
+    input.turnDeltaDegrees = 28.0F;
+    const auto frame = evaluate(state, input, 12);
+
+    expect(frame.locomotionClip == nemisis::player::CharacterAnimationClip::Crouch,
+        "grounded crouch selects crouch clip");
+    expect(frame.crouchAlpha > 0.95F, "crouch pose blends to full weight");
+    expect(frame.locomotionRight > 0.99F && std::abs(frame.locomotionForward) < 0.01F,
+        "world velocity resolves into local strafe direction");
+    expect(frame.movementAngleDegrees > 89.0F && frame.movementAngleDegrees < 91.0F,
+        "local strafe direction exposes a stable movement angle");
+    expect(frame.turnLean > 0.70F, "turn delta drives deterministic turn lean");
+    expect(frame.thirdPersonBodyOffset.y < -0.05F, "crouch lowers the third-person body pose");
+}
+
+void testConcurrentUpperBodyAdditivesAndMarkers() {
+    nemisis::player::CharacterAnimationState state{};
+    auto input = baseInput();
+    (void)evaluate(state, input, 1);
+    input.adsHeld = true;
+    input.weapon.adsAlpha = 1.0F;
+    input.weapon.shotIndex = 1U;
+    input.weapon.timeSinceLastShotSeconds = 0.0F;
+    input.weapon.reloading = true;
+    input.weapon.reloadProgress = 0.40F;
+    const auto layered = evaluate(state, input, 1);
+
+    expect(layered.upperBodyClip == nemisis::player::CharacterAnimationClip::Reload,
+        "reload remains the dominant upper-body state");
+    expect(layered.additiveLayerCount == 3U, "ADS, fire, and reload coexist as additive layers");
+    expect(layered.additiveLayers[0].clip == nemisis::player::CharacterAnimationClip::Ads,
+        "ADS additive layer has stable ordering");
+    expect(layered.additiveLayers[1].clip == nemisis::player::CharacterAnimationClip::Fire,
+        "fire additive layer has stable ordering");
+    expect(layered.additiveLayers[2].clip == nemisis::player::CharacterAnimationClip::Reload,
+        "reload additive layer has stable ordering");
+    expect(nemisis::player::hasCharacterAnimationEvent(
+        layered, nemisis::player::CharacterAnimationEvent::Fire),
+        "shot index change emits fire marker");
+    expect(nemisis::player::hasCharacterAnimationEvent(
+        layered, nemisis::player::CharacterAnimationEvent::ReloadStart),
+        "reload edge emits reload-start marker");
+    expect(nemisis::player::hasCharacterAnimationEvent(
+        layered, nemisis::player::CharacterAnimationEvent::AdsEnter),
+        "ADS edge emits enter marker");
+
+    input.weapon.reloadProgress = 0.60F;
+    const auto insert = evaluate(state, input, 1);
+    expect(nemisis::player::hasCharacterAnimationEvent(
+        insert, nemisis::player::CharacterAnimationEvent::ReloadInsert),
+        "reload midpoint emits insert marker once crossed");
+
+    input.weapon.reloading = false;
+    input.weapon.timeSinceLastShotSeconds = 1.0F;
+    const auto completed = evaluate(state, input, 1);
+    expect(nemisis::player::hasCharacterAnimationEvent(
+        completed, nemisis::player::CharacterAnimationEvent::ReloadComplete),
+        "reload falling edge emits completion marker");
+}
+
+void testFootstepAndMovementTechMarkers() {
+    nemisis::player::CharacterAnimationState walkState{};
+    auto walk = baseInput();
+    walk.velocity = {0.0F, 0.0F, 4.5F};
+    walk.speed01 = 0.55F;
+    int leftFootsteps = 0;
+    int rightFootsteps = 0;
+    for (int tick = 0; tick < 180; ++tick) {
+        const auto frame = evaluate(walkState, walk);
+        leftFootsteps += nemisis::player::hasCharacterAnimationEvent(
+            frame, nemisis::player::CharacterAnimationEvent::FootstepLeft) ? 1 : 0;
+        rightFootsteps += nemisis::player::hasCharacterAnimationEvent(
+            frame, nemisis::player::CharacterAnimationEvent::FootstepRight) ? 1 : 0;
+    }
+    expect(leftFootsteps > 0 && rightFootsteps > 0, "loop phase crossings emit alternating footstep markers");
+    expect(std::abs(leftFootsteps - rightFootsteps) <= 1, "footstep marker counts remain balanced");
+
+    nemisis::player::CharacterAnimationState mantleState{};
+    auto mantle = baseInput();
+    mantle.movementMode = nemisis::movement::MovementMode::Mantling;
+    mantle.mantleProgress01 = 0.20F;
+    const auto reach = evaluate(mantleState, mantle);
+    expect(nemisis::player::hasCharacterAnimationEvent(
+        reach, nemisis::player::CharacterAnimationEvent::MantleReach),
+        "mantle entry emits reach marker");
+    mantle.mantleProgress01 = 0.55F;
+    const auto pull = evaluate(mantleState, mantle);
+    expect(nemisis::player::hasCharacterAnimationEvent(
+        pull, nemisis::player::CharacterAnimationEvent::MantlePull),
+        "mantle phase crossing emits pull marker");
+}
+
+void testSkeletonPoseAndSocketsAreQueryable() {
+    nemisis::player::CharacterAnimationState state{};
+    auto input = baseInput();
+    input.velocity = {2.0F, 0.0F, 4.0F};
+    input.speed01 = 0.60F;
+    input.adsHeld = true;
+    input.weapon.adsAlpha = 1.0F;
+    input.aimPitchDegrees = 25.0F;
+    input.aimYawDegrees = -18.0F;
+    const auto frame = evaluate(state, input, 8);
+
+    const auto* root = nemisis::player::findCharacterBonePose(frame.pose, nemisis::player::CharacterBone::Root);
+    const auto* chest = nemisis::player::findCharacterBonePose(frame.pose, nemisis::player::CharacterBone::Chest);
+    const auto* hand = nemisis::player::findCharacterBonePose(frame.pose, nemisis::player::CharacterBone::HandRight);
+    const auto* muzzle = nemisis::player::findCharacterSocketPose(frame.pose, nemisis::player::CharacterSocket::Muzzle);
+    expect(root != nullptr && root->parent == nemisis::player::CharacterBone::Invalid,
+        "semantic skeleton pose exposes a root bone");
+    expect(chest != nullptr && chest->parent == nemisis::player::CharacterBone::SpineUpper,
+        "semantic skeleton pose exposes hierarchy links");
+    expect(hand != nullptr && hand->parent == nemisis::player::CharacterBone::ForearmRight,
+        "semantic skeleton pose exposes hand bone for weapon attachment");
+    expect(muzzle != nullptr && muzzle->parentBone == nemisis::player::CharacterBone::HandRight,
+        "muzzle socket is parented to the weapon hand");
+    expect(chest != nullptr && std::abs(chest->local.rotation.x) > 0.001F,
+        "ADS aim offset is present in upper-body bone rotation");
+    expect(nemisis::player::characterBoneName(nemisis::player::CharacterBone::HandRight) == "hand_r",
+        "bone semantics expose stable binding names");
+    expect(nemisis::player::characterSocketName(nemisis::player::CharacterSocket::Muzzle) == "muzzle",
+        "socket semantics expose stable binding names");
+    expect(nemisis::player::characterAnimationEventName(nemisis::player::CharacterAnimationEvent::ReloadInsert) ==
+            "reload_insert",
+        "event markers expose stable debug names");
+}
+
 } // namespace
 
 int main() {
@@ -180,6 +385,12 @@ int main() {
     testSlideWallRunAndMantleProduceDistinctPoses();
     testReloadFireAndEnergyPlatformDriveUpperBody();
     testResetClearsTransientAnimationState();
+    testDeterministicTransitionsAndNormalizedClipTime();
+    testJumpFallLandStateAndEvents();
+    testCrouchDirectionAndTurnLean();
+    testConcurrentUpperBodyAdditivesAndMarkers();
+    testFootstepAndMovementTechMarkers();
+    testSkeletonPoseAndSocketsAreQueryable();
 
     if (failures > 0) {
         std::cerr << failures << " player animation test(s) failed\n";

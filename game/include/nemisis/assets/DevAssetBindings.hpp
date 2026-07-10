@@ -25,6 +25,10 @@ struct DevAssetBindingSummary final {
     std::size_t totalMeshCount = 0;
     std::size_t totalNodeCount = 0;
     std::size_t totalMaterialCount = 0;
+    std::size_t skinnedAssetCount = 0;
+    std::size_t animatedAssetCount = 0;
+    std::size_t totalSkinCount = 0;
+    std::size_t totalAnimationCount = 0;
     std::size_t extractedAssetCount = 0;
     std::size_t totalPrimitiveCount = 0;
     std::size_t totalVertexCount = 0;

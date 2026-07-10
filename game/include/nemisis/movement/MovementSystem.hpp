@@ -47,6 +47,11 @@ struct PlayerMovementState final {
     float airborneTimeSeconds = 0.0F;
     float lastHorizontalSpeed = 0.0F;
     float inputMagnitude = 0.0F;
+    float crouchFraction = 0.0F;
+    float landingRecoveryRemaining = 0.0F;
+    float lastLandingSpeed = 0.0F;
+    bool crouched = false;
+    bool landedThisTick = false;
     bool slideHeldConsumed = false;
 };
 

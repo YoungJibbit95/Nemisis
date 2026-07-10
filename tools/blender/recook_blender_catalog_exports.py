@@ -139,7 +139,14 @@ def recook_entry(root: Path, entry: dict[str, Any], args: argparse.Namespace) ->
         }
 
     cooked.parent.mkdir(parents=True, exist_ok=True)
-    bpy.ops.export_scene.gltf(filepath=str(cooked), export_format="GLB", export_yup=True)
+    bpy.ops.export_scene.gltf(
+        filepath=str(cooked),
+        export_format="GLB",
+        export_yup=True,
+        export_skins=True,
+        export_animations=True,
+        export_animation_mode="ACTIONS",
+    )
 
     metadata: dict[str, Any] = {}
     if metadata_path.exists():
@@ -176,6 +183,18 @@ def recook_entry(root: Path, entry: dict[str, Any], args: argparse.Namespace) ->
     if "weapon" in entry.get("tags", []) or str(entry.get("id", "")).startswith("wpn_"):
         metadata["origin"] = "Recooked from normalized Blender source; weapon sockets are Blender -Y forward and runtime +Z forward."
         metadata["socket_generation"] = "Recooked from checked-in .blend sockets by tools/blender/recook_blender_catalog_exports.py."
+    armatures = [obj for obj in bpy.context.scene.objects if obj.type == "ARMATURE"]
+    if armatures:
+        armature = armatures[0]
+        metadata["skin"] = armature.name
+        metadata["skinned_meshes"] = sorted(
+            obj.name
+            for obj in bpy.context.scene.objects
+            if obj.type == "MESH"
+            and any(modifier.type == "ARMATURE" and modifier.object == armature for modifier in obj.modifiers)
+        )
+        metadata["animation_clips"] = sorted(action.name for action in bpy.data.actions)
+        metadata["rig_type"] = "deforming_armature"
     write_json(metadata_path, metadata)
 
     return {

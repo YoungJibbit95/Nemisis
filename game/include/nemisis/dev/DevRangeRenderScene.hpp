@@ -59,6 +59,8 @@ struct DevRangePlayerRenderState final {
 
 struct DevRangeRenderSceneStats final {
     bool skyPassEnabled = false;
+    bool firstPersonViewmodelActive = false;
+    bool localWorldModelActive = false;
     std::size_t skyFallbackMeshCount = 0;
     std::size_t worldBoxCount = 0;
     std::size_t meshInstanceCount = 0;

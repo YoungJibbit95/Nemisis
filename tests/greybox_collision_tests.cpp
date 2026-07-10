@@ -1,6 +1,9 @@
 #include "nemisis/dev/GreyboxCollision.hpp"
 
+#include "novacore/physics/CharacterController.hpp"
+
 #include <algorithm>
+#include <cmath>
 #include <cstdlib>
 #include <iostream>
 #include <string_view>
@@ -306,6 +309,133 @@ void testSweepReportsWallRunPanelContact() {
         "greybox contact role names are stable");
 }
 
+novacore::physics::PhysicsWorld makeCornerDepenetrationWorld(bool reverseOrder) {
+    novacore::physics::StaticCollider alpha{
+        "alpha_wall",
+        novacore::physics::SurfaceKind::Wall,
+        {0.0F, 1.0F, 0.0F},
+        {0.25F, 1.0F, 2.0F},
+        true,
+    };
+    novacore::physics::StaticCollider beta{
+        "beta_wall",
+        novacore::physics::SurfaceKind::Wall,
+        {0.0F, 1.0F, 0.0F},
+        {2.0F, 1.0F, 0.25F},
+        true,
+    };
+    novacore::physics::PhysicsWorld world;
+    if (reverseOrder) {
+        world.addStaticCollider(beta);
+        world.addStaticCollider(alpha);
+    } else {
+        world.addStaticCollider(alpha);
+        world.addStaticCollider(beta);
+    }
+    return world;
+}
+
+void testDepenetrationIsIndependentOfColliderInsertionOrder() {
+    auto forwardWorld = makeCornerDepenetrationWorld(false);
+    auto reverseWorld = makeCornerDepenetrationWorld(true);
+    novacore::physics::CharacterQuery query{};
+    query.position = {0.1F, 0.4F, 0.1F};
+    query.radius = 0.42F;
+    query.height = 1.8F;
+    query.enableGroundSnap = false;
+    query.enableStepUp = false;
+    query.maxDepenetrationIterations = 8;
+
+    const auto forward = forwardWorld.resolveCharacter(query);
+    const auto reverse = reverseWorld.resolveCharacter(query);
+    expect(forward.blocked && reverse.blocked, "corner overlap depenetrates in both collider orders");
+    expect(std::abs(forward.position.x - reverse.position.x) <= 0.00001F,
+           "depenetration x is independent of insertion order");
+    expect(std::abs(forward.position.z - reverse.position.z) <= 0.00001F,
+           "depenetration z is independent of insertion order");
+    expect(forward.depenetrationIterations == reverse.depenetrationIterations,
+           "depenetration iteration count is deterministic");
+    expect(forward.contacts.size() == reverse.contacts.size(), "depenetration contact count is deterministic");
+}
+
+void testCapsuleSweepUsesRoundedCorner() {
+    novacore::physics::PhysicsWorld world;
+    world.addStaticCollider(novacore::physics::StaticCollider{
+        "corner_block",
+        novacore::physics::SurfaceKind::Wall,
+        {0.0F, 1.0F, 0.0F},
+        {0.5F, 1.0F, 0.5F},
+        true,
+    });
+    novacore::physics::CharacterSweepQuery query{};
+    query.startPosition = {-1.2F, 0.25F, 1.2F};
+    query.desiredDisplacement = {0.3F, 0.0F, -0.3F};
+    query.radius = 0.5F;
+    query.height = 1.8F;
+    query.enableGroundSnap = false;
+    query.enableStepUp = false;
+
+    const auto result = world.sweepCharacter(query);
+    expect(!result.hit, "rounded capsule corner does not collide with empty expanded-AABB corner");
+    expect(result.resolve.position.x > -0.91F && result.resolve.position.z < 0.91F,
+           "rounded capsule corner sweep applies full clear displacement");
+}
+
+void testVerticalCapsuleSweepCatchesFastLanding() {
+    novacore::physics::PhysicsWorld world;
+    world.addStaticCollider(novacore::physics::StaticCollider{
+        "drop_step",
+        novacore::physics::SurfaceKind::Cover,
+        {0.0F, 0.2F, 0.0F},
+        {1.0F, 0.2F, 1.0F},
+        true,
+        novacore::physics::RampDirection::None,
+        0.4F,
+    });
+    novacore::physics::CharacterSweepQuery query{};
+    query.startPosition = {0.0F, 2.0F, 0.0F};
+    query.desiredDisplacement = {0.0F, -3.0F, 0.0F};
+    query.radius = 0.42F;
+    query.height = 1.8F;
+    query.enableStepUp = false;
+
+    const auto result = world.sweepCharacter(query);
+    expect(result.hit, "vertical capsule sweep catches high-speed landing");
+    expect(result.hitColliderId == "drop_step", "vertical capsule sweep reports landed collider");
+    expect(result.hitNormal.y > 0.99F, "vertical capsule landing exposes walkable up normal");
+    expect(result.resolve.grounded, "vertical capsule landing ends grounded");
+    expect(std::abs(result.resolve.position.y - 0.4F) <= 0.01F,
+           "vertical capsule landing resolves to top surface without tunneling");
+}
+
+void testGroundSnapDistanceAndSlopeLimit() {
+    novacore::physics::PhysicsWorld floorWorld;
+    novacore::physics::CharacterQuery floorQuery{};
+    floorQuery.position = {0.0F, 0.2F, 0.0F};
+    floorQuery.snapDownDistance = 0.3F;
+    const auto floor = floorWorld.resolveCharacter(floorQuery);
+    expect(floor.grounded, "ground snap acquires floor within configured distance");
+    expect(std::abs(floor.groundSnapDistance - 0.2F) <= 0.001F,
+           "ground snap reports deterministic correction distance");
+
+    novacore::physics::PhysicsWorld steepWorld;
+    steepWorld.addStaticCollider(novacore::physics::StaticCollider{
+        "steep_ramp",
+        novacore::physics::SurfaceKind::Ramp,
+        {0.0F, 1.0F, 0.0F},
+        {1.0F, 1.0F, 0.5F},
+        true,
+        novacore::physics::RampDirection::PositiveZ,
+    });
+    novacore::physics::CharacterQuery steepQuery{};
+    steepQuery.position = {0.0F, 0.95F, 0.0F};
+    steepQuery.walkableSlopeCosine = 0.68F;
+    steepQuery.snapDownDistance = 0.2F;
+    const auto steep = steepWorld.resolveCharacter(steepQuery);
+    expect(!steep.grounded, "slope above walkable limit is not accepted as ground");
+    expect(steep.groundColliderId.empty(), "rejected steep slope does not leak ground identity");
+}
+
 } // namespace
 
 int main() {
@@ -324,6 +454,10 @@ int main() {
     testMidLedgeReportsMantleCandidate();
     testWallRunPanelReportsSurfaceContact();
     testSweepReportsWallRunPanelContact();
+    testDepenetrationIsIndependentOfColliderInsertionOrder();
+    testCapsuleSweepUsesRoundedCorner();
+    testVerticalCapsuleSweepCatchesFastLanding();
+    testGroundSnapDistanceAndSlopeLimit();
 
     if (failures > 0) {
         std::cerr << failures << " greybox collision test(s) failed\n";

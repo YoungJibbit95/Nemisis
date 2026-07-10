@@ -4,6 +4,14 @@
 
 The game uses full third-person characters while keeping first-person feel responsive. First-person weapon/arms animation and third-person body animation are related but separate presentation layers.
 
+## Current Runtime Foundation
+
+- NovaCore imports glTF skins, joint hierarchy, inverse bind matrices, weighted vertices, and translation/rotation/scale animation channels.
+- `PlayerSkeletalAnimator` converts cooked clips into NovaCore runtime clips, crossfades locomotion states, evaluates sockets, skins the mesh, and queues dynamic Vulkan vertex updates.
+- The A1 operator currently supplies `idle`, `walk`, and `aim`; the A1 first-person arms supply `idle` and `aim`. The Project character retains its source `Hard stand`, `Run`, `T_pose`, and `Walk` clips for future GPU-skinned full-body use.
+- Game-side animation still supplies deterministic state selection, phases, event markers, procedural additive offsets, and first-person weapon/hand constraints.
+- The first-person render path submits an exclusive camera-bound arms/weapon viewmodel and does not submit the duplicate local third-person body.
+
 ## Character Representations
 
 First-person:

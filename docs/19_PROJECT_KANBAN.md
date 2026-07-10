@@ -169,16 +169,24 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [x] Add a renderer-owned NovaCore sky pass and switch Dev Range away from the broken large GLB skybox path.
 - [x] Keep the old Project skybox GLB as an explicit disabled-sky fallback instead of a normal scene mesh.
 - [x] Add per-mesh material fallback response profiles for Project/A1/A2 weapons, characters, environment meshes, and asset debug telemetry.
+- [x] Import glTF skins, joints, inverse bind matrices, animation channels, and weighted vertices through NovaCore.
+- [x] Play cooked operator/first-person-arm clips through a runtime skeleton and update dynamic Vulkan vertex resources.
+- [x] Normalize Project weapon axes, dimensions, origins, muzzle/ejection/grip sockets, and recook Blender exports.
+- [x] Upgrade character/arms Blender sources with real armatures plus idle/walk/aim clips.
+- [x] Add deterministic animation transitions, event markers, directional locomotion, land/crouch states, and bone/socket poses.
+- [x] Improve movement response, air counter-steering, crouch interpolation, hard-landing recovery, slide limits, and wall-run acceleration.
+- [x] Add KCC skin width, iterative depenetration, sweep step-up, richer ground/step diagnostics, crouch motor state, and landing telemetry.
+- [x] Regenerate prototype map sockets/collision markers and reach a zero-error Blender-enabled readiness audit.
 
 ## Doing
 
 - [ ] Expand renderer validation labels and resize stress coverage.
 - [ ] Keep UI moving from clickable Vulkan primitive path toward SDF/MSDF text, clipping, batching, focus graph, and richer vector drawing.
-- [ ] Start texture/material binding for A1/A2 GLBs so imported assets look less like tinted blockouts.
-- [ ] Extend Dev Range drills with selectable drill variants, recoil graphs, richer lane awards, and future server validation hooks.
-- [ ] Deepen KCC physics beyond the current swept AABB/contact-manifold pass into true capsule sweeps, moving platform contacts, slope/slide validation, and server replay validation.
-- [ ] Author or generate Project-asset sockets (`socket_muzzle`, `socket_weapon_root`, `socket_camera`, hands) so the runtime can stop using placement heuristics.
-- [ ] Replace procedural first-person mesh-anchor poses with authored skeletal arm/weapon clips once Blender-ready rigs, sockets, and animation exports exist.
+- [ ] Add descriptor-backed image/sampler residency so embedded glTF base-color, normal, metallic/roughness, and emissive textures replace fallback material factors.
+- [ ] Move skeletal deformation from the current CPU/dynamic-vertex prototype to GPU joint palettes with per-instance animation state.
+- [ ] Extend Dev Range drills with recoil graphs, richer lane awards, and future server validation hooks.
+- [ ] Continue KCC toward capsule-vs-triangle queries, moving platform rotation, dynamic bodies, and server replay validation.
+- [ ] Author reload/fire/mantle/wall-run clips and animation retarget profiles for the final first-person arm rig.
 
 ## Next Core
 

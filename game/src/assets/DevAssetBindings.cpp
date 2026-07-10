@@ -156,6 +156,8 @@ DevAssetBindingSummary DevAssetBindings::bindAssets(
         const auto meshCount = meshData.sceneInfo.meshCount;
         const auto nodeCount = meshData.sceneInfo.nodeCount;
         const auto materialCount = meshData.sceneInfo.materialCount;
+        const auto skinCount = meshData.sceneInfo.skinCount;
+        const auto animationCount = meshData.sceneInfo.animationCount;
         const auto binaryBytes = meshData.sceneInfo.binaryBytes;
         const auto primitiveCount = meshData.primitiveCount();
         const auto vertexCount = meshData.vertexCount();
@@ -172,6 +174,10 @@ DevAssetBindingSummary DevAssetBindings::bindAssets(
         summary.totalMeshCount += meshCount;
         summary.totalNodeCount += nodeCount;
         summary.totalMaterialCount += materialCount;
+        summary.totalSkinCount += skinCount;
+        summary.totalAnimationCount += animationCount;
+        summary.skinnedAssetCount += skinCount > 0U ? 1U : 0U;
+        summary.animatedAssetCount += animationCount > 0U ? 1U : 0U;
         summary.totalBinaryBytes += binaryBytes;
         summary.totalPrimitiveCount += primitiveCount;
         summary.totalVertexCount += vertexCount;

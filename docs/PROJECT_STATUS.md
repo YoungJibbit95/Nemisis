@@ -1,5 +1,16 @@
 # Nemisis Project Status
 
+## Latest Block - Runtime Skeletal Animation, Corrected Assets, And Movement Feel
+
+- Added a real NovaCore-backed skeletal animation path for cooked glTF skins: joint hierarchies, authored clip playback, crossfades, sockets, CPU skinning, and dynamic Vulkan vertex resources are now live in `nemisis_game`.
+- The local A1 operator and first-person arms now play cooked `idle`/`walk`/`aim` clips instead of presenting static T-poses; the full local world model remains excluded from the first-person camera.
+- Rebuilt camera/weapon/arms attachment evaluation around a single camera basis and cooked muzzle/ejection/right-grip/left-grip sockets. Project rifles, SMG, and sidearms use normalized +Z-forward runtime exports and asset-specific dimensions.
+- Expanded procedural animation state with clip phases, deterministic transitions, jump/fall/land/crouch states, directional locomotion, turn lean, additive upper-body layers, event markers, and bone/socket pose output.
+- Retuned player movement with stronger ground response, turn acceleration, air counter-steering, crouch transitions, landing recovery, bounded slide speed, and more stable wall-run acceleration.
+- Recooked the Blender catalog. Six skinned runtime assets now expose fourteen clips; the final Blender-enabled readiness audit has zero errors, 24 `game_ready` assets, 10 `ready_with_notes`, and four manual collision/metadata notes.
+- Regenerated prototype map assets with root/snap/cover/ramp/target sockets and the humanoid collision marker; added initial weapon/environment PBR material definitions.
+- Verified 37/37 Nemisis tests and the direct Vulkan Dev Range smoke path with two dynamic skeletal mesh resources.
+
 ## Latest Block - Renderer Sky Pass And Dev Range Sky Fallback Cleanup
 
 - Wired a new NovaCore renderer-owned sky pass into the Dev Range render scene so the sky is submitted before depth-tested world geometry instead of relying on the broken large GLB skybox mesh.

@@ -1,6 +1,6 @@
 # Asset Import Readiness
 
-Generated: 2026-06-13
+Generated: 2026-07-10
 
 Scan command:
 
@@ -12,16 +12,18 @@ python tools\assets\asset_readiness_check.py --repo-root . --output assets\proce
 
 - Checked `assets/source/blender`, `assets/export/gltf`, `assets/generated`, `assets/project_assets`, `configs/assets/nemisis_assets.json`, and existing asset tooling.
 - The imported Project GLB drop is now repo-local under `assets/project_assets`; `F:\Coding\Project\Assets` is only a staging location for newly dropped files.
-- Original `.blend` assets were not rewritten. Sidecar metadata was added next to the imported Project GLBs and skybox, and the audit output is `assets/processed/readiness/asset_readiness_scan.json`.
-- This scan did not request Blender validation. Run the same command with `--with-blender` when Blender transform checks are needed.
+- Blender sources and normalized Project exports were recooked where required; the audit output is `assets/processed/readiness/asset_readiness_scan.json`.
+- The current scan used Blender 5.1.2 headlessly and validates units, transforms, bounds, sockets, skins, clips, and cooked GLBs.
 
 ## Summary
 
 - Catalog entries: 38 total, 36 runtime mesh/scene GLBs plus 2 material IDs.
-- GLB inventory: 36 repo-local runtime GLBs under `assets/`, including the imported Project character/weapons plus `skybox1.glb`; 0 orphan repo GLBs, 0 uncataloged runtime `.blend` sources.
+- Audit result: zero error-severity issues; 24 assets are `game_ready`, 10 are `ready_with_notes`, and four retain manual collision/metadata notes.
+- GLB inventory: 43 files under `assets/`; seven uncooked Project source GLBs are intentionally reported as source-side orphans while their normalized cooked counterparts are cataloged.
 - Format: every scanned cataloged GLB is binary glTF 2.0 with an embedded BIN chunk.
 - Texture/material references: no scanned GLB uses external buffer or image URIs. Imported Project GLBs carry embedded image data.
-- Blender source scan: not requested in this pass. The previous Blender-enabled audit opened 21 cataloged `.blend` files headless with meter scale and no unapplied mesh transforms.
+- Blender source scan: all cataloged `.blend` files open headlessly; normalized weapon meshes have applied transforms, meter scale, +Z runtime forward sockets, and authored grip origins.
+- Animation inventory: six skinned runtime assets and fourteen cooked clips are available to the game runtime.
 - Root/pivot note: A1/A2 sources include root empties named after the asset at origin. Older A0 dev primitives do not, but their sockets/collision nodes are present and transforms are applied.
 
 ## Game-Ready Now

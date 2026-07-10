@@ -22,14 +22,22 @@ void expectNear(float actual, float expected, float tolerance, std::string_view 
     expect(std::abs(actual - expected) <= tolerance, message);
 }
 
+void expectVecNear(
+    novacore::math::Vec3 actual,
+    novacore::math::Vec3 expected,
+    float tolerance,
+    std::string_view message) {
+    expectNear(actual.x, expected.x, tolerance, message);
+    expectNear(actual.y, expected.y, tolerance, message);
+    expectNear(actual.z, expected.z, tolerance, message);
+}
+
 nemisis::player::FirstPersonRigMountDesc longGunMount() {
     nemisis::player::FirstPersonRigMountDesc mount{};
     mount.hipOffset = {0.26F, -0.30F, 0.90F};
     mount.adsOffset = {0.035F, -0.165F, 0.72F};
     mount.scale = {1.0F, 1.0F, 1.0F};
     mount.yawCorrectionDegrees = 0.0F;
-    mount.hipPitchFollow = 0.38F;
-    mount.adsPitchFollow = 0.78F;
     mount.recoilYawScale = 0.46F;
     mount.recoilPitchScale = 0.34F;
     mount.reloadPitchDegrees = 9.5F;
@@ -48,13 +56,20 @@ nemisis::player::FirstPersonRigMountDesc sidearmMount() {
     return mount;
 }
 
+nemisis::player::FirstPersonRigSocketLayout sidearmSockets() {
+    return {
+        {0.0F, 0.011F, 0.34F},
+        {0.052F, 0.022F, 0.16F},
+        {0.038F, -0.015F, 0.052F},
+        {-0.040F, -0.025F, -0.025F},
+    };
+}
+
 nemisis::player::FirstPersonRigMountDesc armsMount() {
     nemisis::player::FirstPersonRigMountDesc mount{};
     mount.hipOffset = {0.08F, -0.50F, 0.78F};
     mount.adsOffset = {0.018F, -0.43F, 0.62F};
     mount.scale = {0.84F, 0.84F, 0.84F};
-    mount.hipPitchFollow = 0.46F;
-    mount.adsPitchFollow = 0.58F;
     return mount;
 }
 
@@ -63,8 +78,6 @@ nemisis::player::FirstPersonRigMountDesc bodyMount() {
     mount.hipOffset = {0.0F, -2.34F, 0.30F};
     mount.adsOffset = {0.0F, -2.38F, 0.22F};
     mount.scale = {0.46F, 0.46F, 0.46F};
-    mount.hipPitchFollow = 0.12F;
-    mount.adsPitchFollow = 0.10F;
     return mount;
 }
 
@@ -156,9 +169,9 @@ void testReloadFireAndWallrunDriveSocketTransforms() {
 
     expect(frame.reloadArc > 0.95F, "half reload produces full reload arc");
     expect(frame.weapon.pitchDegrees > 7.0F, "reload and recoil pitch weapon through the rig socket");
-    expect(frame.weapon.rollDegrees < -5.0F, "reload rolls weapon away from the sightline");
-    expect(std::abs(frame.arms.rollDegrees) > 4.0F, "arms retain animation/reload roll while wallrunning");
-    expect(frame.wallRunRollDegrees > 3.0F, "wallrun camera roll propagates into first-person attachments");
+    expectNear(frame.weapon.rollDegrees, 1.0F, 0.01F, "weapon keeps full camera roll while applying its reload arc");
+    expectNear(frame.arms.rollDegrees, 2.0F, 0.01F, "arms keep full camera roll while applying animation and reload arcs");
+    expectNear(frame.wallRunRollDegrees, 10.0F, 0.01F, "wallrun roll diagnostic matches the camera roll");
     expect(frame.supportElbow.position.y < frame.leftHand.position.y, "support elbow stays below the support hand");
 }
 
@@ -167,6 +180,7 @@ void testSidearmUsesShorterMuzzleAndPistolRoll() {
     auto sidearm = rifle;
     sidearm.weaponClass = nemisis::weapons::WeaponClass::Sidearm;
     sidearm.weaponMount = sidearmMount();
+    sidearm.weaponSockets = sidearmSockets();
 
     const auto rifleFrame = nemisis::player::evaluateFirstPersonRig(rifle);
     const auto sidearmFrame = nemisis::player::evaluateFirstPersonRig(sidearm);
@@ -174,6 +188,48 @@ void testSidearmUsesShorterMuzzleAndPistolRoll() {
     expect(rifleFrame.muzzle.position.z > rifleFrame.weapon.position.z + 0.70F, "rifle muzzle socket is near the long barrel");
     expect(sidearmFrame.muzzle.position.z < sidearmFrame.weapon.position.z + 0.50F, "sidearm muzzle socket is shorter than rifle socket");
     expectNear(sidearmFrame.weapon.rollDegrees, 0.0F, 0.01F, "sidearm uses normalized pistol roll");
+}
+
+void testCameraBasisDrivesWeaponSocketsAndHands() {
+    auto input = baseInput();
+    input.view.yawDegrees = 33.0F;
+    input.view.pitchDegrees = 22.0F;
+    input.cameraRollDegrees = -14.0F;
+    input.weaponSockets = {
+        {0.0F, 0.0F, 1.0F},
+        {0.25F, 0.0F, 0.0F},
+        {0.08F, -0.04F, 0.16F},
+        {-0.10F, -0.05F, 0.42F},
+    };
+
+    const auto frame = nemisis::player::evaluateFirstPersonRig(input);
+    const auto& weaponRoot = nemisis::player::firstPersonRigSocket(
+        frame,
+        nemisis::player::FirstPersonRigSocket::WeaponRoot);
+    const auto& muzzle = nemisis::player::firstPersonRigSocket(
+        frame,
+        nemisis::player::FirstPersonRigSocket::Muzzle);
+    const auto& rightGrip = nemisis::player::firstPersonRigSocket(
+        frame,
+        nemisis::player::FirstPersonRigSocket::RightGrip);
+    const auto& leftGrip = nemisis::player::firstPersonRigSocket(
+        frame,
+        nemisis::player::FirstPersonRigSocket::LeftGrip);
+    constexpr float kPi = 3.14159265358979323846F;
+    const float yaw = input.view.yawDegrees * (kPi / 180.0F);
+    const float pitch = input.view.pitchDegrees * (kPi / 180.0F);
+    const novacore::math::Vec3 expectedForward{
+        std::sin(yaw) * std::cos(pitch),
+        std::sin(pitch),
+        std::cos(yaw) * std::cos(pitch),
+    };
+
+    expectNear(frame.weapon.yawDegrees, 33.0F, 0.01F, "weapon yaw follows camera yaw");
+    expectNear(frame.weapon.pitchDegrees, -22.0F, 0.01F, "mesh pitch uses the renderer sign needed to follow camera pitch");
+    expectNear(frame.weapon.rollDegrees, -14.0F, 0.01F, "weapon roll follows camera roll");
+    expectVecNear(muzzle.worldPosition - weaponRoot.worldPosition, expectedForward, 0.0001F, "muzzle follows the same camera basis as the weapon mesh");
+    expectVecNear(frame.rightHand.position, rightGrip.worldPosition, 0.0001F, "right hand remains on the firing grip");
+    expectVecNear(frame.leftHand.position, leftGrip.worldPosition, 0.0001F, "left hand remains on the support grip");
 }
 
 void testRigSocketsExposeCameraHandsAndWeaponAttachments() {
@@ -214,6 +270,7 @@ int main() {
     testLookDownRevealsBodyWithoutLiftingItIntoCamera();
     testReloadFireAndWallrunDriveSocketTransforms();
     testSidearmUsesShorterMuzzleAndPistolRoll();
+    testCameraBasisDrivesWeaponSocketsAndHands();
     testRigSocketsExposeCameraHandsAndWeaponAttachments();
 
     if (failures > 0) {

@@ -61,12 +61,17 @@ struct FirstPersonRigMountDesc final {
     float yawCorrectionDegrees = 0.0F;
     float pitchCorrectionDegrees = 0.0F;
     float rollCorrectionDegrees = 0.0F;
-    float hipPitchFollow = 0.42F;
-    float adsPitchFollow = 0.82F;
     float recoilYawScale = 0.50F;
     float recoilPitchScale = 0.38F;
     float reloadPitchDegrees = 8.0F;
     float reloadRollDegrees = 8.0F;
+};
+
+struct FirstPersonRigSocketLayout final {
+    novacore::math::Vec3 muzzle{0.0F, 0.028F, 0.78F};
+    novacore::math::Vec3 ejectionPort{0.105F, 0.052F, 0.34F};
+    novacore::math::Vec3 rightGrip{0.060F, -0.030F, 0.145F};
+    novacore::math::Vec3 leftGrip{-0.090F, -0.055F, 0.380F};
 };
 
 struct FirstPersonRigInput final {
@@ -81,6 +86,7 @@ struct FirstPersonRigInput final {
     FirstPersonRigMountDesc weaponMount{};
     FirstPersonRigMountDesc armsMount{};
     FirstPersonRigMountDesc bodyMount{};
+    FirstPersonRigSocketLayout weaponSockets{};
     float cameraRollDegrees = 0.0F;
     float adsAlpha = 0.0F;
     float speed01 = 0.0F;

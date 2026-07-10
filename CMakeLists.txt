@@ -86,6 +86,7 @@ add_executable(nemisis_game
     game/src/player/PlayerFirstPersonRig.cpp
     game/src/player/PlayerHealth.cpp
     game/src/player/PlayerProfile.cpp
+    game/src/player/PlayerSkeletalAnimator.cpp
     game/src/player/PlayerSpawn.cpp
     game/src/player/PlayerView.cpp
     game/src/render/RenderTuning.cpp
@@ -239,6 +240,25 @@ target_include_directories(nemisis_player_animation_tests
 
 target_link_libraries(nemisis_player_animation_tests PRIVATE Novacore::Engine)
 add_test(NAME nemisis_player_animation_tests COMMAND nemisis_player_animation_tests)
+
+add_executable(nemisis_player_skeletal_animator_tests
+    tests/player_skeletal_animator_tests.cpp
+    game/src/player/PlayerSkeletalAnimator.cpp
+)
+
+target_include_directories(nemisis_player_skeletal_animator_tests
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/game/include
+)
+
+target_compile_definitions(nemisis_player_skeletal_animator_tests
+    PRIVATE
+        NEMISIS_SOURCE_ROOT="${CMAKE_CURRENT_SOURCE_DIR}"
+)
+
+target_link_libraries(nemisis_player_skeletal_animator_tests PRIVATE Novacore::Engine)
+novacore_copy_mingw_runtime(nemisis_player_skeletal_animator_tests)
+add_test(NAME nemisis_player_skeletal_animator_tests COMMAND nemisis_player_skeletal_animator_tests)
 
 add_executable(nemisis_player_first_person_rig_tests
     game/src/player/PlayerAnimation.cpp

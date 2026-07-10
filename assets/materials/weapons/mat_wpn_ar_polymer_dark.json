@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "id": "mat_wpn_ar_polymer_dark",
+  "shader": "pbr_metallic_roughness",
+  "base_color": [0.055, 0.064, 0.071, 1.0],
+  "metallic": 0.42,
+  "roughness": 0.58,
+  "normal_scale": 0.75,
+  "emissive": [0.0, 0.0, 0.0],
+  "texture_slots": {
+    "base_color": "textures/weapons/wpn_polymer_dark_basecolor.png",
+    "normal": "textures/weapons/wpn_polymer_dark_normal.png",
+    "metallic_roughness": "textures/weapons/wpn_polymer_dark_mr.png"
+  },
+  "fallback": {
+    "rim_scale": 0.65,
+    "specular_scale": 0.85,
+    "contrast_scale": 1.08,
+    "saturation_scale": 0.88
+  }
+}

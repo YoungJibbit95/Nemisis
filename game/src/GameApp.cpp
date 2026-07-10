@@ -571,6 +571,28 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
                 command.crouchHeld,
             });
         hasCharacterAnimationFrame_ = true;
+
+        const float animationDelta = static_cast<float>(context.fixedDeltaSeconds);
+        const auto bodyMesh = devMeshResources_.find("chr_a1_stylized_operator_01");
+        if (bodyMesh != devMeshResources_.end() &&
+            skeletalBodyAnimator_.update(latestCharacterAnimationFrame_, animationDelta)) {
+            if (const auto* skinnedMesh = skeletalBodyAnimator_.skinnedMesh(); skinnedMesh != nullptr) {
+                (void)renderer_.updateMeshResourceVertices(bodyMesh->second, *skinnedMesh);
+            }
+        }
+
+        auto armsAnimationFrame = latestCharacterAnimationFrame_;
+        armsAnimationFrame.locomotionClip =
+            armsAnimationFrame.upperBodyClip == player::CharacterAnimationClip::Idle
+            ? player::CharacterAnimationClip::Idle
+            : player::CharacterAnimationClip::Ads;
+        const auto armsMesh = devMeshResources_.find("chr_a1_fp_arms_01");
+        if (armsMesh != devMeshResources_.end() &&
+            skeletalArmsAnimator_.update(armsAnimationFrame, animationDelta)) {
+            if (const auto* skinnedMesh = skeletalArmsAnimator_.skinnedMesh(); skinnedMesh != nullptr) {
+                (void)renderer_.updateMeshResourceVertices(armsMesh->second, *skinnedMesh);
+            }
+        }
     }
 
     net::PredictionSnapshot predictionSnapshot{};
@@ -761,6 +783,10 @@ void GameApp::loadAssetCatalog() {
             " meshes=" + std::to_string(devAssetSummary_.totalMeshCount) +
             " nodes=" + std::to_string(devAssetSummary_.totalNodeCount) +
             " materials=" + std::to_string(devAssetSummary_.totalMaterialCount) +
+            " skinned=" + std::to_string(devAssetSummary_.skinnedAssetCount) +
+            " animated=" + std::to_string(devAssetSummary_.animatedAssetCount) +
+            " skins=" + std::to_string(devAssetSummary_.totalSkinCount) +
+            " clips=" + std::to_string(devAssetSummary_.totalAnimationCount) +
             " primitives=" + std::to_string(devAssetSummary_.totalPrimitiveCount) +
             " vertices=" + std::to_string(devAssetSummary_.totalVertexCount) +
             " indices=" + std::to_string(devAssetSummary_.totalIndexCount));
@@ -1145,7 +1171,38 @@ void GameApp::registerDevMeshResources() {
             continue;
         }
 
-        const auto handle = renderer_.registerMeshResource(std::string(assetId), *source->meshData);
+        const novacore::assets::GltfMeshData* initialMesh = &*source->meshData;
+        auto usage = novacore::render::MeshResourceUsage::Static;
+        player::PlayerSkeletalAnimator* animator = nullptr;
+        if (assetId == "chr_a1_stylized_operator_01") {
+            animator = &skeletalBodyAnimator_;
+        } else if (assetId == "chr_a1_fp_arms_01") {
+            animator = &skeletalArmsAnimator_;
+        }
+        if (animator != nullptr && animator->initialize(*source->meshData)) {
+            if (const auto* skinnedMesh = animator->skinnedMesh(); skinnedMesh != nullptr) {
+                initialMesh = skinnedMesh;
+                usage = novacore::render::MeshResourceUsage::DynamicVertices;
+            }
+            const auto& animationStats = animator->stats();
+            novacore::core::logInfo(
+                "game",
+                "Skeletal asset ready: id=" + std::string(assetId) +
+                    " joints=" +
+                    std::to_string(animationStats.jointCount) +
+                    " sockets=" + std::to_string(animationStats.socketCount) +
+                    " clips=" + std::to_string(animationStats.clipCount) +
+                    " vertices=" + std::to_string(animationStats.skinnedVertexCount) +
+                    " clip=" + animationStats.currentClip);
+        } else if (animator != nullptr) {
+            for (const auto& error : animator->errors()) {
+                novacore::core::logWarning(
+                    "game",
+                    "Skeletal asset " + std::string(assetId) + ": " + error);
+            }
+        }
+
+        const auto handle = renderer_.registerMeshResource(std::string(assetId), *initialMesh, usage);
         if (!handle.isValid()) {
             ++rejected;
             novacore::core::logWarning("game", "Dev mesh resource registration failed: " + std::string(assetId));
@@ -1160,6 +1217,7 @@ void GameApp::registerDevMeshResources() {
         "Renderer dev mesh resources registered: " + std::to_string(devMeshResources_.size()) + "/" +
             std::to_string(assets::requiredDevSandboxRenderableAssetIds().size()) +
             " cpu_registered=" + std::to_string(stats.registeredResources) +
+            " dynamic=" + std::to_string(stats.dynamicVertexResources) +
             " primitives=" + std::to_string(stats.totalPrimitives) +
             " vertices=" + std::to_string(stats.totalVertices) +
             " indices=" + std::to_string(stats.totalIndices) +

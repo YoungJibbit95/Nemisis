@@ -5,9 +5,10 @@
   "tactical_sprint_speed": 8.6,
   "crouch_speed": 3.1,
   "ground": {
-    "acceleration": 42.0,
-    "deceleration": 34.0,
-    "friction": 10.0,
+    "acceleration": 46.0,
+    "turn_acceleration": 68.0,
+    "deceleration": 38.0,
+    "friction": 9.5,
     "stop_speed": 1.25
   },
   "jump_velocity": 7.35,
@@ -21,13 +22,17 @@
     "buffer_time": 0.16
   },
   "gravity": -22.0,
-  "air_acceleration": 18.0,
+  "air_acceleration": 17.0,
   "air": {
     "max_speed": 8.2,
-    "drag": 0.12
+    "drag": 0.08,
+    "counter_acceleration": 25.0,
+    "control": 0.42
   },
   "slide": {
-    "initial_impulse": 8.5,
+    "initial_impulse": 2.6,
+    "min_entry_speed": 4.2,
+    "max_speed": 11.5,
     "max_duration": 0.9,
     "friction": 7.0,
     "steering_acceleration": 8.0,
@@ -44,6 +49,12 @@
   },
   "wall_run": {
     "speed": 8.2,
+    "max_speed": 10.6,
+    "acceleration": 24.0,
+    "entry_min_speed": 4.0,
+    "max_outward_speed": 1.35,
+    "vertical_target": -0.35,
+    "vertical_acceleration": 11.0,
     "max_duration": 1.35,
     "wall_jump_impulse": 6.2,
     "min_height": 0.35,
@@ -56,12 +67,20 @@
     "max_height": 1.4,
     "duration": 0.22
   },
+  "crouch": {
+    "enter_time": 0.08,
+    "exit_time": 0.11
+  },
+  "landing": {
+    "hard_speed": 8.5,
+    "recovery_time": 0.16,
+    "control_scale": 0.68
+  },
   "validation": {
     "max_horizontal_speed": 13.0,
     "max_position_error": 0.35
   }
 }
-
 
 
 

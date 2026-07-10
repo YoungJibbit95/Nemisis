@@ -6,16 +6,54 @@
   "scale_meters": true,
   "runtime_up_axis": "Y",
   "gameplay_forward_axis": "+Z",
+  "blender_up_axis": "+Z",
+  "blender_forward_axis": "-Y",
+  "dimensions_m": [
+    0.6149,
+    0.76685,
+    0.32966
+  ],
+  "target_dimensions_m": [
+    0.6149,
+    0.76685,
+    0.32966
+  ],
+  "origin": "Root at socket_camera; first-person arms extend along Blender -Y.",
   "sockets": [
     "socket_camera",
     "socket_weapon_root",
     "socket_hand_r",
-    "socket_hand_l"
+    "socket_hand_l",
+    "socket_vfx"
   ],
   "collision": "none",
   "lods": [
     "chr_dev_arms_a_lod0"
   ],
   "license": "original_project_asset",
-  "generated_by": "tools/blender/make_dev_primitives.py"
+  "external_assets": false,
+  "generated_by": "tools/blender/make_dev_primitives.py",
+  "skin": "rig_chr_dev_arms_a",
+  "skinned_meshes": [
+    "chr_dev_arms_a_lod0_elbow_l",
+    "chr_dev_arms_a_lod0_elbow_r",
+    "chr_dev_arms_a_lod0_forearm_l",
+    "chr_dev_arms_a_lod0_forearm_r",
+    "chr_dev_arms_a_lod0_hand_l",
+    "chr_dev_arms_a_lod0_hand_r",
+    "chr_dev_arms_a_lod0_upper_arm_l",
+    "chr_dev_arms_a_lod0_upper_arm_r",
+    "chr_dev_arms_a_lod0_weapon_alignment_bar",
+    "chr_dev_arms_a_lod0_wrist_wrap_l",
+    "chr_dev_arms_a_lod0_wrist_wrap_r"
+  ],
+  "animation_clips": [
+    "chr_dev_arms_a_aim",
+    "chr_dev_arms_a_idle"
+  ],
+  "animation_clip_roles": {
+    "chr_dev_arms_a_aim": "aim",
+    "chr_dev_arms_a_idle": "idle"
+  },
+  "rig_type": "deforming_armature"
 }

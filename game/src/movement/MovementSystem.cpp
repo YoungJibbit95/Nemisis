@@ -29,6 +29,10 @@ struct HorizontalInput final {
     return std::sqrt((velocity.x * velocity.x) + (velocity.z * velocity.z));
 }
 
+[[nodiscard]] float dotHorizontal(novacore::math::Vec3 lhs, novacore::math::Vec3 rhs) {
+    return (lhs.x * rhs.x) + (lhs.z * rhs.z);
+}
+
 [[nodiscard]] novacore::math::Vec3 horizontalVelocity(novacore::math::Vec3 velocity) {
     return novacore::math::Vec3{velocity.x, 0.0F, velocity.z};
 }
@@ -59,6 +63,13 @@ struct HorizontalInput final {
 
 [[nodiscard]] float consumeCooldown(float value, float fixedDeltaSeconds) {
     return std::max(0.0F, value - fixedDeltaSeconds);
+}
+
+[[nodiscard]] float approachFloat(float current, float target, float maxDelta) {
+    if (current < target) {
+        return std::min(target, current + std::max(0.0F, maxDelta));
+    }
+    return std::max(target, current - std::max(0.0F, maxDelta));
 }
 
 [[nodiscard]] novacore::math::Vec3 approachHorizontalVelocity(
@@ -115,6 +126,81 @@ struct HorizontalInput final {
     return velocity;
 }
 
+[[nodiscard]] novacore::math::Vec3 accelerateAlongDirection(
+    novacore::math::Vec3 velocity,
+    novacore::math::Vec3 direction,
+    float wishSpeed,
+    float acceleration,
+    float fixedDeltaSeconds) {
+    const float speedAlongWish = dotHorizontal(velocity, direction);
+    const float speedToAdd = wishSpeed - speedAlongWish;
+    if (speedToAdd <= 0.0F) {
+        return velocity;
+    }
+    const float accelerationStep = std::min(speedToAdd, std::max(0.0F, acceleration) * fixedDeltaSeconds);
+    velocity.x += direction.x * accelerationStep;
+    velocity.z += direction.z * accelerationStep;
+    return velocity;
+}
+
+[[nodiscard]] novacore::math::Vec3 applyAirControl(
+    novacore::math::Vec3 velocity,
+    novacore::math::Vec3 direction,
+    float inputMagnitude,
+    const MovementTuning& tuning,
+    float fixedDeltaSeconds) {
+    const float speed = horizontalSpeed(velocity);
+    if (speed <= 0.001F || direction.lengthSquared() <= 0.0001F) {
+        return velocity;
+    }
+
+    const auto currentDirection = normalizedOrZero(horizontalVelocity(velocity));
+    const float alignment = dotHorizontal(currentDirection, direction);
+    if (alignment <= 0.0F) {
+        return accelerateAlongDirection(
+            velocity,
+            direction,
+            tuning.airMaxSpeed * inputMagnitude,
+            tuning.airCounterAcceleration,
+            fixedDeltaSeconds);
+    }
+
+    const float control = clamp01(tuning.airControl * inputMagnitude * inputMagnitude * fixedDeltaSeconds);
+    const auto controlledDirection = normalizedOrZero(currentDirection + ((direction - currentDirection) * control));
+    velocity.x = controlledDirection.x * speed;
+    velocity.z = controlledDirection.z * speed;
+    return velocity;
+}
+
+void beginSlide(
+    PlayerMovementState& state,
+    novacore::math::Vec3 direction,
+    bool slideHeld,
+    const MovementTuning& tuning) {
+    const auto velocityDirection = normalizedOrZero(horizontalVelocity(state.velocity));
+    if (direction.lengthSquared() <= 0.0001F) {
+        direction = velocityDirection.lengthSquared() > 0.0001F
+            ? velocityDirection
+            : novacore::math::Vec3{0.0F, 0.0F, 1.0F};
+    }
+    if (velocityDirection.lengthSquared() > 0.0001F && dotHorizontal(direction, velocityDirection) < 0.35F) {
+        direction = velocityDirection;
+    }
+
+    const float entrySpeed = std::max(horizontalSpeed(state.velocity), tuning.slideMinEntrySpeed);
+    const float slideSpeed = std::min(tuning.slideMaxSpeed, entrySpeed + tuning.slideImpulse);
+    state.velocity.x = direction.x * slideSpeed;
+    state.velocity.z = direction.z * slideSpeed;
+    state.slideCooldownRemaining = tuning.slideCooldownSeconds;
+    state.slideTimeRemaining = tuning.slideMaxDurationSeconds;
+    state.slideBufferRemaining = 0.0F;
+    state.slideHeldConsumed = slideHeld;
+    state.crouched = true;
+    state.crouchFraction = 1.0F;
+    state.landingRecoveryRemaining = 0.0F;
+    state.mode = MovementMode::Sliding;
+}
+
 [[nodiscard]] bool isGroundedLike(MovementMode mode) {
     return mode == MovementMode::Grounded ||
         mode == MovementMode::Sliding ||
@@ -155,8 +241,9 @@ PlayerMovementState MovementSystem::simulate(
     PlayerMovementState state,
     const player::PlayerInputCommand& command,
     float fixedDeltaSeconds) const {
-    fixedDeltaSeconds = std::max(0.0F, fixedDeltaSeconds);
+    fixedDeltaSeconds = std::clamp(fixedDeltaSeconds, 0.0F, 1.0F / 30.0F);
     beginMovementTechFrame(state.tech, fixedDeltaSeconds);
+    state.landedThisTick = false;
     state.dashCooldownRemaining = consumeCooldown(state.dashCooldownRemaining, fixedDeltaSeconds);
     state.dashTimeRemaining = consumeCooldown(state.dashTimeRemaining, fixedDeltaSeconds);
     state.slideCooldownRemaining = consumeCooldown(state.slideCooldownRemaining, fixedDeltaSeconds);
@@ -166,6 +253,7 @@ PlayerMovementState MovementSystem::simulate(
     state.wallRunContactGraceRemaining = consumeCooldown(state.wallRunContactGraceRemaining, fixedDeltaSeconds);
     state.wallRunDetachCooldownRemaining = consumeCooldown(state.wallRunDetachCooldownRemaining, fixedDeltaSeconds);
     state.mantleTimeRemaining = consumeCooldown(state.mantleTimeRemaining, fixedDeltaSeconds);
+    state.landingRecoveryRemaining = consumeCooldown(state.landingRecoveryRemaining, fixedDeltaSeconds);
     state.jumpBufferRemaining = command.jumpPressed
         ? tuning_.jumpBufferSeconds
         : consumeCooldown(state.jumpBufferRemaining, fixedDeltaSeconds);
@@ -179,10 +267,15 @@ PlayerMovementState MovementSystem::simulate(
         state.groundJumpAvailable = true;
         state.hasDoubleJump = true;
     }
-    state.hasWallRunContact = false;
     if (!command.slideHeld) {
         state.slideHeldConsumed = false;
     }
+
+    const bool wantsCrouch = command.crouchHeld || state.mode == MovementMode::Sliding;
+    const float crouchDuration = wantsCrouch ? tuning_.crouchEnterSeconds : tuning_.crouchExitSeconds;
+    const float crouchStep = crouchDuration > 0.0001F ? fixedDeltaSeconds / crouchDuration : 1.0F;
+    state.crouchFraction = approachFloat(state.crouchFraction, wantsCrouch ? 1.0F : 0.0F, crouchStep);
+    state.crouched = state.crouchFraction > 0.001F;
 
     const auto input = horizontalInput(command.move);
     const auto direction = input.direction;
@@ -198,7 +291,7 @@ PlayerMovementState MovementSystem::simulate(
     }
 
     float targetSpeed = tuning_.walkSpeed;
-    if (command.crouchHeld) {
+    if (state.crouched) {
         targetSpeed = tuning_.crouchSpeed;
     } else if (command.tacticalSprintHeld) {
         targetSpeed = tuning_.tacticalSprintSpeed;
@@ -213,6 +306,7 @@ PlayerMovementState MovementSystem::simulate(
     if (state.mode == MovementMode::Sliding &&
         (state.slideTimeRemaining <= 0.0F || horizontalSpeed(state.velocity) <= tuning_.slideEndSpeed)) {
         state.mode = state.position.y <= 0.001F ? MovementMode::Grounded : MovementMode::Airborne;
+        state.crouched = command.crouchHeld;
     }
     if (state.mode == MovementMode::WallRunning && state.wallRunTimeRemaining <= 0.0F) {
         stopGravityBoots(state.tech);
@@ -220,6 +314,7 @@ PlayerMovementState MovementSystem::simulate(
             state.wallRunDetachCooldownRemaining,
             tuning_.wallRunDetachCooldownSeconds);
         state.mode = MovementMode::Airborne;
+        state.hasWallRunContact = false;
     }
     if (state.mode == MovementMode::Mantling) {
         const float duration = std::max(0.001F, tuning_.mantleDurationSeconds);
@@ -251,21 +346,41 @@ PlayerMovementState MovementSystem::simulate(
     if (state.mode == MovementMode::Grounded) {
         if (hasMoveInput) {
             const auto targetVelocity = direction * targetSpeed;
+            const auto currentDirection = normalizedOrZero(horizontalVelocity(state.velocity));
+            const float alignment = currentDirection.lengthSquared() > 0.0001F
+                ? dotHorizontal(currentDirection, direction)
+                : 1.0F;
+            float acceleration = alignment < 0.35F
+                ? tuning_.groundTurnAcceleration
+                : tuning_.groundAcceleration;
+            if (currentHorizontalSpeed > targetSpeed + 0.01F) {
+                acceleration = std::max(acceleration, tuning_.groundDeceleration);
+            }
+            if (state.landingRecoveryRemaining > 0.0F) {
+                acceleration *= tuning_.hardLandingControlScale;
+            }
             state.velocity = approachHorizontalVelocity(
                 state.velocity,
                 targetVelocity,
-                tuning_.groundAcceleration,
+                acceleration,
                 fixedDeltaSeconds);
         } else {
             state.velocity = applyGroundFriction(state.velocity, tuning_, fixedDeltaSeconds);
         }
     } else if (state.mode == MovementMode::Airborne) {
         if (hasMoveInput) {
-            const auto targetVelocity = direction * std::min(targetSpeed, tuning_.airMaxSpeed);
-            state.velocity = approachHorizontalVelocity(
+            const float wishSpeed = std::min(targetSpeed, tuning_.airMaxSpeed);
+            state.velocity = accelerateAlongDirection(
                 state.velocity,
-                targetVelocity,
+                direction,
+                wishSpeed,
                 tuning_.airAcceleration,
+                fixedDeltaSeconds);
+            state.velocity = applyAirControl(
+                state.velocity,
+                direction,
+                input.magnitude,
+                tuning_,
                 fixedDeltaSeconds);
         }
         const float drag = std::clamp(1.0F - (tuning_.airDrag * fixedDeltaSeconds), 0.0F, 1.0F);
@@ -297,30 +412,38 @@ PlayerMovementState MovementSystem::simulate(
     } else if (state.mode == MovementMode::WallRunning) {
         const auto tangent = chooseWallRunTangent(state.wallRunTangent, state.velocity, direction);
         if (tangent.lengthSquared() > 0.0001F) {
-            state.velocity.x = tangent.x * tuning_.wallRunSpeed;
-            state.velocity.z = tangent.z * tuning_.wallRunSpeed;
+            const float tangentSpeed = std::abs(dotHorizontal(state.velocity, tangent));
+            const float targetWallSpeed = std::clamp(
+                std::max(tangentSpeed, tuning_.wallRunSpeed),
+                tuning_.wallRunSpeed,
+                tuning_.wallRunMaxSpeed);
+            state.velocity = approachHorizontalVelocity(
+                state.velocity,
+                tangent * targetWallSpeed,
+                tuning_.wallRunAcceleration,
+                fixedDeltaSeconds);
         }
-        state.velocity.y = std::max(state.velocity.y, -1.15F);
+        state.velocity.y = approachFloat(
+            state.velocity.y,
+            tuning_.wallRunVerticalTarget,
+            tuning_.wallRunVerticalAcceleration * fixedDeltaSeconds);
     }
 
     if (state.slideBufferRemaining > 0.0F &&
         state.mode == MovementMode::Grounded &&
-        state.slideCooldownRemaining <= 0.0F) {
+        state.slideCooldownRemaining <= 0.0F &&
+        currentHorizontalSpeed >= tuning_.slideMinEntrySpeed) {
         const auto slideDirection = hasMoveInput
             ? direction
             : normalizedOrZero(horizontalVelocity(state.velocity));
-        const auto impulseDirection = slideDirection.lengthSquared() > 0.0001F
-            ? slideDirection
-            : novacore::math::Vec3{0.0F, 0.0F, 1.0F};
-        state.velocity = state.velocity + (impulseDirection * tuning_.slideImpulse);
-        state.slideCooldownRemaining = tuning_.slideCooldownSeconds;
-        state.slideTimeRemaining = tuning_.slideMaxDurationSeconds;
-        state.slideBufferRemaining = 0.0F;
-        state.slideHeldConsumed = command.slideHeld;
-        state.mode = MovementMode::Sliding;
+        beginSlide(state, slideDirection, command.slideHeld, tuning_);
     }
 
-    if (command.dashPressed && state.dashCooldownRemaining <= 0.0F) {
+    if (command.dashPressed &&
+        state.dashCooldownRemaining <= 0.0F &&
+        state.mode != MovementMode::Sliding &&
+        state.mode != MovementMode::WallRunning &&
+        state.mode != MovementMode::Mantling) {
         const auto dashDirection = hasMoveInput
             ? direction
             : normalizedOrZero(horizontalVelocity(state.velocity));
@@ -367,6 +490,7 @@ PlayerMovementState MovementSystem::simulate(
         state.coyoteTimeRemaining = 0.0F;
         state.groundJumpAvailable = false;
         state.hasDoubleJump = true;
+        state.hasWallRunContact = false;
         triggerWallJumpDetach(state.tech);
         state.mode = MovementMode::Airborne;
     } else if (wantsAirJump && canUseAirJump) {
@@ -380,7 +504,11 @@ PlayerMovementState MovementSystem::simulate(
         state.velocity.y = tuning_.jumpVelocity;
         if (state.mode == MovementMode::Sliding) {
             const auto slideDirection = normalizedOrZero(horizontalVelocity(state.velocity));
-            state.velocity = state.velocity + (slideDirection * tuning_.slideJumpBoost);
+            const float boostedSpeed = std::min(
+                tuning_.slideMaxSpeed,
+                horizontalSpeed(state.velocity) + tuning_.slideJumpBoost);
+            state.velocity.x = slideDirection.x * boostedSpeed;
+            state.velocity.z = slideDirection.z * boostedSpeed;
             state.slideTimeRemaining = 0.0F;
         }
         state.jumpBufferRemaining = 0.0F;
@@ -399,6 +527,9 @@ PlayerMovementState MovementSystem::simulate(
         state.velocity.y += tuning_.gravity * fixedDeltaSeconds;
     }
 
+    const bool wasAirborneBeforeIntegration =
+        state.mode == MovementMode::Airborne || state.mode == MovementMode::WallRunning;
+    const float impactSpeed = std::max(0.0F, -state.velocity.y);
     state.position = state.position + (state.velocity * fixedDeltaSeconds);
 
     if (state.position.y <= 0.0F) {
@@ -422,6 +553,16 @@ PlayerMovementState MovementSystem::simulate(
             state.groundedTimeSeconds = 0.0F;
             state.airborneTimeSeconds = fixedDeltaSeconds;
         } else {
+            state.landedThisTick = wasAirborneBeforeIntegration;
+            if (state.landedThisTick) {
+                state.lastLandingSpeed = impactSpeed;
+                if (impactSpeed >= tuning_.hardLandingSpeed) {
+                    const float severity = clamp01(
+                        (impactSpeed - tuning_.hardLandingSpeed) /
+                        std::max(0.01F, tuning_.hardLandingSpeed));
+                    state.landingRecoveryRemaining = tuning_.hardLandingRecoverySeconds * (0.55F + (0.45F * severity));
+                }
+            }
             state.velocity.y = 0.0F;
             state.groundJumpAvailable = true;
             state.hasDoubleJump = true;
@@ -431,8 +572,16 @@ PlayerMovementState MovementSystem::simulate(
             state.mantleTimeRemaining = 0.0F;
             state.wallRunContactGraceRemaining = 0.0F;
             stopGravityBoots(state.tech);
-            if (state.mode == MovementMode::Airborne || state.mode == MovementMode::Dashing) {
+            state.hasWallRunContact = false;
+            if (state.mode == MovementMode::Airborne ||
+                state.mode == MovementMode::Dashing ||
+                state.mode == MovementMode::WallRunning) {
                 state.mode = MovementMode::Grounded;
+            }
+            if (state.slideBufferRemaining > 0.0F &&
+                state.slideCooldownRemaining <= 0.0F &&
+                horizontalSpeed(state.velocity) >= tuning_.slideMinEntrySpeed) {
+                beginSlide(state, direction, command.slideHeld, tuning_);
             }
             state.groundedTimeSeconds += fixedDeltaSeconds;
             state.airborneTimeSeconds = 0.0F;
@@ -452,7 +601,7 @@ PlayerMovementState MovementSystem::applyWallRunContact(
     const player::PlayerInputCommand& command,
     WallRunContact contact,
     float fixedDeltaSeconds) const {
-    fixedDeltaSeconds = std::max(0.0F, fixedDeltaSeconds);
+    fixedDeltaSeconds = std::clamp(fixedDeltaSeconds, 0.0F, 1.0F / 30.0F);
     const auto input = horizontalInput(command.move);
     const bool contactGraceActive =
         state.mode == MovementMode::WallRunning &&
@@ -460,11 +609,17 @@ PlayerMovementState MovementSystem::applyWallRunContact(
         state.wallRunNormal.lengthSquared() > 0.0001F &&
         state.wallRunTangent.lengthSquared() > 0.0001F;
     const bool usableContact = contact.available || contactGraceActive;
-    const bool hasWallRunInput = input.magnitude > 0.12F ||
-        horizontalSpeed(state.velocity) > tuning_.walkSpeed * 0.55F;
+    const auto requestedNormal = normalizedOrZero(contact.available ? contact.normal : state.wallRunNormal);
+    const float movementSpeed = horizontalSpeed(state.velocity);
+    const float outwardSpeed = dotHorizontal(state.velocity, requestedNormal);
+    const bool enteringWallRun = state.mode != MovementMode::WallRunning;
+    const bool hasWallRunInput = input.magnitude > 0.12F || movementSpeed >= tuning_.wallRunEntryMinSpeed;
+    const bool entryVelocityAllowed = !enteringWallRun ||
+        (movementSpeed >= tuning_.wallRunEntryMinSpeed && outwardSpeed <= tuning_.wallRunMaxOutwardSpeed);
     const bool wantsWallRun = usableContact &&
         state.wallRunDetachCooldownRemaining <= 0.0F &&
         hasWallRunInput &&
+        entryVelocityAllowed &&
         state.position.y >= tuning_.wallRunMinHeight &&
         state.mode != MovementMode::Grounded &&
         state.mode != MovementMode::Sliding &&
@@ -478,6 +633,7 @@ PlayerMovementState MovementSystem::applyWallRunContact(
                 tuning_.wallRunDetachCooldownSeconds * 0.50F);
             state.mode = MovementMode::Airborne;
         }
+        state.hasWallRunContact = false;
         return state;
     }
 
@@ -488,7 +644,6 @@ PlayerMovementState MovementSystem::applyWallRunContact(
         return state;
     }
 
-    const bool enteringWallRun = state.mode != MovementMode::WallRunning || !state.hasWallRunContact;
     state.mode = MovementMode::WallRunning;
     state.hasWallRunContact = true;
     state.wallRunNormal = normalizedOrZero(contactNormal);
@@ -505,10 +660,20 @@ PlayerMovementState MovementSystem::applyWallRunContact(
         state.wallRunTimeRemaining = tuning_.wallRunMaxDurationSeconds;
     }
 
-    const float speed = std::max(tuning_.wallRunSpeed, horizontalSpeed(state.velocity));
-    state.velocity.x = tangent.x * speed;
-    state.velocity.z = tangent.z * speed;
-    state.velocity.y = std::clamp(std::max(state.velocity.y, -0.45F) + (1.65F * fixedDeltaSeconds), -0.45F, 1.55F);
+    const float tangentSpeed = std::abs(dotHorizontal(state.velocity, tangent));
+    const float targetSpeed = std::clamp(
+        std::max(tangentSpeed, tuning_.wallRunSpeed),
+        tuning_.wallRunSpeed,
+        tuning_.wallRunMaxSpeed);
+    state.velocity = approachHorizontalVelocity(
+        state.velocity,
+        tangent * targetSpeed,
+        tuning_.wallRunAcceleration,
+        fixedDeltaSeconds);
+    state.velocity.y = approachFloat(
+        state.velocity.y,
+        tuning_.wallRunVerticalTarget,
+        tuning_.wallRunVerticalAcceleration * fixedDeltaSeconds);
     state.hasDoubleJump = true;
     state.groundJumpAvailable = false;
     state.lastHorizontalSpeed = horizontalSpeed(state.velocity);

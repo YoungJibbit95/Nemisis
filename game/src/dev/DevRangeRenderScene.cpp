@@ -52,13 +52,12 @@ struct FirstPersonWeaponMount final {
     float yawCorrectionDegrees = 0.0F;
     float pitchCorrectionDegrees = 0.0F;
     float rollCorrectionDegrees = 0.0F;
-    float hipPitchFollow = 0.42F;
-    float adsPitchFollow = 0.82F;
     float recoilYawScale = 0.50F;
     float recoilPitchScale = 0.38F;
     float reloadPitchDegrees = 8.0F;
     float reloadRollDegrees = 8.0F;
     std::array<float, 4> color;
+    player::FirstPersonRigSocketLayout sockets{};
 };
 
 struct FirstPersonArmMount final {
@@ -287,6 +286,22 @@ std::size_t bindFirstPersonRigToCookedWeaponSockets(
     rig.weapon.yawDegrees = weaponYaw;
     rig.weapon.pitchDegrees = weaponPitch;
     rig.weapon.rollDegrees = weaponRoll;
+    bindRigJointToCookedSocket(
+        rig,
+        player::FirstPersonRigJoint::WeaponRoot,
+        weaponPosition,
+        weaponYaw,
+        weaponPitch,
+        weaponRoll);
+    bindRigSocketToCookedSocket(
+        rig,
+        player::FirstPersonRigSocket::WeaponRoot,
+        player::FirstPersonRigJoint::WeaponRoot,
+        weaponPosition,
+        weaponYaw,
+        weaponPitch,
+        weaponRoll);
+    rig.sockets[static_cast<std::size_t>(player::FirstPersonRigSocket::WeaponRoot)].localPosition = {};
 
     const auto toWorld = [&](novacore::math::Vec3 local) {
         return cookedSocketWorldPosition(weaponPosition, local, weaponScale, weaponYaw, weaponPitch, weaponRoll);
@@ -297,6 +312,7 @@ std::size_t bindFirstPersonRigToCookedWeaponSockets(
         rig.muzzle.position = world;
         bindRigJointToCookedSocket(rig, player::FirstPersonRigJoint::Muzzle, world, weaponYaw, weaponPitch, weaponRoll);
         bindRigSocketToCookedSocket(rig, player::FirstPersonRigSocket::Muzzle, player::FirstPersonRigJoint::Muzzle, world, weaponYaw, weaponPitch, weaponRoll);
+        rig.sockets[static_cast<std::size_t>(player::FirstPersonRigSocket::Muzzle)].localPosition = *cooked.muzzle;
     }
     if (cooked.ejection.has_value()) {
         bindRigSocketToCookedSocket(
@@ -307,6 +323,7 @@ std::size_t bindFirstPersonRigToCookedWeaponSockets(
             weaponYaw,
             weaponPitch,
             weaponRoll);
+        rig.sockets[static_cast<std::size_t>(player::FirstPersonRigSocket::EjectionPort)].localPosition = *cooked.ejection;
     }
     if (cooked.rightGrip.has_value()) {
         const auto world = toWorld(*cooked.rightGrip);
@@ -314,6 +331,7 @@ std::size_t bindFirstPersonRigToCookedWeaponSockets(
         bindRigJointToCookedSocket(rig, player::FirstPersonRigJoint::RightHand, world, weaponYaw, weaponPitch, weaponRoll);
         bindRigSocketToCookedSocket(rig, player::FirstPersonRigSocket::RightGrip, player::FirstPersonRigJoint::RightHand, world, weaponYaw, weaponPitch, weaponRoll);
         bindRigSocketToCookedSocket(rig, player::FirstPersonRigSocket::RightHand, player::FirstPersonRigJoint::RightHand, world, weaponYaw, weaponPitch, weaponRoll);
+        rig.sockets[static_cast<std::size_t>(player::FirstPersonRigSocket::RightGrip)].localPosition = *cooked.rightGrip;
         ++boundGrips;
     }
     if (cooked.leftGrip.has_value()) {
@@ -325,6 +343,7 @@ std::size_t bindFirstPersonRigToCookedWeaponSockets(
         bindRigSocketToCookedSocket(rig, player::FirstPersonRigSocket::LeftGrip, player::FirstPersonRigJoint::LeftHand, world, weaponYaw, weaponPitch, weaponRoll);
         bindRigSocketToCookedSocket(rig, player::FirstPersonRigSocket::LeftHand, player::FirstPersonRigJoint::LeftHand, world, weaponYaw, weaponPitch, weaponRoll);
         bindRigSocketToCookedSocket(rig, player::FirstPersonRigSocket::SupportElbow, player::FirstPersonRigJoint::LeftForearm, rig.supportElbow.position, weaponYaw, weaponPitch, weaponRoll);
+        rig.sockets[static_cast<std::size_t>(player::FirstPersonRigSocket::LeftGrip)].localPosition = *cooked.leftGrip;
         ++boundGrips;
     }
     return boundGrips;
@@ -334,7 +353,9 @@ std::size_t bindFirstPersonArmsMeshToRigSockets(
     player::FirstPersonRigFrame& rig,
     const FirstPersonCookedArmsRig& cooked) {
     std::size_t boundSockets = 0U;
-    const auto anchorMeshSocket = [&](novacore::math::Vec3 local, novacore::math::Vec3 target, float weight) {
+    novacore::math::Vec3 weightedCorrection{};
+    float totalWeight = 0.0F;
+    const auto accumulateSocketCorrection = [&](novacore::math::Vec3 local, novacore::math::Vec3 target, float weight) {
         const auto current = cookedSocketWorldPosition(
             rig.arms.position,
             local,
@@ -342,29 +363,31 @@ std::size_t bindFirstPersonArmsMeshToRigSockets(
             rig.arms.yawDegrees,
             rig.arms.pitchDegrees,
             rig.arms.rollDegrees);
-        rig.arms.position = rig.arms.position + ((target - current) * weight);
+        weightedCorrection = weightedCorrection + ((target - current) * weight);
+        totalWeight += weight;
+        ++boundSockets;
     };
 
     if (cooked.rightHand.has_value()) {
-        rig.arms.position = alignMeshPositionToSocket(
-            rig.rightHand.position,
-            *cooked.rightHand,
-            rig.arms.scale,
-            rig.arms.yawDegrees,
-            rig.arms.pitchDegrees,
-            rig.arms.rollDegrees);
-        ++boundSockets;
+        accumulateSocketCorrection(*cooked.rightHand, rig.rightHand.position, 1.0F);
     }
     if (cooked.leftHand.has_value()) {
-        anchorMeshSocket(*cooked.leftHand, rig.leftHand.position, 0.45F);
-        ++boundSockets;
+        accumulateSocketCorrection(*cooked.leftHand, rig.leftHand.position, 1.0F);
     }
     if (cooked.weaponRoot.has_value()) {
         const auto& weaponRoot = player::firstPersonRigSocket(rig, player::FirstPersonRigSocket::WeaponRoot);
         if (weaponRoot.valid) {
-            anchorMeshSocket(*cooked.weaponRoot, weaponRoot.worldPosition, 0.25F);
-            ++boundSockets;
+            accumulateSocketCorrection(*cooked.weaponRoot, weaponRoot.worldPosition, 0.35F);
         }
+    }
+    if (cooked.camera.has_value()) {
+        const auto& camera = player::firstPersonRigSocket(rig, player::FirstPersonRigSocket::Camera);
+        if (camera.valid) {
+            accumulateSocketCorrection(*cooked.camera, camera.worldPosition, 0.10F);
+        }
+    }
+    if (totalWeight > 0.0F) {
+        rig.arms.position = rig.arms.position + (weightedCorrection * (1.0F / totalWeight));
     }
     return boundSockets;
 }
@@ -453,13 +476,12 @@ std::size_t bindFirstPersonArmsMeshToRigSockets(
         0.0F,
         0.0F,
         0.0F,
-        0.38F,
-        0.78F,
         0.46F,
         0.34F,
         9.5F,
         9.0F,
         kWeaponMeshTint,
+        {{0.0F, 0.028F, 0.78F}, {0.105F, 0.052F, 0.34F}, {0.060F, -0.030F, 0.145F}, {-0.090F, -0.055F, 0.380F}},
     };
     static constexpr FirstPersonWeaponMount kSmg{
         "wpn_project_smg_fr17",
@@ -470,13 +492,12 @@ std::size_t bindFirstPersonArmsMeshToRigSockets(
         0.0F,
         0.0F,
         0.0F,
-        0.38F,
-        0.78F,
         0.50F,
         0.36F,
         8.0F,
         8.0F,
         kSmgMeshTint,
+        {{0.0F, 0.024F, 0.58F}, {0.090F, 0.045F, 0.28F}, {0.052F, -0.025F, 0.125F}, {-0.075F, -0.045F, 0.295F}},
     };
     static constexpr FirstPersonWeaponMount kShotgun{
         "wpn_project_rifle_ncar",
@@ -487,13 +508,12 @@ std::size_t bindFirstPersonArmsMeshToRigSockets(
         0.0F,
         0.0F,
         0.0F,
-        0.36F,
-        0.78F,
         0.44F,
         0.32F,
         10.0F,
         10.0F,
         kWeaponMeshTint,
+        {{0.0F, 0.032F, 0.88F}, {0.110F, 0.050F, 0.36F}, {0.062F, -0.032F, 0.150F}, {-0.095F, -0.060F, 0.420F}},
     };
     static constexpr FirstPersonWeaponMount kSidearm{
         "wpn_project_sidearm_glock19",
@@ -504,13 +524,12 @@ std::size_t bindFirstPersonArmsMeshToRigSockets(
         0.0F,
         0.0F,
         0.0F,
-        0.48F,
-        0.88F,
         0.58F,
         0.42F,
         6.5F,
         5.5F,
         kSidearmMeshTint,
+        {{0.0F, 0.011F, 0.34F}, {0.052F, 0.022F, 0.16F}, {0.038F, -0.015F, 0.052F}, {-0.040F, -0.025F, -0.025F}},
     };
 
     if (weaponId == "sidearm_01") {
@@ -551,7 +570,7 @@ std::size_t bindFirstPersonArmsMeshToRigSockets(
 
 [[nodiscard]] const FirstPersonBodyMount& firstPersonBodyMount() {
     static constexpr FirstPersonBodyMount kBody{
-        "chr_project_male1",
+        "chr_a1_stylized_operator_01",
         "chr_a2_pilot_operator_01",
         {0.0F, -2.34F, 0.30F},
         {0.0F, -2.38F, 0.22F},
@@ -576,8 +595,6 @@ std::size_t bindFirstPersonArmsMeshToRigSockets(
         mount.yawCorrectionDegrees,
         mount.pitchCorrectionDegrees,
         mount.rollCorrectionDegrees,
-        mount.hipPitchFollow,
-        mount.adsPitchFollow,
         mount.recoilYawScale,
         mount.recoilPitchScale,
         mount.reloadPitchDegrees,
@@ -593,8 +610,6 @@ std::size_t bindFirstPersonArmsMeshToRigSockets(
     result.yawCorrectionDegrees = mount.yawCorrectionDegrees;
     result.pitchCorrectionDegrees = mount.pitchCorrectionDegrees;
     result.rollCorrectionDegrees = mount.rollCorrectionDegrees;
-    result.hipPitchFollow = 0.46F;
-    result.adsPitchFollow = 0.58F;
     return result;
 }
 
@@ -603,8 +618,6 @@ std::size_t bindFirstPersonArmsMeshToRigSockets(
     result.hipOffset = mount.hipOffset;
     result.adsOffset = mount.adsOffset;
     result.scale = mount.scale;
-    result.hipPitchFollow = 0.12F;
-    result.adsPitchFollow = 0.10F;
     return result;
 }
 
@@ -1080,8 +1093,12 @@ DevRangeRenderSceneStats DevRangeRenderSceneBuilder::append(
     appendWorldGeometry(frame, desc, stats);
     appendStaticShowcaseMeshes(frame, desc, stats);
     appendTargetLaneMeshes(frame, desc, stats);
+    stats.firstPersonViewmodelActive = desc.player.hasCameraRig;
+    stats.localWorldModelActive = desc.player.hasMovementState && !desc.player.hasCameraRig;
     appendLocalPlayerBodyMesh(frame, desc, stats);
-    appendFirstPersonMeshes(frame, desc, stats);
+    if (stats.firstPersonViewmodelActive) {
+        appendFirstPersonMeshes(frame, desc, stats);
+    }
     if (desc.showWorldDebugLines) {
         appendMovementTechVisuals(frame, desc, stats);
         appendWorldDebugLines(frame, desc, stats);
@@ -1297,7 +1314,7 @@ void DevRangeRenderSceneBuilder::appendLocalPlayerBodyMesh(
     if (!appendMesh(
             frame,
             desc,
-            "chr_project_male1",
+            "chr_a1_stylized_operator_01",
             bodyPosition,
             {0.82F, 0.82F, 0.82F},
             view.yawDegrees,
@@ -1363,6 +1380,7 @@ void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
     rigInput.weaponMount = toRigMount(mount);
     rigInput.armsMount = toRigMount(armsMount);
     rigInput.bodyMount = toRigMount(bodyMount);
+    rigInput.weaponSockets = mount.sockets;
     rigInput.cameraRollDegrees = desc.player.cameraRollDegrees;
     rigInput.adsAlpha = desc.player.adsAlpha;
     rigInput.speed01 = desc.player.speed01;
