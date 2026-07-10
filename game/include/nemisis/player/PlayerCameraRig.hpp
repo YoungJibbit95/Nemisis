@@ -25,6 +25,12 @@ struct CameraRigTuning final {
     float recoilYawVisualScale = 0.55F;
     float velocitySwayDegrees = 0.45F;
     float weaponSwayScale = 0.035F;
+    float lookSwayHorizontalScale = 0.0018F;
+    float lookSwayVerticalScale = 0.0014F;
+    float maxLookSwayMeters = 0.060F;
+    float lookVelocitySharpness = 20.0F;
+    float landingKickMeters = 0.065F;
+    float landingKickRecovery = 15.0F;
     float bobWalkAmplitude = 0.035F;
     float bobSprintAmplitude = 0.060F;
     float bobSlideAmplitude = 0.025F;
@@ -71,6 +77,10 @@ struct CameraRigState final {
     float verticalFovDegrees = 74.0F;
     float speed01 = 0.0F;
     float adsAlpha = 0.0F;
+    float lookYawVelocity = 0.0F;
+    float lookPitchVelocity = 0.0F;
+    float landingKick = 0.0F;
+    movement::MovementMode previousMovementMode = movement::MovementMode::Grounded;
 };
 
 void resetCameraRig(CameraRigState& state);

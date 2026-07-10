@@ -239,6 +239,8 @@ void testDevRangeRenderSceneBuildsExpectedSubmissions() {
     expect(stats.skyFallbackMeshCount == 0, "dev range render scene skips legacy skybox mesh while sky pass is active");
     expect(stats.skippedMeshInstanceCount == 0, "dev range render scene skips no mesh when lookup is complete");
     expect(stats.materialFallbackProfileCount == stats.meshInstanceCount, "dev range render scene assigns material fallback profiles to submitted GLB meshes");
+    expect(stats.contactShadowCount >= targetRange.lanes.size(), "dev range render scene emits soft shadows for grounded actors and props");
+    expect(frame.contactShadows.size() == stats.contactShadowCount, "contact shadow submissions match scene statistics");
     expect(stats.firstPersonMeshCount == 2, "dev range render scene emits weapon and one arms viewmodel mesh for first-person");
     expect(stats.firstPersonBodyPrimitiveCount == 4, "first-person rig submits hands and forearms as camera-linked body primitives");
     expect(stats.firstPersonSocketCount == nemisis::player::kFirstPersonRigSocketCount, "first-person rig exposes all camera, hand, weapon, muzzle, and ejection sockets");
@@ -256,6 +258,12 @@ void testDevRangeRenderSceneBuildsExpectedSubmissions() {
         expect(std::abs(firstPersonRifle->rollDegrees) < 5.0F, "first-person rifle stays upright without legacy import roll correction");
         expect(firstPersonRifle->scale.x > 0.9F && firstPersonRifle->scale.x < 1.1F, "first-person rifle uses normalized Project asset scale");
         expect(firstPersonRifle->material.specularScale > 1.30F, "first-person rifle uses a weapon material fallback profile");
+        expect(firstPersonRifle->layer == novacore::render::RenderMeshLayer::ViewModel, "first-person rifle uses isolated viewmodel depth");
+    }
+    const auto firstPersonArms = findLastMesh(frame, "chr_a1_fp_arms_01");
+    expect(firstPersonArms.has_value(), "first-person arms mesh is submitted");
+    if (firstPersonArms.has_value()) {
+        expect(firstPersonArms->layer == novacore::render::RenderMeshLayer::ViewModel, "first-person arms use isolated viewmodel depth");
     }
 }
 

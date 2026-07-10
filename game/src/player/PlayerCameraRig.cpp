@@ -143,11 +143,23 @@ constexpr float kPi = 3.14159265358979323846F;
 [[nodiscard]] novacore::math::Vec3 targetWeaponSway(
     const CameraRigInput& input,
     const CameraRigTuning& tuning,
-    float speed01) {
+    float speed01,
+    float lookYawVelocity,
+    float lookPitchVelocity,
+    float landingKick) {
     const float adsDamp = 1.0F - (std::clamp(input.weapon.adsAlpha, 0.0F, 1.0F) * 0.68F);
+    const float lookX = std::clamp(
+        -lookYawVelocity * tuning.lookSwayHorizontalScale,
+        -tuning.maxLookSwayMeters,
+        tuning.maxLookSwayMeters);
+    const float lookY = std::clamp(
+        lookPitchVelocity * tuning.lookSwayVerticalScale,
+        -tuning.maxLookSwayMeters,
+        tuning.maxLookSwayMeters);
     return novacore::math::Vec3{
-        std::clamp(-input.playerVelocity.x * tuning.weaponSwayScale, -0.09F, 0.09F) * adsDamp,
-        (isSliding(input.movementMode) ? -0.05F : 0.0F) - (speed01 * 0.025F * adsDamp),
+        (std::clamp(-input.playerVelocity.x * tuning.weaponSwayScale, -0.09F, 0.09F) + lookX) * adsDamp,
+        ((isSliding(input.movementMode) ? -0.05F : 0.0F) -
+            (speed01 * 0.025F) + lookY - landingKick) * adsDamp,
         std::clamp(-cameraRigHorizontalSpeed(input.playerVelocity) * 0.004F, -0.05F, 0.0F) * adsDamp,
     };
 }
@@ -186,6 +198,22 @@ CameraRigFrame updateCameraRig(
     const CameraRigTuning& tuning) {
     const float dt = std::max(0.0F, input.fixedDeltaSeconds);
     const float speed01 = movementSpeed01(input);
+    const bool landedThisFrame = state.initialized &&
+        state.previousMovementMode == movement::MovementMode::Airborne &&
+        input.movementMode == movement::MovementMode::Grounded;
+    if (landedThisFrame) {
+        const float impactSpeed = std::clamp(std::abs(input.playerVelocity.y) / 12.0F, 0.35F, 1.0F);
+        state.landingKick = std::max(state.landingKick, tuning.landingKickMeters * impactSpeed);
+    }
+    state.landingKick *= std::exp(-std::max(0.0F, tuning.landingKickRecovery) * dt);
+
+    if (state.initialized && dt > 0.00001F) {
+        const float targetYawVelocity = shortestAngleDelta(state.view.yawDegrees, input.authoredView.yawDegrees) / dt;
+        const float targetPitchVelocity = (input.authoredView.pitchDegrees - state.view.pitchDegrees) / dt;
+        const float velocityT = smoothFactor(tuning.lookVelocitySharpness, dt);
+        state.lookYawVelocity = lerp(state.lookYawVelocity, targetYawVelocity, velocityT);
+        state.lookPitchVelocity = lerp(state.lookPitchVelocity, targetPitchVelocity, velocityT);
+    }
     const float frequency = (input.sprintHeld || input.tacticalSprintHeld)
         ? tuning.bobSprintFrequency
         : tuning.bobWalkFrequency;
@@ -195,7 +223,13 @@ CameraRigFrame updateCameraRig(
     }
 
     const auto targetBob = targetHeadBob(input, tuning, speed01, state.bobPhase);
-    const auto targetSway = targetWeaponSway(input, tuning, speed01);
+    const auto targetSway = targetWeaponSway(
+        input,
+        tuning,
+        speed01,
+        state.lookYawVelocity,
+        state.lookPitchVelocity,
+        state.landingKick);
     const auto targetPosition =
         input.playerPosition +
         novacore::math::Vec3{0.0F, targetEyeHeight(input, tuning), 0.0F} +
@@ -230,6 +264,7 @@ CameraRigFrame updateCameraRig(
         state.speed01 = lerp(state.speed01, speed01, positionT);
         state.adsAlpha = lerp(state.adsAlpha, input.weapon.adsAlpha, fovT);
     }
+    state.previousMovementMode = input.movementMode;
 
     return CameraRigFrame{
         state.position,

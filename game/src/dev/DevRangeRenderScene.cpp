@@ -1088,6 +1088,7 @@ DevRangeRenderSceneStats DevRangeRenderSceneBuilder::append(
     const auto targetLaneCount = desc.targetRange == nullptr ? 0U : desc.targetRange->lanes.size();
     frame.worldBoxes.reserve(frame.worldBoxes.size() + desc.greyboxWorld->primitives.size() + (targetLaneCount * 3U) + 29U);
     frame.worldMeshes.reserve(frame.worldMeshes.size() + 13U + (targetLaneCount * 2U));
+    frame.contactShadows.reserve(frame.contactShadows.size() + 12U + targetLaneCount);
 
     appendSkyboxMesh(frame, desc, stats);
     appendWorldGeometry(frame, desc, stats);
@@ -1130,7 +1131,9 @@ bool DevRangeRenderSceneBuilder::appendMesh(
     std::array<float, 4> color,
     DevRangeRenderSceneStats& stats,
     float pitchDegrees,
-    float rollDegrees) const {
+    float rollDegrees,
+    novacore::render::RenderMeshLayer layer,
+    bool castsContactShadow) const {
     const auto handle = findMesh(desc, assetId);
     if (!handle.isValid()) {
         ++stats.skippedMeshInstanceCount;
@@ -1148,10 +1151,29 @@ bool DevRangeRenderSceneBuilder::appendMesh(
         rollDegrees,
         color,
         material,
+        {},
+        layer,
     });
     ++stats.meshInstanceCount;
     if (usesMaterialFallbackProfile(material)) {
         ++stats.materialFallbackProfileCount;
+    }
+    if (castsContactShadow && layer == novacore::render::RenderMeshLayer::World &&
+        assetId != "env_project_skybox1") {
+        const float horizontalScale = std::max(std::abs(scale.x), std::abs(scale.z));
+        const float height = std::max(0.0F, position.y);
+        frame.contactShadows.push_back(novacore::render::RenderContactShadow3D{
+            position,
+            0.018F,
+            {
+                std::clamp(horizontalScale * 0.52F, 0.16F, 1.35F),
+                std::clamp(horizontalScale * 0.36F, 0.12F, 0.95F),
+            },
+            std::clamp(height, 0.0F, 3.0F),
+            0.82F,
+            0.86F,
+        });
+        ++stats.contactShadowCount;
     }
     return true;
 }
@@ -1438,7 +1460,9 @@ void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
         withAlpha(mount.color, presentedRig.weapon.alpha),
         stats,
         weaponPitch,
-        weaponRoll);
+        weaponRoll,
+        novacore::render::RenderMeshLayer::ViewModel,
+        false);
     if (!weaponMeshAppended) {
         weaponMeshAppended = appendMesh(
             frame,
@@ -1450,7 +1474,9 @@ void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
             withAlpha(mount.color, presentedRig.weapon.alpha),
             stats,
             weaponPitch,
-            weaponRoll);
+            weaponRoll,
+            novacore::render::RenderMeshLayer::ViewModel,
+            false);
     }
     if (weaponMeshAppended) {
         ++stats.firstPersonMeshCount;
@@ -1466,7 +1492,9 @@ void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
         withAlpha(armsMount.color, presentedRig.arms.alpha),
         stats,
         presentedRig.arms.pitchDegrees,
-        presentedRig.arms.rollDegrees);
+        presentedRig.arms.rollDegrees,
+        novacore::render::RenderMeshLayer::ViewModel,
+        false);
     if (!armsMeshAppended) {
         armsMeshAppended = appendMesh(
             frame,
@@ -1478,7 +1506,9 @@ void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
             kArmsTint,
             stats,
             rig.arms.pitchDegrees,
-            rig.arms.rollDegrees);
+            rig.arms.rollDegrees,
+            novacore::render::RenderMeshLayer::ViewModel,
+            false);
     }
     if (armsMeshAppended) {
         ++stats.firstPersonMeshCount;
@@ -1518,7 +1548,9 @@ void DevRangeRenderSceneBuilder::appendMovementTechVisuals(
                 {0.58F, 0.78F, 0.72F, 0.92F},
                 stats,
                 (renderView(desc).pitchDegrees * 0.28F) - 8.0F,
-                desc.player.cameraRollDegrees * 0.42F);
+                desc.player.cameraRollDegrees * 0.42F,
+                novacore::render::RenderMeshLayer::ViewModel,
+                false);
             if (!armMeshAppended) {
                 appendBox(
                     frame,
@@ -1562,7 +1594,9 @@ void DevRangeRenderSceneBuilder::appendMovementTechVisuals(
             {0.58F, 0.84F, 0.92F, 0.90F},
             stats,
             (renderView(desc).pitchDegrees * 0.30F) - 12.0F,
-            desc.player.cameraRollDegrees * 0.25F);
+            desc.player.cameraRollDegrees * 0.25F,
+            novacore::render::RenderMeshLayer::ViewModel,
+            false);
     }
 
     if (tech.mantleReachTriggered || tech.mantleReachSeconds > 0.0F) {
@@ -1582,7 +1616,9 @@ void DevRangeRenderSceneBuilder::appendMovementTechVisuals(
             {0.68F, 0.88F, 0.92F, 0.94F},
             stats,
             (renderView(desc).pitchDegrees * 0.24F) - (progress * 10.0F),
-            desc.player.cameraRollDegrees * 0.20F);
+            desc.player.cameraRollDegrees * 0.20F,
+            novacore::render::RenderMeshLayer::ViewModel,
+            false);
         if (!mantleArmMeshAppended) {
             appendBox(
                 frame,

@@ -79,6 +79,14 @@ void testCookedCharacterImportsAndAnimates() {
 
     expect(animator.stats().evaluatedFrameCount >= 8U, "skeletal runtime tracks evaluated frames");
 
+    auto layered = walk;
+    layered.upperBodyClip = nemisis::player::CharacterAnimationClip::Ads;
+    layered.upperBodyAlpha = 0.85F;
+    layered.upperBodyNormalizedTime = 0.5F;
+    expect(animator.update(layered, 1.0F / 60.0F), "upper-body aim layer evaluates over locomotion");
+    expect(!animator.stats().upperBodyClip.empty(), "skeletal runtime reports the authored upper-body clip");
+    expect(animator.stats().upperBodyWeight > 0.84F, "skeletal runtime preserves gameplay upper-body blend weight");
+
     novacore::animation::Mat4 hand{};
     expect(animator.socketTransform("socket_hand_r", hand), "right-hand runtime socket follows the animated skeleton");
 }

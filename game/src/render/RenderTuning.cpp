@@ -75,6 +75,22 @@ DevRenderTuning devRenderTuningFromConfig(
         numberOr(document, "sky.exposure", fallback.sky.exposure),
         0.0F,
         4.0F);
+    fallback.sky.sunAngularRadiusDegrees = std::clamp(
+        numberOr(document, "sky.sun_angular_radius_degrees", fallback.sky.sunAngularRadiusDegrees),
+        0.05F,
+        12.0F);
+    fallback.sky.sunIntensity = std::clamp(
+        numberOr(document, "sky.sun_intensity", fallback.sky.sunIntensity),
+        0.0F,
+        8.0F);
+    fallback.sky.hazeStrength = std::clamp(
+        numberOr(document, "sky.haze_strength", fallback.sky.hazeStrength),
+        0.0F,
+        1.0F);
+    fallback.sky.cloudStrength = std::clamp(
+        numberOr(document, "sky.cloud_strength", fallback.sky.cloudStrength),
+        0.0F,
+        1.0F);
 
     fallback.lighting.sunDirection = normalizedOr(
         vectorOr(document, "lighting.sun_direction", fallback.lighting.sunDirection),
@@ -106,6 +122,18 @@ DevRenderTuning devRenderTuningFromConfig(
         numberOr(document, "lighting.saturation", fallback.lighting.saturation),
         0.0F,
         2.0F);
+    fallback.lighting.contactShadowsEnabled = boolOr(
+        document,
+        "lighting.contact_shadows_enabled",
+        fallback.lighting.contactShadowsEnabled);
+    fallback.lighting.contactShadowOpacity = std::clamp(
+        numberOr(document, "lighting.contact_shadow_opacity", fallback.lighting.contactShadowOpacity),
+        0.0F,
+        1.0F);
+    fallback.lighting.contactShadowSoftness = std::clamp(
+        numberOr(document, "lighting.contact_shadow_softness", fallback.lighting.contactShadowSoftness),
+        0.05F,
+        1.0F);
 
     fallback.verticalFovDegrees = std::clamp(
         numberOr(document, "camera.vertical_fov_degrees", fallback.verticalFovDegrees),

@@ -1,5 +1,13 @@
 # Nemisis Project Status
 
+## Latest Block - Atmospheric Range, Viewmodel Depth, Surface Textures, And Network Physics
+
+- Upgraded the Vulkan Dev Range with a camera-oriented atmospheric sky, sun disc, haze/cloud controls, soft contact shadows for grounded actors/props, UV-driven material shading, and a dedicated first-person depth layer for weapons and arms.
+- Added deterministic 128x128 weapon-polymer and movement-panel PBR texture sets (base color, normal, metallic/roughness, emissive) plus a reproducible asset generator and texture manifest.
+- Added look-driven weapon inertia, ADS damping, landing-settle presentation, and upper-body authored clip layering over skeletal locomotion.
+- Integrated NovaCore's expanded capsule/KCC behavior and server-authoritative replication primitives while preserving fixed-tick gameplay and headless compatibility.
+- Disabled normal world-debug lines in the playable render profile; explicit debug/test scene descriptors can still enable them.
+
 ## Latest Block - Runtime Skeletal Animation, Corrected Assets, And Movement Feel
 
 - Added a real NovaCore-backed skeletal animation path for cooked glTF skins: joint hierarchies, authored clip playback, crossfades, sockets, CPU skinning, and dynamic Vulkan vertex resources are now live in `nemisis_game`.

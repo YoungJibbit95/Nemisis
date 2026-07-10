@@ -187,6 +187,20 @@ This file mirrors the active work locally while GitHub Projects also track the l
 - [ ] Extend Dev Range drills with recoil graphs, richer lane awards, and future server validation hooks.
 - [ ] Continue KCC toward capsule-vs-triangle queries, moving platform rotation, dynamic bodies, and server replay validation.
 - [ ] Author reload/fire/mantle/wall-run clips and animation retarget profiles for the final first-person arm rig.
+- [ ] Add descriptor-backed PNG sampling and glTF image residency on top of the new cooked UV/material path.
+- [ ] Connect NovaCore snapshot baselines/reconciliation primitives to live UDP transport and Nemisis remote-player entities.
+
+## Latest Completed
+
+- [x] Add camera-oriented atmospheric sky rendering with sun, haze, cloud breakup, and runtime tuning.
+- [x] Add soft renderer contact shadows for Dev Range actors, props, and weapon-stage assets.
+- [x] Add an isolated first-person viewmodel depth/projection layer for held weapons and animated arms.
+- [x] Upload cooked UV0 attributes and evaluate per-fragment metallic/roughness micro-surface shading.
+- [x] Generate initial weapon/environment PBR PNG texture sets and a deterministic regeneration tool.
+- [x] Add camera-look weapon inertia, ADS damping, and landing-settle presentation.
+- [x] Layer authored upper-body aim/reload/fire animation over locomotion through NovaCore masks.
+- [x] Expand NovaCore KCC with multi-contact sweeps, slopes, steps, snap, moving supports, and landing telemetry.
+- [x] Add strict packet envelopes, acknowledgements, snapshot deltas, interpolation, and reconciliation primitives.
 
 ## Next Core
 

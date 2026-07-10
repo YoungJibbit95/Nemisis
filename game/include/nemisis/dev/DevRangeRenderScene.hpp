@@ -78,6 +78,7 @@ struct DevRangeRenderSceneStats final {
     std::size_t activeLanePressurePrimitiveCount = 0;
     std::size_t targetMeshCount = 0;
     std::size_t materialFallbackProfileCount = 0;
+    std::size_t contactShadowCount = 0;
 };
 
 struct DevRangeRenderSceneDesc final {
@@ -94,6 +95,10 @@ struct DevRangeRenderSceneDesc final {
         0.46F,
         1.45F,
         1.08F,
+        1.55F,
+        1.65F,
+        0.30F,
+        0.22F,
     };
     novacore::render::RenderWorldLighting lighting{
         {0.30F, 0.88F, 0.34F},
@@ -104,6 +109,9 @@ struct DevRangeRenderSceneDesc final {
         0.16F,
         1.12F,
         1.08F,
+        true,
+        0.46F,
+        0.64F,
     };
     bool showWorldDebugLines = true;
     float verticalFovDegrees = 74.0F;
@@ -133,7 +141,9 @@ private:
         std::array<float, 4> color,
         DevRangeRenderSceneStats& stats,
         float pitchDegrees = 0.0F,
-        float rollDegrees = 0.0F) const;
+        float rollDegrees = 0.0F,
+        novacore::render::RenderMeshLayer layer = novacore::render::RenderMeshLayer::World,
+        bool castsContactShadow = true) const;
 
     void appendWorldGeometry(
         novacore::render::RenderFrameInfo& frame,

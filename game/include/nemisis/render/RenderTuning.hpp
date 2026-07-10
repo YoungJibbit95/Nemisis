@@ -14,6 +14,10 @@ struct DevRenderTuning final {
         0.46F,
         1.45F,
         1.08F,
+        1.55F,
+        1.65F,
+        0.30F,
+        0.22F,
     };
     novacore::render::RenderWorldLighting lighting{
         {0.30F, 0.88F, 0.34F},
@@ -24,11 +28,14 @@ struct DevRenderTuning final {
         0.16F,
         1.12F,
         1.08F,
+        true,
+        0.46F,
+        0.64F,
     };
     float verticalFovDegrees = 74.0F;
     float nearPlane = 0.03F;
     float farPlane = 120.0F;
-    bool showWorldDebugLines = true;
+    bool showWorldDebugLines = false;
 };
 
 [[nodiscard]] DevRenderTuning devRenderTuningFromConfig(

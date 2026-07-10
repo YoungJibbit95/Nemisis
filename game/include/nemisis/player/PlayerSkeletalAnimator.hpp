@@ -21,6 +21,8 @@ struct PlayerSkeletalAnimatorStats final {
     std::uint64_t evaluatedFrameCount = 0;
     std::uint64_t failedFrameCount = 0;
     std::string currentClip;
+    std::string upperBodyClip;
+    float upperBodyWeight = 0.0F;
     bool initialized = false;
     bool poseReady = false;
 };
@@ -58,6 +60,8 @@ private:
     novacore::assets::GltfAnimationAsset animationAsset_;
     novacore::animation::AnimationRuntime runtime_;
     const novacore::animation::AnimationClip* activeClip_ = nullptr;
+    novacore::animation::LayerMask upperBodyMask_;
+    bool upperBodyMaskReady_ = false;
     PlayerSkeletalAnimatorStats stats_;
     std::vector<std::string> warnings_;
     std::vector<std::string> errors_;

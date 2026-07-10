@@ -19,7 +19,11 @@
     },
     "horizon_height": 0.46,
     "gradient_power": 1.45,
-    "exposure": 1.08
+    "exposure": 1.08,
+    "sun_angular_radius_degrees": 1.55,
+    "sun_intensity": 1.65,
+    "haze_strength": 0.3,
+    "cloud_strength": 0.22
   },
   "lighting": {
     "sun_direction": {
@@ -37,7 +41,10 @@
     "rim_intensity": 0.22,
     "specular_intensity": 0.16,
     "contrast": 1.12,
-    "saturation": 1.08
+    "saturation": 1.08,
+    "contact_shadows_enabled": true,
+    "contact_shadow_opacity": 0.46,
+    "contact_shadow_softness": 0.64
   },
   "camera": {
     "vertical_fov_degrees": 74.0,
@@ -45,6 +52,6 @@
     "far_plane": 120.0
   },
   "debug": {
-    "world_lines": true
+    "world_lines": false
   }
 }

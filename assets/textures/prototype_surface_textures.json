@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "generator": "tools/assets/generate_surface_textures.py",
+  "resolution": [
+    128,
+    128
+  ],
+  "color_space": {
+    "base_color": "sRGB",
+    "normal": "linear",
+    "metallic_roughness": "linear",
+    "emissive": "sRGB"
+  },
+  "textures": [
+    "textures/environments/movement_accent_basecolor.png",
+    "textures/environments/movement_accent_emissive.png",
+    "textures/environments/movement_accent_mr.png",
+    "textures/environments/movement_accent_normal.png",
+    "textures/weapons/wpn_polymer_dark_basecolor.png",
+    "textures/weapons/wpn_polymer_dark_mr.png",
+    "textures/weapons/wpn_polymer_dark_normal.png"
+  ]
+}

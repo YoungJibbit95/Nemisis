@@ -98,6 +98,23 @@ bool PlayerSkeletalAnimator::initialize(const novacore::assets::GltfMeshData& me
         errors_.push_back("Initial character animation pose evaluation failed");
         return false;
     }
+
+    const auto upperRoot = std::ranges::find_if(
+        animationAsset_.skeleton.joints,
+        [](const novacore::animation::Joint& joint) {
+            const auto name = lowercase(joint.name);
+            return name.find("chest") != std::string::npos ||
+                name.find("spine_02") != std::string::npos ||
+                name.find("spine2") != std::string::npos ||
+                name == "spine";
+        });
+    if (upperRoot != animationAsset_.skeleton.joints.end()) {
+        const auto jointIndex = static_cast<novacore::animation::JointIndex>(
+            std::distance(animationAsset_.skeleton.joints.begin(), upperRoot));
+        upperBodyMask_ = novacore::animation::makeDescendantMask(animationAsset_.skeleton, jointIndex);
+        upperBodyMaskReady_ = novacore::animation::validateLayerMask(
+            upperBodyMask_, animationAsset_.skeleton).valid();
+    }
     const auto skin = novacore::assets::skinGltfMesh(
         sourceMesh_, animationAsset_, runtime_.globalPose(), skinnedMesh_);
     warnings_.insert(warnings_.end(), skin.warnings.begin(), skin.warnings.end());
@@ -132,6 +149,8 @@ void PlayerSkeletalAnimator::reset() {
     animationAsset_ = {};
     runtime_ = {};
     activeClip_ = nullptr;
+    upperBodyMask_ = {};
+    upperBodyMaskReady_ = false;
     stats_ = {};
     warnings_.clear();
     errors_.clear();
@@ -155,6 +174,36 @@ bool PlayerSkeletalAnimator::update(
     const float playbackScale = frame.locomotionClip == CharacterAnimationClip::Sprint
         ? std::clamp(0.85F + frame.stride01 * 0.55F, 0.85F, 1.40F)
         : std::clamp(0.75F + frame.stride01 * 0.45F, 0.75F, 1.20F);
+
+    const auto* upperClip = selectClip(frame.upperBodyClip);
+    const float upperWeight = std::clamp(frame.upperBodyAlpha, 0.0F, 1.0F);
+    if (upperBodyMaskReady_ && upperClip != nullptr && upperWeight > 0.001F && upperClip != activeClip_) {
+        const auto layerValidation = runtime_.setLayer(
+            0U,
+            novacore::animation::AnimationLayerDesc{
+                upperClip,
+                upperBodyMask_,
+                std::clamp(frame.upperBodyNormalizedTime, 0.0F, 1.0F) * upperClip->duration,
+                1.0F,
+                upperWeight,
+                frame.upperBodyClip == CharacterAnimationClip::Reload ||
+                        frame.upperBodyClip == CharacterAnimationClip::Fire
+                    ? novacore::animation::WrapMode::Clamp
+                    : novacore::animation::WrapMode::Loop,
+            });
+        if (!layerValidation.valid()) {
+            errors_.push_back("Upper-body animation layer validation failed");
+            ++stats_.failedFrameCount;
+            stats_.poseReady = false;
+            return false;
+        }
+        stats_.upperBodyClip = upperClip->name;
+        stats_.upperBodyWeight = upperWeight;
+    } else {
+        runtime_.clearLayer(0U);
+        stats_.upperBodyClip.clear();
+        stats_.upperBodyWeight = 0.0F;
+    }
     if (!runtime_.update(std::clamp(deltaSeconds * playbackScale, 0.0F, 0.10F))) {
         errors_.push_back("Animation runtime update failed: " + std::string(runtime_.lastError()));
         ++stats_.failedFrameCount;
