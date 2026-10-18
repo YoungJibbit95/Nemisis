@@ -61,6 +61,9 @@ void testSpawnCreatesExpectedPlayerComponents() {
     expect(transform != nullptr && transform->position.x == 1.0F, "transform stores spawn x");
     expect(transform != nullptr && transform->position.y == 2.0F, "transform stores spawn y");
     expect(transform != nullptr && transform->position.z == 3.0F, "transform stores spawn z");
+    const auto* motor = world.getComponent<nemisis::movement::PlayerMovementState>(entity);
+    expect(motor != nullptr && (motor->position - desc.position).lengthSquared() == 0.0F,
+        "authoritative movement starts at the requested spawn, without a first-tick teleport");
 
     const auto* weaponState = world.getComponent<nemisis::weapons::WeaponRuntimeState>(entity);
     expect(weaponState != nullptr, "weapon runtime component exists");
