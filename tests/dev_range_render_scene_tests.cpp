@@ -251,6 +251,7 @@ void testDevRangeRenderSceneBuildsExpectedSubmissions() {
     player.position = {1.0F, 0.0F, 2.0F};
     player.view.yawDegrees = 32.0F;
     player.view.pitchDegrees = -7.0F;
+    player.cameraRollDegrees = 12.0F;
     player.hasMovementState = true;
     useFirstPersonCamera(player);
     nemisis::dev::GreyboxCollisionResult collision{};
@@ -287,9 +288,12 @@ void testDevRangeRenderSceneBuildsExpectedSubmissions() {
     expect(frame.camera3D.position.z == 2.0F, "dev range render scene copies player z");
     expect(frame.camera3D.yawDegrees == 32.0F, "dev range render scene copies yaw");
     expect(frame.camera3D.pitchDegrees == -7.0F, "dev range render scene copies pitch");
+    expect(frame.camera3D.rollDegrees == player.cameraRollDegrees,
+           "world and sky receive the same presented camera roll");
     expect(frame.camera3D.verticalFovDegrees == 74.0F, "dev range render scene uses default FOV");
     expect(frame.lighting.ambientIntensity > 0.33F && frame.lighting.ambientIntensity < 0.35F, "dev range render scene applies lighting profile");
-    expect(frame.lighting.sunDirection.y > 0.80F, "dev range lighting points from above");
+    expect(frame.lighting.sunDirection.y > 0.30F && frame.lighting.sunDirection.y < 0.40F,
+           "Dev Range uses a visible low-elevation sun above the horizon");
     expect(frame.lighting.fillIntensity > 0.20F, "dev range lighting applies fill light for imported meshes");
     expect(frame.lighting.rimIntensity > 0.20F, "dev range lighting applies rim light for mesh readability");
     expect(frame.sky.enabled, "dev range render scene enables renderer sky pass");
@@ -319,7 +323,8 @@ void testDevRangeRenderSceneBuildsExpectedSubmissions() {
     if (firstPersonRifle.has_value()) {
         expect(firstPersonRifle->position.z > player.position.z + 0.45F, "first-person rifle sits in front of the camera");
         expect(firstPersonRifle->yawDegrees > 31.0F && firstPersonRifle->yawDegrees < 33.0F, "first-person rifle uses normalized Project asset forward axis");
-        expect(std::abs(firstPersonRifle->rollDegrees) < 5.0F, "first-person rifle stays upright without legacy import roll correction");
+        expect(std::abs(firstPersonRifle->rollDegrees - player.cameraRollDegrees) < 5.0F,
+               "rifle stays upright relative to the rolled camera without legacy import correction");
         expect(firstPersonRifle->scale.x > 0.9F && firstPersonRifle->scale.x < 1.1F, "first-person rifle uses normalized Project asset scale");
         expect(firstPersonRifle->material.specularScale > 1.30F, "first-person rifle uses a weapon material fallback profile");
         expect(firstPersonRifle->layer == novacore::render::RenderMeshLayer::ViewModel, "first-person rifle uses isolated viewmodel depth");

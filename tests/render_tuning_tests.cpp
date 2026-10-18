@@ -1,7 +1,11 @@
 #include "nemisis/render/RenderTuning.hpp"
 
 #include <cstdlib>
+#include <cmath>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
+#include <iterator>
 #include <string_view>
 
 namespace {
@@ -159,12 +163,33 @@ void testRenderTuningPreservesFallbacksWhenMissing() {
     expect(!tuning.showWorldDebugLines, "missing debug toggle preserves fallback");
 }
 
+void testDevRangeProfileSunIsVisibleAtLevelPitch() {
+    const auto path = std::filesystem::path{NEMISIS_SOURCE_ROOT} / "configs/render/dev_range_render.json";
+    std::ifstream file(path);
+    expect(file.good(), "actual Dev Range profile opens");
+    const std::string text{std::istreambuf_iterator<char>{file}, std::istreambuf_iterator<char>{}};
+    novacore::core::ConfigDocument document;
+    expect(novacore::core::parseJsonConfig(text, document).ok(), "actual Dev Range profile parses");
+    const auto tuning = nemisis::render::devRenderTuningFromConfig(document);
+    const auto sun = tuning.lighting.sunDirection;
+    const float elevation = std::atan2(sun.y, std::sqrt(sun.x * sun.x + sun.z * sun.z));
+    constexpr float radians = 3.14159265358979323846F / 180.F;
+    expect(elevation > 10.F * radians && elevation < 30.F * radians,
+           "profile uses a low above-horizon sun rather than the previous 62.7-degree elevation");
+    expect(elevation < tuning.verticalFovDegrees * radians * .5F,
+           "level camera can see the sun when facing its azimuth");
+    const nemisis::render::DevRenderTuning fallback;
+    expect(std::abs(sun.y - fallback.lighting.sunDirection.y) < 1e-5F,
+           "missing profile uses the same sun elevation");
+}
+
 } // namespace
 
 int main() {
     testRenderTuningLoadsLightingAndCamera();
     testRenderTuningClampsUnsafeValues();
     testRenderTuningPreservesFallbacksWhenMissing();
+    testDevRangeProfileSunIsVisibleAtLevelPitch();
 
     if (failures > 0) {
         std::cerr << failures << " render tuning test(s) failed\n";

@@ -397,6 +397,7 @@ target_include_directories(nemisis_render_tuning_tests
 )
 
 target_link_libraries(nemisis_render_tuning_tests PRIVATE Novacore::Engine)
+target_compile_definitions(nemisis_render_tuning_tests PRIVATE NEMISIS_SOURCE_ROOT="${CMAKE_CURRENT_SOURCE_DIR}")
 add_test(NAME nemisis_render_tuning_tests COMMAND nemisis_render_tuning_tests)
 
 add_executable(nemisis_weapon_simulation_tests
