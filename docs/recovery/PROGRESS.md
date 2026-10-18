@@ -754,3 +754,21 @@ claim follows from this evidence. Renew explicit GUI permission before resuming.
 Technically Integrated: developer Ready/shared pose/contact only. Animation
 Complete: NO. Visually Accepted: NO. CI status at the published runtime head is
 tracked on PR #23; this final evidence update is documentation only.
+
+## 2026-10-18 UI foundation / native component showcase
+
+User-requested UI work is isolated in `ui/00-technology-spike`. RmlUi 6.1 and
+FreeType 2.13.3 replace bitmap typography for the new opt-in `--ui-showcase`.
+Space Grotesk regular/bold and all license notices ship with the UI assets.
+Existing GameMenu, settings, persistence, loadout and HUD remain intact.
+The optional UI engine pin is fb33cb5502e6a4ea59ddc6183329529f25c0c279 (separate
+engine draft PR #14); the ordinary engine pin is unchanged. No merge.
+
+Full local GCC Release headless game build/34 CPU tests and Vulkan game build
+pass; native document tests cover 720p/1080p/1440p geometry and controls/modal/
+controller actions with stable idle resources. Authorized live 720p inspection
+confirmed real typography, gradients/glow, button/modal/dropdown interaction and
+Dev Range transition/back. Physical Escape stopped Computer Use; no subsequent
+GUI actions were made. Larger-resolution visual/resize/GPU timing acceptance
+remains open. See docs/ui/UI_ROADMAP.md and UI_DESIGN_SYSTEM.md for the bounded
+milestone, reproducible launch and remaining phases.

@@ -22,6 +22,9 @@
 #include "nemisis/settings/GameSettings.hpp"
 #include "nemisis/settings/UserSettingsPersistence.hpp"
 #include "nemisis/ui/GameMenu.hpp"
+#if NEMISIS_HAS_RMLUI
+#include "nemisis/ui/UiShowcase.hpp"
+#endif
 #include "nemisis/weapons/WeaponAttachments.hpp"
 #include "nemisis/weapons/WeaponSystem.hpp"
 
@@ -49,6 +52,9 @@ struct GameAppOptions final {
     bool autoEnterDevRange = false;
     bool lockDevRange = false;
     bool runMenuFlowSmoke = false;
+    bool uiShowcase = false;
+    int uiPreviewWidth = 1280;
+    int uiPreviewHeight = 720;
     bool firstPersonHandIK = false;
     bool projectFPSPreview = false;
     bool projectRifleReady = false;
@@ -107,6 +113,11 @@ private:
     dev::DevRangeRenderSceneBuilder devRangeRenderer_;
     dev::DevRangeRenderSceneStats latestDevRangeRenderStats_;
     ui::GameMenu menu_;
+#if NEMISIS_HAS_RMLUI
+    std::unique_ptr<ui::UiShowcase> uiShowcase_;
+#endif
+    bool uiQuitRequested_ = false;
+    bool uiConfirmReleasePending_ = false;
     settings::GameSettings settings_;
     movement::MovementSystem movement_;
     render::DevRenderTuning renderTuning_;
