@@ -16,7 +16,22 @@ int main(int argc, char** argv) {
     bool smokeTest = false;
     for (int i = 1; i < argc; ++i) {
         const std::string_view argument(argv[i]);
-        if (argument == "--smoke-test") {
+        if (argument == "--ui-showcase") {
+#if NEMISIS_HAS_RMLUI
+            gameOptions.uiShowcase = true;
+            gameOptions.autoEnterDevRange = false;
+            gameOptions.lockDevRange = false;
+#else
+            std::cerr << "--ui-showcase requires -DNEMISIS_ENABLE_RMLUI=ON\n";
+            return 2;
+#endif
+        } else if (argument.starts_with("--ui-size=")) {
+            const auto size = argument.substr(10);
+            if (size == "1280x720") { gameOptions.uiPreviewWidth = 1280; gameOptions.uiPreviewHeight = 720; }
+            else if (size == "1920x1080") { gameOptions.uiPreviewWidth = 1920; gameOptions.uiPreviewHeight = 1080; }
+            else if (size == "2560x1440") { gameOptions.uiPreviewWidth = 2560; gameOptions.uiPreviewHeight = 1440; }
+            else { std::cerr << "UI size must be 1280x720, 1920x1080 or 2560x1440\n"; return 2; }
+        } else if (argument == "--smoke-test") {
             smokeTest = true;
         } else if (argument == "--project-rifle-ready") {
 #if defined(NEMISIS_PROJECT_FPS_PREVIEW) && defined(NEMISIS_ENABLE_HAND_IK)
@@ -89,6 +104,17 @@ int main(int argc, char** argv) {
         }
     }
 
+    if (gameOptions.uiShowcase) {
+        if (gameOptions.runMenuFlowSmoke || gameOptions.projectFPSPreview || gameOptions.firstPersonHandIK) {
+            std::cerr << "UI showcase cannot be combined with other preview profiles\n"; return 2;
+        }
+        if (!gameOptions.preferVulkanRenderer) {
+            std::cerr << "--ui-showcase requires the Vulkan renderer\n"; return 2;
+        }
+        gameOptions.requireVulkanRenderer = true;
+        gameOptions.autoEnterDevRange = false;
+        gameOptions.lockDevRange = false;
+    }
     if (smokeTest) {
         desc.maxFrames = gameOptions.runMenuFlowSmoke ? 44 :
             (gameOptions.firstPersonHandIK || gameOptions.projectFPSPreview) ? 60 : 5;
