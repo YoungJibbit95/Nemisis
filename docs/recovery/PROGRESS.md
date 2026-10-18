@@ -1,5 +1,25 @@
 # Recovery progress
 
+## 2026-10-18 Phase 5 orchestration checkpoint
+
+- Actual main: game f15bc0e (#23 merged), engine 38e718b (#12/#13 merged).
+  Game #25/#26/#27 remain Draft and have green hosted MSVC/Clang checks.
+  Separate UI #28 and engine #14 remain Draft; #14 conflicts with engine main.
+- Main locally combined engine main and UI #14 as5518818, preserving both
+  CameraMath and VulkanUiRenderer plus their records; combined game source is
+  143efac (#27 + main + #28). Engine/game CPU and Vulkan combination validation
+  follows before any pin migration or claim of runtime compatibility.
+- Three isolated specialist streams started as requested. Physical anatomical
+  grip ownership is P0; existing screen-right and contact residual tests alone
+  are insufficient. Physics audits/adopts a bounded solver without replacing
+  KCC. Rendering continues R2 after existing R0/R1 and preserves UI resources.
+- Main coordination and UI contracts: docs/coordination/PHASE5_INTEGRATION.md
+  and UI_HANDOFF.md. UI remains owned by the separate UI chat; its branch and
+  original dirty user worktrees are untouched. No automatic merges.
+- Physical Escape still prohibits new GUI actions/graphical launches. Phase 4
+  baseline-only evidence and the accidental post-stop launch remain recorded
+  below; visual and GPU performance acceptance remain open.
+
 ## 2026-10-18 Phase 4 GUI Escape stop / limited evidence
 
 - User explicitly renewed GUI permission for baseline/R0/R1 Hip/Look-down and
