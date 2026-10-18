@@ -1549,6 +1549,7 @@ void testProjectReadyUsesOneConstrainedPose() {
         desc.player.animation.locomotionClip = clip;
         desc.player.animation.stride01 = .65F;
         for (int phase = 0; phase < 72; ++phase) {
+            desc.player.cameraRollDegrees = std::sin(static_cast<float>(ticks) * .13F) * 12.F;
             desc.player.animation.thirdPersonBodyPitchDegrees = clip == player::CharacterAnimationClip::Sprint ? 8 : 0;
             desc.player.animation.thirdPersonBodyRollDegrees = std::sin(static_cast<float>(ticks) * .1F) * 2;
             desc.player.position = {3, 0, -5};
@@ -1721,6 +1722,19 @@ void testProjectReadyUsesOneConstrainedPose() {
                     }
                 }
                 expect(localShadowExclusions == 3, "all three actual local Project submissions have shadow policy");
+                for (const auto asset : {dev::kProjectFPSBodyAssetId, dev::kProjectFPSArmsAssetId}) {
+                    const auto subset = std::ranges::find(frame.worldMeshes, asset, &render::RenderMesh3D::assetId);
+                    expect(subset != frame.worldMeshes.end(), "both actual Project subsets are submitted");
+                    if (subset != frame.worldMeshes.end()) {
+                        const auto matrix = player::firstPersonAttachmentMatrix({subset->position, subset->scale,
+                            subset->yawDegrees, subset->pitchDegrees, subset->rollDegrees});
+                        bool coherent = true;
+                        for (std::size_t row=0; row<4; ++row) for (std::size_t column=0; column<4; ++column) {
+                            coherent &= std::abs(matrix.at(row,column) - model.at(row,column)) < 1e-6F;
+                        }
+                        expect(coherent, "real body/arms/eye/IK share the same root matrix through both camera-roll signs");
+                    }
+                }
                 expect(stats.projectFPSBodyActive && stats.projectFPSArmsActive, "both actual subsets submitted");
                 const auto rifle = std::ranges::find(frame.worldMeshes, dev::kProjectReadyWeaponAssetId,
                                                      &render::RenderMesh3D::assetId);
