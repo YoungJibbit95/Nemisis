@@ -162,6 +162,17 @@ if(NEMISIS_BUILD_PROJECT_FPS_CANDIDATE)
         NEMISIS_PROJECT_FPS_CANDIDATE_ROOT="${project_fps_candidate_dir}")
     novacore_copy_mingw_runtime(nemisis_project_fps_candidate_tests)
     add_dependencies(nemisis_project_fps_candidate_tests nemisis_project_fps_candidate)
+    add_custom_command(
+        OUTPUT "${project_fps_candidate_dir}/arms_palm_proposal.glb" "${project_fps_candidate_dir}/palm_proposal_report.json"
+        COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tools/assets/author_project_palm_proposal.py"
+                --candidate-dir "${project_fps_candidate_dir}"
+        DEPENDS "${project_fps_candidate_dir}/arms.glb" "${project_fps_candidate_dir}/report.json"
+                assets/metadata/project_palm_frame_proposal.json tools/assets/author_project_palm_proposal.py
+                tools/assets/asset_readiness_check.py VERBATIM)
+    add_custom_target(nemisis_project_palm_proposal
+        DEPENDS "${project_fps_candidate_dir}/arms_palm_proposal.glb" "${project_fps_candidate_dir}/palm_proposal_report.json")
+    add_dependencies(nemisis_project_fps_candidate_tests nemisis_project_palm_proposal)
+    add_test(NAME nemisis_project_palm_proposal_tests COMMAND nemisis_project_fps_candidate_tests --palm-proposal)
     add_test(NAME nemisis_project_fps_candidate_tests COMMAND nemisis_project_fps_candidate_tests)
     add_test(NAME nemisis_project_fps_cook_tests
         COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/project_fps_cook_tests.py"
