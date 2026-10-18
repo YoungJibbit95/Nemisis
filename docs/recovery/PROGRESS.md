@@ -54,23 +54,6 @@
 - Separate palm authoring draft#21 at75ce615 has green MSVC/Clang CI (40 cases).
   M4 draft#19 remains separate and green; runtime draft#20 is not promoted.
 
-## 2026-10-18 Phase 2D bounded Project palm proposal
-
-- Separate authoring candidate adds two finger-bone-derived palm reference
-  sockets to a new build-only arms_palm_proposal.glb. Existing source/candidate
-  assets, original sockets, binary data, all weighted segments, scales and clips
-  are preserved. Recipe/source hashes and deterministic --check pass.
-- Public-engine C++ contract passes at pin
-  a687c8816fbcc8a7f4d313cf092c6dc17a59f8f7: independent landmark frame checks,
-  original bind/clip socket/joint and actual skinned-vertex parity.
-- Hand-local origins are approximately(+/-0.0007583,0.0570446,-0.0021107)m.
-  Full orientations and outstanding palm-normal/contact-depth/finger-wrap artist
-  decisions are recorded in FIRST_PERSON_RECOVERY.md and generated report.
-- No production IK activation. ozz supports non-direct ancestors; the current
-  A1 adapter's direct-parent/uniform-frame and wrist-rotation assumptions block
-  safe Project use. Full affine chain adaptation and M4 contact validation remain
-  open. Runtime preview and isolated M4 correction remain separate PRs.
-
 ## 2026-10-18 Phase 2C candidate / visual and integration gates OPEN
 
 - Published DRAFT https://github.com/YoungJibbit95/Nemisis/pull/18, implementation
