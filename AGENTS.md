@@ -75,13 +75,15 @@ Start with the dependency-light build:
 ```powershell
 cmake --preset local-debug-no-deps
 cmake --build --preset local-debug-no-deps
-ctest --test-dir build/local-debug-no-deps --output-on-failure
+ctest --test-dir build/local-debug-no-deps --label-exclude gpu --output-on-failure
 ```
 
 On MSVC use `windows-vs2022-no-deps` and CTest with `-C Debug`. For visible
 Windows validation use `windows-msvc-debug`; use `windows-ninja-vcpkg-debug`
 only when its toolchain is available. Missing GPU/SDK support is not a successful
 Vulkan test. Preserve graphics code when the environment cannot validate it.
+The `ci-headless*` CTest presets exclude only the explicit `gpu` hardware label.
+Run that label separately with a graphical build and usable Vulkan backend.
 
 Run relevant existing tests and the available full build. Add/update tests for
 new behavior or real bugs, not merely to justify an AI-generated workaround.

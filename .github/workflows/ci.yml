@@ -1,0 +1,75 @@
+name: Nemisis headless CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nemisis-headless-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  headless:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Ubuntu Clang
+            os: ubuntu-24.04
+            preset: ci-headless-linux
+          - name: Windows MSVC
+            os: windows-2022
+            preset: ci-headless-windows
+    defaults:
+      run:
+        working-directory: Nemisis
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: Nemisis
+          persist-credentials: false
+      - name: Read exact engine revision
+        id: engine
+        shell: pwsh
+        run: |
+          $revision = (Get-Content -Raw cmake/novacore-revision.txt).Trim()
+          if ($revision -cnotmatch '^[0-9a-f]{40}$') { throw 'NovaCore pin must be a full lowercase commit SHA' }
+          Add-Content $env:GITHUB_OUTPUT "revision=$revision"
+      - name: Checkout pinned public NovaCore
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: YoungJibbit95/Novacore-Engine
+          ref: ${{ steps.engine.outputs.revision }}
+          path: Novacore-Engine
+          persist-credentials: false
+      - name: Verify engine revision and record validation boundary
+        shell: pwsh
+        run: |
+          $actual = git -C ../Novacore-Engine rev-parse HEAD
+          if ($LASTEXITCODE -ne 0 -or $actual -ne '${{ steps.engine.outputs.revision }}') { throw 'NovaCore checkout does not match pin' }
+          Add-Content $env:GITHUB_STEP_SUMMARY "NovaCore: $actual. GPU-labelled smokes require a usable Vulkan backend and are excluded from this CPU-only job."
+      - name: Configure C++23 headless game
+        run: cmake --preset ${{ matrix.preset }}
+      - name: Build game and all test executables
+        run: cmake --build --preset ${{ matrix.preset }} --parallel 2
+      - name: Test gameplay, movement, weapons, assets, networking and headless boot
+        run: ctest --preset ${{ matrix.preset }} --output-junit test-results.xml
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: nemisis-${{ matrix.preset }}-failure
+          path: |
+            Nemisis/test-results.xml
+            Nemisis/build/**/Testing/Temporary/**
+            Nemisis/build/**/CMakeFiles/CMakeConfigureLog.yaml
+          retention-days: 7
+          if-no-files-found: warn

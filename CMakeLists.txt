@@ -137,10 +137,41 @@ endif()
 
 enable_testing()
 
-add_test(NAME nemisis_game_smoke COMMAND nemisis_game --smoke-test)
-add_test(NAME nemisis_game_vulkan_smoke COMMAND nemisis_game --vulkan-smoke-test)
-add_test(NAME nemisis_game_vulkan_dev_range_smoke COMMAND nemisis_game --vulkan-dev-range-smoke-test)
-add_test(NAME nemisis_game_menu_flow_smoke COMMAND nemisis_game --menu-flow-smoke-test)
+function(nemisis_add_runtime_smoke test_name argument require_vulkan)
+    add_test(NAME ${test_name}
+        COMMAND ${CMAKE_COMMAND}
+            "-DGAME_EXECUTABLE=$<TARGET_FILE:nemisis_game>"
+            "-DSMOKE_ARGUMENT=${argument}"
+            "-DREQUIRE_VULKAN=${require_vulkan}"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/RunGameSmoke.cmake"
+    )
+endfunction()
+
+nemisis_add_runtime_smoke(nemisis_game_smoke --smoke-test OFF)
+nemisis_add_runtime_smoke(nemisis_game_vulkan_smoke --vulkan-smoke-test ON)
+nemisis_add_runtime_smoke(nemisis_game_vulkan_dev_range_smoke --vulkan-dev-range-smoke-test ON)
+nemisis_add_runtime_smoke(nemisis_game_menu_flow_smoke --menu-flow-smoke-test ON)
+
+# These exercise real cooked assets/configs without copying the authoring tree.
+set_tests_properties(
+    nemisis_game_smoke
+    nemisis_game_vulkan_smoke
+    nemisis_game_vulkan_dev_range_smoke
+    nemisis_game_menu_flow_smoke
+    PROPERTIES
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        TIMEOUT 120
+)
+
+# CPU-only CI excludes this explicit hardware label. An unavailable Vulkan
+# backend must never yield a successful graphics smoke through the null renderer.
+set_tests_properties(
+    nemisis_game_vulkan_smoke
+    nemisis_game_vulkan_dev_range_smoke
+    nemisis_game_menu_flow_smoke
+    PROPERTIES
+        LABELS "gpu"
+)
 
 add_executable(nemisis_movement_replay_tests
     game/src/input/InputCommandBuilder.cpp

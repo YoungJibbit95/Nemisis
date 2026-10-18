@@ -67,6 +67,29 @@ cmake --build --preset windows-msvc-vcpkg-debug
 
 ### Sibling checkout fallback:
 
+The reproducible recovery baseline uses `ci-headless-linux` (Ubuntu/Clang),
+`ci-headless-windows` (Windows/MSVC), or `ci-headless` (local Ninja): configure,
+build and run CTest with the same preset name. CI checks out the full NovaCore
+commit in `cmake/novacore-revision.txt`; use that revision locally to reproduce it.
+These presets validate from the source checkout without staging authoring assets.
+
+The headless CTest presets explicitly exclude the `gpu` label. All three graphics
+smokes remain registered and require an active Vulkan backend, loaded runtime data
+and a successful process exit. With a graphical build and usable GPU run:
+
+```text
+ctest --test-dir build/windows-msvc-debug -C Debug -L gpu --output-on-failure
+```
+
+For a legacy no-deps build, use:
+
+```text
+ctest --test-dir build/local-debug-no-deps -LE gpu --output-on-failure
+```
+
+A headless run is not GPU validation. See
+[recovery progress](docs/recovery/PROGRESS.md) before continuing.
+
 ```powershell
 cmake --preset local-debug-no-deps
 cmake --build --preset local-debug-no-deps
