@@ -22,9 +22,11 @@ The previous W1 X=+.11m Ready mount compensated for the reflected camera. The
 existing offline Blender tool restores the physical right side and re-solves
 the real deform arms. The first X=-.11,Z=.21m pose crossed the eye by .0554923m
 at Sprint-to-Idle tick216 because the original unarmed ancestors keep turning.
-The revised offline mount is X=-.16,Z=.17m, with Y=1.54m unchanged. This combines
-five centimetres of rightward and four of rearward correction to retain actual
-left-arm reach. Its full 288-tick runtime gate remains required after recooking.
+The final offline mount is X=-.16,Y=1.61,Z=.17m. This combines five centimetres
+rightward and four rearward to retain actual left-arm reach, then seven upward
+to bring the real firing hand into the unchanged74-degree frustum. All288
+runtime samples pass: minimum right margin .00907103m, maximum actual palm
+residual .000991491m, and158/2275 visible right/left hand vertices at hip.
 Local translations/scales, source skin and actual .R firing/.L support identity
 stay intact. Rendered anatomy, finger wrap, ADS and performance still need renewed
 Vulkan inspection. Historical +X-screen-right/+Z-depth rows below describe the

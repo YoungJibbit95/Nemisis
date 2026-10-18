@@ -1,5 +1,21 @@
 # Recovery progress
 
+## 2026-10-19 Ready strict runtime gate passed
+
+- Final offline mount X=-.16,Y=1.61,Z=.17m: after the measured lateral/depth
+  correction, actual .R skin was still below the eye frustum. Raising the whole
+  authored weapon7cm and solving both real chains yields158R/2275L hand vertices
+  inside the original74-degree frustum. No FOV or test tolerance changed.
+- Recooked paired integration passes all288 Idle/Walk/Sprint/stop samples:
+  minimum firing camera-right margin+.00907103m, maximum palm residual.000991491m,
+  minimum weapon-forward dot.643083. Actual original weighted skin,1mm/.5-degree
+  contact, positive scales, immutable eye/chest and render-matrix checks pass.
+- Blender wrist residuals25.03um/.224um, original local T/S preservation below
+  7.79e-7m/1.05e-6;72 tracks. Pose SHA256
+  f59c8151c3950778ae457f748b2bb4341ff62d6b623597b5c1c2ea716cd5cc5e.
+  Physical-contact mutation checks pass. Updated full/hosted gates remain pending;
+  no Vulkan/finger-quality/complete-armed-animation or default migration claim.
+
 ## 2026-10-19 Ready transition measurement and offline correction
 
 - Proper-camera runtime gate exposed three hip-side failures at Sprint-to-Idle

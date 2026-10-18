@@ -897,12 +897,28 @@ Original unarmed lower ancestors continue blending beneath the Ready rotations;
 they turn the chest relative to the gameplay camera. All 288 contact checks
 passed, maximum .000979131m. The strict positive-side assertion is retained.
 
-The revised offline solve uses X=-.16,Y=1.54,Z=.17m: five centimetres farther
+The intermediate offline solve used X=-.16,Y=1.54,Z=.17m: five centimetres farther
 right and four rearward, reducing the lateral correction needed from the actual
 left support arm. Blender wrist residuals are .0000114425m R and .0000003638m L;
 original local translation/scale deltas remain below .0000007367m/.0000011247.
 The 72-track pose SHA256 is
 `bc60ff4b2927764eaa702853a1dcea8c9331a7311c17fb38841df9f5e13b39eb`.
-Physical-contact mutation checks pass. The new pose's runtime side/contact/skin
-and frustum gate is pending recook; predicted placement is not an acceptance
-result. No runtime offset, reflection, contact relaxation or GUI action is used.
+Physical-contact mutation checks passed. Runtime side/contact checks then passed
+but firing-hand frustum visibility failed:446 vertices passed the horizontal
+planes, none the vertical planes. Actual eye-relative hand bounds were
+Y[-.257654,-.0849818], Z[.0432939,.137778]m. This candidate was not accepted.
+
+The final solve raises the entire authored weapon to Y=1.61m while retaining
+X=-.16,Z=.17 and solves both actual chains again. Blender wrist residuals are
+.0000250239m R and .0000002235m L; original local T/S deltas remain below
+.0000007789m/.0000010410. Pose SHA256:
+`f59c8151c3950778ae457f748b2bb4341ff62d6b623597b5c1c2ea716cd5cc5e`.
+Physical-contact mutation checks pass. The recooked integration runtime gate
+passes all288 samples: minimum firing camera-right margin .00907103m, maximum
+palm residual .000991491m, minimum forward dot .643083, and158/2275 actual
+right/left hand vertices in the unchanged hip frustum. Positive side,1mm contact,
+.5-degree orientation, original source-weighted skin and >10 hand vertices
+remain strict. Full updated hosted CI remains pending at this source checkpoint.
+This establishes a bounded mathematical Ready reference over original unarmed
+locomotion, not polished fingers, true directional armed clips or Vulkan pixels.
+No runtime offset, reflection, contact relaxation or GUI action is used.
