@@ -124,6 +124,65 @@ The run ended normally after4619 samples/skins/vertex updates for each subset,
 world_updates=0 and one active submission per subset. Corrected anatomical
 placement must be reviewed again; weapon-ready/ADS/reload contact remains open.
 
+## Phase 2D: Project palm authoring proposal (2026-10-18)
+
+This is a separate **unapproved authoring candidate**, not a completed hand-IK
+adapter or a runtime grip activation. The runtime preview remains independent.
+The existing optional candidate build also produces `arms_palm_proposal.glb`
+and `palm_proposal_report.json` under `build/project-fps-candidate`. Reproduce with:
+
+```powershell
+python tools/assets/cook_project_fps_candidate.py --output build/project-fps-candidate
+python tools/assets/author_project_palm_proposal.py --candidate-dir build/project-fps-candidate
+python tools/assets/author_project_palm_proposal.py --candidate-dir build/project-fps-candidate --check
+```
+
+The proposal appends `socket_palm_r_proposal` and `socket_palm_l_proposal` below
+the corresponding DEF-hand bones. It preserves the original seven sockets, all
+original joint/mesh TRS, the complete binary chunk, weights, fingers, inverse
+binds, indices and animation channels. Both original source hashes and the
+candidate recipe/output hashes are checked before authoring. No large duplicate
+GLB is committed or mounted in gameplay.
+
+Frames use actual descendant index/middle/pinky proximal finger bones in hand
+local bind space. Origin is halfway from the wrist to the midpoint of index and
+pinky knuckles; Z points from wrist to middle knuckle, X is pinky-to-index
+orthogonalized against Z, and Y=cross(Z,X). This is independent of hand bounding
+boxes. The local origins in metres are:
+
+| Frame | X | Y | Z | Wrist distance |
+| --- | ---: | ---: | ---: | ---: |
+| Right | 0.000758260 | 0.057044649 | -0.002110675 | 0.0570887 |
+| Left | -0.000758338 | 0.057044641 | -0.002110661 | 0.0570887 |
+
+The report contains full XYZ axes/matrices and exact SHA256 values. Artists must
+confirm each palmar normal sign/approach rotation and contact depth on the actual
+palm surface, then author finger wrap and trigger placement against M4 hip/ADS/
+reload poses. These anatomical reference frames alone do not establish contact.
+The old hand sockets' roughly0.414/0.487m offsets are not silently overwritten.
+
+The public engine contract independently derives landmark origins/orientations,
+imports the added matrix nodes as sockets and checks unchanged old socket frames,
+joint global poses, topology, weights and actual skinned vertices across authored
+clips. Deterministic generation and --check pass. A local C++23 Release contract
+linked against exact engine a687c8816fbcc8a7f4d313cf092c6dc17a59f8f7 passes.
+
+**IK blocker is the current game adapter, not five bones alone.** Upstream ozz
+0.17.0 IKTwoBoneJob explicitly permits non-direct ancestor start/mid/end joints;
+intermediate joints remain fixed. A1's adapter instead requires direct parents
+and uniform frames, and computes wrist orientation from only selected local
+rotations. That is invalid for the weighted Project .001 intermediates and their
+animated nonuniform scales. Upstream common-parent nonuniform-scale tests do not
+prove arbitrary per-segment scale/shear plus rigid palm alignment.
+
+A future bounded adapter must preserve the actual full affine ancestor chain and
+deforming intermediate joints, apply ozz corrections in the correct local spaces,
+derive wrist rotation through its real parent, account for the approved palm
+offset/orientation and verify post-skin hand contact and bend plane/joint limits.
+Until that is proven, the existing A1 solver is explicitly unavailable for the
+Project preview. No new solver, second sampler, scale stripping or guessed bone
+offsets are introduced. Weapon Rig Completed remains **NO**.
+
 ## Phase 2C Project FPS technical candidate (2026-10-18)
 
 **Technically Correct for subset skinning; not Visually Accepted; not Character
