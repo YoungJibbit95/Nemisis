@@ -82,6 +82,7 @@ class PlayerSkeletalAnimator final {
     bool constrainedPoseReady_ = false;
     const novacore::animation::AnimationClip* activeClip_ = nullptr;
     const novacore::animation::AnimationClip* readyClip_ = nullptr;
+    const novacore::animation::AnimationClip* armedIdleClip_ = nullptr;
     novacore::animation::LayerMask upperBodyMask_;
     bool upperBodyMaskReady_ = false;
     PlayerSkeletalAnimatorStats stats_;
