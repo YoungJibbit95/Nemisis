@@ -1477,7 +1477,7 @@ void testProjectReadyUsesOneConstrainedPose() {
         expect(false, "one animator accepts real Project subsets");
         return;
     }
-    expect(animator.stats().currentClip == "Developer Rifle Ready Idle", "actual new Ready clip is selected");
+    expect(animator.stats().currentClip == "Project M4 Armed Idle", "actual authored M4 Armed Idle clip is selected");
     expect(animator.skinnedMesh() && animator.skinnedCompanion(),
            "both original palettes are skinned from the common pose");
     expect(arms.animationData->skins[0].joints.size() == 81 && body.animationData->skins[0].joints.size() == 57,
