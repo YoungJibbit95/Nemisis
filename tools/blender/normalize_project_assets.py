@@ -12,6 +12,7 @@ By default it writes a JSON report and does not export binary assets. Pass
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import sys
@@ -457,6 +458,7 @@ def write_asset_metadata(
             "Blender export_yup produces runtime Y-up/+Z-forward sockets."
         )
         metadata["socket_notes"] = weapon_socket_notes()
+        metadata["socket_notes"].update(entry.get("socket_notes", {}))
     elif category == "character":
         clips = action_names()
         rigs = armature_names()
@@ -547,6 +549,10 @@ def inspect_entry(
             "source": entry.get("source"),
             "error": "Source file does not exist.",
         }
+
+    expected_hash = entry.get("source_sha256")
+    if expected_hash and hashlib.sha256(source.read_bytes()).hexdigest() != expected_hash:
+        raise ValueError(f"Source hash changed for {entry['id']}; review geometry normalization and anchors before cooking")
 
     reset_scene()
     imported = import_asset(source)
