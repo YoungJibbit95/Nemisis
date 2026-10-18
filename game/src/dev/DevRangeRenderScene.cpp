@@ -1280,6 +1280,7 @@ DevRangeRenderSceneStats DevRangeRenderSceneBuilder::append(
     const auto view = renderView(desc);
     frame.camera3D.yawDegrees = view.yawDegrees;
     frame.camera3D.pitchDegrees = view.pitchDegrees;
+    frame.camera3D.rollDegrees = desc.player.cameraRollDegrees;
     frame.camera3D.verticalFovDegrees = desc.player.hasCameraRig
         ? desc.player.verticalFovDegrees
         : desc.verticalFovDegrees;

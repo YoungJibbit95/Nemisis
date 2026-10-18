@@ -677,3 +677,128 @@ claim follows from this evidence. Renew explicit GUI permission before resuming.
 Technically Integrated: developer Ready/shared pose/contact only. Animation
 Complete: NO. Visually Accepted: NO. CI status at the published runtime head is
 tracked on PR #23; this final evidence update is documentation only.
+
+## Phase 4 W1: arsenal inventory and right-handed reference
+
+Audited 2026-10-18 against `core_trio.json`, `WeaponSystem.cpp`,
+`DevRangeRenderScene.cpp::firstPersonWeaponMount`, the actual GLB nodes and the
+asset manifest. There are four playable definitions, not six. All six Project
+weapons also appear in the static showcase. Source prefix below is
+`assets/project_assets/weapon_`; cooked prefix is
+`assets/processed/normalized/project_assets/wpn_project_`; suffix is `.glb`.
+These are existing source/cooked files, not newly imported assets.
+
+| Gameplay ID / class | Source -> cooked suffix | Presentation/profile | Integration / visual acceptance |
+| --- | --- | --- | --- |
+| `ar_01` / assault rifle | `rifle_m4a1` -> `rifle_m4a1` | Rifle; separate `rifle_m4a1_ready_preview` developer variant | Project Ready shares one body/arms pose and physical palm constraints. Right hip reference re-authored in W1; **not visually accepted**. |
+| `smg_01` / SMG | `smg_fr17` -> `smg_fr17` | Legacy procedural SMG | Project skeleton/profile absent; orientation and real contacts need W2. **Not accepted**. |
+| `shotgun_01` / shotgun | `rifle_ncar` -> `rifle_ncar` | Legacy long-gun mount; pickup label `BREACH RIFLE` | **Content mismatch**: rifle geometry, no proven shotgun mechanism. No approved proxy and no Project integration. **Not accepted**. |
+| `sidearm_01` / sidearm | `sidearm_glock19` -> `sidearm_glock19` | Legacy procedural sidearm | Project pistol grip, support/release, slide/magazine reload absent. **Not accepted**. |
+| none / alternative rifle | `rifle_afr120` -> `rifle_afr120` | Showcase only | No gameplay definition or Project profile; no new weapon/balance added. **Not accepted**. |
+| none / alternative sidearm | `sidearm_p320` -> `sidearm_p320` | Showcase only | No gameplay definition or Project profile. **Not accepted**. |
+
+Every current cooked marker declares +Y up / +Z forward. That declaration does
+not prove physical orientation. M4 #19 established real sights above magazine,
+barrel/muzzle forward and unit scale. FR17's tall appendages currently extend
+upward and require geometric classification/re-cook before claiming the same.
+Glock, P320, NCAR and AFR120 still need independent geometry inspection. No
+orientation repair was added in the runtime.
+
+Positions below are metres in each cooked asset scene, rounded for readability;
+they were evaluated through the real node hierarchy, not copied from metadata.
+All right grip origins are `(0,0,0)`. These legacy grip markers are positional
+proposals; only the M4 Ready variant additionally has measured physical palm
+frames. None of these original GLBs contains skins or animation clips.
+
+| Asset suffix | Muzzle XYZ | Left support XYZ | Eject XYZ | Sight / magazine / profile gaps |
+| --- | --- | --- | --- | --- |
+| `rifle_m4a1` | (.00009,.08978,.61478) | (0,.05833,.33855) | (-.02455,.06357,.12194) | Named Sight/Sight_2/Magazine/Stock/Trigger; no accepted sight-aperture/ADS or magazine-motion frame. Actual source ejection is -X; preserve it. |
+| `smg_fr17` | (-.020,.080,.310) | (-.030,.030,.160) | (.012,.060,.080) | Generic Plane/Cylinder parts; muzzle/grips/eject provisional, no sight or magazine-motion frame. |
+| `sidearm_glock19` | (-.012,.045,.135) | (-.020,0,.005) | (.002,.055,.055) | One mesh; no validated sight, magazine, slide or palmar frames. |
+| `rifle_ncar` | (-.035,.090,.575) | (-.053,.040,.290) | (.025,.070,.180) | Generic parts; no shotgun shell/pump/mechanism evidence. |
+| `rifle_afr120` | (-.028,.100,.742) | (-.042,.040,.330) | (.014,.080,.230) | Single mesh; no accepted sight, magazine or animation profile. |
+| `sidearm_p320` | (-.014,.050,.148) | (-.023,0,.005) | (.002,.060,.063) | Single mesh; no validated sight, slide or magazine-motion frames. |
+
+Existing fallback assets remain explicit: M4 and shotgun ->
+`wpn_a2_modular_rifle_01`, SMG -> `wpn_a2_blackout_carbine_01`, sidearm ->
+`wpn_a2_striker_sidearm_01`. Legacy arms use `chr_a1_fp_arms_01`; active Project
+Ready instead uses the actual Project subsets and never falls back to A1.
+The separate Project FPS preview/Ready currently locks weapon switching to AR.
+Thus legacy SMG/pistol availability does **not** establish Project arsenal support.
+
+### Right-hand contract and W1 developer reference
+
+Hipfire means the actual firing grip is on camera-right; the primary physical
+palm remains parented to `DEF-hand.R`, support to `DEF-hand.L`. ADS may center
+the sight while retaining those identities. No negative scale, reflected mesh,
+swapped bone labels or runtime asset-axis repair is permitted. Contact goals,
+muzzle and render submission must all use the same final weapon matrix.
+
+Phase 3 Vulkan evidence placed the M4 left of the anatomical eye. The W1 offline
+Blender source moves the artistic mount from X=-.11 to X=+.11 metres and solves
+the existing real arm chains again. It retains the reach-compatible torso pose,
+actual palms, source geometry and all local translation/scale. Simply reversing
+the torso twist made the support arm unreachable and was rejected. No renderer
+camera/basis change is used to move the weapon.
+
+The permanent Ready regression now tests camera-relative primary-grip side
+through the existing 288 Idle/Walk/Run/stop ticks and yaw/body pitch/roll; it also
+checks forward direction and positive instance scales. The deterministic cook
+checks that physical .R/.L palm markers attach to the actual corresponding hand
+bones. Existing independent final contact/orientation, immutable eye/chest,
+original binary/palette preservation and render-matrix tests remain mandatory.
+These checks establish a mathematical developer reference, **not** acceptable
+finger wrap, shoulder posture, third-person anatomy or game pixels.
+
+State acceptance remains open for all four playable weapons: true directional
+armed locomotion, Sprint hold, ADS enter/hold/exit, fire distribution, class reload
+with hand release and magazine/slide/shell handling, equip/switch, jump/fall/land
+and world-model armed attachment. Ready-over-original Walk/Run is not a completed
+armed movement set. Do not enable the developer slice by default or remove legacy.
+
+Next packages: W2 FR17 offline physical orientation/sockets then actual Project
+SMG Hip/ADS; W3 Glock; W4 suitable shotgun source or explicitly approved proxy;
+W5 alternatives only if selected; W6 class state authoring and switching; W7 real
+game matrix. All GUI acceptance requires renewed explicit permission after the
+last physical Escape stop. No Phase 4 GUI inspection has occurred.
+
+### Phase 4 visual reference handoff
+
+The user's `Nemisis_Visual_References_Codex.zip` is extracted locally at
+`F:/Coding/Project/recovery/phase4/visual-references`. All 13 external images
+were downloaded with the provided standard-library script and decoded/verified;
+F01 initially returned HTTP403, then its original URL succeeded with the original
+source Referer. `download-status.json` preserves hashes, original sources, image
+formats/dimensions and rights. `reference_board_local.html` uses the downloaded
+images; the original board/JSON/README are unchanged. No reference binaries are
+committed, republished or imported as textures/models.
+
+- F01 ([The Finals](https://the-finals.it.malavida.com/windows/)): Hip weapon and
+  actual firing wrist in the lower right; central target area free; continuous
+  arm/wrist/grip silhouettes and visible fore-end support without gaps or gross
+  penetration. The mathematical W1 side check is only a prerequisite.
+- F02 ([Titanfall 2](https://www.eneba.com/hub/games/most-underrated-games/)) and
+  F03 ([Apex ADS](https://www.gamestar.de/artikel/apex-legends-guide-so-verbessert-ihr-euren-aim,3341325.html)):
+  actual centered sight aperture, visible target through the sight and stable
+  anatomical hand identities during enter/hold/exit and motion. The supplied F02
+  still is ADS, not proof of animated movement; use it for sight readability.
+- S01-S03 guide sky/sun/haze; M01-M02 real materials; P01-P02 metal/roughness/
+  reflections; L01-L03 cast shadows/industrial lighting. Renderer packages own
+  these criteria; later atmospheric/PBR/shadow targets are not claimed by R0.
+
+Reproducible Vulkan comparison must record game and engine commits, EXE and
+cooked-asset hashes, viewport/FOV, camera position/yaw/pitch/roll, fixed-tick or
+held presentation state and scene. Match those values before/after. Capture
+Hip, ADS, look-down and each supported movement/fire/reload/switch state
+separately; missing states stay open. `00_Nemisis_IST_Zustand` contains genuine
+historical user screenshots from different builds, not a matched current
+baseline. The Phase 3 Ready image is also historical evidence, not Phase 4 pixels.
+New GUI input/captures require renewed explicit permission, or user-supplied
+matched screenshots. No visible Phase 4 improvement is inferred from CPU tests.
+
+FR17 audit refinement: an actual side projection of the existing vertices places
+the muzzle/barrel `Cylinder.010` at negative Z (front extremity -.18478m), while
+stock `Plane.024` reaches positive Z (.30477m). The current +.310Z muzzle marker
+therefore points at the stock as well as the grips being upside down. W2 must
+correct forward and up together in the existing offline cook, then recalibrate
+that asset's own contacts/sights. Do not attach hands to these old targets.

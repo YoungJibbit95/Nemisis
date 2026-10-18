@@ -1,5 +1,119 @@
 # Recovery progress
 
+## 2026-10-18 Phase 4 R1 exact runtime integration
+
+- Separate renderer Draft https://github.com/YoungJibbit95/Novacore-Engine/pull/13
+  stacks on R0 #12. Final pin3d673b7345d295588367b466a8877e84dee112a9;
+  implementation a68ea79, final3d673b7 changes documentation only. This game
+  branch stacks on R0 integration #26 (571d264), which stacks on W1 #25 and #23.
+  No automatic merge, rewrite or original-checkout edit occurred.
+- R1 transforms instance normals by R*inverse(S), matching position order
+  Ry*Rx*Rz. Unit light directions and bounded factors are packed to preserve the
+  existing128-byte push limit; no new buffers/descriptors/lifetime framework.
+  Independent tests cover geometric tangent orthogonality,180-degree lighting,
+  tiny/invalid scales, NaN/Inf/FE_INVALID and precision. Measured error maxima:
+  direction0.00371697 degrees; factor7.62939e-06. All45 public headers match R0.
+- Full engine Release build and7/7 CPU tests pass1.63s; separate complete Vulkan
+  static-library build and install pass. All15 shaders compile and pass SPIR-V
+  validation; member offsets match C++ and total128bytes. R0 shaders stay frozen.
+- Complete game build/relink against the exact public R1 library and45/45 CPU
+  CTest cases pass156.03s. Local validation reuses the byte-identical R0 public
+  headers and overrides only the imported public library path, avoiding another
+  full compile and preserving R0 packages. Normal source-pin/CI builds need no
+  such local cache hint or engine-private headers. Pin updated only after this
+  cross-repository validation. No tests disabled or tolerances relaxed.
+- R0 game Vulkan build completed all73 steps. Preserved review executable:
+  recovery/phase4/review-r0/nemisis_game.exe SHA256
+  0208996a03da69acf9c0919cf8633a9d24bf2ad3fe2b3bc63e6065768ce644f8.
+  The same game objects link successfully with the exact R1 Vulkan library;
+  recovery/phase4/review-r1/nemisis_game.exe SHA256
+  24414568ed2c10af703dca68a5c7b89707f1d9933aec9a2a2d93979127adb77e.
+  These review copies retain their compiled asset root
+  build/phase4-r0-vulkan/project-fps-candidate; preserve that directory. Runtime
+  DLL imports were inspected. No GUI launch is inferred from a successful link.
+- Manual launcher: tools/run_project_rifle_ready.ps1 -Executable
+  F:/Coding/Project/recovery/phase4/review-r1/nemisis_game.exe (add -LookDown for
+  body). Use game FOV55/74/105; engine-only CPU cases40/110 are not game settings.
+  Matched capture metadata/observations belong in recovery/phase4/visual and PR
+  bodies; at this technical checkpoint no renewed GUI permission or Phase4
+  Vulkan image exists. Reference board and hashes remain in visual-references.
+- W1 and engine R0 hosted Windows/MSVC + Ubuntu/Clang checks are green. Game R0
+  and R1 hosted results are tracked in their PRs; R1 publication/CI follows this
+  commit. Technical validation is separate from visual acceptance.
+- R1 fixes render-instance normals only. The existing importer's linear baked
+  nonuniform normal transform and fixed-view specular/rim approximation remain
+  explicit followups. Dynamic shadow maps, real texture binding, BRDF/IBL and
+  LOD/performance packages R2-R5 have not been implemented in this slice.
+- Weapon continuation: W2 FR17 actual barrel/stock forward/up correction and
+  asset-specific sockets before Project SMG Hip/ADS; then W3 Glock, W4 suitable
+  shotgun source or explicitly approved proxy, class-specific animation/switching
+  and W7 actual visual matrix. Current Ready is still a developer pose over old
+  Walk/Run; no arsenal/ADS/reload/third-person completion is claimed.
+
+## 2026-10-18 Phase 4 R0 integration and visual reference handoff
+
+- W1 Draft https://github.com/YoungJibbit95/Nemisis/pull/25 at e2b0488 has green
+  Windows/MSVC and Ubuntu/Clang CI, run39165450688. It depends on still-open #23;
+  no merges performed. Its PR body includes explicit F01-F03 visual targets.
+- Exactly one renderer agent implemented R0 in its own engine worktree. Draft
+  https://github.com/YoungJibbit95/Novacore-Engine/pull/12 targets main d4eee3a.
+  New game pin: fa37f17cb77649434ce4893acc25437dbc0bb910. Runtime f0c90b7 plus
+  documentation-only followup fa37f17; inspected diff contains only two docs.
+- R0 replaces fixed sky ray factors/opposite screen-Y with the world camera's
+  actual FOV/aspect/projection and yaw/pitch/roll basis. Sun remains the shared
+  world-space toward-light direction. Game forwards presented camera roll and
+  config/fallbacks use azimuth25/elevation20 degrees instead of elevation62.7.
+- Engine full dependency-light build and6/6 CPU tests pass1.49s. Vulkan backend
+  and all15 shaders compile; SPIR-V validation passes, sky push block128bytes.
+  Exact-public-package Nemisis full Release build and45/45 CPU tests pass133.77s.
+  First integration run caught one test's zero-roll assumption after its fixture
+  gained12-degree camera roll. Assert now checks the same5-degree import-roll
+  tolerance relative to camera; complete suite rerun passes. No test disabled.
+- Separate Vulkan game directory build/phase4-r0-vulkan is configured; binary
+  compilation/real GPU acceptance are still pending at this checkpoint. Original
+  Phase3 EXE/DLLs copied to recovery/phase4/baseline-vulkan, EXE SHA256
+  4cd67d719e7d2c94bbb3c64534797d94e943d8b8b07957701b8ac0cf65aa7ebc.
+  R0 shaders/packages are frozen separately from the following R1 work.
+- User reference ZIP extracted to recovery/phase4/visual-references,13/13 external
+  images downloaded, decoded/verified, source/rights/hashes in download-status.json;
+  original board/README/JSON preserved, local board also available. Reference
+  binaries stay outside Git/game assets. FIRST_PERSON_RECOVERY records concrete
+  F/S/M/P/L criteria, historical-image limits and matched Vulkan capture metadata.
+- No renewed GUI authorization after physical Escape: no Phase4 GUI actions,
+  Vulkan screenshots or performance improvements claimed. R1 instance normals
+  remains a separate engine branch/PR. Current stable weapon slice is W1 only;
+  W2 begins with actual FR17 forward/up/socket corrections, not the old markers.
+
+## 2026-10-18 Phase 4 W1: inventory and right-handed developer reference
+
+- Fresh GitHub audit: #19, #20, #21, #22 and baseline #24 merged; #23 remains
+  Draft against main. Both Windows/MSVC and Ubuntu/Clang checks at its final
+  8dc9ce3 head passed (run 39157419733). W1 depends on #23; main cce7bec was
+  merged into this isolated recovery branch. Original dirty checkouts untouched.
+- Exact engine pin remains a687c8816fbcc8a7f4d313cf092c6dc17a59f8f7. Engine main
+  d4eee3a differs from that runtime only in recovery documentation.
+- FIRST_PERSON_RECOVERY records all four playable definitions, six source/cooked
+  Project assets, evaluated sockets, class/profile gaps and explicit fallbacks.
+  NCAR-as-shotgun is an unresolved content mismatch, not an approved proxy.
+- Re-authored M4 developer Hip reference X=-.11 -> +.11 in Blender 5.1.0,
+  preserving original anatomy, source meshes, positive scale and actual palm
+  frames. Kept the reach-compatible torso; reversing it failed the real support
+  arm reach check and was rejected. No runtime axis fix or mirror introduced.
+- Permanent actual Ready tests verify primary-grip camera side over 288 movement/
+  yaw ticks, forward hemisphere, positive scale and physical .R/.L parent bones.
+  Independent contact/orientation and original binary/palette checks retained.
+  Old Phase 3 left-pose fixture is rejected (285 side failures); new fixture passes.
+- Full dependency-light Release build passes; 45/45 CPU CTest cases pass in
+  105.47s. Actual Ready contact max 0.000999308m, minimum camera-forward dot
+  0.643084 during original locomotion; both hand vertices in frustum (179 right /
+  2275 left). These are not occlusion/pixel or artist-quality claims.
+- Exactly one rendering subagent owns separate engine worktree/branch, R0 first;
+  game files/pin remain main-agent owned. No GUI permission was renewed after
+  physical Escape; no Phase 4 GUI input, screenshots or GPU acceptance claimed.
+- Next: publish W1 Draft/CI, then FR17 geometry-specific offline cook and Project
+  SMG integration. Separately validate exact R0 engine commit against Nemisis
+  before updating its pin/config; R1 must remain a separate renderer PR.
+
 ## 2026-10-18 Phase 2D actual Project FPS runtime preview
 
 - User has merged engine#11 and game#13–#17; current game main is
