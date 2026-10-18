@@ -154,6 +154,62 @@ void check(const Asset& original, const Asset& candidate, const std::string& nam
               << " max_authored_deformation_m=" << std::sqrt(maxDeformation) << '\n';
 }
 
+void checkPalmProposal() {
+    const auto root = std::filesystem::path(NEMISIS_PROJECT_FPS_CANDIDATE_ROOT);
+    const auto source = load(root / "arms.glb"), proposal = load(root / "arms_palm_proposal.glb");
+    require(source.mesh.vertexCount() == proposal.mesh.vertexCount() &&
+            source.mesh.indexCount() == proposal.mesh.indexCount() &&
+            source.animation.jointNodeIndices == proposal.animation.jointNodeIndices &&
+            source.animation.skeleton.sockets.size() == 7 && proposal.animation.skeleton.sockets.size() == 9,
+            "palm proposal adds only two attachments; no skin/topology replacement");
+    const auto bind = pose(source, -1, 0);
+    const auto proposalBind = pose(proposal, -1, 0);
+    for (const std::string side : {"R", "L"}) {
+        const auto wrist = animation::findJoint(source.animation.skeleton, "DEF-hand." + side);
+        const auto index = animation::findJoint(source.animation.skeleton, "DEF-f_index.01." + side);
+        const auto middle = animation::findJoint(source.animation.skeleton, "DEF-f_middle.01." + side);
+        const auto pinky = animation::findJoint(source.animation.skeleton, "DEF-f_pinky.01." + side);
+        require(wrist && index && middle && pinky, "actual deforming wrist/knuckle landmarks retained");
+        const auto w = animation::matrixTranslation(bind.joints[*wrist]);
+        const auto i = animation::matrixTranslation(bind.joints[*index]);
+        const auto m = animation::matrixTranslation(bind.joints[*middle]);
+        const auto p = animation::matrixTranslation(bind.joints[*pinky]);
+        const auto expected = w * 0.5F + (i + p) * 0.25F;
+        animation::Mat4 palm;
+        require(animation::evaluateSocket(proposal.animation.skeleton, proposalBind,
+            side == "R" ? "socket_palm_r_proposal" : "socket_palm_l_proposal", palm), "new proposal attachment imports");
+        require((animation::matrixTranslation(palm) - expected).lengthSquared() < 0.0000000001F,
+                "palm origin uses actual wrist/knuckle landmarks, not a bounding box");
+        const auto z = animation::transformDirection(palm, {0, 0, 1});
+        const auto finger = m - w;
+        require((z * (1.0F / std::sqrt(z.lengthSquared())) - finger * (1.0F / std::sqrt(finger.lengthSquared()))).lengthSquared() < 0.000001F,
+                "proposal forward follows actual middle-finger base");
+        std::cout << side << " palm wrist_offset_m=" << std::sqrt((expected - w).lengthSquared()) << '\n';
+    }
+    for (int clip = -1; clip < static_cast<int>(source.animation.clips.size()); ++clip) {
+        const auto a = pose(source, clip, 0.37F), b = pose(proposal, clip, 0.37F);
+        for (const auto& socket : source.animation.skeleton.sockets) {
+            animation::Mat4 sa, sb;
+            require(animation::evaluateSocket(source.animation.skeleton, a, socket.name, sa) &&
+                    animation::evaluateSocket(proposal.animation.skeleton, b, socket.name, sb) && near(sa, sb),
+                    "all original authored socket offsets/scales survive proposal");
+        }
+        for (std::size_t j = 0; j < a.joints.size(); ++j) { require(near(a.joints[j], b.joints[j]), "original animated joint globals preserved"); }
+        assets::GltfMeshData sa, sb;
+        require(assets::skinGltfMesh(source.mesh, source.animation, a, sa).ok() &&
+                assets::skinGltfMesh(proposal.mesh, proposal.animation, b, sb).ok(), "proposal actually skins");
+        for (std::size_t p = 0; p < sa.primitives.size(); ++p) {
+            require(sa.primitives[p].weights == sb.primitives[p].weights && sa.primitives[p].joints == sb.primitives[p].joints &&
+                    sa.primitives[p].indices == sb.primitives[p].indices, "all weights/joints/triangles preserved");
+            for (std::size_t v = 0; v < sa.primitives[p].positions.size(); ++v) {
+                require((sa.primitives[p].positions[v] - sb.primitives[p].positions[v]).lengthSquared() == 0,
+                        "new attachments do not change animated weighted geometry");
+            }
+        }
+    }
+    std::cout << "Project palm landmark proposal contracts pass; weapon-contact/artist gate remains open\n";
+}
+
 // Reproducible CPU-only Release comparison: fixed Walk clip, 20 warmup samples,
 // 120 measured samples, existing public sampler/global evaluator/skinner. Import,
 // GPU allocation/transfer/draw and filesystem work are outside timing. Allocations
@@ -182,6 +238,7 @@ void benchmark(const Asset& asset, const std::string& name) {
 
 int main(int argc, char** argv) {
     try {
+        if (argc == 2 && std::string(argv[1]) == "--palm-proposal") { checkPalmProposal(); return 0; }
         const auto original = load(std::filesystem::path(NEMISIS_SOURCE_ROOT) /
                                    "assets/processed/normalized/project_assets/chr_project_male1.glb");
         for (const std::string name : {"arms", "body"}) {

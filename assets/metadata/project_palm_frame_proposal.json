@@ -1,0 +1,10 @@
+{
+  "source_sha256": "e53f5ba51ce08b660e87ecb1f39bb3414e465329bf09dd947e74d44fb3a55f9b",
+  "approved_for_weapon_contact": false,
+  "origin_rule": "Halfway from wrist origin to midpoint of index/pinky proximal knuckles, in hand-bone local space.",
+  "axis_rule": "+Z wrist-to-middle proximal knuckle; +X pinky-to-index projected perpendicular to Z; +Y cross(Z,X). Normal sign/contact depth require artist review.",
+  "frames": [
+    {"socket": "socket_palm_r_proposal", "hand": "DEF-hand.R", "index": "DEF-f_index.01.R", "middle": "DEF-f_middle.01.R", "pinky": "DEF-f_pinky.01.R"},
+    {"socket": "socket_palm_l_proposal", "hand": "DEF-hand.L", "index": "DEF-f_index.01.L", "middle": "DEF-f_middle.01.L", "pinky": "DEF-f_pinky.01.L"}
+  ]
+}
