@@ -109,8 +109,10 @@ DevAssetBindingSummary DevAssetBindings::bindRequiredAssets(
 DevAssetBindingSummary DevAssetBindings::bindAssets(
     const GameAssetCatalog& catalog,
     std::span<const std::string_view> assetIds,
-    const std::filesystem::path& runtimeRoot) {
-    clear();
+    const std::filesystem::path& runtimeRoot,
+    bool append) {
+    if (!append) { clear(); }
+    const auto initialMeshCount = meshes_.meshCount();
 
     DevAssetBindingSummary summary{};
     summary.requiredAssetCount = assetIds.size();
@@ -198,7 +200,7 @@ DevAssetBindingSummary DevAssetBindings::bindAssets(
         summary.totalIndexCount += indexCount;
     }
 
-    summary.renderableAssetCount = meshes_.meshCount();
+    summary.renderableAssetCount = meshes_.meshCount() - initialMeshCount;
     return summary;
 }
 

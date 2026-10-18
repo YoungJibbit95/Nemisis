@@ -24,6 +24,7 @@ struct GameAssetCatalogLoadResult final {
 class GameAssetCatalog final {
 public:
     [[nodiscard]] GameAssetCatalogLoadResult loadFromJson(const std::filesystem::path& path);
+    [[nodiscard]] GameAssetCatalogLoadResult mountFromJson(const std::filesystem::path& path);
     void clear();
 
     [[nodiscard]] const novacore::assets::AssetRecord* find(std::string_view id) const;

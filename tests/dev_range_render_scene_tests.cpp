@@ -2,6 +2,9 @@
 #include "nemisis/dev/DevRangeSession.hpp"
 #include "nemisis/dev/GreyboxWorld.hpp"
 #include "nemisis/player/PlayerFirstPersonRig.hpp"
+#if defined(NEMISIS_PROJECT_FPS_CANDIDATE_ROOT)
+#include "nemisis/player/PlayerSkeletalAnimator.hpp"
+#endif
 
 #include "novacore/assets/GltfDocument.hpp"
 #include "novacore/animation/AnimationTypes.hpp"
@@ -1260,9 +1263,185 @@ void testDevRangeRenderSceneDrawsContactDebugLines() {
     expect(frame.worldLines.size() == 3, "frame receives contact debug world lines");
 }
 
+#if defined(NEMISIS_PROJECT_FPS_CANDIDATE_ROOT)
+void testActualProjectFPSPreviewSubmitsAnimatedSubsets() {
+    namespace dev = nemisis::dev;
+    namespace player = nemisis::player;
+    using namespace novacore;
+    render::Renderer renderer;
+    auto resources = registerSceneMeshes(renderer); // Includes A1 to detect accidental fallback.
+    assets::GltfMeshData body, arms;
+    const std::filesystem::path root{NEMISIS_PROJECT_FPS_CANDIDATE_ROOT};
+    const bool loaded = assets::loadGltfMeshData(root / "body_runtime.glb", body).ok() &&
+        assets::loadGltfMeshData(root / "arms_runtime.glb", arms).ok();
+    expect(loaded && body.vertexCount() == 40532U && arms.vertexCount() == 9536U,
+           "preview imports actual Project candidate geometry");
+    if (!loaded) { return; }
+    player::PlayerSkeletalAnimator bodyAnimator, armsAnimator;
+    if (!bodyAnimator.initialize(body) || !armsAnimator.initialize(arms)) {
+        expect(false, "both actual Project preview subsets initialize authored animation"); return;
+    }
+    for (const auto name : {"arms", "body"}) {
+        assets::GltfMeshData baseline;
+        player::PlayerSkeletalAnimator reference;
+        if (!assets::loadGltfMeshData(root / (std::string(name) + ".glb"), baseline).ok() || !reference.initialize(baseline)) {
+            expect(false, "original subset initializes for independent canonical-frame parity"); return;
+        }
+        const auto* corrected = std::string_view(name) == "arms" ? armsAnimator.skinnedMesh() : bodyAnimator.skinnedMesh();
+        for (std::size_t p = 0; p < corrected->primitives.size(); ++p) {
+            const auto& before = reference.skinnedMesh()->primitives[p];
+            const auto& after = corrected->primitives[p];
+            expect(before.indices == after.indices && before.weights == after.weights && before.joints == after.joints,
+                   "canonical frame preserves original topology, fingers and weights");
+            for (std::size_t v = 0; v < before.positions.size(); ++v) {
+                const auto q = before.positions[v];
+                const math::Vec3 expected{0.10315F-q.x, q.y, 0.10893F-q.z};
+                if ((expected-after.positions[v]).lengthSquared() > 0.000000001F) {
+                    expect(false, "actual skinned vertices receive the canonical scene transform exactly once"); break;
+                }
+            }
+        }
+    }
+    resources[std::string(dev::kProjectFPSBodyResourceId)] = renderer.registerMeshResource(
+        std::string(dev::kProjectFPSBodyResourceId), *bodyAnimator.skinnedMesh(), render::MeshResourceUsage::DynamicVertices);
+    resources[std::string(dev::kProjectFPSArmsResourceId)] = renderer.registerMeshResource(
+        std::string(dev::kProjectFPSArmsResourceId), *armsAnimator.skinnedMesh(), render::MeshResourceUsage::DynamicVertices);
+    const auto world = dev::createDevRangeGreyboxWorld();
+    dev::DevRangeRenderSceneDesc desc;
+    desc.greyboxWorld = &world;
+    desc.meshResources = &resources;
+    desc.projectFPSPreview = true;
+    desc.player.hasMovementState = true;
+    desc.player.hasCameraRig = true;
+    desc.player.hasAnimationFrame = true;
+    desc.player.position = {3, 0, -5};
+    animation::Mat4 eye;
+    expect(bodyAnimator.socketTransform("socket_fps_eye", eye), "actual Project body exposes an animated anatomical eye reference");
+    desc.player.cameraPosition = desc.player.position + animation::matrixTranslation(eye);
+    desc.showWorldDebugLines = true;
+    dev::DevRangeRenderSceneBuilder builder;
+    const auto initialArmVertex = armsAnimator.skinnedMesh()->primitives[0].positions[0];
+    // CPU frustum sanity check for the two required screenshot cases. This is
+    // not a pixel/occlusion oracle and does not replace actual Vulkan images.
+    const auto hip = dev::evaluateFirstPersonPresentation(desc);
+    const auto armsMatrix = player::firstPersonAttachmentMatrix(hip.rig.arms);
+    std::size_t hipVertices = 0, lookDownVertices = 0;
+    for (const auto& primitive : armsAnimator.skinnedMesh()->primitives) {
+        for (const auto p : primitive.positions) {
+            const auto v = animation::transformPoint(armsMatrix, p) - desc.player.cameraPosition;
+            if (v.z > 0.004F && std::abs(v.y) < v.z * 0.6745F && std::abs(v.x) < v.z * 1.199F) { ++hipVertices; }
+        }
+    }
+    for (const auto& primitive : bodyAnimator.skinnedMesh()->primitives) {
+        for (const auto p : primitive.positions) {
+            const auto v = p + desc.player.position - desc.player.cameraPosition;
+            const float depth = -0.939693F * v.y + 0.342020F * v.z;
+            const float screenY = 0.342020F * v.y + 0.939693F * v.z;
+            if (depth > 0.03F && std::abs(screenY) < depth * 0.7536F && std::abs(v.x) < depth * 1.3397F) { ++lookDownVertices; }
+        }
+    }
+    expect(lookDownVertices > 100U, "actual player-root body intersects the anatomical eye look-down frustum");
+    std::cout << "Project preview CPU frustum: hip_arm_vertices=" << hipVertices << " look_down_body_vertices=" << lookDownVertices << '\n';
+    for (const auto clip : {player::CharacterAnimationClip::Idle, player::CharacterAnimationClip::Walk,
+                            player::CharacterAnimationClip::Sprint}) {
+        desc.player.animation.locomotionClip = clip;
+        desc.player.animation.stride01 = 0.65F;
+        for (int tick = 0; tick < 12; ++tick) {
+            expect(bodyAnimator.update(desc.player.animation, 1.0F / 60.0F) &&
+                   armsAnimator.update(desc.player.animation, 1.0F / 60.0F), "authored Project locomotion samples and skins");
+            expect(renderer.updateMeshResourceVertices(resources.at(std::string(dev::kProjectFPSBodyResourceId)), *bodyAnimator.skinnedMesh()) &&
+                   renderer.updateMeshResourceVertices(resources.at(std::string(dev::kProjectFPSArmsResourceId)), *armsAnimator.skinnedMesh()),
+                   "both real Project dynamic resources accept the new pose");
+        }
+        for (const auto view : {player::PlayerViewComponent{0, 0}, player::PlayerViewComponent{38, -70},
+                               player::PlayerViewComponent{-46, 65}}) {
+            desc.player.view = view;
+            desc.player.cameraView = view;
+            desc.player.animation.thirdPersonBodyOffset = {0, -0.07F, 0.02F};
+            auto presentation = dev::evaluateFirstPersonPresentation(desc);
+            desc.firstPersonPresentation = &presentation;
+            render::RenderFrameInfo frame;
+            const auto stats = builder.append(frame, desc);
+            expect(stats.projectFPSBodyActive && stats.projectFPSArmsActive && !stats.localWorldModelActive,
+                   "FPS preview submits head-excluded body and matching arms, never full local world body");
+            expect(presentation.armsAssetId == dev::kProjectFPSArmsAssetId && presentation.armsBoundCount == 0,
+                   "Project preview owns its selected arms without A1 averaging");
+            std::size_t bodyCount = 0, armsCount = 0;
+            for (const auto& mesh : frame.worldMeshes) {
+                expect(mesh.assetId != "chr_a1_fp_arms_01", "Project preview submits no A1 mesh, including diagnostics");
+                if (mesh.assetId == dev::kProjectFPSBodyAssetId) {
+                    ++bodyCount;
+                    expect(mesh.mesh == resources.at(std::string(dev::kProjectFPSBodyResourceId)) &&
+                           mesh.layer == render::RenderMeshLayer::World && mesh.yawDegrees == view.yawDegrees &&
+                           (mesh.position - desc.player.position - desc.player.animation.thirdPersonBodyOffset).lengthSquared() < 0.000001F &&
+                           mesh.scale.x == 1 && mesh.scale.y == 1 && mesh.scale.z == 1,
+                           "Project body uses dedicated dynamic resource at the real player root and metre scale");
+                } else if (mesh.assetId == dev::kProjectFPSArmsAssetId) {
+                    ++armsCount;
+                    expect(mesh.mesh == resources.at(std::string(dev::kProjectFPSArmsResourceId)) &&
+                           mesh.layer == render::RenderMeshLayer::World &&
+                           (mesh.position - desc.player.position - desc.player.animation.thirdPersonBodyOffset).lengthSquared() < 0.000001F &&
+                           mesh.yawDegrees == view.yawDegrees && mesh.pitchDegrees == desc.player.animation.thirdPersonBodyPitchDegrees,
+                           "actual Project arms share the body's player root, projection and depth");
+                }
+            }
+            expect(bodyCount == 1 && armsCount == 1 && stats.firstPersonBodyPrimitiveCount == 0,
+                   "exactly one submission of each Project subset and no procedural body/arm proxies");
+            const auto samples = armsAnimator.stats().sampledFrameCount;
+            render::RenderFrameInfo repeat;
+            (void)builder.append(repeat, desc);
+            expect(armsAnimator.stats().sampledFrameCount == samples, "extra render frame does not sample or skin again");
+            desc.firstPersonPresentation = nullptr;
+        }
+    }
+    expect(bodyAnimator.stats().sampledFrameCount == 36U && armsAnimator.stats().sampledFrameCount == 36U &&
+           bodyAnimator.stats().skinnedFrameCount == 36U && armsAnimator.stats().skinnedFrameCount == 36U,
+           "one authored sample/skin per requested tick, same clocks for Project subsets");
+    expect((initialArmVertex - armsAnimator.skinnedMesh()->primitives[0].positions[0]).lengthSquared() > 0.000001F,
+           "authored locomotion deforms actual Project sleeve vertices");
+    // Exercise interrupted locomotion fades and complete looping clips; short
+    // startup-only sampling cannot expose failures during real movement.
+    for (int tick = 0; tick < 360; ++tick) {
+        const auto phase = (tick / 7) % 3;
+        desc.player.animation.locomotionClip = phase == 0 ? player::CharacterAnimationClip::Idle :
+            phase == 1 ? player::CharacterAnimationClip::Walk : player::CharacterAnimationClip::Sprint;
+        const bool bodyReady = bodyAnimator.update(desc.player.animation, 1.0F / 60.0F);
+        const bool armsReady = armsAnimator.update(desc.player.animation, 1.0F / 60.0F);
+        if (!bodyReady || !armsReady) {
+            for (const auto& error : bodyAnimator.errors()) { std::cerr << "Project body: " << error << '\n'; }
+            for (const auto& error : armsAnimator.errors()) { std::cerr << "Project arms: " << error << '\n'; }
+            expect(false, "Project subsets survive repeated interrupted locomotion fades");
+            break;
+        }
+    }
+    desc.player.animation.locomotionClip = player::CharacterAnimationClip::Idle;
+    for (int tick = 0; tick < 40; ++tick) {
+        expect(bodyAnimator.update(desc.player.animation, 1.0F / 60.0F) &&
+               armsAnimator.update(desc.player.animation, 1.0F / 60.0F), "latest locomotion request settles after an active fade");
+    }
+    expect(bodyAnimator.stats().currentClip.find("stand") != std::string::npos &&
+           bodyAnimator.stats().currentClip == armsAnimator.stats().currentClip &&
+           bodyAnimator.stats().failedFrameCount == 0 && armsAnimator.stats().failedFrameCount == 0,
+           "both Project subsets settle to authored idle without a rejected overlapping fade");
+    resources.erase(std::string(dev::kProjectFPSArmsResourceId));
+    render::RenderFrameInfo missing;
+    expect(!builder.append(missing, desc).projectFPSArmsActive, "missing Project resource is reported, not replaced with A1");
+    expect(std::ranges::none_of(missing.worldMeshes, [](const auto& mesh) { return mesh.assetId == "chr_a1_fp_arms_01"; }),
+           "missing Project resource never silently falls back");
+    desc.player.hasCameraRig = false;
+    render::RenderFrameInfo external;
+    const auto externalStats = builder.append(external, desc);
+    expect(externalStats.localWorldModelActive && !externalStats.projectFPSBodyActive && !externalStats.projectFPSArmsActive,
+           "external scene retains separate complete Project world representation");
+}
+#endif
+
 } // namespace
 
 int main() {
+#if defined(NEMISIS_PROJECT_FPS_CANDIDATE_ROOT)
+    testActualProjectFPSPreviewSubmitsAnimatedSubsets();
+#endif
     testDevRangeRenderSceneBuildsExpectedSubmissions();
     testDevRangeRenderSceneMovesWeaponTowardSightlineInAds();
     testDevRangeRenderSceneViewmodelFollowsCameraAngles();
