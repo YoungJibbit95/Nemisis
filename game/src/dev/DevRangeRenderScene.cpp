@@ -49,9 +49,6 @@ struct FirstPersonWeaponMount final {
     novacore::math::Vec3 hipOffset;
     novacore::math::Vec3 adsOffset;
     novacore::math::Vec3 scale;
-    float yawCorrectionDegrees = 0.0F;
-    float pitchCorrectionDegrees = 0.0F;
-    float rollCorrectionDegrees = 0.0F;
     float recoilYawScale = 0.50F;
     float recoilPitchScale = 0.38F;
     float reloadPitchDegrees = 8.0F;
@@ -65,9 +62,6 @@ struct FirstPersonArmMount final {
     novacore::math::Vec3 hipOffset;
     novacore::math::Vec3 adsOffset;
     novacore::math::Vec3 scale;
-    float yawCorrectionDegrees = 0.0F;
-    float pitchCorrectionDegrees = 0.0F;
-    float rollCorrectionDegrees = 0.0F;
     std::array<float, 4> color;
 };
 
@@ -473,9 +467,6 @@ std::size_t bindFirstPersonArmsMeshToRigSockets(
         {0.26F, -0.30F, 0.90F},
         {0.035F, -0.165F, 0.72F},
         {1.0F, 1.0F, 1.0F},
-        0.0F,
-        0.0F,
-        0.0F,
         0.46F,
         0.34F,
         9.5F,
@@ -489,9 +480,6 @@ std::size_t bindFirstPersonArmsMeshToRigSockets(
         {0.22F, -0.285F, 0.82F},
         {0.028F, -0.155F, 0.66F},
         {1.15F, 1.15F, 1.15F},
-        0.0F,
-        0.0F,
-        0.0F,
         0.50F,
         0.36F,
         8.0F,
@@ -505,9 +493,6 @@ std::size_t bindFirstPersonArmsMeshToRigSockets(
         {0.27F, -0.315F, 0.94F},
         {0.04F, -0.18F, 0.75F},
         {0.92F, 0.92F, 0.92F},
-        0.0F,
-        0.0F,
-        0.0F,
         0.44F,
         0.32F,
         10.0F,
@@ -521,9 +506,6 @@ std::size_t bindFirstPersonArmsMeshToRigSockets(
         {0.18F, -0.245F, 0.68F},
         {0.020F, -0.125F, 0.54F},
         {1.35F, 1.35F, 1.35F},
-        0.0F,
-        0.0F,
-        0.0F,
         0.58F,
         0.42F,
         6.5F,
@@ -550,9 +532,6 @@ std::size_t bindFirstPersonArmsMeshToRigSockets(
         {0.08F, -0.50F, 0.78F},
         {0.018F, -0.43F, 0.62F},
         {0.84F, 0.84F, 0.84F},
-        0.0F,
-        0.0F,
-        0.0F,
         kArmsTint,
     };
     static constexpr FirstPersonArmMount kCharacterProxyArms{
@@ -560,9 +539,6 @@ std::size_t bindFirstPersonArmsMeshToRigSockets(
         {0.12F, -0.52F, 0.82F},
         {0.035F, -0.45F, 0.66F},
         {0.90F, 0.90F, 0.90F},
-        0.0F,
-        0.0F,
-        0.0F,
         {0.52F, 0.58F, 0.54F, 0.88F},
     };
     return adsAligned ? kA1Arms : kCharacterProxyArms;
@@ -589,16 +565,13 @@ std::size_t bindFirstPersonArmsMeshToRigSockets(
 
 [[nodiscard]] player::FirstPersonRigMountDesc toRigMount(const FirstPersonWeaponMount& mount) {
     return player::FirstPersonRigMountDesc{
-        mount.hipOffset,
-        mount.adsOffset,
-        mount.scale,
-        mount.yawCorrectionDegrees,
-        mount.pitchCorrectionDegrees,
-        mount.rollCorrectionDegrees,
-        mount.recoilYawScale,
-        mount.recoilPitchScale,
-        mount.reloadPitchDegrees,
-        mount.reloadRollDegrees,
+        .hipOffset = mount.hipOffset,
+        .adsOffset = mount.adsOffset,
+        .scale = mount.scale,
+        .recoilYawScale = mount.recoilYawScale,
+        .recoilPitchScale = mount.recoilPitchScale,
+        .reloadPitchDegrees = mount.reloadPitchDegrees,
+        .reloadRollDegrees = mount.reloadRollDegrees,
     };
 }
 
@@ -607,9 +580,6 @@ std::size_t bindFirstPersonArmsMeshToRigSockets(
     result.hipOffset = mount.hipOffset;
     result.adsOffset = mount.adsOffset;
     result.scale = mount.scale;
-    result.yawCorrectionDegrees = mount.yawCorrectionDegrees;
-    result.pitchCorrectionDegrees = mount.pitchCorrectionDegrees;
-    result.rollCorrectionDegrees = mount.rollCorrectionDegrees;
     return result;
 }
 

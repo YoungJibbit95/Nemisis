@@ -82,3 +82,28 @@ axis assertions. This is behavior-preserving cleanup, not an asset recook.
 Then classify all test contracts and verify runtime axes/units/transform order
 before migrating a representative weapon. Actual asset/fixup removal still
 requires representative-asset visual/ADS/socket/animation validation.
+
+## Phase 1 bounded cleanup: inactive mount correction slots
+
+- Removed yaw/pitch/roll correction members from the two private per-asset mount
+  structs in DevRangeRenderScene.cpp, plus 18 explicit zero initializer values
+  and their forwarding. All four weapon and both arm definitions were already
+  zero; the shared rig descriptor still supplies the same zero defaults.
+- Used named initialization for the remaining weapon pose/recoil/reload data.
+  Socket binding, hip/ADS offsets, scale, recoil/reload response, the generic rig
+  API, fallback assets and cooked/source binaries are unchanged.
+- Renamed testDevRangeRenderSceneUsesPerWeaponImportAxisCorrections to
+  testDevRangeRenderSceneKeepsCookedWeaponAxes. The contract remains valid:
+  cooked SMG/sidearm submission retains forward/upright axes and mount scale.
+  Every assertion and test invocation is retained; no replacement test needed.
+- Executed complete incremental game/test build and all 34 CPU CTest cases:
+  pass on GCC 13.2 / Ninja. Source-tree headless asset boot also passes.
+  Engine checkout: 15485df, runtime identical to pinned dbdfc38. Diff check passes.
+- This is removal of inactive data, not recooking or changing asset orientation.
+  GPU visual/ADS/socket/animation validation remains required before any actual
+  alignment-fix or cooked-asset migration. Hosted MSVC/Clang follow-up pending.
+
+Next: classify the full test portfolio and verify the actual coordinate/transform
+contract, then select wpn_project_rifle_m4a1 as a representative migration only
+after visual validation is available. Do not assume the recovery plan's historical
+Euler fixes still exist: current weapon mount angles were already all zero.
