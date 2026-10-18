@@ -22,6 +22,21 @@ void GameAssetCatalog::clear() {
     registry_.clear();
 }
 
+GameAssetCatalogLoadResult GameAssetCatalog::mountFromJson(const std::filesystem::path& path) {
+    novacore::assets::AssetManifest manifest;
+    const auto result = novacore::assets::loadAssetManifestFromJson(path, manifest);
+    if (!result.ok()) {
+        return GameAssetCatalogLoadResult{result.errors};
+    }
+    for (const auto& record : manifest.records()) {
+        if (registry_.contains(record.id)) {
+            return GameAssetCatalogLoadResult{{"Additional manifest duplicates asset: " + record.id}};
+        }
+    }
+    registry_.mountManifest(manifest);
+    return {};
+}
+
 const novacore::assets::AssetRecord* GameAssetCatalog::find(std::string_view id) const {
     return registry_.find(id);
 }

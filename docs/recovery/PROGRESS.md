@@ -1,5 +1,34 @@
 # Recovery progress
 
+## 2026-10-18 Phase 2D actual Project FPS runtime preview
+
+- User has merged engine#11 and game#13–#17; current game main is
+  58e55df. Candidate#18 remains open, now based on main, with green MSVC/Clang
+  checks on45363f8. Runtime preview branch stacks on that exact candidate head.
+  No engine pin change: a687c8816fbcc8a7f4d313cf092c6dc17a59f8f7.
+- `--project-fps-preview` now mounts generated metadata into the existing asset
+  registry and loads/animates the actual9,536-arm/40,532-body-vertex subsets.
+  Own DynamicVertices resources player/local/fps_arms and player/local/fps_body
+  submit once in ViewModel and World layers respectively. No A1 GPU resource,
+  fallback/proxy, or hidden full-world-body skin/update passes in FPS preview.
+- Existing authored locomotion sampling, original weights/scales/hierarchy and
+  shared final weapon snapshot are retained. Missing data fails explicitly.
+  Project hand contact remains blocked and the incompatible A1 IK flag is
+  rejected explicitly; no silent substitution or guessed bone-scale removal.
+- Full local GCC13.2 Release build and40/40 CPU cases pass, including real mesh
+  submission/animation and actual GameApp preview smoke. The candidate's source
+  hash/topology/vertex parity checks remain intact. Invalid-metadata negative
+  control fails before graphics startup. See FIRST_PERSON_RECOVERY.md for IDs,
+  launch commands, staging, camera test pose and known release blockers.
+- Isolated M4 correction336cf7346abd65b29062625d6d9a42a62e97b220 published as
+  DRAFT https://github.com/YoungJibbit95/Nemisis/pull/19 against the newly merged
+  main.37/37 IK and34/34 default-OFF CPU cases passed previously; corrected GPU
+  approval remains open after Escape. Source GLB is unchanged.
+- No current GUI permission is inferred from the Phase2D request. Prepare a
+  combined preview+M4 graphical build, then request fresh permission for the two
+  required images or use the documented manual commands. Runtime integration,
+  visual acceptance and completed Project weapon rig remain separate milestones.
+
 ## 2026-10-18 Phase 2C candidate / visual and integration gates OPEN
 
 - Published DRAFT https://github.com/YoungJibbit95/Nemisis/pull/18, implementation

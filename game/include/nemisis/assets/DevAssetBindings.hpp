@@ -60,7 +60,8 @@ public:
     [[nodiscard]] DevAssetBindingSummary bindAssets(
         const GameAssetCatalog& catalog,
         std::span<const std::string_view> assetIds,
-        const std::filesystem::path& runtimeRoot);
+        const std::filesystem::path& runtimeRoot,
+        bool append = false);
 
     [[nodiscard]] const novacore::render::MeshCatalog& meshCatalog() const;
     [[nodiscard]] std::size_t meshCount() const;

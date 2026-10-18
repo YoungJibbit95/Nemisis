@@ -50,6 +50,8 @@ struct GameAppOptions final {
     bool lockDevRange = false;
     bool runMenuFlowSmoke = false;
     bool firstPersonHandIK = false;
+    bool projectFPSPreview = false;
+    bool projectFPSLookDown = false;
 };
 
 class GameApp final : public novacore::core::IApplicationDelegate {
@@ -116,8 +118,13 @@ private:
     player::CharacterAnimationFrame latestCharacterAnimationFrame_;
     player::PlayerSkeletalAnimator skeletalBodyAnimator_;
     player::PlayerSkeletalAnimator skeletalArmsAnimator_;
+    player::PlayerSkeletalAnimator skeletalFPSBodyAnimator_;
     std::optional<dev::FirstPersonPresentation> firstPersonPresentation_;
     std::uint64_t armVertexUpdateCount_ = 0;
+    std::uint64_t fpsBodyVertexUpdateCount_ = 0;
+    std::uint64_t worldBodyVertexUpdateCount_ = 0;
+    bool projectFPSBodySubmitted_ = false;
+    bool projectFPSArmsSubmitted_ = false;
     player::CameraRigState cameraRig_;
     player::AccountStats accountStats_ = player::prototypeAccountStats();
     novacore::ecs::EntityId localPlayerEntity_;

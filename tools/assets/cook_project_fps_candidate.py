@@ -226,6 +226,21 @@ def cook(recipe):
     for name in ("arms", "body"):
         files, reports[name] = cook_variant(source, binary, recipe, name)
         outputs.update(files)
+    assets = []
+    sockets = [node["name"] for node in source["nodes"] if node.get("name", "").startswith("socket_")]
+    for name in ("arms", "body"):
+        asset_id = f"chr_project_male1_fp_{name}_preview"
+        cooked = f"project-fps-candidate/{name}.glb"
+        assets.append({"id": asset_id, "kind": "mesh", "source": recipe["source"]["path"],
+                       "cooked": cooked, "tags": ["project_fps_preview"], "streamable": False})
+        metadata = {"id": asset_id, "source": recipe["source"]["path"], "export": cooked,
+                    "category": "character", "scale_meters": True, "runtime_up_axis": "Y",
+                    "gameplay_forward_axis": "+Z", "sockets": sockets, "collision": "none",
+                    "license": "original_project_asset", "generated_by": "tools/assets/cook_project_fps_candidate.py",
+                    "status": "developer preview; seams and palm frames unapproved"}
+        outputs[f"{name}.metadata.json"] = (json.dumps(metadata, indent=2) + "\n").encode()
+    outputs["preview_assets.json"] = (json.dumps({"manifest": {"name": "project_fps_preview"},
+                                                 "assets": assets}, indent=2) + "\n").encode()
     report = {"source": recipe["source"], "recipe_sha256": digest(RECIPE.read_bytes()),
               "status": "technical candidate; not visually accepted or registered for gameplay",
               "variants": reports, "artist_review": recipe["artist_review"]}
