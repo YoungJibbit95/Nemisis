@@ -1065,7 +1065,6 @@ DevRangeRenderSceneStats DevRangeRenderSceneBuilder::append(
     appendStaticShowcaseMeshes(frame, desc, stats);
     appendTargetLaneMeshes(frame, desc, stats);
     stats.firstPersonViewmodelActive = desc.player.hasCameraRig;
-    stats.localWorldModelActive = desc.player.hasMovementState && !desc.player.hasCameraRig;
     appendLocalPlayerBodyMesh(frame, desc, stats);
     if (stats.firstPersonViewmodelActive) {
         appendFirstPersonMeshes(frame, desc, stats);
@@ -1103,8 +1102,9 @@ bool DevRangeRenderSceneBuilder::appendMesh(
     float pitchDegrees,
     float rollDegrees,
     novacore::render::RenderMeshLayer layer,
-    bool castsContactShadow) const {
-    const auto handle = findMesh(desc, assetId);
+    bool castsContactShadow,
+    novacore::render::MeshResourceHandle resourceOverride) const {
+    const auto handle = resourceOverride.isValid() ? resourceOverride : findMesh(desc, assetId);
     if (!handle.isValid()) {
         ++stats.skippedMeshInstanceCount;
         return false;
@@ -1282,7 +1282,6 @@ void DevRangeRenderSceneBuilder::appendLocalPlayerBodyMesh(
     }
 
     const auto view = renderView(desc);
-    const auto vectors = player::viewVectors(view);
     const auto animationOffset = desc.player.hasAnimationFrame
         ? desc.player.animation.thirdPersonBodyOffset
         : novacore::math::Vec3{};
@@ -1292,40 +1291,18 @@ void DevRangeRenderSceneBuilder::appendLocalPlayerBodyMesh(
     const float animationRoll = desc.player.hasAnimationFrame
         ? desc.player.animation.thirdPersonBodyRollDegrees
         : 0.0F;
-    const auto bodyPosition =
-        desc.player.position -
-        (vectors.forward * 0.12F) +
-        novacore::math::Vec3{0.0F, 0.02F, 0.0F} +
-        animationOffset;
-    const auto bodyColor = desc.player.movementMode == movement::MovementMode::WallRunning
-        ? std::array<float, 4>{0.34F, 0.86F, 1.0F, 0.62F}
-        : desc.player.movementMode == movement::MovementMode::Mantling
-            ? std::array<float, 4>{0.86F, 0.78F, 0.42F, 0.62F}
-            : std::array<float, 4>{0.54F, 0.62F, 0.58F, 0.52F};
-
-    if (!appendMesh(
-            frame,
-            desc,
-            "chr_a1_stylized_operator_01",
-            bodyPosition,
-            {0.82F, 0.82F, 0.82F},
-            view.yawDegrees,
-            bodyColor,
-            stats,
-            animationPitch,
-            (desc.player.cameraRollDegrees * 0.18F) + animationRoll)) {
-        (void)appendMesh(
-            frame,
-            desc,
-            "chr_a2_pilot_operator_01",
-            bodyPosition,
-            {0.86F, 0.86F, 0.86F},
-            view.yawDegrees,
-            bodyColor,
-            stats,
-            animationPitch,
-            (desc.player.cameraRollDegrees * 0.18F) + animationRoll);
+    const auto bodyResource = findMesh(desc, kLocalPlayerBodyResourceId);
+    if (!bodyResource.isValid()) {
+        ++stats.skippedMeshInstanceCount;
+        return;
     }
+    // This cooked character has a metre-scale, feet-at-zero pivot. Keep its
+    // local animated resource separate from static targets/showcases.
+    stats.localWorldModelActive = appendMesh(
+        frame, desc, kLocalPlayerBodyAssetId, desc.player.position + animationOffset,
+        {1.0F, 1.0F, 1.0F}, view.yawDegrees, {1.0F, 1.0F, 1.0F, 1.0F}, stats,
+        animationPitch, (desc.player.cameraRollDegrees * 0.18F) + animationRoll,
+        novacore::render::RenderMeshLayer::World, true, bodyResource);
 }
 
 void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(

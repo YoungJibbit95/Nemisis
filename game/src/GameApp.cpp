@@ -573,8 +573,10 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
         hasCharacterAnimationFrame_ = true;
 
         const float animationDelta = static_cast<float>(context.fixedDeltaSeconds);
-        const auto bodyMesh = devMeshResources_.find("chr_a1_stylized_operator_01");
-        if (bodyMesh != devMeshResources_.end() &&
+        const auto bodyMesh = devMeshResources_.find(std::string(dev::kLocalPlayerBodyResourceId));
+        // Until an authored FPS body mask exists, this full body is visible only
+        // outside the camera rig. Avoid skinning/uploading 78k hidden vertices.
+        if (!cameraRig_.initialized && bodyMesh != devMeshResources_.end() &&
             skeletalBodyAnimator_.update(latestCharacterAnimationFrame_, animationDelta)) {
             if (const auto* skinnedMesh = skeletalBodyAnimator_.skinnedMesh(); skinnedMesh != nullptr) {
                 (void)renderer_.updateMeshResourceVertices(bodyMesh->second, *skinnedMesh);
@@ -1174,7 +1176,15 @@ void GameApp::registerDevMeshResources() {
         const novacore::assets::GltfMeshData* initialMesh = &*source->meshData;
         auto usage = novacore::render::MeshResourceUsage::Static;
         player::PlayerSkeletalAnimator* animator = nullptr;
-        if (assetId == "chr_a1_stylized_operator_01") {
+        const bool localPlayerBody = assetId == dev::kLocalPlayerBodyAssetId;
+        if (localPlayerBody) {
+            const auto sharedHandle = renderer_.registerMeshResource(std::string(assetId), *source->meshData);
+            if (sharedHandle.isValid()) {
+                devMeshResources_[std::string(assetId)] = sharedHandle;
+            } else {
+                ++rejected;
+                novacore::core::logWarning("game", "Dev mesh resource registration failed: " + std::string(assetId));
+            }
             animator = &skeletalBodyAnimator_;
         } else if (assetId == "chr_a1_fp_arms_01") {
             animator = &skeletalArmsAnimator_;
@@ -1200,22 +1210,28 @@ void GameApp::registerDevMeshResources() {
                     "game",
                     "Skeletal asset " + std::string(assetId) + ": " + error);
             }
+            if (localPlayerBody) {
+                // The chosen character is explicit: don't silently substitute
+                // a different player or display an unanimated bind pose.
+                continue;
+            }
         }
 
-        const auto handle = renderer_.registerMeshResource(std::string(assetId), *initialMesh, usage);
+        const auto resourceId = localPlayerBody ? dev::kLocalPlayerBodyResourceId : assetId;
+        const auto handle = renderer_.registerMeshResource(std::string(resourceId), *initialMesh, usage);
         if (!handle.isValid()) {
             ++rejected;
             novacore::core::logWarning("game", "Dev mesh resource registration failed: " + std::string(assetId));
             continue;
         }
-        devMeshResources_[std::string(assetId)] = handle;
+        devMeshResources_[std::string(resourceId)] = handle;
     }
 
     const auto stats = renderer_.meshResourceStats();
     novacore::core::logInfo(
         "game",
-        "Renderer dev mesh resources registered: " + std::to_string(devMeshResources_.size()) + "/" +
-            std::to_string(assets::requiredDevSandboxRenderableAssetIds().size()) +
+        "Renderer dev mesh resources registered: " + std::to_string(devMeshResources_.size()) +
+            " required_assets=" + std::to_string(assets::requiredDevSandboxRenderableAssetIds().size()) +
             " cpu_registered=" + std::to_string(stats.registeredResources) +
             " dynamic=" + std::to_string(stats.dynamicVertexResources) +
             " primitives=" + std::to_string(stats.totalPrimitives) +
