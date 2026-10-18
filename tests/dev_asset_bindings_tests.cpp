@@ -328,12 +328,48 @@ void testRepresentativeCookedWeaponContract() {
     expect(dimensions.z > 0.5F && dimensions.z < 1.5F, "rifle is metre-scale, not centimetre or authoring-unit scale");
 }
 
+void testFirstPersonArmsExcludeAuthoringHelpers() {
+    const std::filesystem::path sourceRoot{NEMISIS_SOURCE_ROOT};
+    nemisis::assets::GameAssetCatalog catalog;
+    expect(catalog.loadFromJson(sourceRoot / "configs/assets/nemisis_assets.json").ok(), "actual catalog loads for arms presentation selection");
+    nemisis::assets::DevAssetBindings bindings;
+    const std::array<std::string_view, 1> ids{"chr_a1_fp_arms_01"};
+    expect(bindings.bindAssets(catalog, ids, sourceRoot).ready(), "actual FP arms bind after presentation selection");
+    const auto* bound = bindings.meshCatalog().findByAssetId(ids.front());
+    if (bound == nullptr || !bound->meshData.has_value()) {
+        expect(false, "selected arms mesh remains available");
+        return;
+    }
+    novacore::assets::GltfMeshData original;
+    expect(novacore::assets::loadGltfMeshData(bound->meshData->path, original).ok(), "unchanged source GLB remains readable");
+    const auto weightedVertices = [](const auto& mesh) {
+        std::size_t count = 0;
+        for (const auto& primitive : mesh.primitives) {
+            if (primitive.skinIndex >= 0) {
+                count += primitive.positions.size();
+            }
+        }
+        return count;
+    };
+    expect(weightedVertices(original) > 0 && weightedVertices(original) == weightedVertices(*bound->meshData),
+        "all weighted arm/hand geometry survives selection");
+    for (const auto& primitive : bound->meshData->primitives) {
+        const auto node = std::ranges::find_if(bound->meshData->nodes, [&](const auto& value) {
+            return primitive.nodeIndex >= 0 && value.nodeIndex == static_cast<std::size_t>(primitive.nodeIndex);
+        });
+        expect(node != bound->meshData->nodes.end() && node->name != "lod0_weapon_alignment_bar" && node->name != "lod1_blockout",
+            "runtime arm primitives exclude the authoring guide and simultaneous blockout LOD");
+    }
+    expect(bound->meshData->nodeMarkers.size() == original.nodeMarkers.size(), "selection preserves authored hierarchy and socket markers");
+}
+
 } // namespace
 
 int main() {
     testRequiredDevAssetsBindToMeshCatalog();
     testMissingMetadataIsReported();
     testRepresentativeCookedWeaponContract();
+    testFirstPersonArmsExcludeAuthoringHelpers();
 
     if (failures > 0) {
         std::cerr << failures << " dev asset binding test(s) failed\n";

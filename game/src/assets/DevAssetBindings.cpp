@@ -4,6 +4,7 @@
 #include "novacore/assets/GltfMetadata.hpp"
 
 #include <filesystem>
+#include <algorithm>
 #include <string>
 #include <utility>
 
@@ -151,6 +152,19 @@ DevAssetBindingSummary DevAssetBindings::bindAssets(
         if (!meshDataResult.ok()) {
             appendErrors(summary, assetId, meshDataResult.errors);
             continue;
+        }
+
+        if (assetId == "chr_a1_fp_arms_01") {
+            // These two authored nodes are a placement guide and an alternate
+            // blockout LOD, not part of the visible skinned arms. Keep their
+            // source nodes/metadata intact; select presentation primitives here.
+            std::erase_if(meshData.primitives, [&meshData](const auto& primitive) {
+                const auto node = std::ranges::find_if(meshData.nodes, [&](const auto& value) {
+                    return primitive.nodeIndex >= 0 && value.nodeIndex == static_cast<std::size_t>(primitive.nodeIndex);
+                });
+                return node != meshData.nodes.end() &&
+                    (node->name == "lod0_weapon_alignment_bar" || node->name == "lod1_blockout");
+            });
         }
 
         const auto meshCount = meshData.sceneInfo.meshCount;

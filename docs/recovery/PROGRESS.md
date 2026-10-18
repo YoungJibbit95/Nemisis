@@ -251,3 +251,42 @@ procedural reload/recoil are visually reviewed, no game-test regression. Preserv
 existing source/cooked binaries and active offline fixups until that gate passes.
 A separate authored-animation socket-offset fixture/fix can be planned without
 mixing it into the rigid-weapon migration. No automatic merges.
+
+## 2026-10-18 Phase 2 first-person geometry selection
+
+- Independent main 741aeae worktree: F:/Coding/Project/recovery/phase2/presentation/Nemisis.
+  Engine pin stays dbdfc38; no dependency on selected-character game PR #12.
+  Current engine PR #10 separately repairs authored sockets/non-joint ancestors.
+- Confirmed extra geometry: arms GLB contains lod0_weapon_alignment_bar and
+  lod1_blockout; all were submitted alongside skinned arms. Game bindings now
+  exclude these two presentation primitives, retaining original source nodes,
+  markers, metadata, all weighted arm vertices and the unchanged GLB.
+- Real arm mesh suppresses duplicate procedural hands/forearms/torso by default.
+  Explicit showFirstPersonRigDiagnostics enables proxy inspection; existing
+  proxies remain as a safe missing-arms fallback. Socket statistics/weapon VFX
+  stay live even when proxies are hidden. Proxies do not prove skinned hand contact.
+- Removed whole-arm copies from wallrun/throw/mantle developer visuals. Existing
+  boot glow, energy platform and mantle target effects remain. Exactly one
+  viewmodel arm submission owns the normal first-person representation.
+- Existing count assertions now reflect intentional proxy removal; no test
+  function deleted. Grip reconstruction still runs with explicit diagnostics.
+  Added actual-asset filtering/weighted-vertex protection and one-owner/VFX/
+  missing-resource fallback coverage. 181 functions, still 37 entries/34 CPU cases.
+- Complete fresh C++23 GCC13.2/Ninja build and all 34 CPU cases pass against exact
+  old pin. Game/render behavior changes are CPU-submission validated only;
+  no new GUI interaction or GPU images after Escape. Original user files intact.
+
+Next: inspect hip/held ADS/look-down/slide/wallrun images after renewed GUI
+authorization. Do not claim a completed Project first-person body: the user chose
+chr_project_male1, whose head-safe FPS split and actual hand constraints remain
+separate work. No GLB recook, new Euler repair, balance or simulation changes.
+
+Published CPU evidence: implementation c98fa12120eed4c00acc418be9553009e41baf2d,
+draft PR https://github.com/YoungJibbit95/Nemisis/pull/13. Fresh hosted complete
+Windows/MSVC and Ubuntu/Clang builds / all34 CPU cases pass:
+https://github.com/YoungJibbit95/Nemisis/actions/runs/39127413992.
+Local review commit259755f combines published #12/#13 without conflict and passes
+full CPU build/34 cases plus an SDL3/Vulkan build against exact engine15c1b68.
+That review branch is unpublished and does not merge main. No new GUI launch or
+images; the explicit new GUI-authorization question remains pending. Keep this
+PR draft until its visual acceptance. This follow-up changes documentation only.

@@ -235,7 +235,7 @@ void testDevRangeRenderSceneBuildsExpectedSubmissions() {
     expect(stats.skyPassEnabled, "dev range render scene reports active sky pass");
 
     expect(!world.primitives.empty(), "greybox world fixture has primitives");
-    expect(stats.worldBoxCount == (world.primitives.size() - 1U) + targetRange.lanes.size() + 17U, "dev range render scene emits world, lane, asset stage, pickup pads, and first-person rig primitives");
+    expect(stats.worldBoxCount == (world.primitives.size() - 1U) + targetRange.lanes.size() + 13U, "dev range render scene emits world, lane, asset stage, and pickup pads without duplicate arm proxies");
     expect(frame.worldBoxes.size() == stats.worldBoxCount, "world box count matches frame");
     expect(stats.meshInstanceCount == 34, "first-person scene emits world, target, showcase, weapon, and arms meshes without a duplicate local world model");
     expect(frame.worldMeshes.size() == 34, "frame receives all world and exclusive viewmodel mesh instances");
@@ -245,7 +245,7 @@ void testDevRangeRenderSceneBuildsExpectedSubmissions() {
     expect(stats.contactShadowCount >= targetRange.lanes.size(), "dev range render scene emits soft shadows for grounded actors and props");
     expect(frame.contactShadows.size() == stats.contactShadowCount, "contact shadow submissions match scene statistics");
     expect(stats.firstPersonMeshCount == 2, "dev range render scene emits weapon and one arms viewmodel mesh for first-person");
-    expect(stats.firstPersonBodyPrimitiveCount == 4, "first-person rig submits hands and forearms as camera-linked body primitives");
+    expect(stats.firstPersonBodyPrimitiveCount == 0, "real arms are not overdrawn by hand and forearm proxies");
     expect(stats.firstPersonSocketCount == nemisis::player::kFirstPersonRigSocketCount, "first-person rig exposes all camera, hand, weapon, muzzle, and ejection sockets");
     expect(stats.targetMeshCount == targetRange.lanes.size(), "dev range render scene emits one actor mesh per target lane");
     expect(stats.worldLineCount == 3, "dev range render scene emits aim, ground-normal, and contact lines");
@@ -425,6 +425,9 @@ void testCookedMuzzleAndGripsFollowRenderedWeaponTransform() {
         useFirstPersonCamera(player);
         novacore::render::RenderFrameInfo fallbackFrame{};
         nemisis::dev::DevRangeRenderSceneDesc desc{&world, &targets, nullptr, &lookup, player};
+        // The proxy boxes visualize the mathematical grip targets; they do not
+        // prove that the separate skinned hands currently meet those targets.
+        desc.showFirstPersonRigDiagnostics = true;
         (void)nemisis::dev::DevRangeRenderSceneBuilder{}.append(fallbackFrame, desc);
         desc.meshCatalog = &catalog;
         novacore::render::RenderFrameInfo cookedFrame{};
@@ -526,7 +529,7 @@ void testDevRangeRenderScenePlacesShowcaseAssetsInSpawnView() {
     expect(stats.skippedMeshInstanceCount == 0, "spawn view scene has no skipped A2 meshes");
     expect(stats.skyPassEnabled, "spawn view uses renderer sky pass");
     expect(frame.sky.enabled, "spawn view frame carries sky pass data");
-    expect(stats.firstPersonBodyPrimitiveCount == 4, "spawn view keeps only hands and forearms as first-person body primitives");
+    expect(stats.firstPersonBodyPrimitiveCount == 0, "spawn view keeps the actual arms without duplicate proxy geometry");
     expect(stats.materialFallbackProfileCount == stats.meshInstanceCount, "spawn view assigns fallback material response to imported meshes");
 
     const auto operatorMesh = findMesh(frame, "chr_a2_pilot_operator_01");
@@ -659,7 +662,7 @@ void testDevRangeRenderSceneRigsFirstPersonBodyForLookDown() {
     const auto firstPersonArms = findLastMesh(frame, "chr_a1_fp_arms_01");
     const auto firstPersonWeapon = findLastMesh(frame, "wpn_project_rifle_m4a1");
     expect(stats.firstPersonMeshCount == 2, "look-down first-person rig keeps arms and weapon mesh submissions");
-    expect(stats.firstPersonBodyPrimitiveCount >= 8, "look-down first-person rig submits torso, pelvis, hands, and forearms as body primitives");
+    expect(stats.firstPersonBodyPrimitiveCount == 0, "look-down does not place diagnostic torso and arm boxes in front of the actual viewmodel");
     expect(stats.firstPersonSocketCount == nemisis::player::kFirstPersonRigSocketCount, "look-down first-person rig keeps socket map live for camera-linked viewmodel placement");
     expect(firstPersonArms.has_value(), "look-down first-person arms mesh is submitted");
     expect(firstPersonWeapon.has_value(), "look-down first-person weapon mesh is submitted");
@@ -681,6 +684,49 @@ void testDevRangeRenderSceneRigsFirstPersonBodyForLookDown() {
         expect(firstPersonWeapon->position.y < frame.camera3D.position.y, "first-person weapon stays below the camera while looking down");
         expect(firstPersonArms->position.z > firstPersonWeapon->position.z - 1.2F, "first-person arms are socket-bound near the held weapon instead of left at the old static mount");
     }
+}
+
+void testFirstPersonArmsHaveOnePresentationOwner() {
+    novacore::render::Renderer renderer;
+    auto lookup = registerSceneMeshes(renderer);
+    const auto world = nemisis::dev::createDevRangeGreyboxWorld();
+    auto targets = nemisis::dev::makeDefaultDevTargetRange();
+    nemisis::dev::DevRangePlayerRenderState player;
+    player.position = world.playerSpawn;
+    useFirstPersonCamera(player);
+    player.movementTech.gravityInvertersActive = true;
+    player.movementTech.wallRunArmTriggerPressed = true;
+    player.movementTech.doubleJumpPlatformThrown = true;
+    player.movementTech.energyPlatformCenter = {10,0,4};
+    player.movementTech.mantleReachTriggered = true;
+    player.movementTech.mantleClimbTriggered = true;
+    player.movementTech.mantleTargetPosition = {8,1,2};
+    nemisis::dev::DevRangeRenderSceneDesc desc{&world, &targets, nullptr, &lookup, player};
+    desc.showWorldDebugLines = true;
+    const auto countArms = [](const auto& frame) {
+        return std::ranges::count_if(frame.worldMeshes, [](const auto& mesh) {
+            return mesh.assetId == "chr_a1_fp_arms_01" && mesh.layer == novacore::render::RenderMeshLayer::ViewModel;
+        });
+    };
+    novacore::render::RenderFrameInfo frame;
+    const auto stats = nemisis::dev::DevRangeRenderSceneBuilder{}.append(frame, desc);
+    expect(countArms(frame) == 1, "wallrun, throw and mantle effects cannot add copies of the entire arms mesh");
+    expect(stats.firstPersonBodyPrimitiveCount == 0U, "visible arms have no duplicate body/hand proxy geometry by default");
+    for (const auto center : {novacore::math::Vec3{10,0,4}, novacore::math::Vec3{8,1.08F,2}}) {
+        expect(std::ranges::any_of(frame.worldBoxes, [center](const auto& box) { return (box.center - center).lengthSquared() < 0.000001F; }),
+            "energy platform and mantle target visual effects remain");
+    }
+    desc.showFirstPersonRigDiagnostics = true;
+    novacore::render::RenderFrameInfo diagnostic;
+    const auto diagnosticStats = nemisis::dev::DevRangeRenderSceneBuilder{}.append(diagnostic, desc);
+    expect(countArms(diagnostic) == 1 && diagnosticStats.firstPersonBodyPrimitiveCount == 4U,
+        "explicit rig diagnostics visualize targets without another arm mesh");
+    desc.showFirstPersonRigDiagnostics = false;
+    lookup.erase("chr_a1_fp_arms_01");
+    novacore::render::RenderFrameInfo fallback;
+    const auto fallbackStats = nemisis::dev::DevRangeRenderSceneBuilder{}.append(fallback, desc);
+    expect(countArms(fallback) == 0 && fallbackStats.firstPersonBodyPrimitiveCount == 4U,
+        "missing arms retain the existing safe procedural fallback");
 }
 
 void testDevRangeRenderSceneDrawsSocketDrivenShotFeedback() {
@@ -740,7 +786,7 @@ void testDevRangeRenderSceneDrawsLanePressure() {
         nemisis::dev::DevRangeRenderSceneDesc{&world, &targetRange, nullptr, &lookup, player});
 
     expect(stats.activeLanePressurePrimitiveCount == 3U, "lane pressure emits ring, beam, and threat line");
-    expect(stats.worldBoxCount == (world.primitives.size() - 1U) + targetRange.lanes.size() + 19U, "lane pressure adds two world-box primitives");
+    expect(stats.worldBoxCount == (world.primitives.size() - 1U) + targetRange.lanes.size() + 15U, "lane pressure adds two world-box primitives");
     expect(stats.worldLineCount == 2U, "lane pressure adds one threat line plus aim line");
 }
 
@@ -996,6 +1042,7 @@ int main() {
     testDevRangeRenderScenePlacesShowcaseAssetsInSpawnView();
     testDevRangeRenderSceneHidesLocalWorldBodyWhenCameraRigIsActive();
     testDevRangeRenderSceneRigsFirstPersonBodyForLookDown();
+    testFirstPersonArmsHaveOnePresentationOwner();
     testDevRangeRenderSceneDrawsSocketDrivenShotFeedback();
     testDevRangeRenderSceneDrawsLanePressure();
     testDevRangeRenderSceneAcceptsSpeedClearTargetLayout();
