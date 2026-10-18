@@ -1541,6 +1541,7 @@ void testProjectReadyUsesOneConstrainedPose() {
     desc.player.activeWeaponId = "ar_01";
     float largestResidual = 0;
     float smallestForwardDot = 1;
+    float smallestRightMargin = 1000;
     std::size_t ticks = 0;
     std::array<std::size_t, 2> visibleHandVertices{};
     for (auto clip : {player::CharacterAnimationClip::Idle, player::CharacterAnimationClip::Walk,
@@ -1590,7 +1591,20 @@ void testProjectReadyUsesOneConstrainedPose() {
             const math::Vec3 cameraRight{-std::cos(yaw), 0, std::sin(yaw)};
             const auto firingOffset = animation::matrixTranslation(targets.rightGripWorld) - desc.player.cameraPosition;
             const auto dot = [](math::Vec3 a, math::Vec3 b) { return a.x * b.x + a.y * b.y + a.z * b.z; };
-            expect(dot(firingOffset, cameraRight) > 0,
+            const float rightMargin = dot(firingOffset, cameraRight);
+            smallestRightMargin = std::min(smallestRightMargin, rightMargin);
+            if (rightMargin <= 0) {
+                const auto authoredWorld = animation::multiply(model, chestMount);
+                const auto authoredX = animation::transformDirection(authoredWorld, {1, 0, 0});
+                const auto eyeLocal = animation::matrixTranslation(eye);
+                const auto mountLocal = animation::matrixTranslation(chestMount);
+                std::cerr << "Ready hip side tick=" << ticks << " locomotion=" << static_cast<int>(clip)
+                          << " camera_right_margin_m=" << rightMargin
+                          << " authored_x_derivative=" << dot(authoredX, cameraRight)
+                          << " eye_model=" << eyeLocal.x << ',' << eyeLocal.y << ',' << eyeLocal.z
+                          << " mount_model=" << mountLocal.x << ',' << mountLocal.y << ',' << mountLocal.z << '\n';
+            }
+            expect(rightMargin > 0,
                    "hip firing grip stays right of anatomical camera across movement and yaw");
             const auto weaponForward = animation::transformPoint(presentation.weaponWorld, {0, 0, 1}) -
                                        animation::matrixTranslation(presentation.weaponWorld);
@@ -1651,22 +1665,41 @@ void testProjectReadyUsesOneConstrainedPose() {
             expect(animator.socketTransform("socket_rifle_ready", afterMount) && chestMount.values == afterMount.values,
                    "hand IK never feeds back into the sampled chest weapon mount");
             if (ticks == 0) {
+                std::array<std::size_t, 2> handDepth{}, handHorizontal{}, handVertical{};
+                std::array<math::Vec3, 2> handMin{{{1000, 1000, 1000}, {1000, 1000, 1000}}};
+                std::array<math::Vec3, 2> handMax{{{-1000, -1000, -1000}, {-1000, -1000, -1000}}};
                 for (const auto& primitive : animator.skinnedMesh()->primitives) {
                     for (std::size_t v = 0; v < primitive.positions.size(); ++v) {
                         const auto p = primitive.positions[v] - animation::matrixTranslation(eye);
-                        if (p.z <= .03F || std::abs(p.y) >= p.z * .7536F || std::abs(p.x) >= p.z * 1.3397F) {
-                            continue;
-                        }
                         for (std::size_t slot = 0; slot < 4; ++slot) {
                             const auto& name = arms.animationData->skins[0].joints[primitive.joints[v][slot]].name;
                             if (primitive.weights[v][slot] > .25F &&
                                 (name.starts_with("DEF-hand.") || name.starts_with("DEF-f_") ||
                                  name.starts_with("DEF-thumb."))) {
-                                ++visibleHandVertices[name.ends_with(".R") ? 0 : 1];
+                                const auto side = name.ends_with(".R") ? 0U : 1U;
+                                handMin[side] = {std::min(handMin[side].x, p.x), std::min(handMin[side].y, p.y),
+                                                 std::min(handMin[side].z, p.z)};
+                                handMax[side] = {std::max(handMax[side].x, p.x), std::max(handMax[side].y, p.y),
+                                                 std::max(handMax[side].z, p.z)};
+                                if (p.z > .03F) {
+                                    ++handDepth[side];
+                                    handHorizontal[side] += std::abs(p.x) < p.z * 1.3397F;
+                                    handVertical[side] += std::abs(p.y) < p.z * .7536F;
+                                    if (std::abs(p.y) < p.z * .7536F && std::abs(p.x) < p.z * 1.3397F) {
+                                        ++visibleHandVertices[side];
+                                    }
+                                }
                                 break;
                             }
                         }
                     }
+                }
+                for (std::size_t side = 0; side < 2; ++side) {
+                    const auto a = handMin[side], b = handMax[side];
+                    std::cout << "Ready hip hand=" << side << " eye_relative_bounds=" << a.x << ',' << a.y << ','
+                              << a.z << ':' << b.x << ',' << b.y << ',' << b.z
+                              << " depth_horizontal_vertical=" << handDepth[side] << ',' << handHorizontal[side]
+                              << ',' << handVertical[side] << '\n';
                 }
             }
             expect(renderer.updateMeshResourceVertices(resources.at(std::string(dev::kProjectFPSArmsResourceId)),
@@ -1712,6 +1745,7 @@ void testProjectReadyUsesOneConstrainedPose() {
     }
     std::cout << "Project Ready common-pose ticks=" << ticks << " max_world_contact_m=" << largestResidual
               << " min_weapon_camera_forward_dot=" << smallestForwardDot
+              << " min_firing_camera_right_m=" << smallestRightMargin
               << " hip_hand_frustum_vertices=" << visibleHandVertices[0] << ',' << visibleHandVertices[1]
               << "; developer Ready over original locomotion, no directional/ADS/reload completeness claim\n";
     expect(visibleHandVertices[0] > 10 && visibleHandVertices[1] > 10,

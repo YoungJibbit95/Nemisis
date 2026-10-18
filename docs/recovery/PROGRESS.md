@@ -1,5 +1,35 @@
 # Recovery progress
 
+## 2026-10-19 Ready strict runtime gate passed
+
+- Final offline mount X=-.16,Y=1.61,Z=.17m: after the measured lateral/depth
+  correction, actual .R skin was still below the eye frustum. Raising the whole
+  authored weapon7cm and solving both real chains yields158R/2275L hand vertices
+  inside the original74-degree frustum. No FOV or test tolerance changed.
+- Recooked paired integration passes all288 Idle/Walk/Sprint/stop samples:
+  minimum firing camera-right margin+.00907103m, maximum palm residual.000991491m,
+  minimum weapon-forward dot.643083. Actual original weighted skin,1mm/.5-degree
+  contact, positive scales, immutable eye/chest and render-matrix checks pass.
+- Blender wrist residuals25.03um/.224um, original local T/S preservation below
+  7.79e-7m/1.05e-6;72 tracks. Pose SHA256
+  f59c8151c3950778ae457f748b2bb4341ff62d6b623597b5c1c2ea716cd5cc5e.
+  Physical-contact mutation checks pass. Updated full/hosted gates remain pending;
+  no Vulkan/finger-quality/complete-armed-animation or default migration claim.
+
+## 2026-10-19 Ready transition measurement and offline correction
+
+- Proper-camera runtime gate exposed three hip-side failures at Sprint-to-Idle
+  ticks216-218, worst -.0554923m. All 288 contact checks still passed, maximum
+  .000979131m; original unarmed ancestors turn beneath the Ready rotation mask.
+  Added signed eye/chest/mount diagnostics while retaining strict positive side,
+  1mm contact, anatomical skin and frustum assertions.
+- Revised the existing offline solve from X=-.11,Z=.21 to X=-.16,Z=.17m;
+  Y=1.54m and torso pose stay unchanged. Both physical chains remain reachable:
+  Blender R/L residuals11.45um/.364um; original T/S deltas below7.37e-7m/1.13e-6.
+  Pose SHA256 bc60ff4b2927764eaa702853a1dcea8c9331a7311c17fb38841df9f5e13b39eb.
+  Physical-contact mutation checks pass. Runtime recook/288-tick gate and hosted
+  CI are pending for this revised pose; no visual-quality result is claimed.
+
 ## 2026-10-19 Phase 5 Glock geometry source checkpoint
 
 - Separate bounded branch stacks on FP/camera #30/#31. Existing Glock cook
