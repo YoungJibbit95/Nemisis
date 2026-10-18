@@ -163,3 +163,14 @@ needed. CPU geometry assertions remain separate from actual image inspection.
 The smoke runner is KEEP/INTEGRATION/H: it requires process success, a nonempty
 catalog, completed shutdown, no missing-data diagnostics, and an active Vulkan
 backend for the hardware cases. None of the 37 smokes/executables was disabled.
+
+Phase 2 geometry selection (main741aeae):
+`testFirstPersonArmsExcludeAuthoringHelpers` is CONTRACT/INTEGRATION, KEEP/H:
+real asset selection excludes guide/alternate-LOD primitives while retaining
+weighted geometry and socket markers. `testFirstPersonArmsHaveOnePresentationOwner`
+is REGRESSION/INTEGRATION, KEEP/H: one arm mesh across simultaneous movement cues,
+preserved effects, explicit rig diagnostics and missing-mesh fallback. Result181
+functions (179 after Phase1 plus2), unchanged registrations. Existing submission
+counts intentionally drop proxy boxes when actual arms exist. The reconstructed
+grip test explicitly enables diagnostic proxies; it checks target transforms,
+not anatomical contact by skinned hands. All original functions remain.
