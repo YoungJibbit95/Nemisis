@@ -1594,8 +1594,15 @@ void testProjectReadyUsesOneConstrainedPose() {
             const float rightMargin = dot(firingOffset, cameraRight);
             smallestRightMargin = std::min(smallestRightMargin, rightMargin);
             if (rightMargin <= 0) {
+                const auto authoredWorld = animation::multiply(model, chestMount);
+                const auto authoredX = animation::transformDirection(authoredWorld, {1, 0, 0});
+                const auto eyeLocal = animation::matrixTranslation(eye);
+                const auto mountLocal = animation::matrixTranslation(chestMount);
                 std::cerr << "Ready hip side tick=" << ticks << " locomotion=" << static_cast<int>(clip)
-                          << " camera_right_margin_m=" << rightMargin << '\n';
+                          << " camera_right_margin_m=" << rightMargin
+                          << " authored_x_derivative=" << dot(authoredX, cameraRight)
+                          << " eye_model=" << eyeLocal.x << ',' << eyeLocal.y << ',' << eyeLocal.z
+                          << " mount_model=" << mountLocal.x << ',' << mountLocal.y << ',' << mountLocal.z << '\n';
             }
             expect(rightMargin > 0,
                    "hip firing grip stays right of anatomical camera across movement and yaw");
