@@ -171,7 +171,7 @@ if(NEMISIS_BUILD_PROJECT_FPS_CANDIDATE)
     target_compile_definitions(nemisis_project_fps_candidate_tests PRIVATE
         NEMISIS_SOURCE_ROOT="${CMAKE_CURRENT_SOURCE_DIR}"
         NEMISIS_PROJECT_FPS_CANDIDATE_ROOT="${project_fps_candidate_dir}")
-    novacore_copy_mingw_runtime(nemisis_project_fps_candidate_tests)
+    nemisis_copy_mingw_runtime(nemisis_project_fps_candidate_tests)
     add_dependencies(nemisis_project_fps_candidate_tests nemisis_project_fps_candidate)
     add_custom_command(
         OUTPUT "${project_fps_candidate_dir}/arms_palm_proposal.glb" "${project_fps_candidate_dir}/palm_proposal_report.json"
@@ -354,7 +354,7 @@ target_compile_definitions(nemisis_player_skeletal_animator_tests
 )
 
 target_link_libraries(nemisis_player_skeletal_animator_tests PRIVATE Novacore::Engine)
-novacore_copy_mingw_runtime(nemisis_player_skeletal_animator_tests)
+nemisis_copy_mingw_runtime(nemisis_player_skeletal_animator_tests)
 add_test(NAME nemisis_player_skeletal_animator_tests COMMAND nemisis_player_skeletal_animator_tests)
 
 add_executable(nemisis_player_first_person_rig_tests
@@ -759,7 +759,9 @@ if(NEMISIS_BUILD_OZZ_IK_PROBE)
     include(cmake/OzzIKProbe.cmake)
 endif()
 if(NEMISIS_ENABLE_HAND_IK)
-    add_library(nemisis_hand_ik STATIC game/src/player/PlayerHandConstraints.cpp)
+    add_library(nemisis_hand_ik STATIC
+        game/src/player/PlayerHandConstraints.cpp
+        game/src/player/ProjectHandConstraints.cpp)
     target_include_directories(nemisis_hand_ik PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/game/include)
     target_compile_definitions(nemisis_hand_ik PUBLIC NEMISIS_ENABLE_HAND_IK=1)
     target_link_libraries(nemisis_hand_ik PUBLIC Novacore::Engine PRIVATE ozz_animation)
@@ -788,6 +790,16 @@ if(NEMISIS_ENABLE_HAND_IK)
     nemisis_copy_mingw_runtime(nemisis_player_hand_constraints_tests)
     nemisis_copy_ozz_notice(nemisis_player_hand_constraints_tests)
     add_test(NAME nemisis_player_hand_constraints_tests COMMAND nemisis_player_hand_constraints_tests)
+    if(NEMISIS_BUILD_PROJECT_FPS_CANDIDATE)
+        add_executable(nemisis_project_hand_constraints_tests tests/project_hand_constraints_tests.cpp)
+        target_link_libraries(nemisis_project_hand_constraints_tests PRIVATE nemisis_hand_ik)
+        target_compile_definitions(nemisis_project_hand_constraints_tests PRIVATE
+            NEMISIS_PROJECT_FPS_CANDIDATE_ROOT="${project_fps_candidate_dir}")
+        add_dependencies(nemisis_project_hand_constraints_tests nemisis_project_palm_proposal)
+        nemisis_copy_mingw_runtime(nemisis_project_hand_constraints_tests)
+        nemisis_copy_ozz_notice(nemisis_project_hand_constraints_tests)
+        add_test(NAME nemisis_project_hand_constraints_tests COMMAND nemisis_project_hand_constraints_tests)
+    endif()
     add_test(NAME nemisis_hand_ik_headless_smoke
         COMMAND ${CMAKE_COMMAND}
             "-DGAME_EXECUTABLE=$<TARGET_FILE:nemisis_game>"

@@ -18,7 +18,7 @@ struct HandIKArm final {
 };
 
 struct PlayerHandConstraintRig final {
-    // Right, then left. Calibration belongs to the authored A1 arm chains.
+    // Right, then left. Calibrated against the selected authored hierarchy.
     std::array<HandIKArm, 2> arms{};
     bool valid = false;
 };
@@ -35,6 +35,9 @@ struct PlayerHandConstraintResult final {
     HandConstraintStatus status = HandConstraintStatus::Disabled;
     std::array<bool, 2> reached{};
     std::array<float, 2> residualMeters{};
+    std::array<float, 2> orientationResidualDegrees{
+        std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN()};
+    std::array<unsigned, 2> iterations{};
 
     [[nodiscard]] bool applied() const {
         return status == HandConstraintStatus::Applied || status == HandConstraintStatus::Unreachable;
