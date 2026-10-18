@@ -627,9 +627,16 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
             // has no authored ADS/reload/fire layer; never substitute A1 clips.
             armsAnimationFrame.upperBodyAlpha = 0.0F;
             const auto fpsBody = devMeshResources_.find(std::string(dev::kProjectFPSBodyResourceId));
-            if (fpsBody == devMeshResources_.end() || !skeletalFPSBodyAnimator_.update(armsAnimationFrame, animationDelta) ||
-                !renderer_.updateMeshResourceVertices(fpsBody->second, *skeletalFPSBodyAnimator_.skinnedMesh())) {
-                throw std::runtime_error("Project FPS body pose/vertex update failed");
+            if (fpsBody == devMeshResources_.end()) {
+                throw std::runtime_error("Project FPS body resource is unavailable");
+            }
+            if (!skeletalFPSBodyAnimator_.update(armsAnimationFrame, animationDelta)) {
+                const auto& errors = skeletalFPSBodyAnimator_.errors();
+                throw std::runtime_error("Project FPS body pose failed: " +
+                    (errors.empty() ? std::string("no animator diagnostic") : errors.back()));
+            }
+            if (!renderer_.updateMeshResourceVertices(fpsBody->second, *skeletalFPSBodyAnimator_.skinnedMesh())) {
+                throw std::runtime_error("Project FPS body dynamic GPU vertex update failed");
             }
             ++fpsBodyVertexUpdateCount_;
         } else {

@@ -28,6 +28,12 @@
   combined preview+M4 graphical build, then request fresh permission for the two
   required images or use the documented manual commands. Runtime integration,
   visual acceptance and completed Project weapon rig remain separate milestones.
+- User subsequently approved the two preview screenshots. First actual RTX3070Ti
+  Vulkan run loaded/submitted both real subsets but rapid movement exposed
+  overlapping-crossfade rejection in the existing game animator. Fixed by
+  finishing the active short fade before applying the latest request; real
+  Project regression covers repeated rapid transitions and settling to idle.
+  Initial image is a failed finding, not visual acceptance; repeat images pending.
 
 ## 2026-10-18 Phase 2C candidate / visual and integration gates OPEN
 

@@ -39,6 +39,14 @@ vertex update each. Extra render frames only consume the cached presentation.
 The hidden full78,456-vertex world body receives no FPS skin/update passes.
 Its existing independent animated external representation remains available.
 
+The first renewed Vulkan run exposed a gameplay adapter bug during rapid movement
+changes: NovaCore rejects a second crossfade while the first is active. The
+adapter now finishes that short fade before consuming the latest locomotion
+request. A real-subset regression exercises repeated interrupted requests and
+settling back to idle; no engine/runtime or animation data changes are needed.
+Preview failures now distinguish missing resources, animator diagnostics and
+GPU vertex update rejection.
+
 The preview fixes the initial loadout to ar_01 / wpn_project_rifle_m4a1 and
 suppresses loadout switching/pickups and user-settings persistence in this mode.
 No A1 GPU resource is registered or drawn in the Project mode; missing Project

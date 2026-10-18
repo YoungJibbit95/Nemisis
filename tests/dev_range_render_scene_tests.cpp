@@ -1374,6 +1374,30 @@ void testActualProjectFPSPreviewSubmitsAnimatedSubsets() {
            "one authored sample/skin per requested tick, same clocks for Project subsets");
     expect((initialArmVertex - armsAnimator.skinnedMesh()->primitives[0].positions[0]).lengthSquared() > 0.000001F,
            "authored locomotion deforms actual Project sleeve vertices");
+    // Exercise interrupted locomotion fades and complete looping clips; short
+    // startup-only sampling cannot expose failures during real movement.
+    for (int tick = 0; tick < 360; ++tick) {
+        const auto phase = (tick / 7) % 3;
+        desc.player.animation.locomotionClip = phase == 0 ? player::CharacterAnimationClip::Idle :
+            phase == 1 ? player::CharacterAnimationClip::Walk : player::CharacterAnimationClip::Sprint;
+        const bool bodyReady = bodyAnimator.update(desc.player.animation, 1.0F / 60.0F);
+        const bool armsReady = armsAnimator.update(desc.player.animation, 1.0F / 60.0F);
+        if (!bodyReady || !armsReady) {
+            for (const auto& error : bodyAnimator.errors()) { std::cerr << "Project body: " << error << '\n'; }
+            for (const auto& error : armsAnimator.errors()) { std::cerr << "Project arms: " << error << '\n'; }
+            expect(false, "Project subsets survive repeated interrupted locomotion fades");
+            break;
+        }
+    }
+    desc.player.animation.locomotionClip = player::CharacterAnimationClip::Idle;
+    for (int tick = 0; tick < 40; ++tick) {
+        expect(bodyAnimator.update(desc.player.animation, 1.0F / 60.0F) &&
+               armsAnimator.update(desc.player.animation, 1.0F / 60.0F), "latest locomotion request settles after an active fade");
+    }
+    expect(bodyAnimator.stats().currentClip.find("stand") != std::string::npos &&
+           bodyAnimator.stats().currentClip == armsAnimator.stats().currentClip &&
+           bodyAnimator.stats().failedFrameCount == 0 && armsAnimator.stats().failedFrameCount == 0,
+           "both Project subsets settle to authored idle without a rejected overlapping fade");
     resources.erase(std::string(dev::kProjectFPSArmsResourceId));
     render::RenderFrameInfo missing;
     expect(!builder.append(missing, desc).projectFPSArmsActive, "missing Project resource is reported, not replaced with A1");
