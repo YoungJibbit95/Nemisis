@@ -57,7 +57,7 @@ jobs:
           if ($LASTEXITCODE -ne 0 -or $actual -ne '${{ steps.engine.outputs.revision }}') { throw 'NovaCore checkout does not match pin' }
           Add-Content $env:GITHUB_STEP_SUMMARY "NovaCore: $actual. GPU-labelled smokes require a usable Vulkan backend and are excluded from this CPU-only job."
       - name: Configure C++23 headless game
-        run: cmake --preset ${{ matrix.preset }} -DNEMISIS_BUILD_OZZ_IK_PROBE=ON -DNEMISIS_ENABLE_HAND_IK=ON
+        run: cmake --preset ${{ matrix.preset }} -DNEMISIS_BUILD_OZZ_IK_PROBE=ON -DNEMISIS_ENABLE_HAND_IK=ON -DNEMISIS_BUILD_PROJECT_FPS_CANDIDATE=ON
       - name: Build game and all test executables
         run: cmake --build --preset ${{ matrix.preset }} --parallel 2
       - name: Test gameplay, movement, weapons, assets, networking and headless boot

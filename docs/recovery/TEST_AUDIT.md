@@ -1,5 +1,13 @@
 # Nemisis test audit
 
+Phase2C extension: optional `NEMISIS_BUILD_PROJECT_FPS_CANDIDATE` adds two CPU
+cases. `project_fps_candidate_tests.cpp` imports actual source/candidate GLBs via
+public NovaCore and checks remapped skin topology, selected inverse binds,
+animated ancestor/socket frames and every skinned subset vertex across bind/all
+clips. `project_fps_cook_tests.py` checks reproducibility and negative hash,
+topology, range and palette gates plus disjoint/head-excluded regions. No existing
+test/assertion was removed. Baseline34, IK+probe37, candidate+IK+probe39 CPU cases.
+
 Baseline: `ff88eb0a7997f238cb76381dc377525c942991c1`, inspected 2026-10-18.
 Read all **33 test sources / 177 test functions**, their fixtures/assertions and
 CMake registrations, plus the shared runtime-smoke runner. This is a function/

@@ -1,5 +1,42 @@
 # Recovery progress
 
+## 2026-10-18 Phase 2C candidate / visual and integration gates OPEN
+
+- Published DRAFT https://github.com/YoungJibbit95/Nemisis/pull/18, implementation
+  bdd03b3, review base #16. Hosted MSVC/Clang checks belong to that PR head.
+
+- Reverified engine #10/#11 and game #12–#16. Game #12 was merged by the user:
+  main f5399961da9e01c341b141785f116d76bc931731. Game #13/#14/#15/#16 remain
+  open drafts with green MSVC/Clang checks. Engine #10 ready/#11 draft are open
+  with green checks. User-created game #17 has also passed MSVC/Clang; it includes
+  only the earlier frozen #12/#13/#14 integration, not #15/#16.
+- Separate integration branch recovery/phase2c-integration, HEAD83d9d00fb48d81547e3b3cd3e69ed9f44384baa1,
+  combines #16 and current main ancestry without conflicts. No duplicate
+  integration PR or remote merge was created. Original dirty worktrees preserved.
+- Exact engine pin remains a687c8816fbcc8a7f4d313cf092c6dc17a59f8f7. Engine5/5,
+  fresh default-OFF34/34 and IK-ON37/37 CPU cases pass. Full SDL3/Vulkan graphical
+  target compiles/links with HAS_SDL3/HAS_VULKAN and productive IK enabled.
+- CLion selected nemisis_game Debug without IK arguments. Its cache still names
+  F:/Coding/Project Nemisis/... and its EXE timestamp is2026-10-06. The recovery
+  Phase2B Vulkan EXE was built17:15:53, after the supplied17:14 screenshots; those
+  images cannot validate PR#16. Their exact source revision remains unknown.
+  The nearby T-pose Project model matches a static showcase at(-7.55,0,-6.75),
+  separate from the animated local player/local/body resource.
+- User explicitly renewed GUI permission during Phase2C. Actual Vulkan on RTX3070Ti
+  confirms the large legacy A1 geometry blocks the view; opt-in IK reduces its
+  footprint but is not anatomically accepted. A separate read-only audit proved
+  the M4 cook's source-up sign was wrong; the correction belongs in a separate
+  focused asset PR. Held ADS/pitch/full movement acceptance remains open.
+- New optional Project FPS cook/contracts and39/39 extended Release CPU cases
+  pass. FIRST_PERSON_RECOVERY.md records exact reductions, public-engine subset
+  parity, reproducible measurements and artist/IK blockers. Candidate files stay
+  in build directories and are not registered in gameplay. No source asset,
+  production rig, engine pin or legacy fallback is replaced/removed.
+- Next: obtain artist-reviewed cut seams and palm frames, then a safe adaptation
+  of the five-segment/nonuniform Project chains using existing ozz, followed by
+  actual GPU hip/held ADS/pitch/reload/movement images. Technical candidate
+  acceptance does not satisfy Visual Acceptance or Character Integration.
+
 ## 2026-10-18 Phase 2B productive constraints, opt-in / visual gate OPEN
 
 - Published DRAFT https://github.com/YoungJibbit95/Nemisis/pull/16, implementation
