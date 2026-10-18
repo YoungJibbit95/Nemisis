@@ -41,7 +41,7 @@ void testDefaultRangeHasMultipleLanes() {
     expect(nemisis::dev::activeTarget(range) != nullptr, "default range exposes an active target");
 }
 
-void testShotSelectsNearestHitLane() {
+void testShotSelectsAimedLane() {
     auto range = nemisis::dev::makeDefaultDevTargetRange();
     const auto center = range.lanes[1].target.position;
 
@@ -117,7 +117,7 @@ void testLanePressureBuildsAndDecays() {
 
 int main() {
     testDefaultRangeHasMultipleLanes();
-    testShotSelectsNearestHitLane();
+    testShotSelectsAimedLane();
     testLaneEliminatesAndRespawnsIndependently();
     testResetRestoresAllLanes();
     testLanePressureBuildsAndDecays();
