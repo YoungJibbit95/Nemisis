@@ -273,6 +273,17 @@ void GameApp::onShutdown() {
             std::to_string(physicsProps_->tickCount()) + " dynamic_props=6");
         physicsProps_.reset();
     }
+    if (options_.materialTextures || renderTuning_.materialTexturesEnabled) {
+        const auto stats = renderer_.backendFrameStats();
+        novacore::core::logInfo("game", "Material texture preview: ready=" +
+            std::to_string(stats.materialTexturesReady) + " textured_draws=" +
+            std::to_string(stats.lastMaterialTextureDrawCount) + " fallback_draws=" +
+            std::to_string(stats.lastMaterialFallbackDrawCount) + " resident_images=" +
+            std::to_string(stats.residentMaterialImageCount) + " resident_bytes=" +
+            std::to_string(stats.residentMaterialImageBytes) + " budget_bytes=" +
+            std::to_string(stats.materialImageBudgetBytes) + " budget_rejects=" +
+            std::to_string(stats.materialImageBudgetRejectCount));
+    }
     releaseDevMeshResources();
     renderer_.shutdown();
     window_.shutdown();
@@ -866,6 +877,7 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
     if (menu_.gameplayActive()) {
         frameInfo.directionalShadows = renderTuning_.directionalShadows;
         frameInfo.directionalShadows.enabled |= options_.directionalShadows;
+        frameInfo.materialTexturesEnabled = options_.materialTextures || renderTuning_.materialTexturesEnabled;
         latestDevRangeRenderStats_ = devRangeRenderer_.append(
             frameInfo,
             dev::DevRangeRenderSceneDesc{

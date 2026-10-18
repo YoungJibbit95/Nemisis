@@ -63,6 +63,7 @@ struct GameAppOptions final {
     bool projectFPSLookDown = false;
     bool physicsProps = false;
     bool directionalShadows = false;
+    bool materialTextures = false;
 };
 
 class GameApp final : public novacore::core::IApplicationDelegate {

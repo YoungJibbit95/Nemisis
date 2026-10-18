@@ -35,6 +35,8 @@ int main(int argc, char** argv) {
             gameOptions.physicsProps = true;
         } else if (argument == "--directional-shadows") {
             gameOptions.directionalShadows = true;
+        } else if (argument == "--material-textures") {
+            gameOptions.materialTextures = true;
         } else if (argument == "--smoke-test") {
             smokeTest = true;
         } else if (argument == "--project-rifle-ready") {
@@ -109,7 +111,7 @@ int main(int argc, char** argv) {
     }
 
     if (gameOptions.uiShowcase) {
-        if (gameOptions.runMenuFlowSmoke || gameOptions.projectFPSPreview || gameOptions.firstPersonHandIK || gameOptions.physicsProps || gameOptions.directionalShadows) {
+        if (gameOptions.runMenuFlowSmoke || gameOptions.projectFPSPreview || gameOptions.firstPersonHandIK || gameOptions.physicsProps || gameOptions.directionalShadows || gameOptions.materialTextures) {
             std::cerr << "UI showcase cannot be combined with other preview profiles\n"; return 2;
         }
         if (!gameOptions.preferVulkanRenderer) {
@@ -127,7 +129,7 @@ int main(int argc, char** argv) {
         gameOptions.autoEnterDevRange = true;
         gameOptions.lockDevRange = true;
     }
-    if (gameOptions.directionalShadows) {
+    if (gameOptions.directionalShadows || gameOptions.materialTextures) {
         gameOptions.autoEnterDevRange = true;
         gameOptions.lockDevRange = true;
     }

@@ -1,5 +1,22 @@
 # Recovery progress
 
+## 2026-10-19 Optional material-texture consumer integration
+
+- Both pins now select engine `14d33a77a9eedef6a48227226d1ef80d593015b9`
+  (Draft engine #23), including R3 #22 and existing UI/R2/physics. Its complete
+  headless engine/server/sandbox build and10/10 CPU suites pass in0.99s; separate
+  fresh Vulkan and full game consumer gates follow before this game is published.
+- `--material-textures` selects the existing range and forwards the actual
+  public frame setting only in gameplay. The optional existing render-config key
+  `material_textures.enabled` defaults false. No persisted UI control is implied.
+  Shutdown exposes actual texture/fallback draws, resident images/bytes and budget.
+  UI showcase rejects mixed preview flags; its separate resource ownership stays.
+- World mesh assets with supported maps are eligible, including the Project
+  FPS World subsets. Greybox RenderBox floors/walls remain untextured. Existing
+  teal prototype surface maps and authored modules are audited for later linking;
+  they are not neutral concrete textures. No texture/GPU/visual acceptance yet.
+  Frozen reviewed Vulkan build/content/shader directories remain unchanged.
+
 ## 2026-10-19 Local animation direction follows actual view
 
 - GameApp now supplies the existing animation input's horizontal forward/right

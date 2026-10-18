@@ -37,6 +37,7 @@ struct DevRenderTuning final {
     float farPlane = 120.0F;
     bool showWorldDebugLines = false;
     novacore::render::RenderDirectionalShadows directionalShadows{};
+    bool materialTexturesEnabled = false;
 };
 
 [[nodiscard]] DevRenderTuning devRenderTuningFromConfig(

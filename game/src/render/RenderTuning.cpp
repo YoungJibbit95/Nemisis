@@ -165,6 +165,7 @@ DevRenderTuning devRenderTuningFromConfig(
         document,
         "debug.world_lines",
         fallback.showWorldDebugLines);
+    fallback.materialTexturesEnabled = boolOr(document, "material_textures.enabled", fallback.materialTexturesEnabled);
     return fallback;
 }
 
