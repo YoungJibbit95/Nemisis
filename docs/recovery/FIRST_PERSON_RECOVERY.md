@@ -1,5 +1,92 @@
 # First-person recovery: diagnosis and bounded implementation
 
+## Phase 2C Project FPS technical candidate (2026-10-18)
+
+**Technically Correct for subset skinning; not Visually Accepted; not Character
+Integrated.** Gameplay still uses the A1 test arms. This candidate changes no
+product registration/default, IK solver, renderer or legacy placement path.
+
+Enable `-DNEMISIS_BUILD_PROJECT_FPS_CANDIDATE=ON` on an existing headless preset
+to generate and test it. This optional capability requires Python3.10+ (standard
+library only); ordinary builds retain no new dependency. CI enables it alongside
+the existing ozz probe and hand-IK options. Alternatively:
+
+```powershell
+python tools/assets/cook_project_fps_candidate.py --output build/project-fps-candidate
+python tools/assets/cook_project_fps_candidate.py --output build/project-fps-candidate --check
+```
+
+Outputs are `arms.glb`, `body.glb`, binary source oracle maps, `report.json` and
+shared original texture byte copies under the requested build directory. Large
+duplicate binaries are not committed. Both original Project GLBs are unchanged.
+The manifest `assets/metadata/project_fps_candidate_regions.json` freezes 170
+inclusive source triangle ranges, primitive topology and SHA256 of both inputs.
+Source/topology drift fails before writes and requires explicit region review.
+Initial ranges came from the offline deform-weight audit; neither cooking nor
+gameplay uses positional/weight-threshold face-removal heuristics.
+
+| Asset | Vertices | Triangles | Primitives | Skin palette / runtime pose nodes |
+| --- | ---: | ---: | ---: | ---: |
+| Original world | 78,456 | 108,582 | 7 | 706 / 709 |
+| Candidate arms | 9,536 | 15,942 | 2 | 81 / 84 |
+| Candidate body | 40,532 | 53,682 | 5 | 57 / 60 |
+
+Arms include Jacket sleeves and Body hands. Body excludes these exact triangles,
+all triangles touching positive head/neck weights, and the entire Neck/Hair
+primitives, including four residual low-weight Neck triangles. No material hide
+or runtime vertex deletion. Sleeve/neck boundaries still need artist approval;
+head/neck-weight exclusion alone is not a rendered camera-clipping guarantee.
+
+The cook preserves original node indices/hierarchy/TRS, materials, all selected
+vertex attributes/weights, inverse binds, all seven socket transforms and exact
+animation sampler bytes for retained nodes. JOINTS and inverse-bind rows are
+remapped together; actual positive influences, ancestors and socket ancestors
+determine the retained palette. Unrelated animation channels are omitted. All
+four clip names/durations remain, including zero-duration T_pose. Required split
+segments and nonuniform scales are retained. Both variants share texture copies.
+
+Public NovaCore importer/bridge contracts compare every selected triangle and
+winding, position/normal/UV, weight and positive joint mapping. Bind and every
+clip at 0%,37%,83% compare retained globals, full socket frames and all skinned
+subset vertices against the original. Maximum local subset drift: **0 m**.
+Authored clips deform arms/body by up to1.112/0.985m. Negative tests reject source
+hash drift, topology drift, invalid/overlapping ranges and wrong palette closure;
+they also check disjoint regions, no positive head/neck influence and exact recook.
+Full local Release build and39/39 CPU cases pass (37 existing +2 candidate cases).
+
+GCC13.2/Ninja Release on AMD Ryzen5 5500, exact engine
+`a687c8816fbcc8a7f4d313cf092c6dc17a59f8f7`, Walk(1_24),20 warmup +120 measured
+samples, no running game during measurement:
+
+| Asset | Median CPU ms | p95 CPU ms | Position+normal arrays | Vulkan payload per consumed slot* |
+| --- | ---: | ---: | ---: | ---: |
+| Full original | 9.428 | 11.919 | 1,882,944B | 2,510,592B |
+| Arms | 0.968 | 1.563 | 228,864B | 305,152B |
+| Body | 2.289 | 3.350 | 972,768B | 1,297,024B |
+
+Reproduce: configure Release with the candidate option, then run
+`build/candidate-release/nemisis_project_fps_candidate_tests.exe --benchmark`.
+Public sampling/global/skin APIs are timed, including their own allocations and
+validation. Import/file IO and GPU work are excluded. Single-machine numbers
+are not a frame-budget guarantee. *Payload is calculated from pinned
+VulkanMeshVertex (8floats), not measured GPU upload time. Gameplay does not yet
+submit these candidates, so actual candidate upload/draw costs remain unmeasured.
+
+Concrete blockers: actual left chain is DEF-upper_arm.L -> DEF-upper_arm.L.001
+-> DEF-forearm.L -> DEF-forearm.L.001 -> DEF-hand.L (palette436..440), right
+560..564. All five segments carry weights. Weighted DEF-shoulder.L/R are siblings
+under ORG-shoulder, not upper-arm parents. The current A1 adapter requires three
+direct joints and uniform frames; Project clips genuinely animate nonuniform
+scales. Do not discard split bones/scales or choose similarly named controls.
+
+Preserved hand socket offsets are approximately0.414m R /0.487m L from the wrists,
+with nonuniform scale; they are not usable authored palm-contact frames. Artist
+work must define palm/finger frames and sleeve/torso/neck boundaries (140 mixed
+arm-boundary triangles,297 mixed head/neck-boundary triangles). No caps/seams
+were invented. Only then adapt the existing ozz path safely for these actual
+segments/scales, and render the complete acceptance matrix before registration.
+No second sampling/IK framework is justified by this candidate.
+
 ## Phase 2B opt-in production hand constraints (visual gate OPEN)
 
 Published [draft game #16](https://github.com/YoungJibbit95/Nemisis/pull/16),

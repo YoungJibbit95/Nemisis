@@ -137,6 +137,37 @@ endif()
 
 enable_testing()
 
+option(NEMISIS_BUILD_PROJECT_FPS_CANDIDATE "Cook and contract-test the offline Project FPS candidate" OFF)
+if(NEMISIS_BUILD_PROJECT_FPS_CANDIDATE)
+    find_package(Python3 3.10 REQUIRED COMPONENTS Interpreter)
+    set(project_fps_candidate_dir "${CMAKE_BINARY_DIR}/project-fps-candidate")
+    add_custom_command(
+        OUTPUT "${project_fps_candidate_dir}/arms.glb" "${project_fps_candidate_dir}/body.glb"
+               "${project_fps_candidate_dir}/arms.map" "${project_fps_candidate_dir}/body.map"
+               "${project_fps_candidate_dir}/report.json"
+        COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tools/assets/cook_project_fps_candidate.py"
+                --output "${project_fps_candidate_dir}"
+        DEPENDS tools/assets/cook_project_fps_candidate.py assets/metadata/project_fps_candidate_regions.json
+                assets/processed/normalized/project_assets/chr_project_male1.glb assets/project_assets/character_male1.glb
+        VERBATIM
+    )
+    add_custom_target(nemisis_project_fps_candidate
+        DEPENDS "${project_fps_candidate_dir}/report.json" "${project_fps_candidate_dir}/arms.glb"
+                "${project_fps_candidate_dir}/body.glb" "${project_fps_candidate_dir}/arms.map"
+                "${project_fps_candidate_dir}/body.map")
+    add_executable(nemisis_project_fps_candidate_tests tests/project_fps_candidate_tests.cpp)
+    target_link_libraries(nemisis_project_fps_candidate_tests PRIVATE Novacore::Engine)
+    target_compile_definitions(nemisis_project_fps_candidate_tests PRIVATE
+        NEMISIS_SOURCE_ROOT="${CMAKE_CURRENT_SOURCE_DIR}"
+        NEMISIS_PROJECT_FPS_CANDIDATE_ROOT="${project_fps_candidate_dir}")
+    novacore_copy_mingw_runtime(nemisis_project_fps_candidate_tests)
+    add_dependencies(nemisis_project_fps_candidate_tests nemisis_project_fps_candidate)
+    add_test(NAME nemisis_project_fps_candidate_tests COMMAND nemisis_project_fps_candidate_tests)
+    add_test(NAME nemisis_project_fps_cook_tests
+        COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/project_fps_cook_tests.py"
+                "${project_fps_candidate_dir}")
+endif()
+
 function(nemisis_add_runtime_smoke test_name argument require_vulkan)
     add_test(NAME ${test_name}
         COMMAND ${CMAKE_COMMAND}
