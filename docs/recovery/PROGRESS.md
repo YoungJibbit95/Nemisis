@@ -2,6 +2,11 @@
 
 ## 2026-10-18 Phase 2B productive constraints, opt-in / visual gate OPEN
 
+- Published DRAFT https://github.com/YoungJibbit95/Nemisis/pull/16, implementation
+  10610e7 (the following record-only commit changes no runtime). Review base #15;
+  required hosted MSVC/Clang 37-case validation is attached to
+  https://github.com/YoungJibbit95/Nemisis/pull/16/checks.
+
 - Shared-pose PR https://github.com/YoungJibbit95/Nemisis/pull/15 is DRAFT,
   implementation 57835a0 (base frozen integration 5baab6137dc5e0a3a81a2b0e9ec62ac4f8a78fa0).
   Both hosted MSVC/Clang builds and 35 CPU cases pass:
@@ -63,6 +68,18 @@ FIRST_PERSON_RECOVERY.md contains exact dataflow/timing, controls/manual Vulkan
 commands, removal criterion and a precise deferred Project head-safe cooking
 plan. No GUI authorization, graphical launch, images or GPU smoke is claimed.
 The chosen character remains chr_project_male1; A1 arms remain temporary.
+
+Next executable session step: recheck engine #10/#11 and game #12/#13/#14/#15/#16
+heads, merge states and CI before any branch/pin changes. Engine #10 -> #11 and
+game #12 -> #14, plus independent #13, precede shared pose #15 -> constraints #16.
+The two new game PRs deliberately target integration/stacked branches, not main;
+retarget only after upstream dependencies are integrated and the resulting diff
+is reviewed. Do not auto-merge or rewrite history. Detached engine worktree
+F:/Coding/Project/recovery/phase2b/Novacore-Engine stays exactly at the new pin;
+verify its HEAD equals cmake/novacore-revision.txt for reproducible future builds.
+Then obtain actual manual images/fresh GUI authorization for the documented
+Vulkan matrix. Only that acceptance unlocks PR C legacy removal/default switch;
+PR D Project head-safe cooking remains a separate plan. Preserve old/user trees.
 
 ## 2026-10-18 Phase 2B shared presentation pose
 

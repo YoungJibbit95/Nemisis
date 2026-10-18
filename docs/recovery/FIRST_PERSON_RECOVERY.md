@@ -2,6 +2,11 @@
 
 ## Phase 2B opt-in production hand constraints (visual gate OPEN)
 
+Published [draft game #16](https://github.com/YoungJibbit95/Nemisis/pull/16),
+stacked after [shared-pose draft #15](https://github.com/YoungJibbit95/Nemisis/pull/15).
+PROGRESS.md records exact pins, integration ancestry, local results and the next
+executable session step. Hosted checks belong to the PRs; no merge is automatic.
+
 The game now has an opt-in constraint path using ozz-animation **0.17.0**, exact
 commit `744eb9d99f606eda849acb0b1204f7a3dc20bca1`. Archive SHA256 and MIT notice
 are unchanged. `cmake/OzzAnimation.cmake` shares that one dependency between
