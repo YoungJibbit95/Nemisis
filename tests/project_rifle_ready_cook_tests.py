@@ -34,6 +34,12 @@ class ReadyCookTests(unittest.TestCase):
                 )
             self.assertEqual(new["animations"][-1]["name"], "Developer Rifle Ready Idle")
             self.assertTrue(all(c["target"]["path"] == "rotation" for c in new["animations"][-1]["channels"]))
+            # Primary/support semantic identity must survive every cook. Swapping
+            # these could still make the distance-only IK checks look correct.
+            for side in ("r", "l"):
+                socket = next(i for i, n in enumerate(new["nodes"]) if n.get("name") == "socket_palm_" + side)
+                parent = next(n for n in new["nodes"] if socket in n.get("children", []))
+                self.assertEqual(parent["name"], "DEF-hand." + side.upper())
         original = ready.ROOT / "assets/processed/normalized/project_assets/wpn_project_rifle_m4a1.glb"
         old, binary = ready.read(original)
         new, output = ready.read(OUTPUT / "rifle_ready.glb")

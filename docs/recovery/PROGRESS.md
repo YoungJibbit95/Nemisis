@@ -1,5 +1,35 @@
 # Recovery progress
 
+## 2026-10-18 Phase 4 W1: inventory and right-handed developer reference
+
+- Fresh GitHub audit: #19, #20, #21, #22 and baseline #24 merged; #23 remains
+  Draft against main. Both Windows/MSVC and Ubuntu/Clang checks at its final
+  8dc9ce3 head passed (run 39157419733). W1 depends on #23; main cce7bec was
+  merged into this isolated recovery branch. Original dirty checkouts untouched.
+- Exact engine pin remains a687c8816fbcc8a7f4d313cf092c6dc17a59f8f7. Engine main
+  d4eee3a differs from that runtime only in recovery documentation.
+- FIRST_PERSON_RECOVERY records all four playable definitions, six source/cooked
+  Project assets, evaluated sockets, class/profile gaps and explicit fallbacks.
+  NCAR-as-shotgun is an unresolved content mismatch, not an approved proxy.
+- Re-authored M4 developer Hip reference X=-.11 -> +.11 in Blender 5.1.0,
+  preserving original anatomy, source meshes, positive scale and actual palm
+  frames. Kept the reach-compatible torso; reversing it failed the real support
+  arm reach check and was rejected. No runtime axis fix or mirror introduced.
+- Permanent actual Ready tests verify primary-grip camera side over 288 movement/
+  yaw ticks, forward hemisphere, positive scale and physical .R/.L parent bones.
+  Independent contact/orientation and original binary/palette checks retained.
+  Old Phase 3 left-pose fixture is rejected (285 side failures); new fixture passes.
+- Full dependency-light Release build passes; 45/45 CPU CTest cases pass in
+  105.47s. Actual Ready contact max 0.000999308m, minimum camera-forward dot
+  0.643084 during original locomotion; both hand vertices in frustum (179 right /
+  2275 left). These are not occlusion/pixel or artist-quality claims.
+- Exactly one rendering subagent owns separate engine worktree/branch, R0 first;
+  game files/pin remain main-agent owned. No GUI permission was renewed after
+  physical Escape; no Phase 4 GUI input, screenshots or GPU acceptance claimed.
+- Next: publish W1 Draft/CI, then FR17 geometry-specific offline cook and Project
+  SMG integration. Separately validate exact R0 engine commit against Nemisis
+  before updating its pin/config; R1 must remain a separate renderer PR.
+
 ## 2026-10-18 Phase 2D actual Project FPS runtime preview
 
 - User has merged engine#11 and game#13–#17; current game main is
