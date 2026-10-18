@@ -1,5 +1,16 @@
 # Recovery progress
 
+## 2026-10-19 Combined UI candidate dependency correction
+
+- The first #29 native-UI CI jobs failed compiling DevRangeRenderScene.cpp:
+  the isolated old UI pinfb33cb5 lacks RenderCamera3D::rollDegrees from R0.
+  This is a real cross-branch API incompatibility, not a test to suppress.
+- The optional UI candidate pin now uses combined engine5518818. Its full
+  engine/server/sandbox CPU build and7/7 tests pass3.09s; full SDL3/Vulkan
+  library build, all17 shaders/SPIR-V validation and hosted MSVC/Clang pass
+  (engine #15, run39169931979). Combined game/native-UI CI/local acceptance
+  follows. The ordinary engine pin3d673b7 is unchanged; no main merge occurred.
+
 ## 2026-10-18 Phase 5 orchestration checkpoint
 
 - Actual main: game f15bc0e (#23 merged), engine 38e718b (#12/#13 merged).
