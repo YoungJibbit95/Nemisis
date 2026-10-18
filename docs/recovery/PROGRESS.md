@@ -63,6 +63,14 @@ acceptance or a binary asset migration. Do not merge automatically.
   Whole-arms average translation still exists in production. The user's desired
   Project model still needs a safe authored FPS mask/split. GPU/UI permission
   remains pending; no further GUI launch/input/capture after the earlier stop.
+- Published draft PR https://github.com/YoungJibbit95/Nemisis/pull/14, implementation
+  c6a2d7e4dddeacb13c4a4a82024c056e740b2418, based on PR #12. Hosted full builds
+  and35/35 CPU cases pass on Windows/MSVC and Ubuntu/Clang, including fresh
+  hash-verified upstream archive fetching:
+  https://github.com/YoungJibbit95/Nemisis/actions/runs/39128535291.
+  Merge-tree check against independent geometry PR #13 is clean; no main merge.
+  This final follow-up only records evidence. Engine/game original user checkouts
+  still contain their original15/75 dirty entries; no files there were changed.
 
 Next: with an authorized visual baseline, integrate one final weapon transform,
 derive actual M4 grips in arms model space, apply the reviewed constraints after

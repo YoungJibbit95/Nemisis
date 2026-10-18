@@ -115,6 +115,14 @@ weapon/grip ownership, runtime integration, the authored FPS-body decision and
 the renewed visual gate. The probe replaces the need to invent a new IK solver;
 it does not yet replace the game's whole-mesh placement workaround.
 
+Published [draft probe PR #14](https://github.com/YoungJibbit95/Nemisis/pull/14),
+implementation c6a2d7e4dddeacb13c4a4a82024c056e740b2418. Fresh hosted Windows/MSVC
+and Ubuntu/Clang builds and35 CPU cases pass, with archive hash verification:
+https://github.com/YoungJibbit95/Nemisis/actions/runs/39128535291.
+Merge order: engine #10, selected-character/pin #12, then this optional probe.
+Geometry #13 is independent and combines cleanly. Main and all user changes remain
+untouched; no GUI authorization/visual acceptance is inferred from these results.
+
 ## Remaining acceptance
 
 There is one existing procedural weapon mount, then cooked muzzle alignment;
