@@ -305,14 +305,15 @@ def pose_data():
 
 print("AUTHOR_READY", flush=True)
 require("spine_fk.003" in rig.pose.bones, "Actual chest control absent")
-# Artist placement is authored in the game's actual +Z-view convention. The
-# previous negative-X mount appeared on the left in Vulkan. Keep the original
-# mesh, positive scale and actual DEF-hand.R firing chain; never mirror either.
+# Restore the anatomical right mount after correcting the camera's reflected
+# +Z-depth view. A proper camera facing gameplay +Z has screen-right at world
+# -X; the character's actual .R shoulder is on that side too. The W1 positive-X
+# placement compensated for the old camera and crossed the firing arm.
 twist("spine_fk.003", -40)
 retarget_spines()
 if "head" in rig.pose.bones:
     twist("head", 40)
-world_weapon = Matrix.Translation(Vector((0.11, 1.54, 0.21)))
+world_weapon = Matrix.Translation(Vector((-0.11, 1.54, 0.21)))
 results = {side: arm_constraint(side, world_weapon) for side in ["R", "L"]}
 
 # Reproducible developer finger controls, baked offline. Each curl axis comes

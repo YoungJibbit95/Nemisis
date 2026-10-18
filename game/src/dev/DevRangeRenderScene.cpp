@@ -1108,7 +1108,7 @@ player::FirstPersonRigAttachment projectFPSPlayerAttachment(const DevRangePlayer
     attachment.scale = {1, 1, 1};
     attachment.yawDegrees = state.view.yawDegrees;
     attachment.pitchDegrees = state.hasAnimationFrame ? state.animation.thirdPersonBodyPitchDegrees : 0.0F;
-    attachment.rollDegrees = state.cameraRollDegrees * 0.18F +
+    attachment.rollDegrees = -state.cameraRollDegrees * 0.18F +
         (state.hasAnimationFrame ? state.animation.thirdPersonBodyRollDegrees : 0.0F);
     attachment.alpha = 1.0F;
     return attachment;
