@@ -19,7 +19,12 @@ asset-local +X sockets use the proper mesh instance rotation and are not reflect
 Mesh roll is the negative camera roll plus authored model additives.
 
 The previous W1 X=+.11m Ready mount compensated for the reflected camera. The
-existing offline Blender tool restores X=-.11m and re-solves the real deform arms.
+existing offline Blender tool restores the physical right side and re-solves
+the real deform arms. The first X=-.11,Z=.21m pose crossed the eye by .0554923m
+at Sprint-to-Idle tick216 because the original unarmed ancestors keep turning.
+The revised offline mount is X=-.16,Z=.17m, with Y=1.54m unchanged. This combines
+five centimetres of rightward and four of rearward correction to retain actual
+left-arm reach. Its full 288-tick runtime gate remains required after recooking.
 Local translations/scales, source skin and actual .R firing/.L support identity
 stay intact. Rendered anatomy, finger wrap, ADS and performance still need renewed
 Vulkan inspection. Historical +X-screen-right/+Z-depth rows below describe the

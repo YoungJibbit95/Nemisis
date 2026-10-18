@@ -873,7 +873,7 @@ camera-relative artistic offsets, negates camera roll for mesh rotation and
 keeps authored socket coordinates in the actual asset basis. View-relative
 camera sway/roll follows the same input semantics at every heading.
 
-The existing Blender authoring tool restores Ready X=-.11m and solves the actual
+The initial Blender authoring pass restored Ready X=-.11m and solved the actual
 deform chains again. Blender wrist errors: R=.0000246802m, L=.0000003054m;
 maximum original local-translation delta .0000008204m, scale delta .0000015232.
 Source pose SHA256 `f6fe115bb008e447ac52fcd9fc40728a8a631062f928e9d54570e0365933ec2b`.
@@ -888,3 +888,21 @@ right/left semantic arm proxies consistent. Old +cameraRoll mesh expectations
 are replaced by -cameraRoll expectations at the same tolerance. Full integration,
 hosted MSVC/Clang and Vulkan visual review remain pending at this source checkpoint.
 No GUI launched and the default launch path was not changed.
+
+The first proper-camera runtime gate found three real side failures on the
+Sprint-to-Idle transition, ticks216-218. Minimum camera-right firing margin was
+-.0554923m; the authored-X derivative there was -.717503. The eye/model position
+was (-.00240873,1.58466,.372916), chest weapon mount (.0562783,1.35255,.46006)m.
+Original unarmed lower ancestors continue blending beneath the Ready rotations;
+they turn the chest relative to the gameplay camera. All 288 contact checks
+passed, maximum .000979131m. The strict positive-side assertion is retained.
+
+The revised offline solve uses X=-.16,Y=1.54,Z=.17m: five centimetres farther
+right and four rearward, reducing the lateral correction needed from the actual
+left support arm. Blender wrist residuals are .0000114425m R and .0000003638m L;
+original local translation/scale deltas remain below .0000007367m/.0000011247.
+The 72-track pose SHA256 is
+`bc60ff4b2927764eaa702853a1dcea8c9331a7311c17fb38841df9f5e13b39eb`.
+Physical-contact mutation checks pass. The new pose's runtime side/contact/skin
+and frustum gate is pending recook; predicted placement is not an acceptance
+result. No runtime offset, reflection, contact relaxation or GUI action is used.
