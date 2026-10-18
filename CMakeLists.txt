@@ -705,6 +705,7 @@ add_test(NAME nemisis_player_view_tests COMMAND nemisis_player_view_tests)
 
 add_executable(nemisis_player_camera_rig_tests
     game/src/player/PlayerCameraRig.cpp
+    game/src/player/PlayerView.cpp
     tests/player_camera_rig_tests.cpp
 )
 
