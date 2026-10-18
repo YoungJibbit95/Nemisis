@@ -1,5 +1,20 @@
 # Recovery progress
 
+## 2026-10-19 Phase 5 Glock geometry source checkpoint
+
+- Separate bounded branch stacks on FP/camera #30/#31. Existing Glock cook
+  retained up but reversed physical front; its muzzle marker pointed behind.
+  Per-asset Blender recipe [0,-90,0] and measured upper-handle/opposite-side
+  pistol support/front-ring anchors correct the offline boundary. Source and
+ 187mm length remain unchanged; every cooked node determinant stays positive.
+- R0, L(.0105303,.0051586,.0128965), muzzle(.0000144,.0536342,.1553505)m.
+  Two Blender5.1 exports match SHA256 d5332e6b62fda44b1349bb82c22ada67fa28121ea02c175b601121fe60b9a326.
+  Actual imported triangle tests check primary inside the handle, nearby pistol
+  support on its opposite surface, barrel-ring center and physical up/forward.
+- C++ full tests/CI are pending. No GPU review or Project pistol profile is
+  claimed. Single rigid primitive has no separate slide/magazine animation;
+  eject, fingers, ADS and class reload remain explicit followups.
+
 ## 2026-10-19 Phase 5 camera/presentation source checkpoint
 
 - Pair with engine f4d7c99b0c522ae872ae05a6eb42818629b16607, Draft #16 on #15.

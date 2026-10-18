@@ -34,10 +34,10 @@
   "external_assets": false,
   "generated_by": "tools/blender/normalize_project_assets.py",
   "socket_notes": {
-    "socket_muzzle": "Muzzle/VFX point at runtime +Z after Blender -Y forward normalization.",
-    "socket_grip_r": "Right-hand firing grip anchor for first-person and future IK retargeting.",
-    "socket_grip_l": "Left support-hand anchor on the fore-end.",
-    "socket_eject": "Right-side casing ejection reference.",
+    "socket_muzzle": "Center of actual foremost barrel ring, raw max Z within0.1mm; measured raw(.0631760526,.0177737572,.2159179002)m.",
+    "socket_grip_r": "Actual upper pistol handle, raw(-.02,.0177960826,-.025)m, midpoint of independently intersected left/right side surfaces.",
+    "socket_grip_l": "Actual opposite grip side surface, raw(-.012,0.0014656925,-.005)m. Two-handed pistol support stays near primary firing grip, away from muzzle.",
+    "socket_eject": "Legacy provisional proposal; actual port and ejection direction remain unaccepted. No slide/magazine motion frames are authored.",
     "socket_vfx": "Muzzle flash/tracer fallback, intentionally colocated with socket_muzzle."
   },
   "socket_forward_axis": "+Z",
