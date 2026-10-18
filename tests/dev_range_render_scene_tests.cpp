@@ -1665,22 +1665,41 @@ void testProjectReadyUsesOneConstrainedPose() {
             expect(animator.socketTransform("socket_rifle_ready", afterMount) && chestMount.values == afterMount.values,
                    "hand IK never feeds back into the sampled chest weapon mount");
             if (ticks == 0) {
+                std::array<std::size_t, 2> handDepth{}, handHorizontal{}, handVertical{};
+                std::array<math::Vec3, 2> handMin{{{1000, 1000, 1000}, {1000, 1000, 1000}}};
+                std::array<math::Vec3, 2> handMax{{{-1000, -1000, -1000}, {-1000, -1000, -1000}}};
                 for (const auto& primitive : animator.skinnedMesh()->primitives) {
                     for (std::size_t v = 0; v < primitive.positions.size(); ++v) {
                         const auto p = primitive.positions[v] - animation::matrixTranslation(eye);
-                        if (p.z <= .03F || std::abs(p.y) >= p.z * .7536F || std::abs(p.x) >= p.z * 1.3397F) {
-                            continue;
-                        }
                         for (std::size_t slot = 0; slot < 4; ++slot) {
                             const auto& name = arms.animationData->skins[0].joints[primitive.joints[v][slot]].name;
                             if (primitive.weights[v][slot] > .25F &&
                                 (name.starts_with("DEF-hand.") || name.starts_with("DEF-f_") ||
                                  name.starts_with("DEF-thumb."))) {
-                                ++visibleHandVertices[name.ends_with(".R") ? 0 : 1];
+                                const auto side = name.ends_with(".R") ? 0U : 1U;
+                                handMin[side] = {std::min(handMin[side].x, p.x), std::min(handMin[side].y, p.y),
+                                                 std::min(handMin[side].z, p.z)};
+                                handMax[side] = {std::max(handMax[side].x, p.x), std::max(handMax[side].y, p.y),
+                                                 std::max(handMax[side].z, p.z)};
+                                if (p.z > .03F) {
+                                    ++handDepth[side];
+                                    handHorizontal[side] += std::abs(p.x) < p.z * 1.3397F;
+                                    handVertical[side] += std::abs(p.y) < p.z * .7536F;
+                                    if (std::abs(p.y) < p.z * .7536F && std::abs(p.x) < p.z * 1.3397F) {
+                                        ++visibleHandVertices[side];
+                                    }
+                                }
                                 break;
                             }
                         }
                     }
+                }
+                for (std::size_t side = 0; side < 2; ++side) {
+                    const auto a = handMin[side], b = handMax[side];
+                    std::cout << "Ready hip hand=" << side << " eye_relative_bounds=" << a.x << ',' << a.y << ','
+                              << a.z << ':' << b.x << ',' << b.y << ',' << b.z
+                              << " depth_horizontal_vertical=" << handDepth[side] << ',' << handHorizontal[side]
+                              << ',' << handVertical[side] << '\n';
                 }
             }
             expect(renderer.updateMeshResourceVertices(resources.at(std::string(dev::kProjectFPSArmsResourceId)),
