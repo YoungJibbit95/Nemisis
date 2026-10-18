@@ -238,3 +238,13 @@ Next: inspect hip/held ADS/look-down/slide/wallrun images after renewed GUI
 authorization. Do not claim a completed Project first-person body: the user chose
 chr_project_male1, whose head-safe FPS split and actual hand constraints remain
 separate work. No GLB recook, new Euler repair, balance or simulation changes.
+
+Published CPU evidence: implementation c98fa12120eed4c00acc418be9553009e41baf2d,
+draft PR https://github.com/YoungJibbit95/Nemisis/pull/13. Fresh hosted complete
+Windows/MSVC and Ubuntu/Clang builds / all34 CPU cases pass:
+https://github.com/YoungJibbit95/Nemisis/actions/runs/39127413992.
+Local review commit259755f combines published #12/#13 without conflict and passes
+full CPU build/34 cases plus an SDL3/Vulkan build against exact engine15c1b68.
+That review branch is unpublished and does not merge main. No new GUI launch or
+images; the explicit new GUI-authorization question remains pending. Keep this
+PR draft until its visual acceptance. This follow-up changes documentation only.
