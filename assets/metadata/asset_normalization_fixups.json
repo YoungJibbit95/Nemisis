@@ -86,31 +86,69 @@
       "category": "weapon",
       "source": "assets/project_assets/weapon_rifle_m4a1.glb",
       "output": "assets/processed/normalized/project_assets/wpn_project_rifle_m4a1.glb",
-      "aliases": ["weapon_rifle_m4a1", "m4a1", "hk416_candidate_no_explicit_hk416_match"],
+      "aliases": [
+        "weapon_rifle_m4a1",
+        "m4a1",
+        "hk416_candidate_no_explicit_hk416_match"
+      ],
       "findings": [
         "No explicit HK416 path, metadata, material, or object-name match was found; this M4A1 asset is the closest rifle candidate.",
         "Old sidecar dimensions understated actual weapon length because only part of the model appears to have been measured.",
-        "Weapon height is on Blender +X while Nemisis target assets use Blender +Z up, so the configured fix rolls source +X to target +Z.",
+        "Geometry audit: the source magazine extends toward +X while the sights lie toward -X. Physical source up is -X; normalize -X to Blender +Z (runtime +Y), preserving forward.",
         "Normalized semantic dimensions are [width, forward length, height] = [0.06361, 0.85884, 0.26632] meters.",
-        "No authored socket_muzzle, grip sockets, eject socket, or col_ collision proxy."
+        "No authored socket_muzzle, grip sockets, eject socket, or col_ collision proxy.",
+        "Generated sockets are provisional geometry-based anchors, not authored palm/finger contact frames. Muzzle is centered on the Barrel extremal front ring; right grip is the pistol-grip region center, left is handguard underside.",
+        "The source Ejector_Lid surface maps to negative runtime X; source handedness/ejection art remains unapproved. Do not replace this with an invented positive-X port."
       ],
       "target_dimensions_m": [0.06361, 0.85884, 0.26632],
       "normalization": {
-        "remove_mesh_names": ["Icosphere"],
-        "rotation_euler_deg": [0.0, -90.0, 180.0],
+        "remove_mesh_names": [
+          "Icosphere"
+        ],
+        "rotation_euler_deg": [0.0, 90.0, 180.0],
         "origin": {
           "mode": "bounds_floor_center",
-          "center_axes": ["X", "Y"],
+          "center_axes": [
+            "X",
+            "Y"
+          ],
           "floor_axis": "Z"
         },
         "ensure_root_empty": true,
         "add_sockets": [
-          {"name": "socket_muzzle", "location": [0.0, -0.435, 0.15], "display_size": 0.035},
-          {"name": "socket_grip_r", "location": [0.022, 0.09, 0.08], "display_size": 0.045},
-          {"name": "socket_grip_l", "location": [-0.012, -0.16, 0.11], "display_size": 0.045},
-          {"name": "socket_eject", "location": [0.036, -0.08, 0.14], "display_size": 0.035},
-          {"name": "socket_vfx", "location": [0.0, -0.435, 0.15], "display_size": 0.04}
+          {
+            "name": "socket_muzzle",
+            "location": [0.0010036593, -0.4294168025, 0.1991569803],
+            "display_size": 0.035
+          },
+          {
+            "name": "socket_grip_r",
+            "location": [0.000911266, 0.1853628245, 0.1093807009],
+            "display_size": 0.045
+          },
+          {
+            "name": "socket_grip_l",
+            "location": [0.000911266, -0.15319, 0.1677090193],
+            "display_size": 0.045
+          },
+          {
+            "name": "socket_eject",
+            "location": [-0.0236403607, 0.0634225567, 0.1729528329],
+            "display_size": 0.035
+          },
+          {
+            "name": "socket_vfx",
+            "location": [0.0010036593, -0.4294168025, 0.1991569803],
+            "display_size": 0.04
+          }
         ]
+      },
+      "source_sha256": "b276eeeb2109baee336d02f366a961b126b827d2aa8983d62d3f59c7013abfc4",
+      "socket_notes": {
+        "socket_muzzle": "Centered on the physical Barrel front ring; runtime +Z forward.",
+        "socket_grip_r": "Provisional pistol-grip region center; not an artist-authored palm/finger frame.",
+        "socket_grip_l": "Provisional handguard underside anchor; not an artist-authored palm/finger frame.",
+        "socket_eject": "Actual Ejector_Lid outer surface, runtime -X. Source chirality and ejection art remain unapproved."
       }
     },
     {

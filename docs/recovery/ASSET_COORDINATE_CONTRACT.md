@@ -1,5 +1,64 @@
 # Canonical asset coordinate contract
 
+## Phase 2C: physical M4 geometry correction, 2026-10-18
+
+Earlier marker/length contracts passed an upside-down M4. The source GLB's
+magazine extends along +X while sights lie along -X: actual up is -X, actual
+barrel forward is -Z. Correct only the M4 offline normalization recipe from
+Blender Euler[0,-90,180] to[0,+90,180]. Runtime instance Euler/matrix/renderer code
+is unchanged. Other Project weapons have different authored axes; do not apply
+this recipe in bulk.
+
+Source SHA256 `b276eeeb2109baee336d02f366a961b126b827d2aa8983d62d3f59c7013abfc4`
+is now checked before the existing Blender cook. Source GLB remains unchanged.
+The old cooked Magazine Y range was[+0.00196,+0.18632], rear Sight_2
+[-0.07457,-0.04680]; generated +Y-up sockets alone did not detect the inversion.
+The new engine-import contract independently checks physical magazine below
+sights, actual muzzle ring alignment within1mm and handguard underside contact.
+This complements the original marker, metre-scale and forward contracts.
+
+Generated anchors are geometry-based and **provisional**, not authored palm or
+finger contact frames. Source sample definitions (raw glTF coordinates, metres):
+
+| Anchor | Source point | Selection |
+| --- | --- | --- |
+| Firing grip | (.0834092991,.0308887340,.1185528245) | Base pistol-grip region X>.055,Z>.07; medianX/Z, centerlineY |
+| Support | (.0250809807,.0308887340,-.22) | Barrel handguard underside, Z[-.225,-.215], centerlineY |
+| Muzzle/VFX | (-.0063669803,.0307963407,-.4962268025) | Bounding-center of Barrel foremost ring, minZ within0.1mm |
+| Eject | (.0198371671,.0554403607,-.0033874433) | Ejector_Lid outer maxY surface within0.1mm |
+
+The existing normalizer rounds pre-recenter bounds to5 decimals; its translation
+is(.03180,.06681,.19279) in Blender space. Config locations include that shift;
+the existing root-to-firing-grip recenter then produces runtime R=(0,0,0),
+L=(0,.0583283,.3385528), muzzle=(.0000924,.0897763,.6147796),
+eject=(-.0245516,.0635721,.1219403). Frames stay +Z-forward/+Y-up. The actual lid
+lies on runtime negativeX; source chirality/ejection art is unapproved. No
+invented positiveX port, reflection or per-instance repair is introduced.
+
+Reproduce with the existing tool, M4 only:
+
+```powershell
+& 'F:/Coding/Project/recovery/tools/blender-5.1.0-portable/blender-5.1.0-windows-x64/blender.exe' --background --factory-startup --python tools/blender/normalize_project_assets.py -- --repo-root . --only wpn_project_rifle_m4a1 --export --report build/m4-normalization-report.json
+```
+
+Local CLI: Blender5.1.0, build adfe2921d5f3. Portable archive from the
+[official release directory](https://download.blender.org/release/Blender5.1/),
+verified against its official SHA256
+`bc184226962904e3f26c5809ba7ec86bbeb670060825b046930b0c02a30a4eee`.
+Two independent CLI exports produced identical cooked GLB SHA256
+`1a9350d4f59d2f50b35906f11eaa8ad8e72539f8c80f83146ff1cb2ab341ff0b`.
+The existing metadata/report record is updated for M4 only. Full anatomical
+grasp, held ADS and camera/movement acceptance still require rendered evidence.
+
+Local full GCC13.2 Release build and37/37 CPU cases pass against exact engine
+`a687c8816fbcc8a7f4d313cf092c6dc17a59f8f7`, including existing actual-M4 hand
+constraints through hip/ADS transitions. A negative control temporarily loaded
+the old cooked bytes: new physical-up, muzzle-ring and support-contact contracts
+all failed, while restored corrected bytes pass. The source was never modified.
+The first parallel4 build exhausted compiler memory; parallel1 completed. A test
+initially overlooked the existing cook's Barrel-to-LOD0 rename, was corrected to
+the actual exported node, and the complete37-case suite was rerun successfully.
+
 Verified baseline: Nemisis `ff88eb0a7997f238cb76381dc377525c942991c1`, NovaCore runtime
 `dbdfc38d092e018952ead43d9cb669333ebf70bc` (unchanged game pin), 2026-10-18.
 This contract describes actual code and separates required cooked-content policy
