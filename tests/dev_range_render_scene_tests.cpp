@@ -443,6 +443,20 @@ void testDevRangeRenderSceneAlignsWeaponMeshToCookedMuzzleSocket() {
     }
 }
 
+// Independent quaternion oracle for renderer T * Ry * Rx * Rz * S.
+novacore::math::Vec3 worldPoint(const novacore::render::RenderMesh3D& mesh, novacore::math::Vec3 point) {
+    constexpr float halfRadians = 3.14159265358979323846F / 360.0F;
+    const float y = mesh.yawDegrees * halfRadians;
+    const float x = mesh.pitchDegrees * halfRadians;
+    const float z = mesh.rollDegrees * halfRadians;
+    const auto rotation = novacore::animation::multiply(
+        novacore::math::Quat{0.0F, std::sin(y), 0.0F, std::cos(y)},
+        novacore::animation::multiply(novacore::math::Quat{std::sin(x), 0.0F, 0.0F, std::cos(x)},
+            novacore::math::Quat{0.0F, 0.0F, std::sin(z), std::cos(z)}));
+    return novacore::animation::transformPoint(
+        novacore::animation::matrixFromTransform({mesh.position, rotation, mesh.scale}), point);
+}
+
 void testCookedMuzzleAndGripsFollowRenderedWeaponTransform() {
     novacore::render::Renderer renderer;
     const auto lookup = registerSceneMeshes(renderer);
@@ -456,21 +470,6 @@ void testCookedMuzzleAndGripsFollowRenderedWeaponTransform() {
     }
     const auto near = [](novacore::math::Vec3 a, novacore::math::Vec3 b) {
         return (a - b).lengthSquared() < 0.0000001F;
-    };
-    // Use the animation matrix implementation as an independent column-vector
-    // oracle for the renderer's T * Ry * Rx * Rz * S model convention.
-    const auto worldPoint = [](const novacore::render::RenderMesh3D& mesh, novacore::math::Vec3 point) {
-        constexpr float halfRadians = 3.14159265358979323846F / 360.0F;
-        const float y = mesh.yawDegrees * halfRadians;
-        const float x = mesh.pitchDegrees * halfRadians;
-        const float z = mesh.rollDegrees * halfRadians;
-        const auto rotation = novacore::animation::multiply(
-            novacore::math::Quat{0.0F, std::sin(y), 0.0F, std::cos(y)},
-            novacore::animation::multiply(
-                novacore::math::Quat{std::sin(x), 0.0F, 0.0F, std::cos(x)},
-                novacore::math::Quat{0.0F, 0.0F, std::sin(z), std::cos(z)}));
-        return novacore::animation::transformPoint(
-            novacore::animation::matrixFromTransform({mesh.position, rotation, mesh.scale}), point);
     };
     for (const float ads : {0.0F, 1.0F}) {
         nemisis::dev::DevRangePlayerRenderState player{};
@@ -1277,8 +1276,8 @@ void testActualProjectFPSPreviewSubmitsAnimatedSubsets() {
     expect(loaded && body.vertexCount() == 40532U && arms.vertexCount() == 9536U,
            "preview imports actual Project candidate geometry");
     if (!loaded) { return; }
-    player::PlayerSkeletalAnimator bodyAnimator, armsAnimator;
-    if (!bodyAnimator.initialize(body) || !armsAnimator.initialize(arms)) {
+    player::PlayerSkeletalAnimator bodyAnimator, armsAnimator, commonAnimator;
+    if (!bodyAnimator.initialize(body) || !armsAnimator.initialize(arms) || !commonAnimator.initialize(arms, &body)) {
         expect(false, "both actual Project preview subsets initialize authored animation"); return;
     }
     for (const auto name : {"arms", "body"}) {
@@ -1349,9 +1348,25 @@ void testActualProjectFPSPreviewSubmitsAnimatedSubsets() {
         for (int tick = 0; tick < 12; ++tick) {
             expect(bodyAnimator.update(desc.player.animation, 1.0F / 60.0F) &&
                    armsAnimator.update(desc.player.animation, 1.0F / 60.0F), "authored Project locomotion samples and skins");
+            expect(commonAnimator.update(desc.player.animation, 1.0F / 60.0F), "one common Project pose advances once");
             expect(renderer.updateMeshResourceVertices(resources.at(std::string(dev::kProjectFPSBodyResourceId)), *bodyAnimator.skinnedMesh()) &&
                    renderer.updateMeshResourceVertices(resources.at(std::string(dev::kProjectFPSArmsResourceId)), *armsAnimator.skinnedMesh()),
                    "both real Project dynamic resources accept the new pose");
+        }
+        for (const auto pair : {std::pair{armsAnimator.skinnedMesh(), commonAnimator.skinnedMesh()},
+                                std::pair{bodyAnimator.skinnedMesh(), commonAnimator.skinnedCompanion()}}) {
+            bool same = pair.first && pair.second && pair.first->primitives.size() == pair.second->primitives.size();
+            if (same) {
+                for (std::size_t p = 0; p < pair.first->primitives.size(); ++p) {
+                    const auto& a = pair.first->primitives[p];
+                    const auto& b = pair.second->primitives[p];
+                    same &= a.positions.size() == b.positions.size() && a.joints == b.joints && a.weights == b.weights;
+                    for (std::size_t v = 0; same && v < a.positions.size(); ++v) {
+                        same &= (a.positions[v]-b.positions[v]).lengthSquared() < 1e-10F;
+                    }
+                }
+            }
+            expect(same, "merged source channels/common time preserve each original palette's actual skinned geometry");
         }
         for (const auto view : {player::PlayerViewComponent{0, 0}, player::PlayerViewComponent{38, -70},
                                player::PlayerViewComponent{-46, 65}}) {
@@ -1436,9 +1451,214 @@ void testActualProjectFPSPreviewSubmitsAnimatedSubsets() {
 }
 #endif
 
+#if defined(NEMISIS_PROJECT_FPS_CANDIDATE_ROOT) && defined(NEMISIS_ENABLE_HAND_IK)
+void testProjectReadyUsesOneConstrainedPose() {
+    using namespace novacore;
+    namespace dev = nemisis::dev;
+    namespace player = nemisis::player;
+    const std::filesystem::path root{NEMISIS_PROJECT_FPS_CANDIDATE_ROOT};
+    assets::GltfMeshData arms, body, weapon;
+    if (!assets::loadGltfMeshData(root / "arms_ready.glb", arms).ok() ||
+        !assets::loadGltfMeshData(root / "body_ready.glb", body).ok() ||
+        !assets::loadGltfMeshData(root / "rifle_ready.glb", weapon).ok()) {
+        expect(false, "actual Ready variants import");
+        return;
+    }
+    player::PlayerSkeletalAnimator animator;
+    if (!animator.initialize(arms, &body)) {
+        for (const auto& error : animator.errors()) {
+            std::cerr << error << '\n';
+        }
+        expect(false, "one animator accepts real Project subsets");
+        return;
+    }
+    expect(animator.stats().currentClip == "Developer Rifle Ready Idle", "actual new Ready clip is selected");
+    expect(animator.skinnedMesh() && animator.skinnedCompanion(),
+           "both original palettes are skinned from the common pose");
+    expect(arms.animationData->skins[0].joints.size() == 81 && body.animationData->skins[0].joints.size() == 57,
+           "optimized input palettes remain independent and unchanged");
+    render::MeshCatalog catalog;
+    render::Renderer renderer;
+    auto resources = registerSceneMeshes(renderer);
+    for (auto entry :
+         {std::pair{dev::kProjectFPSArmsAssetId, &arms}, std::pair{dev::kProjectReadyWeaponAssetId, &weapon}}) {
+        assets::AssetRecord record;
+        record.id = entry.first;
+        record.kind = assets::AssetKind::Mesh;
+        record.cookedPath = entry.second->path;
+        assets::GltfAssetMetadata metadata;
+        metadata.id = entry.first;
+        metadata.exportPath = record.cookedPath;
+        metadata.scaleMeters = true;
+        metadata.runtimeUpAxis = "Y";
+        metadata.gameplayForwardAxis = "+Z";
+        metadata.license = "original_project_asset";
+        expect(catalog.registerImportedGltfAsset(record, metadata, *entry.second).isValid(),
+               "Ready marker asset registers");
+    }
+    resources[std::string(dev::kProjectFPSArmsResourceId)] =
+        renderer.registerMeshResource(std::string(dev::kProjectFPSArmsResourceId), *animator.skinnedMesh(),
+                                      render::MeshResourceUsage::DynamicVertices);
+    resources[std::string(dev::kProjectFPSBodyResourceId)] =
+        renderer.registerMeshResource(std::string(dev::kProjectFPSBodyResourceId), *animator.skinnedCompanion(),
+                                      render::MeshResourceUsage::DynamicVertices);
+    resources[std::string(dev::kProjectReadyWeaponAssetId)] =
+        renderer.registerMeshResource(std::string(dev::kProjectReadyWeaponAssetId), weapon);
+    const auto world = dev::createDevRangeGreyboxWorld();
+    dev::DevRangeRenderSceneDesc desc;
+    desc.greyboxWorld = &world;
+    desc.meshCatalog = &catalog;
+    desc.meshResources = &resources;
+    desc.projectFPSPreview = true;
+    desc.projectRifleReady = true;
+    desc.useHandConstraints = true;
+    desc.player.hasCameraRig = true;
+    desc.player.hasAnimationFrame = true;
+    desc.player.hasMovementState = true;
+    desc.player.activeWeaponId = "ar_01";
+    float largestResidual = 0;
+    std::size_t ticks = 0;
+    std::array<std::size_t, 2> visibleHandVertices{};
+    for (auto clip : {player::CharacterAnimationClip::Idle, player::CharacterAnimationClip::Walk,
+                      player::CharacterAnimationClip::Sprint, player::CharacterAnimationClip::Idle}) {
+        desc.player.animation.locomotionClip = clip;
+        desc.player.animation.stride01 = .65F;
+        for (int phase = 0; phase < 72; ++phase) {
+            desc.player.animation.thirdPersonBodyPitchDegrees = clip == player::CharacterAnimationClip::Sprint ? 8 : 0;
+            desc.player.animation.thirdPersonBodyRollDegrees = std::sin(static_cast<float>(ticks) * .1F) * 2;
+            desc.player.position = {3, 0, -5};
+            desc.player.view.yawDegrees = static_cast<float>(ticks) * 2;
+            desc.player.cameraView = desc.player.view;
+            expect(animator.samplePose(desc.player.animation, 1.F / 60), "one fixed-tick sample");
+            expect(!animator.samplePose(desc.player.animation, 1.F / 60), "an unconsumed sample cannot advance twice");
+            expect(!animator.skinnedMesh() && !animator.skinnedCompanion(),
+                   "sample never exposes stale mesh as the new skin");
+            animation::Mat4 eye;
+            expect(animator.socketTransform("socket_fps_eye", eye), "eye is available before hand constraints");
+            animation::Mat4 chestMount;
+            expect(animator.socketTransform("socket_rifle_ready", chestMount),
+                   "weapon mount follows the sampled chest ancestor");
+            desc.player.rifleReadyMount = chestMount;
+            const auto model = player::firstPersonAttachmentMatrix(dev::projectFPSPlayerAttachment(desc.player));
+            desc.player.cameraPosition = animation::transformPoint(model, animation::matrixTranslation(eye));
+            auto presentation = dev::evaluateFirstPersonPresentation(desc);
+            if (!presentation.rightGripWorld || !presentation.leftGripWorld) {
+                expect(false, "real M4 contact goals");
+                return;
+            }
+            const player::PlayerHandTargets targets{model, *presentation.rightGripWorld, *presentation.leftGripWorld};
+            expect(animator.skinPose(&targets), "common constrained pose skins both original meshes");
+            const auto& result = animator.stats().handConstraints;
+            if (result.status != player::HandConstraintStatus::Applied) {
+                std::cerr << "Ready tick=" << ticks << " residual=" << result.residualMeters[0] << ','
+                          << result.residualMeters[1] << '\n';
+            }
+            expect(result.status == player::HandConstraintStatus::Applied,
+                   "both actual authored M4 surface targets are reachable");
+            for (std::size_t side = 0; side < 2; ++side) {
+                animation::Mat4 palm;
+                expect(animator.socketTransform(side == 0 ? "socket_palm_r" : "socket_palm_l", palm),
+                       "physical palm socket follows final skeleton");
+                const auto goal =
+                    animation::matrixTranslation(side == 0 ? targets.rightGripWorld : targets.leftGripWorld);
+                const auto actual = animation::transformPoint(model, animation::matrixTranslation(palm));
+                const float residual = std::sqrt((goal - actual).lengthSquared());
+                largestResidual = std::max(largestResidual, residual);
+                expect(residual <= .001F && result.orientationResidualDegrees[side] <= .5F,
+                       "actual final palm/M4 contact is within 1 mm and 0.5 degrees");
+            }
+            animation::Mat4 afterEye;
+            expect(animator.socketTransform("socket_fps_eye", afterEye) && eye.values == afterEye.values,
+                   "hand IK never feeds back into the anatomical camera eye");
+            animation::Mat4 afterMount;
+            expect(animator.socketTransform("socket_rifle_ready", afterMount) && chestMount.values == afterMount.values,
+                   "hand IK never feeds back into the sampled chest weapon mount");
+            if (ticks == 0) {
+                for (const auto& primitive : animator.skinnedMesh()->primitives) {
+                    for (std::size_t v = 0; v < primitive.positions.size(); ++v) {
+                        const auto p = primitive.positions[v] - animation::matrixTranslation(eye);
+                        if (p.z <= .03F || std::abs(p.y) >= p.z * .7536F || std::abs(p.x) >= p.z * 1.3397F) {
+                            continue;
+                        }
+                        for (std::size_t slot = 0; slot < 4; ++slot) {
+                            const auto& name = arms.animationData->skins[0].joints[primitive.joints[v][slot]].name;
+                            if (primitive.weights[v][slot] > .25F &&
+                                (name.starts_with("DEF-hand.") || name.starts_with("DEF-f_") ||
+                                 name.starts_with("DEF-thumb."))) {
+                                ++visibleHandVertices[name.ends_with(".R") ? 0 : 1];
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            expect(renderer.updateMeshResourceVertices(resources.at(std::string(dev::kProjectFPSArmsResourceId)),
+                                                       *animator.skinnedMesh()) &&
+                       renderer.updateMeshResourceVertices(resources.at(std::string(dev::kProjectFPSBodyResourceId)),
+                                                           *animator.skinnedCompanion()),
+                   "both visible meshes accept exactly this common pose");
+            desc.firstPersonPresentation = &presentation;
+            for (int renderOnly = 0; renderOnly < 2; ++renderOnly) {
+                render::RenderFrameInfo frame;
+                const auto stats = dev::DevRangeRenderSceneBuilder{}.append(frame, desc);
+                expect(stats.projectFPSBodyActive && stats.projectFPSArmsActive, "both actual subsets submitted");
+                const auto rifle = std::ranges::find(frame.worldMeshes, dev::kProjectReadyWeaponAssetId,
+                                                     &render::RenderMesh3D::assetId);
+                expect(rifle != frame.worldMeshes.end() && rifle->layer == render::RenderMeshLayer::World,
+                       "rifle shares the actual body/arms projection");
+                if (rifle != frame.worldMeshes.end()) {
+                    expect((rifle->position - animation::matrixTranslation(presentation.weaponWorld)).lengthSquared() <
+                               1e-10F,
+                           "rendered rifle uses the same final pose as both contact targets");
+                    for (const auto name : {"socket_muzzle", "socket_palm_contact_r", "socket_palm_contact_l"}) {
+                        const auto marker = std::ranges::find(weapon.nodeMarkers, std::string_view(name),
+                                                              &assets::GltfNodeMarker::name);
+                        const auto& target = std::string_view(name) == "socket_muzzle" ? presentation.muzzleWorld
+                                             : std::string_view(name) == "socket_palm_contact_r"
+                                                 ? presentation.rightGripWorld
+                                                 : presentation.leftGripWorld;
+                        expect(marker != weapon.nodeMarkers.end() && target &&
+                                   (worldPoint(*rifle, marker->worldPosition) - animation::matrixTranslation(*target))
+                                           .lengthSquared() < 1e-9F,
+                               "rendered weapon rotation/scale reconstructs the exact cached muzzle and palm goals");
+                    }
+                }
+                expect(std::ranges::none_of(frame.worldMeshes,
+                                            [](const auto& mesh) { return mesh.assetId == "chr_a1_fp_arms_01"; }),
+                       "armed Project preview has no A1 fallback");
+            }
+            ++ticks;
+            expect(animator.stats().sampledFrameCount == ticks && animator.stats().skinnedFrameCount == ticks,
+                   "render-only frames never advance/sample/skin the logical pose");
+            expect(!animator.skinPose(&targets), "a sampled pose is consumed only once");
+        }
+    }
+    std::cout << "Project Ready common-pose ticks=" << ticks << " max_world_contact_m=" << largestResidual
+              << " hip_hand_frustum_vertices=" << visibleHandVertices[0] << ',' << visibleHandVertices[1]
+              << "; developer Ready over original locomotion, no directional/ADS/reload completeness claim\n";
+    expect(visibleHandVertices[0] > 10 && visibleHandVertices[1] > 10,
+           "both actual weighted hands intersect the anatomical hip camera frustum (not an occlusion/pixel oracle)");
+    auto mismatch = body;
+    auto changed = std::make_shared<assets::GltfAnimationData>(*body.animationData);
+    changed->nodes[0].name += "_different_source";
+    mismatch.animationData = changed;
+    player::PlayerSkeletalAnimator rejected;
+    expect(!rejected.initialize(arms, &mismatch), "unrelated companion hierarchy fails closed");
+}
+#endif
+
 } // namespace
 
-int main() {
+int main(int argc, char** argv) {
+#if defined(NEMISIS_PROJECT_FPS_CANDIDATE_ROOT) && defined(NEMISIS_ENABLE_HAND_IK)
+    if (argc == 2 && std::string_view(argv[1]) == "--ready-only") {
+        testProjectReadyUsesOneConstrainedPose();
+        return failures == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+    }
+#else
+    (void)argc;
+    (void)argv;
+#endif
 #if defined(NEMISIS_PROJECT_FPS_CANDIDATE_ROOT)
     testActualProjectFPSPreviewSubmitsAnimatedSubsets();
 #endif

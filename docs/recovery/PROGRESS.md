@@ -586,3 +586,46 @@ Status: Technically Integrated (adapter/test boundary only); Animation Complete:
 no; Visually Accepted: no. Next executable step: finish the non-destructive
 Blender Ready source variant, measure actual palm/M4 surfaces, and feed body and
 arms from one logical pose before enabling the armed preview.
+## 2026-10-18 Phase 3 developer Ready integration
+
+- Read-only audit reconfirmed missing Rifle/ADS/Reload/Fire/backward/strafe clips;
+  original Hard stand/Walk/Run/T_pose are retained, never renamed as substitutes.
+- Technical prerequisite: draft PR #22, implementation
+  733c1b5936097b853f4981a518dd9df0585fa37c. Full build and 42/42 CPU cases; hosted
+  MSVC and Clang pass: https://github.com/YoungJibbit95/Nemisis/actions/runs/39154228416.
+  Review base 78bf2b7 combines merged #18 with draft #19/#20/#21; no main merge.
+- Ready follow-up branch recovery/phase3-armed-ready uses that prerequisite.
+  One logical NovaCore pose/time, original separate palettes, animated eye/chest
+  sockets, one shared M4 pose, Project palms/ozz constraints, then both skins and
+  GPU updates. Hidden full world body remains skipped. Exact engine remains
+  a687c8816fbcc8a7f4d313cf092c6dc17a59f8f7; no engine source changes.
+- Non-destructive Blender 5.1.0 authoring generates 72 explicit upper-body
+  rotation tracks and real palm/M4 surface calibrations. Original T/S, weighted
+  intermediate bones, geometry, inverse binds and existing clip bytes survive.
+  Ready developer finger curl is provisional. New GLBs/.blend stay build-only.
+- Initial short-cycle suite passed 45/45; expanded full-cycle checks exposed
+  static-mount and incomplete-mask failures, now repaired with sampled chest
+  mounting and an explicit complete upper-body rotation mask. Final full-suite,
+  hosted-CI and graphical-build evidence is recorded below when available.
+- No Phase 3 game GUI control has been performed. Offline Blender evidence is
+  not Vulkan acceptance. Technically Integrated applies to developer Ready only;
+  Animation Complete and Visually Accepted remain NO. Directional/ADS/reload,
+  advanced movement and complete world-model animation remain explicit work.
+
+Next: run/review the explicit Ready executable via tools/run_project_rifle_ready.ps1,
+with renewed GUI authorization after Escape. Inspect grip/fingers/shoulder and
+look-down first; then author directional locomotion and ADS in separate steps.
+Final local Ready evidence (GCC13.2 Release, exact public NovaCore package at the
+pin above): complete build and 45/45 CPU CTest cases pass in 83.19 s. The Ready
+end-to-end test covers 288 fixed ticks across complete Idle/Walk/Run/stop cycles,
+yaw plus body pitch/roll, two render-only submissions per tick, original palette
+sizes, immutable eye/chest mount across hand IK, no A1 fallback, actual M4
+muzzle/contact reconstruction and exactly-once pose consumption. Maximum actual
+Ready world contact error: 0.000979131 m; orientation <=0.5 degrees. Both hands
+intersect the hip camera frustum (106 right / 2275 left weighted vertices); this
+is not a pixel/occlusion check. Shared unarmed poses also match both independently
+skinned original palettes. The separate 24 affine rig cases pass, maximum error
+0.00099753 m. The final 72-track authoring JSON reproduces byte-for-byte under
+Blender 5.1.0/adfe2921d5f3: SHA256
+480685f1a1d3bd8bb83180a9a16398a0ad710537bf726005515eedfa4031502b.
+No GPU test or in-game visual acceptance is inferred from these CPU results.
