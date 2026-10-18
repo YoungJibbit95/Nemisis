@@ -1553,6 +1553,19 @@ void testProjectReadyUsesOneConstrainedPose() {
                 return;
             }
             const player::PlayerHandTargets targets{model, *presentation.rightGripWorld, *presentation.leftGripWorld};
+            const auto physicalFiring = std::ranges::find(weapon.nodeMarkers, std::string_view("socket_grip_r"),
+                                                          &assets::GltfNodeMarker::name);
+            const auto physicalSupport = std::ranges::find(weapon.nodeMarkers, std::string_view("socket_grip_l"),
+                                                           &assets::GltfNodeMarker::name);
+            expect(physicalFiring != weapon.nodeMarkers.end() && physicalSupport != weapon.nodeMarkers.end(),
+                   "actual M4 positional pistol/handguard anchors remain available alongside palm frames");
+            if (physicalFiring != weapon.nodeMarkers.end() && physicalSupport != weapon.nodeMarkers.end()) {
+                const auto actualFiring = animation::transformPoint(presentation.weaponWorld, physicalFiring->worldPosition);
+                const auto actualSupport = animation::transformPoint(presentation.weaponWorld, physicalSupport->worldPosition);
+                expect((animation::matrixTranslation(targets.rightGripWorld) - actualFiring).lengthSquared() < .02F * .02F &&
+                           (animation::matrixTranslation(targets.leftGripWorld) - actualSupport).lengthSquared() < .01F * .01F,
+                       "real DEF-hand.R target is physical pistol grip and DEF-hand.L target is forward handguard, never exchanged");
+            }
             // Semantic right-hand contract: camera-relative side, real firing
             // grip and original .R/.L anatomy. No fixed screenshot pixel oracle.
             const float yaw = desc.player.cameraView.yawDegrees * (3.14159265358979323846F / 180.F);
@@ -1589,6 +1602,29 @@ void testProjectReadyUsesOneConstrainedPose() {
                 largestResidual = std::max(largestResidual, residual);
                 expect(residual <= .001F && result.orientationResidualDegrees[side] <= .5F,
                        "actual final palm/M4 contact is within 1 mm and 0.5 degrees");
+                math::Vec3 skinCenter{};
+                std::size_t handVertices = 0;
+                for (std::size_t p = 0; p < arms.primitives.size(); ++p) {
+                    const auto& source = arms.primitives[p];
+                    if (source.skinIndex < 0) { continue; }
+                    const auto& palette = arms.animationData->skins[source.skinIndex].joints;
+                    for (std::size_t v = 0; v < source.positions.size(); ++v) {
+                        bool hand = false;
+                        for (std::size_t slot = 0; slot < 4; ++slot) {
+                            const auto& name = palette[source.joints[v][slot]].name;
+                            hand |= source.weights[v][slot] > .75F && name == (side == 0 ? "DEF-hand.R" : "DEF-hand.L");
+                        }
+                        if (hand) { skinCenter = skinCenter + animator.skinnedMesh()->primitives[p].positions[v]; ++handVertices; }
+                    }
+                }
+                expect(handVertices > 0, "actual visible Project hand skin is weighted to its independently selected source bone");
+                if (handVertices) {
+                    skinCenter = animation::transformPoint(model, skinCenter * (1.F / static_cast<float>(handVertices)));
+                    const auto other = animation::matrixTranslation(side == 0 ? targets.leftGripWorld : targets.rightGripWorld);
+                    expect((skinCenter - goal).lengthSquared() < .10F * .10F &&
+                               (skinCenter - goal).lengthSquared() < (skinCenter - other).lengthSquared(),
+                           "visible real Project hand geometry follows firing/support ownership, not only named socket markers");
+                }
             }
             animation::Mat4 afterEye;
             expect(animator.socketTransform("socket_fps_eye", afterEye) && eye.values == afterEye.values,

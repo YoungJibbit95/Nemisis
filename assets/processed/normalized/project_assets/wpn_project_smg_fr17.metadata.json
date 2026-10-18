@@ -34,10 +34,10 @@
   "external_assets": false,
   "generated_by": "tools/blender/normalize_project_assets.py",
   "socket_notes": {
-    "socket_muzzle": "Muzzle/VFX point at runtime +Z after Blender -Y forward normalization.",
-    "socket_grip_r": "Right-hand firing grip anchor for first-person and future IK retargeting.",
-    "socket_grip_l": "Left support-hand anchor on the fore-end.",
-    "socket_eject": "Right-side casing ejection reference.",
+    "socket_muzzle": "Center of actual Cylinder.010 foremost ring (raw max Z within .1mm); previous marker pointed at stock Plane.024.",
+    "socket_grip_r": "Physical Plane.012 pistol grip, raw midpoint (.0814315006,.0247771684,-.0697734952)m; behind the trigger, primary firing-hand anchor.",
+    "socket_grip_l": "Physical Plane.003 forward underside at raw (-.0036042801,.0247771684,+.13)m; .1997735m ahead of firing grip, .0918751m behind physical muzzle.",
+    "socket_eject": "Legacy provisional ejection proposal; actual port/direction is not visually or physically accepted.",
     "socket_vfx": "Muzzle flash/tracer fallback, intentionally colocated with socket_muzzle."
   },
   "socket_forward_axis": "+Z",

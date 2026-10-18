@@ -372,6 +372,76 @@ void testRepresentativeCookedWeaponContract() {
     }
 }
 
+void testFR17PhysicalGripOwnership() {
+    using namespace novacore;
+    assets::GltfMeshData mesh;
+    expect(assets::loadGltfMeshData(std::filesystem::path(NEMISIS_SOURCE_ROOT) /
+               "assets/processed/normalized/project_assets/wpn_project_smg_fr17.glb", mesh).ok(),
+           "actual FR17 cooked geometry imports");
+    const auto part = [&](std::string_view name) -> const assets::GltfPrimitiveData* {
+        for (const auto& primitive : mesh.primitives) {
+            const auto node = std::ranges::find_if(mesh.nodes, [&](const auto& n) {
+                return primitive.nodeIndex >= 0 && n.nodeIndex == static_cast<std::size_t>(primitive.nodeIndex);
+            });
+            if (node != mesh.nodes.end() && node->name == name) { return &primitive; }
+        }
+        return nullptr;
+    };
+    const auto marker = [&](std::string_view name) -> const assets::GltfNodeMarker* {
+        const auto found = std::ranges::find(mesh.nodeMarkers, name, &assets::GltfNodeMarker::name);
+        return found == mesh.nodeMarkers.end() ? nullptr : &*found;
+    };
+    const auto bounds = [](const assets::GltfPrimitiveData& p) {
+        std::array<math::Vec3, 2> result{math::Vec3{100, 100, 100}, math::Vec3{-100, -100, -100}};
+        for (auto v : p.positions) {
+            result[0] = {std::min(result[0].x, v.x), std::min(result[0].y, v.y), std::min(result[0].z, v.z)};
+            result[1] = {std::max(result[1].x, v.x), std::max(result[1].y, v.y), std::max(result[1].z, v.z)};
+        }
+        return result;
+    };
+    const auto *handle = part("Plane.012"), *trigger = part("Plane.009"), *foreEnd = part("Plane.003"),
+               *barrel = part("Cylinder.010"), *stock = part("Plane.024");
+    const auto *firing = marker("socket_grip_r"), *support = marker("socket_grip_l"), *muzzle = marker("socket_muzzle");
+    expect(handle && trigger && foreEnd && barrel && stock && firing && support && muzzle,
+           "FR17 exposes independently audited physical parts and unique sockets");
+    if (!handle || !trigger || !foreEnd || !barrel || !stock || !firing || !support || !muzzle) { return; }
+    const auto h = bounds(*handle), t = bounds(*trigger), b = bounds(*barrel), s = bounds(*stock);
+    const auto r = firing->worldPosition, l = support->worldPosition;
+    expect(r.x > h[0].x && r.x < h[1].x && r.y > h[0].y && r.y < h[1].y && r.z > h[0].z && r.z < h[1].z,
+           "firing anchor is inside the actual pistol handle, independent of socket naming");
+    expect(t[0].z > r.z && t[0].y > r.y && h[0].y < b[0].y,
+           "pistol grip lies below the barrel and behind actual trigger geometry");
+    expect(s[1].z < r.z && b[1].z > l.z && l.z > r.z + .15F && b[1].z - l.z > .07F,
+           "physical stock/firing/support/muzzle order follows actual weapon +Z, with support clearance");
+    math::Vec3 capMin{100, 100, b[1].z}, capMax{-100, -100, b[1].z};
+    for (auto v : barrel->positions) {
+        if (b[1].z - v.z < .0001F) {
+            capMin.x = std::min(capMin.x, v.x); capMin.y = std::min(capMin.y, v.y);
+            capMax.x = std::max(capMax.x, v.x); capMax.y = std::max(capMax.y, v.y);
+        }
+    }
+    expect(((capMin + capMax) * .5F - muzzle->worldPosition).lengthSquared() < 1.e-6F,
+           "FR17 muzzle meets actual front barrel ring within 1mm, never the rear stock");
+    // Intersect the real fore-end triangles at support X/Z. This independent
+    // surface test rejects a plausible-looking but empty-space socket proposal.
+    float underside = 100;
+    for (std::size_t i = 0; i + 2 < foreEnd->indices.size(); i += 3) {
+        const auto a = foreEnd->positions[foreEnd->indices[i]],
+                   v = foreEnd->positions[foreEnd->indices[i + 1]] - a,
+                   w = foreEnd->positions[foreEnd->indices[i + 2]] - a;
+        const float denominator = v.x * w.z - w.x * v.z;
+        if (std::abs(denominator) < 1.e-10F) { continue; }
+        const float u = ((l.x - a.x) * w.z - (l.z - a.z) * w.x) / denominator;
+        const float q = (v.x * (l.z - a.z) - v.z * (l.x - a.x)) / denominator;
+        if (u >= 0 && q >= 0 && u + q <= 1) { underside = std::min(underside, a.y + u * v.y + q * w.y); }
+    }
+    expect(std::abs(underside - l.y) < .001F, "support anchor touches physical forward fore-end underside within 1mm");
+    for (const auto* socket : {firing, support, muzzle}) {
+        expect(socket->worldForward.z > .999F && socket->worldUp.y > .999F,
+               "FR17 physical anchors retain canonical +Z forward/+Y up frames");
+    }
+}
+
 void testFirstPersonArmsExcludeAuthoringHelpers() {
     const std::filesystem::path sourceRoot{NEMISIS_SOURCE_ROOT};
     nemisis::assets::GameAssetCatalog catalog;
@@ -413,6 +483,7 @@ int main() {
     testRequiredDevAssetsBindToMeshCatalog();
     testMissingMetadataIsReported();
     testRepresentativeCookedWeaponContract();
+    testFR17PhysicalGripOwnership();
     testFirstPersonArmsExcludeAuthoringHelpers();
 
     if (failures > 0) {

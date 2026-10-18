@@ -1,5 +1,23 @@
 # Recovery progress
 
+## 2026-10-18 Phase 5 FP-1 implementation checkpoint
+
+- Isolated branch starts at game2264e27 (#27); engine pin3d673b7 unchanged.
+  M4 Ready already owns .R firing/.L support. Added cook-time rejection of
+  exchanged contacts, false palm identity and reflected frames, plus actual
+  weighted-skin/physical-grip regression coverage. Python2/2 checks pass.
+- Corrected FR17 physical up/forward in the existing offline normalizer and
+  recooked its own measured pistol/support/front-ring sockets. Two exports are
+  byte-identical, cooked SHA256 e1f3ee9bb2cabdb36150d7ecf3a93cbb147047ab1250d8c45ea7bb7ebc6a7038.
+  Actual imported geometry tests cover stock/firing/support/muzzle order and
+  contact surfaces. Source remains unchanged; no runtime axis/mirror fix.
+- Existing legacy IK regression now tests actual M4/FR17 skin ownership through
+  switch, ADS, recoil and movement. Default still uses old unconstrained A1;
+  no completed Project arsenal/default migration is claimed. Source anatomical
+  audit confirms correct Rigify identity; image-space chirality/pose needs review.
+- C++ full build/tests and MSVC/Clang CI remain pending at this implementation
+  checkpoint. No GUI started. Visual acceptance remains open after Escape.
+
 ## 2026-10-18 Phase 4 R1 exact runtime integration
 
 - Separate renderer Draft https://github.com/YoungJibbit95/Novacore-Engine/pull/13

@@ -55,10 +55,12 @@ struct Fixture {
     render::MeshCatalog catalog;
     render::Renderer renderer;
     nemisis::dev::MeshResourceLookup lookup;
+    animation::Mat4 presentedWeaponWorld;
     bool initialize() {
         for (const auto& [id, path] : std::array{
                  std::pair{"chr_a1_fp_arms_01", "assets/export/gltf/characters/chr_a1_fp_arms_01.glb"},
-                 std::pair{"wpn_project_rifle_m4a1", "assets/processed/normalized/project_assets/wpn_project_rifle_m4a1.glb"}}) {
+                 std::pair{"wpn_project_rifle_m4a1", "assets/processed/normalized/project_assets/wpn_project_rifle_m4a1.glb"},
+                 std::pair{"wpn_project_smg_fr17", "assets/processed/normalized/project_assets/wpn_project_smg_fr17.glb"}}) {
             assets::GltfMeshData imported;
             if (!assets::loadGltfMeshData(std::filesystem::path(NEMISIS_SOURCE_ROOT) / path, imported).ok()) return false;
             if (std::string_view(id) == "chr_a1_fp_arms_01") {
@@ -80,10 +82,13 @@ struct Fixture {
         return mesh.animationData && assets::buildGltfAnimationAsset(*mesh.animationData, 0U, asset).ok() &&
             buildPlayerHandConstraintRig(asset.skeleton, rig);
     }
-    PlayerHandTargets targets(int index, float adsOverride = -1.0F) {
+    PlayerHandTargets targets(int index, float adsOverride = -1.0F, std::string_view weaponId = "ar_01") {
         nemisis::dev::DevRangeRenderSceneDesc desc;
         desc.meshResources = &lookup; desc.meshCatalog = &catalog; desc.useHandConstraints = true;
         auto& player = desc.player;
+        player.activeWeaponId = weaponId;
+        player.activeWeaponClass = weaponId == "smg_01" ? nemisis::weapons::WeaponClass::Smg :
+                                                       nemisis::weapons::WeaponClass::AssaultRifle;
         player.hasCameraRig = true; player.hasAnimationFrame = true;
         player.cameraPosition = {3.0F, 1.65F, -2.0F};
         player.adsAlpha = std::array{0.0F, 1.0F, 0.65F, 0.2F}[index]; player.weapon.adsAlpha = player.adsAlpha;
@@ -100,12 +105,85 @@ struct Fixture {
             player.animation.firstPersonWeaponRollAddDegrees = 3.0F;
         }
         const auto presentation = nemisis::dev::evaluateFirstPersonPresentation(desc);
+        presentedWeaponWorld = presentation.weaponWorld;
         expect(presentation.rightGripWorld && presentation.leftGripWorld, "actual M4 has both final cooked grip frames");
         expect(presentation.armsBoundCount == 0U, "IK placement skips whole-mesh socket averaging");
         return {firstPersonAttachmentMatrix(presentation.rig.arms),
                 presentation.rightGripWorld.value_or(animation::Mat4{}), presentation.leftGripWorld.value_or(animation::Mat4{})};
     }
 };
+
+void verifyContacts(const Fixture& f, const animation::GlobalPose& global, const PlayerHandTargets& targets);
+
+void testPhysicalOwnershipAcrossRifleSmgSwitch(Fixture& f) {
+    PlayerSkeletalAnimator animator, unconstrained;
+    expect(animator.initialize(f.mesh) && unconstrained.initialize(f.mesh), "actual weighted legacy arms initialize");
+    float largestResidual = 0;
+    for (const auto weapon : {"ar_01", "smg_01", "ar_01", "smg_01"}) {
+        for (int step = 0; step <= 8; ++step) {
+            const float ads = static_cast<float>(step) / 8;
+            const auto targets = f.targets(step < 2 ? 0 : 2, ads, weapon);
+            const auto firing = animation::matrixTranslation(targets.rightGripWorld),
+                       support = animation::matrixTranslation(targets.leftGripWorld);
+            const auto forward = unit(animation::transformDirection(f.presentedWeaponWorld, {0, 0, 1}));
+            const auto separation = support - firing;
+            expect(separation.x * forward.x + separation.y * forward.y + separation.z * forward.z > .15F,
+                   "support remains ahead of actual pistol grip along final weapon-forward through ADS/recoil/switch");
+            CharacterAnimationFrame frame;
+            frame.locomotionClip = step < 2 ? CharacterAnimationClip::Idle : CharacterAnimationClip::Walk;
+            frame.stride01 = .65F;
+            expect(animator.update(frame, 1.F / 60, &targets), "existing production IK consumes current weapon targets");
+            expect(animator.stats().handConstraints.status == HandConstraintStatus::Applied,
+                   "both real firing/support targets are reachable for M4 and FR17");
+            if (!animator.globalPose() || !animator.skinnedMesh()) { continue; }
+            verifyContacts(f, *animator.globalPose(), targets);
+            for (std::size_t side = 0; side < 2; ++side) {
+                const auto& arm = f.rig.arms[side];
+                expect(f.asset.skeleton.joints[arm.wrist].name == (side == 0 ? "hand.R" : "hand.L"),
+                       "actual source wrist owns its anatomical side rather than exchanged target labels");
+                const auto ownGoal = side == 0 ? firing : support;
+                const auto otherGoal = side == 0 ? support : firing;
+                animation::Mat4 palm;
+                expect(animation::evaluateSocket(f.asset.skeleton, *animator.globalPose(), arm.socketIndex, palm),
+                       "actual solved hand socket evaluates");
+                const auto actual = animation::transformPoint(targets.armsWorld, animation::matrixTranslation(palm));
+                largestResidual = std::max(largestResidual, distance(actual, ownGoal));
+                expect(distance(actual, ownGoal) < .001F && distance(actual, otherGoal) > .15F,
+                       "right firing and left support cannot be exchanged while retaining a passing contact residual");
+                math::Vec3 center{};
+                std::size_t count = 0;
+                for (std::size_t p = 0; p < f.mesh.primitives.size(); ++p) {
+                    const auto& source = f.mesh.primitives[p];
+                    const auto& skinned = animator.skinnedMesh()->primitives[p];
+                    if (source.skinIndex < 0) { continue; }
+                    for (std::size_t v = 0; v < source.positions.size(); ++v) {
+                        bool ownHand = false;
+                        for (std::size_t j = 0; j < 4; ++j) {
+                            const auto& joint = f.mesh.animationData->skins[source.skinIndex].joints[source.joints[v][j]];
+                            ownHand |= source.weights[v][j] > .75F && joint.name == (side == 0 ? "hand.R" : "hand.L");
+                        }
+                        if (ownHand) { center = center + skinned.positions[v]; ++count; }
+                    }
+                }
+                expect(count > 0, "actual hand geometry is weighted to the independently selected source wrist");
+                if (count) {
+                    center = animation::transformPoint(targets.armsWorld, center * (1.F / static_cast<float>(count)));
+                    expect(distance(center, ownGoal) < .10F && distance(center, ownGoal) < distance(center, otherGoal),
+                           "visible skinned hand follows its physical grip, not only a debug socket");
+                }
+            }
+            if (step == 0) {
+                expect(unconstrained.update(frame, 1.F / 60), "historical no-IK negative control samples actual source");
+                animation::Mat4 palm;
+                expect(unconstrained.socketTransform("socket_hand_r", palm), "historical actual right socket exists");
+                expect(distance(animation::transformPoint(targets.armsWorld, animation::matrixTranslation(palm)), firing) > .01F,
+                       "historical uncorrected path fails physical contact even with correctly named rig sockets");
+            }
+        }
+    }
+    std::cout << "Actual M4/FR17 ownership: 4 switches x 9 ADS/recoil/movement samples; max palm error "
+              << largestResidual << "m; GPU anatomy acceptance remains open\n";
+}
 void verifyLengths(const Fixture& f, const animation::GlobalPose& base, const animation::GlobalPose& solved) {
     expect(solved.joints.size() == base.joints.size(), "constraints retain the complete joint topology");
     if (solved.joints.size() != base.joints.size()) return;
@@ -270,7 +348,8 @@ void testAnimatorUsesOneFinalPose(Fixture& f) {
 int main() {
     Fixture fixture;
     const bool ready = fixture.initialize(); expect(ready, "actual M4 and filtered weighted arms import into one NovaCore rig");
-    if (ready) { testActualWeaponConstraints(fixture); testBoundsAndInvalidInputs(fixture); testAnimatorUsesOneFinalPose(fixture); }
+    if (ready) { testActualWeaponConstraints(fixture); testBoundsAndInvalidInputs(fixture); testAnimatorUsesOneFinalPose(fixture);
+        testPhysicalOwnershipAcrossRifleSmgSwitch(fixture); }
     if (failures) { std::cerr << failures << " player hand constraint checks failed\n"; return 1; }
     std::cout << "Player hand constraint tests passed\n";
     return 0;
