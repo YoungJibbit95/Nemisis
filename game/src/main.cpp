@@ -18,6 +18,17 @@ int main(int argc, char** argv) {
         const std::string_view argument(argv[i]);
         if (argument == "--smoke-test") {
             smokeTest = true;
+        } else if (argument == "--project-rifle-ready") {
+#if defined(NEMISIS_PROJECT_FPS_PREVIEW) && defined(NEMISIS_ENABLE_HAND_IK)
+            gameOptions.projectRifleReady = true;
+            gameOptions.projectFPSPreview = true;
+            gameOptions.firstPersonHandIK = true;
+            gameOptions.autoEnterDevRange = true;
+            gameOptions.lockDevRange = true;
+#else
+            std::cerr << "Project Rifle Ready requires Project FPS candidate and hand IK build options\n";
+            return 2;
+#endif
         } else if (argument == "--project-fps-look-down") {
             gameOptions.projectFPSLookDown = true;
         } else if (argument == "--project-fps-preview") {
@@ -87,7 +98,7 @@ int main(int argc, char** argv) {
         std::cerr << "--project-fps-look-down requires --project-fps-preview\n";
         return 2;
     }
-    if (gameOptions.projectFPSPreview && gameOptions.firstPersonHandIK) {
+    if (gameOptions.projectFPSPreview && gameOptions.firstPersonHandIK && !gameOptions.projectRifleReady) {
         std::cerr << "Project hand IK is blocked: five weighted deform segments, nonuniform animated scales "
                      "and unapproved palm frames. Run --project-fps-preview without --first-person-hand-ik.\n";
         return 2;

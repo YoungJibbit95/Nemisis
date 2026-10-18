@@ -7,6 +7,7 @@
 #include <cmath>
 #include <optional>
 #include <string>
+#include <stdexcept>
 
 namespace nemisis::dev {
 
@@ -214,9 +215,45 @@ struct FirstPersonCookedArmsRig final {
     return novacore::animation::multiply(weaponWorld, local);
 }
 
-[[nodiscard]] FirstPersonCookedArmsRig cookedArmsSocketRig(
-    const DevRangeRenderSceneDesc& desc,
-    std::string_view assetId) {
+[[nodiscard]] player::FirstPersonRigAttachment rigidChestAttachment(const novacore::animation::Mat4& frame) {
+    // A weapon is rigid. Define its orientation by the sampled socket's +Z
+    // forward and projected +Y up, while keeping the skeleton's full affine
+    // transforms untouched for IK/skinning. Render and IK use the same result.
+    const auto unit = [](novacore::math::Vec3 v) {
+        const auto length = v.lengthSquared();
+        if (!novacore::animation::isFinite(v) || !std::isfinite(length) || length < 1e-12F) {
+            throw std::runtime_error("Degenerate sampled Project weapon frame");
+        }
+        return v * (1 / std::sqrt(length));
+    };
+    const auto cross = [](novacore::math::Vec3 a, novacore::math::Vec3 b) {
+        return novacore::math::Vec3{a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x};
+    };
+    const auto z = unit(novacore::animation::transformDirection(frame, {0, 0, 1}));
+    const auto x = unit(cross(novacore::animation::transformDirection(frame, {0, 1, 0}), z));
+    const auto y = cross(z, x);
+    constexpr float toDegrees = 180 / 3.14159265358979323846F;
+    player::FirstPersonRigAttachment result;
+    result.position = novacore::animation::matrixTranslation(frame);
+    if (!novacore::animation::isFinite(result.position)) {
+        throw std::runtime_error("Nonfinite sampled Project weapon position");
+    }
+    result.scale = {1, 1, 1};
+    result.pitchDegrees = std::asin(std::clamp(-z.y, -1.F, 1.F)) * toDegrees;
+    if (std::abs(z.y) < .999999F) {
+        result.yawDegrees = std::atan2(z.x, z.z) * toDegrees;
+        result.rollDegrees = std::atan2(x.y, y.y) * toDegrees;
+    } else {
+        result.yawDegrees = std::atan2(-x.z, x.x) * toDegrees;
+        result.rollDegrees = 0;
+    }
+    result.alpha = 1;
+    result.visible = true;
+    return result;
+}
+
+[[nodiscard]] FirstPersonCookedArmsRig cookedArmsSocketRig(const DevRangeRenderSceneDesc& desc,
+                                                           std::string_view assetId) {
     FirstPersonCookedArmsRig rig{};
     if (desc.meshCatalog == nullptr) {
         return rig;
@@ -1140,17 +1177,47 @@ FirstPersonPresentation evaluateFirstPersonPresentation(const DevRangeRenderScen
     rigInput.hasAnimationFrame = desc.player.hasAnimationFrame;
     const auto rig = player::evaluateFirstPersonRig(rigInput);
 
+    if (desc.projectRifleReady) {
+        result.rig = rig;
+        result.rig.arms = projectFPSPlayerAttachment(desc.player);
+        result.rig.weapon = result.rig.arms;
+        const auto playerWorld = player::firstPersonAttachmentMatrix(result.rig.arms);
+        if (!desc.player.rifleReadyMount) {
+            throw std::runtime_error("Sampled Project Rifle Ready chest mount is missing");
+        }
+        const auto authoredMount = novacore::animation::multiply(playerWorld, *desc.player.rifleReadyMount);
+        result.rig.weapon = rigidChestAttachment(authoredMount);
+        result.weaponWorld = player::firstPersonAttachmentMatrix(result.rig.weapon);
+        result.weaponAssetId = kProjectReadyWeaponAssetId;
+        result.armsAssetId = kProjectFPSArmsAssetId;
+        result.weaponColor = mount.color;
+        result.armsColor = armsMount.color;
+        result.muzzleWorld = cookedMarkerWorld(desc, result.weaponAssetId, "socket_muzzle", result.weaponWorld);
+        result.rightGripWorld =
+            cookedMarkerWorld(desc, result.weaponAssetId, "socket_palm_contact_r", result.weaponWorld);
+        result.leftGripWorld =
+            cookedMarkerWorld(desc, result.weaponAssetId, "socket_palm_contact_l", result.weaponWorld);
+        if (!result.muzzleWorld || !result.rightGripWorld || !result.leftGripWorld) {
+            throw std::runtime_error("Authored Project M4 contact/muzzle markers are missing");
+        }
+        const auto cooked = cookedSocketRig(desc, result.weaponAssetId);
+        result.cookedSocketCount = cooked.socketCount;
+        result.gripBoundCount = bindFirstPersonRigToCookedWeaponSockets(
+            result.rig, cooked, result.rig.weapon.position, result.rig.weapon.scale, result.rig.weapon.yawDegrees,
+            result.rig.weapon.pitchDegrees, result.rig.weapon.rollDegrees);
+        return result;
+    }
+
     const auto& weaponSocket = player::firstPersonRigSocket(rig, player::FirstPersonRigSocket::WeaponRoot);
     auto weaponPosition = weaponSocket.valid ? weaponSocket.worldPosition : rig.weapon.position;
     const auto weaponYaw = weaponSocket.valid ? weaponSocket.yawDegrees : rig.weapon.yawDegrees;
     const auto weaponPitch = weaponSocket.valid ? weaponSocket.pitchDegrees : rig.weapon.pitchDegrees;
     const auto weaponRoll = weaponSocket.valid ? weaponSocket.rollDegrees : rig.weapon.rollDegrees;
-    const auto primary = desc.meshResources != nullptr
-        ? desc.meshResources->find(std::string(mount.assetId)) : MeshResourceLookup::const_iterator{};
-    const bool hasPrimary = desc.meshResources != nullptr && primary != desc.meshResources->end() && primary->second.isValid();
-    const std::string_view selectedWeaponAssetId = hasPrimary
-        ? mount.assetId
-        : mount.fallbackAssetId;
+    const auto primary = desc.meshResources != nullptr ? desc.meshResources->find(std::string(mount.assetId))
+                                                       : MeshResourceLookup::const_iterator{};
+    const bool hasPrimary =
+        desc.meshResources != nullptr && primary != desc.meshResources->end() && primary->second.isValid();
+    const std::string_view selectedWeaponAssetId = hasPrimary ? mount.assetId : mount.fallbackAssetId;
     result.skippedWeaponMeshCount = hasPrimary ? 0U : 1U;
     const auto cookedRig = cookedSocketRig(desc, selectedWeaponAssetId);
     result.cookedSocketCount += cookedRig.socketCount;
@@ -1502,7 +1569,8 @@ void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
         presentedRig.weapon.yawDegrees,
         withAlpha(presentation.weaponColor, presentedRig.weapon.alpha), stats,
         presentedRig.weapon.pitchDegrees, presentedRig.weapon.rollDegrees,
-        novacore::render::RenderMeshLayer::ViewModel, false);
+        desc.projectRifleReady ? novacore::render::RenderMeshLayer::World : novacore::render::RenderMeshLayer::ViewModel,
+        desc.projectRifleReady);
     if (weaponMeshAppended) {
         ++stats.firstPersonMeshCount;
     }

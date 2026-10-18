@@ -25,6 +25,7 @@
 namespace nemisis::dev {
 
 using MeshResourceLookup = std::unordered_map<std::string, novacore::render::MeshResourceHandle>;
+inline constexpr std::string_view kProjectReadyWeaponAssetId = "wpn_project_rifle_m4a1_ready_preview";
 
 inline constexpr std::string_view kLocalPlayerBodyAssetId = "chr_project_male1";
 // Local animation must not mutate the shared showcase/target asset resource.
@@ -65,6 +66,9 @@ struct DevRangePlayerRenderState final {
     bool hitThisFrame = false;
     bool eliminatedThisFrame = false;
     bool hasLatestShotTrace = false;
+    // Sampled anatomical chest mount, read before arm constraints; never a
+    // render-time animation evaluation or feedback from the constrained hands.
+    std::optional<novacore::animation::Mat4> rifleReadyMount;
 };
 
 struct DevRangeRenderSceneStats final {
@@ -154,6 +158,7 @@ struct DevRangeRenderSceneDesc final {
     // Temporary visual acceptance switch. Legacy averaging remains default.
     bool useHandConstraints = false;
     bool projectFPSPreview = false;
+    bool projectRifleReady = false;
 };
 
 [[nodiscard]] FirstPersonPresentation evaluateFirstPersonPresentation(const DevRangeRenderSceneDesc& desc);
