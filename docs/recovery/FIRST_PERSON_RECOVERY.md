@@ -706,5 +706,5 @@ is not a pixel/occlusion check. Shared unarmed poses also match both independent
 skinned original palettes. The separate 24 affine rig cases pass, maximum error
 0.00099753 m. The final 72-track authoring JSON reproduces byte-for-byte under
 Blender 5.1.0/adfe2921d5f3: SHA256
-480685f1a1d3bd8bb83180a9a16398a0ad710537bf726005515eedfa4031502b.
+f6fe115bb008e447ac52fcd9fc40728a8a631062f928e9d54570e0365933ec2b.
 No GPU test or in-game visual acceptance is inferred from these CPU results.

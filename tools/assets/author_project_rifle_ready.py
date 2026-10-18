@@ -370,7 +370,7 @@ result = {
         for side, p in contacts.items()
     },
 }
-(OUT / "rifle_ready_pose.json").write_text(json.dumps(result, indent=2))
+(OUT / "rifle_ready_pose.json").write_text(json.dumps(result, indent=2), encoding="utf-8", newline="\n")
 # Place the actual M4 geometry at the same authored transform for Blender review.
 weapon_instance = C @ world_weapon @ CI
 for obj in weapon_objects:
