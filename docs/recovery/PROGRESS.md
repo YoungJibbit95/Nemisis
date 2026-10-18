@@ -54,3 +54,31 @@ uncommitted source/GLB changes in the original checkout.
 - Initial hosted matrix is running. Switched Windows to the documented
   Windows-2022 / VS2022 runner after the engine's Windows-2025 job could not
   resolve a VS2022 instance. This changes the environment, not test coverage.
+
+## Phase 0 validation complete
+
+- Rules: d0f67b5 / tracking dd8c870, PR #7.
+- CI: 6f0331b plus runner correction 25a314d, PR
+  https://github.com/YoungJibbit95/Nemisis/pull/8 (base: recovery/00-agent-rules).
+- Fresh hosted run at 25a314d passed:
+  https://github.com/YoungJibbit95/Nemisis/actions/runs/39120132884.
+  Windows 2022 / MSVC 19.44: full build, 34/34 CPU tests pass.
+  Ubuntu 24.04 / Clang 18.1.3: full build, 34/34 CPU tests pass.
+  Both independently checked out the exact pinned NovaCore dbdfc38 SHA.
+- Local negative controls: Vulkan smoke rejects a null/headless backend;
+  running the smoke runner from an empty data directory also fails despite the
+  game returning exit code zero. Logs: build/*negative-control.log.
+- Pre-existing warnings include unused engine buildSummary without SDL and the
+  unhandled Ceiling switch value in GreyboxCollision.cpp; neither was hidden.
+- Actionlint and the final diff whitespace check pass. No merge performed.
+- All 37 tests remain registered; 3 graphics smokes require real GPU validation.
+  No claim of visual correctness or complete two-player gameplay is made.
+
+Next bounded step: remove the unused per-asset correction fields in
+DevRangeRenderScene.cpp, whose four weapon and two arm definitions all pass
+zero angles already. Retain the rig's generic pose defaults and socket behavior;
+rename the misleading ImportAxisCorrections test without deleting its canonical
+axis assertions. This is behavior-preserving cleanup, not an asset recook.
+Then classify all test contracts and verify runtime axes/units/transform order
+before migrating a representative weapon. Actual asset/fixup removal still
+requires representative-asset visual/ADS/socket/animation validation.

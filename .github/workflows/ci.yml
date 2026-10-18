@@ -73,4 +73,3 @@ jobs:
             Nemisis/build/**/CMakeFiles/CMakeConfigureLog.yaml
           retention-days: 7
           if-no-files-found: warn
-

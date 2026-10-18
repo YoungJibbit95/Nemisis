@@ -81,8 +81,13 @@ and a successful process exit. With a graphical build and usable GPU run:
 ctest --test-dir build/windows-msvc-debug -C Debug -L gpu --output-on-failure
 ```
 
-For a legacy no-deps build, use `ctest --test-dir build/local-debug-no-deps -LE gpu
---output-on-failure`. A headless run is not GPU validation. See
+For a legacy no-deps build, use:
+
+```text
+ctest --test-dir build/local-debug-no-deps -LE gpu --output-on-failure
+```
+
+A headless run is not GPU validation. See
 [recovery progress](docs/recovery/PROGRESS.md) before continuing.
 
 ```powershell
