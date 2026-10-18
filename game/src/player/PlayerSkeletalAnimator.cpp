@@ -123,6 +123,9 @@ bool PlayerSkeletalAnimator::initialize(const novacore::assets::GltfMeshData& me
         return false;
     }
 
+#if defined(NEMISIS_ENABLE_HAND_IK)
+    (void)buildPlayerHandConstraintRig(animationAsset_.skeleton, handRig_);
+#endif
     stats_.jointCount = animationAsset_.skeleton.joints.size();
     stats_.socketCount = animationAsset_.skeleton.sockets.size();
     stats_.clipCount = animationAsset_.clips.size();
@@ -148,6 +151,10 @@ void PlayerSkeletalAnimator::reset() {
     skinnedMesh_ = {};
     animationAsset_ = {};
     runtime_ = {};
+    handRig_ = {};
+    constrainedLocal_ = {};
+    constrainedGlobal_ = {};
+    constrainedPoseReady_ = false;
     activeClip_ = nullptr;
     upperBodyMask_ = {};
     upperBodyMaskReady_ = false;
@@ -158,7 +165,8 @@ void PlayerSkeletalAnimator::reset() {
 
 bool PlayerSkeletalAnimator::update(
     const CharacterAnimationFrame& frame,
-    float deltaSeconds) {
+    float deltaSeconds,
+    const PlayerHandTargets* handTargets) {
     if (!stats_.initialized) {
         return false;
     }
@@ -211,8 +219,30 @@ bool PlayerSkeletalAnimator::update(
         return false;
     }
 
+    ++stats_.sampledFrameCount;
+    constrainedPoseReady_ = false;
+    stats_.handConstraints = {};
+    if (handTargets != nullptr) {
+#if defined(NEMISIS_ENABLE_HAND_IK)
+        stats_.handConstraints = applyPlayerHandConstraints(
+            handRig_, animationAsset_.skeleton, runtime_.localPose(), runtime_.globalPose(),
+            *handTargets, constrainedLocal_, constrainedGlobal_);
+        constrainedPoseReady_ = stats_.handConstraints.applied();
+#else
+        stats_.handConstraints.status = HandConstraintStatus::Invalid;
+#endif
+    }
+    if (stats_.handConstraints.applied()) {
+        ++stats_.constrainedFrameCount;
+    }
+    if (stats_.handConstraints.status == HandConstraintStatus::Unreachable) {
+        ++stats_.unreachableHandFrameCount;
+    } else if (stats_.handConstraints.status == HandConstraintStatus::Invalid) {
+        ++stats_.invalidHandFrameCount;
+    }
+    const auto& finalPose = constrainedPoseReady_ ? constrainedGlobal_ : runtime_.globalPose();
     const auto skin = novacore::assets::skinGltfMesh(
-        sourceMesh_, animationAsset_, runtime_.globalPose(), skinnedMesh_);
+        sourceMesh_, animationAsset_, finalPose, skinnedMesh_);
     if (!skin.ok()) {
         errors_.insert(errors_.end(), skin.errors.begin(), skin.errors.end());
         ++stats_.failedFrameCount;
@@ -220,6 +250,7 @@ bool PlayerSkeletalAnimator::update(
         return false;
     }
 
+    ++stats_.skinnedFrameCount;
     ++stats_.evaluatedFrameCount;
     stats_.poseReady = true;
     stats_.currentClip = activeClip_ != nullptr ? activeClip_->name : std::string{};
@@ -231,13 +262,15 @@ const novacore::assets::GltfMeshData* PlayerSkeletalAnimator::skinnedMesh() cons
 }
 
 const novacore::animation::GlobalPose* PlayerSkeletalAnimator::globalPose() const {
-    return stats_.poseReady ? &runtime_.globalPose() : nullptr;
+    return stats_.poseReady ? (constrainedPoseReady_ ? &constrainedGlobal_ : &runtime_.globalPose()) : nullptr;
 }
 
 bool PlayerSkeletalAnimator::socketTransform(
     std::string_view socketName,
     novacore::animation::Mat4& outTransform) const {
-    return stats_.poseReady && runtime_.socketTransform(socketName, outTransform);
+    const auto* pose = globalPose();
+    return pose != nullptr && novacore::animation::evaluateSocket(
+        animationAsset_.skeleton, *pose, socketName, outTransform);
 }
 
 const PlayerSkeletalAnimatorStats& PlayerSkeletalAnimator::stats() const {

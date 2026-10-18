@@ -1,5 +1,69 @@
 # Recovery progress
 
+## 2026-10-18 Phase 2B productive constraints, opt-in / visual gate OPEN
+
+- Shared-pose PR https://github.com/YoungJibbit95/Nemisis/pull/15 is DRAFT,
+  implementation 57835a0 (base frozen integration 5baab6137dc5e0a3a81a2b0e9ec62ac4f8a78fa0).
+  Both hosted MSVC/Clang builds and 35 CPU cases pass:
+  https://github.com/YoungJibbit95/Nemisis/actions/runs/39138283817.
+- Branch recovery/09-production-hand-ik stacks on #15. New solver consumes the
+  actual shared M4 grip matrices, accounts for authored socket translation AND
+  rotation, applies independent arm-bone corrections before the single NovaCore
+  skin and uses the existing dynamic arms resource. Final globals/socket access
+  agree with final geometry. There is no second sampling/skeleton runtime.
+- Exact ozz0.17.0 commit 744eb9d99f606eda849acb0b1204f7a3dc20bca1 and archive
+  SHA256 are retained; shared CMake dependency and exact MIT notice serve game,
+  integration test and probe. Capability defaults OFF; built capability still
+  requires --first-person-hand-ik to activate. Ordinary launch keeps the baseline.
+- Removed from the opt-in path: whole-mesh average correction and discontinuous
+  ADS arm scale. The legacy default still uses its original averaging until
+  visual acceptance. One existing artistic mount is retuned for reach, with
+  no change to the final weapon, axes, GLBs or bone translations/scales.
+- Fresh default-OFF complete GCC13.2/Ninja build and 34/34 CPU cases pass; no ozz
+  population directory/targets. Uncompiled runtime flag rejects with exit2.
+  Focused opt-in production tests pass actual bind/Idle/Aim, four M4 hip/ADS/
+  combined poses, nine ADS steps, both hand orientations/contact, bone lengths,
+  deformed weighted geometry, bounds, six invalid input categories and single
+  sampling/skinning. All authored clip coverage is executed.
+- Complete opt-in cross-repo build and 37/37 CPU cases pass with exact published
+  engine a687c8816fbcc8a7f4d313cf092c6dc17a59f8f7. The pin was updated only after
+  that validation. This includes all standard cases, ozz probe, actual-M4
+  integration unit and the productive headless Dev Range smoke.
+- Review exposed a real engine blocker: Vulkan dynamic updates only wrote one
+  alternating frame slot, so a render frame without a fixed tick could draw
+  older arms. A separate focused engine PR retains the latest payload until
+  each safe frame slot consumes it. No game-side repeated skin/upload workaround.
+  Engine draft https://github.com/YoungJibbit95/Novacore-Engine/pull/11 bases on
+  engine #10 e22d397. Runtime fix a687c88 passes full local5/5 and hosted MSVC/
+  Clang5/5: https://github.com/YoungJibbit95/Novacore-Engine/actions/runs/39139271352.
+  Both existing and new game PR dependencies remain open; none is auto-merged.
+- Final default-OFF full build/34 CPU cases also pass against the new pin. After
+  adding accepted vertex-update accounting, affected integration/headless tests
+  pass again: applied=4, samples=4, skins=4, vertex_updates=4, invalid=0,
+  unreachable=0. These are accepted renderer requests, not executed GPU frames.
+- Full graphical GCC13.2/SDL3 3.2.22/Vulkan SDK1.4.350.0 target compiles/links,
+  including the real conditional Vulkan backend and new IK. No graphical
+  executable or GPU-labelled smoke was launched. `git diff --check`, CMake
+  preset inventory, actionlint and copied MIT notice hash checks pass.
+
+Reproduce local graphical build from this checkout (existing verified SDL source
+cache, exact engine pin; no launch is part of these commands):
+
+```powershell
+cmake -S . -B build/phase2b-vulkan -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=C:/Strawberry/c/bin/g++.exe -DNOVACORE_ENGINE_ROOT=F:/Coding/Project/recovery/phase2b/dynamic-mesh/Novacore-Engine -DNOVACORE_ENABLE_SDL3=ON -DNOVACORE_ENABLE_VULKAN=ON -DNOVACORE_FETCH_SDL3=ON -DFETCHCONTENT_SOURCE_DIR_SDL3=F:/Coding/Project/recovery/Nemisis/build/phase1-vulkan/_deps/sdl3-src -DSDL_SHARED=OFF -DSDL_STATIC=ON -DNEMISIS_COPY_RUNTIME_DATA=OFF -DNOVACORE_BUILD_SANDBOX=OFF -DNEMISIS_ENABLE_HAND_IK=ON -DNEMISIS_BUILD_OZZ_IK_PROBE=ON -DVulkan_INCLUDE_DIR=F:/VulkanSDK/1.4.350.0/Include -DVulkan_LIBRARY=F:/VulkanSDK/1.4.350.0/Lib/vulkan-1.lib -DVulkan_GLSLC_EXECUTABLE=F:/VulkanSDK/1.4.350.0/Bin/glslc.exe
+cmake --build build/phase2b-vulkan --target nemisis_game --parallel 4
+```
+
+After actual GUI authorization/manual testing, run separately from source:
+`./build/phase2b-vulkan/nemisis_game.exe --vulkan --dev-range` (legacy), then
+`./build/phase2b-vulkan/nemisis_game.exe --vulkan --dev-range --first-person-hand-ik`.
+These commands are provided for the next step, not reported as executed.
+
+FIRST_PERSON_RECOVERY.md contains exact dataflow/timing, controls/manual Vulkan
+commands, removal criterion and a precise deferred Project head-safe cooking
+plan. No GUI authorization, graphical launch, images or GPU smoke is claimed.
+The chosen character remains chr_project_male1; A1 arms remain temporary.
+
 ## 2026-10-18 Phase 2B shared presentation pose
 
 - Rechecked engine #10 e22d39708f09a80472c185ab52cc59b90a3f8c14 and game #12

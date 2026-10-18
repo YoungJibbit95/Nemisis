@@ -145,6 +145,8 @@ struct DevRangeRenderSceneDesc final {
     const novacore::render::MeshCatalog* meshCatalog = nullptr;
     bool showFirstPersonRigDiagnostics = false;
     const FirstPersonPresentation* firstPersonPresentation = nullptr;
+    // Temporary visual acceptance switch. Legacy averaging remains default.
+    bool useHandConstraints = false;
 };
 
 [[nodiscard]] FirstPersonPresentation evaluateFirstPersonPresentation(const DevRangeRenderSceneDesc& desc);

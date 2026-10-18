@@ -49,6 +49,7 @@ struct GameAppOptions final {
     bool autoEnterDevRange = false;
     bool lockDevRange = false;
     bool runMenuFlowSmoke = false;
+    bool firstPersonHandIK = false;
 };
 
 class GameApp final : public novacore::core::IApplicationDelegate {
@@ -116,6 +117,7 @@ private:
     player::PlayerSkeletalAnimator skeletalBodyAnimator_;
     player::PlayerSkeletalAnimator skeletalArmsAnimator_;
     std::optional<dev::FirstPersonPresentation> firstPersonPresentation_;
+    std::uint64_t armVertexUpdateCount_ = 0;
     player::CameraRigState cameraRig_;
     player::AccountStats accountStats_ = player::prototypeAccountStats();
     novacore::ecs::EntityId localPlayerEntity_;
