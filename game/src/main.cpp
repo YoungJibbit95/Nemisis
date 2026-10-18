@@ -33,6 +33,8 @@ int main(int argc, char** argv) {
             else { std::cerr << "UI size must be 1280x720, 1920x1080 or 2560x1440\n"; return 2; }
         } else if (argument == "--physics-props") {
             gameOptions.physicsProps = true;
+        } else if (argument == "--directional-shadows") {
+            gameOptions.directionalShadows = true;
         } else if (argument == "--smoke-test") {
             smokeTest = true;
         } else if (argument == "--project-rifle-ready") {
@@ -107,7 +109,7 @@ int main(int argc, char** argv) {
     }
 
     if (gameOptions.uiShowcase) {
-        if (gameOptions.runMenuFlowSmoke || gameOptions.projectFPSPreview || gameOptions.firstPersonHandIK || gameOptions.physicsProps) {
+        if (gameOptions.runMenuFlowSmoke || gameOptions.projectFPSPreview || gameOptions.firstPersonHandIK || gameOptions.physicsProps || gameOptions.directionalShadows) {
             std::cerr << "UI showcase cannot be combined with other preview profiles\n"; return 2;
         }
         if (!gameOptions.preferVulkanRenderer) {
@@ -122,6 +124,10 @@ int main(int argc, char** argv) {
             std::cerr << "--physics-props requires NovaCore configured with -DNOVACORE_ENABLE_JOLT=ON\n";
             return 2;
         }
+        gameOptions.autoEnterDevRange = true;
+        gameOptions.lockDevRange = true;
+    }
+    if (gameOptions.directionalShadows) {
         gameOptions.autoEnterDevRange = true;
         gameOptions.lockDevRange = true;
     }

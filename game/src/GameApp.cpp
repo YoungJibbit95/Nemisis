@@ -853,6 +853,8 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
     novacore::render::RenderFrameInfo frameInfo{};
     frameInfo.clearColor = menu_.gameplayActive() ? devSandbox_.clearColor() : menu_.clearColor();
     if (menu_.gameplayActive()) {
+        frameInfo.directionalShadows = renderTuning_.directionalShadows;
+        frameInfo.directionalShadows.enabled |= options_.directionalShadows;
         latestDevRangeRenderStats_ = devRangeRenderer_.append(
             frameInfo,
             dev::DevRangeRenderSceneDesc{

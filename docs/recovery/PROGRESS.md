@@ -1,5 +1,24 @@
 # Recovery progress
 
+## 2026-10-19 Directional-shadow game preview
+
+- `--directional-shadows` enters the existing Dev Range with real R2 enabled;
+  default remains off. The existing render config exposes resolution 256/512/
+  1024/2048, distance 1..150m, finite depth/slope bias. GameApp passes those
+  public settings only for gameplay frames. No separate UI implementation.
+- Local Project World-depth body, arms and held rifle explicitly exclude
+  casting/receiving shadows, as do legacy viewmodels/diagnostics/muzzle flashes.
+  The sky shell is excluded. Shared weapon resources remain eligible in world
+  showcase instances; ownership is decided per submission, never globally by
+  resource handle. A complete external animated character shadow remains open.
+- Targeted tests pass 3/3 in 5.89s: real Project Ready 288-pose exclusions,
+  shared-resource/legacy/sky policy and config bounds/nonfinite fallback.
+  Both engine #18 and combined #19 have green hosted MSVC/Clang; #19 also has
+  both Jolt jobs green. Exact combined engine remains `cca45a41aded8b13171943553e27f85071c76ed3`.
+- Full combined game build/CPU CI follows. This is technical integration;
+  shadows/resize/synchronization, material appearance and GPU cost have not been
+  inspected in Vulkan. No Phase 5 GUI was launched and no visual result claimed.
+
 ## 2026-10-19 Ready strict runtime gate passed
 
 - Final offline mount X=-.16,Y=1.61,Z=.17m: after the measured lateral/depth

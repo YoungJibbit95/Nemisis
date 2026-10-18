@@ -62,6 +62,7 @@ struct GameAppOptions final {
     bool projectRifleReady = false;
     bool projectFPSLookDown = false;
     bool physicsProps = false;
+    bool directionalShadows = false;
 };
 
 class GameApp final : public novacore::core::IApplicationDelegate {
