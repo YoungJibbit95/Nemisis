@@ -184,6 +184,16 @@ void GameApp::onStartup() {
     rendererInfo.requireVulkan = options_.requireVulkanRenderer;
     renderer_.create(window_, rendererInfo);
     registerDevMeshResources();
+    if (options_.physicsProps) {
+        physicsProps_ = std::make_unique<dev::DevRangeRigidBodies>();
+        physicsProps_->reset(greyboxWorld_);
+        const auto* crate = devAssetBindings_.meshCatalog().findByAssetId("map_a2_cover_crate_01");
+        const auto handle = devMeshResources_.find("map_a2_cover_crate_01");
+        if (!crate || !crate->meshData || handle == devMeshResources_.end()) {
+            throw std::runtime_error("Physics fixture requires the registered Dev Range crate asset");
+        }
+        physicsProps_->setVisual(handle->second, *crate->meshData);
+    }
 #if NEMISIS_HAS_RMLUI
     if (options_.uiShowcase) {
         if (window_.isHeadless() || renderer_.backendName() != "vulkan-world" || !renderer_.backendFrameStats().uiGeometryReady)
@@ -250,6 +260,11 @@ void GameApp::onShutdown() {
         std::to_string(renderer_.backendFrameStats().lastUiGeometryDrawCount));
     uiShowcase_.reset();
 #endif
+    if (physicsProps_) {
+        novacore::core::logInfo("game", "Dev Range rigid-body fixture: ticks=" +
+            std::to_string(physicsProps_->tickCount()) + " dynamic_props=6");
+        physicsProps_.reset();
+    }
     releaseDevMeshResources();
     renderer_.shutdown();
     window_.shutdown();
@@ -312,9 +327,9 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
             movementState->mode == movement::MovementMode::Grounded ||
             movementState->mode == movement::MovementMode::Sliding ||
             movementState->mode == movement::MovementMode::Dashing;
-        collisionSample = dev::resolveGreyboxPlayerCollision(
-            greyboxWorld_,
-            collisionQuery);
+        collisionSample = physicsProps_
+            ? dev::resolveGreyboxPlayerCollision(greyboxWorld_, physicsProps_->collisionWorld(), collisionQuery)
+            : dev::resolveGreyboxPlayerCollision(greyboxWorld_, collisionQuery);
         const bool mantleActivationWindow =
             movementState->mode == movement::MovementMode::Airborne &&
             movementState->velocity.y <= movement_.tuning().jumpVelocity * 0.50F;
@@ -338,7 +353,9 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
             collisionQuery.useSweep = false;
             collisionQuery.enableGroundSnap = false;
             collisionQuery.enableStepUp = false;
-            collisionSample = dev::resolveGreyboxPlayerCollision(greyboxWorld_, collisionQuery);
+            collisionSample = physicsProps_
+                ? dev::resolveGreyboxPlayerCollision(greyboxWorld_, physicsProps_->collisionWorld(), collisionQuery)
+                : dev::resolveGreyboxPlayerCollision(greyboxWorld_, collisionQuery);
             collisionSample.position = movementState->position;
         }
         const bool activeMantleInterpolation =
@@ -417,6 +434,7 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
         }
     }
 
+    if (physicsProps_ && movementState) { physicsProps_->tick(movementState->position); }
     processGameplayWeaponInteractions(command);
 
     auto* weaponState = world_.getComponent<weapons::WeaponRuntimeState>(localPlayerEntity_);
@@ -473,6 +491,9 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
     dev::DebugTargetHitResult targetHit{};
     dev::DevTargetRangeHitResult targetRangeHit{};
     if (hasShotTrace) {
+        if (physicsProps_) {
+            (void)physicsProps_->impact(shotTrace.origin, shotTrace.direction * shotTrace.rangeMeters);
+        }
         targetRangeHit = dev::applyShotToDevTargetRange(targetRange_, shotTrace);
         targetHit = targetRangeHit.targetHit;
     }
@@ -855,6 +876,7 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
             });
         projectFPSBodySubmitted_ |= latestDevRangeRenderStats_.projectFPSBodyActive;
         projectFPSArmsSubmitted_ |= latestDevRangeRenderStats_.projectFPSArmsActive;
+        if (physicsProps_) { physicsProps_->append(frameInfo); }
     } else {
         latestDevRangeRenderStats_ = {};
     }
@@ -1183,6 +1205,7 @@ void GameApp::ensureLocalPlayer() {
 }
 
 void GameApp::resetDevRangeState() {
+    if (physicsProps_) { physicsProps_->reset(greyboxWorld_); }
     ensureLocalPlayer();
     rebuildActiveAttachmentSummary();
     dev::recordRangeReset(devRangeSession_, devRangeTuning_);

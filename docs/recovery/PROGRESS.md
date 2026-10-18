@@ -1,5 +1,34 @@
 # Recovery progress
 
+## 2026-10-19 Dev Range rigid-body integration
+
+- Main now consumes exact public engine `cca45a41aded8b13171943553e27f85071c76ed3`
+  (integration Draft engine #19). Both ordinary/UI pins agree. This combines
+  UI, proper camera, R2 and optional Jolt without private engine includes.
+- Opt-in `--physics-props` adds six actual crate mesh instances to the existing
+  range, driven by Jolt bodies. The resolved player capsule pushes props in one
+  direction; props never inject motor velocity or enter predicted player state.
+  Existing shots can apply a bounded prop-only impulse through a closest query
+  including static occluders. Damage/ammo/cadence/score are unchanged.
+- Player and rigid bodies share `buildGreyboxPhysicsWorld`; the original KCC
+  overload remains. Reset invalidates body handles and restarts consecutive
+  local ticks. The backend must exist before startup; there is no null-physics
+  success. Actual existing crate bounds fit physical OBBs including rotation.
+- Full Release game build with RmlUi/Project/IK and Jolt ON passes. New fixture
+  tests pass settling, angular render transforms, actual bounded KCC walking /
+  pushing, reset and static shot occlusion. Real headless GameApp physics smoke
+  and spawn test pass (2/2,14.06s). Review corrected a test-only twelve-metre
+  proxy teleport and guarded shots before the first static synchronization.
+- The runtime smoke exposed a pre-existing spawn defect: transform used the
+  requested position while MovementState started at zero. Commit `9fb67a5`
+  initializes both from the spawn descriptor, with a regression assertion.
+- New Jolt MSVC/Clang game CI supplements the default-off path. SDL-backed
+  physics smoke is marked gpu/gui; --no-vulkan alone does not prevent a window.
+  Full combined CPU/CI regression remains pending, and Ready hand-frustum
+  authoring is still under correction. No GUI, GPU run or visual acceptance.
+- Dynamic props do not yet block/support the KCC; they are local developer
+  fixtures, without replicated rigid-body state, trigger events or ragdolls.
+
 ## 2026-10-19 Proper camera / physical grip integration candidate
 
 - Enginef4d7c99 (Draft #16, on UI integration #15) preserves glTF chirality

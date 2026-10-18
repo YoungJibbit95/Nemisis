@@ -29,6 +29,10 @@ if(REQUIRE_VULKAN AND NOT smoke_output MATCHES "Vulkan backend active:")
     message(FATAL_ERROR "Graphics smoke requires an active Vulkan backend; headless/null fallback is not graphics validation")
 endif()
 
+if(REQUIRE_PHYSICS_PROPS AND NOT smoke_output MATCHES "Dev Range rigid-body fixture: ticks=[1-9][0-9]* dynamic_props=6")
+    message(FATAL_ERROR "Physics smoke requires actual game-owned fixed-tick rigid-body updates")
+endif()
+
 if(REQUIRE_HAND_IK)
     if(NOT smoke_output MATCHES "Hand IK frames: applied=([1-9][0-9]*) samples=([1-9][0-9]*) skins=([1-9][0-9]*) vertex_updates=([1-9][0-9]*) invalid=0 unreachable=0")
         message(FATAL_ERROR "Opt-in hand IK smoke did not apply valid reachable constraints")
