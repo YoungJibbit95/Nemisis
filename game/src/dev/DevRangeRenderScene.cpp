@@ -819,12 +819,6 @@ void appendFirstPersonRigPrimitives(
     novacore::render::RenderFrameInfo& frame,
     const player::FirstPersonRigFrame& rig,
     DevRangeRenderSceneStats& stats) {
-    for (const auto& socket : rig.sockets) {
-        if (socket.valid) {
-            ++stats.firstPersonSocketCount;
-        }
-    }
-
     const std::array<float, 4> gloveColor{0.34F, 0.40F, 0.36F, 0.92F};
     const std::array<float, 4> sleeveColor{0.28F, 0.36F, 0.34F, 0.78F};
     const std::array<float, 4> torsoColor{0.24F, 0.32F, 0.30F, 0.18F + (rig.lookDownBodyAlpha * 0.44F)};
@@ -1417,7 +1411,11 @@ void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
     const auto cookedArmsRig = cookedArmsSocketRig(desc, armsMount.assetId);
     stats.firstPersonCookedSocketCount += cookedArmsRig.socketCount;
     stats.firstPersonArmsSocketBoundCount += bindFirstPersonArmsMeshToRigSockets(presentedRig, cookedArmsRig);
-    appendFirstPersonRigPrimitives(frame, presentedRig, stats);
+    for (const auto& socket : presentedRig.sockets) {
+        if (socket.valid) {
+            ++stats.firstPersonSocketCount;
+        }
+    }
     appendWeaponFeedbackPrimitives(frame, desc, presentedRig, stats);
 
     bool weaponMeshAppended = appendMesh(
@@ -1483,6 +1481,9 @@ void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
     if (armsMeshAppended) {
         ++stats.firstPersonMeshCount;
     }
+    if (!armsMeshAppended || desc.showFirstPersonRigDiagnostics) {
+        appendFirstPersonRigPrimitives(frame, presentedRig, stats);
+    }
 }
 
 void DevRangeRenderSceneBuilder::appendMovementTechVisuals(
@@ -1491,7 +1492,6 @@ void DevRangeRenderSceneBuilder::appendMovementTechVisuals(
     DevRangeRenderSceneStats& stats) const {
     const auto& tech = desc.player.movementTech;
     const auto vectors = player::viewVectors(renderView(desc));
-    const auto eye = playerEyePosition(desc);
     const auto bootBase = desc.player.position + novacore::math::Vec3{0.0F, 0.16F, 0.0F};
 
     if (tech.gravityInvertersActive || tech.gravityInverterGlowSeconds > 0.0F) {
@@ -1502,34 +1502,6 @@ void DevRangeRenderSceneBuilder::appendMovementTechVisuals(
         appendBox(frame, bootBase + (right * 0.18F), {0.09F, 0.035F, 0.14F}, glowColor, stats);
         appendBox(frame, bootBase - (right * 0.18F), {0.09F, 0.035F, 0.14F}, glowColor, stats);
 
-        if (tech.wallRunArmTriggerPressed || tech.wallRunArmTriggerSeconds > 0.0F) {
-            const auto armCenter =
-                eye +
-                (vectors.forward * 0.52F) -
-                (right * 0.24F) +
-                novacore::math::Vec3{0.0F, -0.34F, 0.0F};
-            const bool armMeshAppended = appendMesh(
-                frame,
-                desc,
-                "chr_a1_fp_arms_01",
-                armCenter,
-                {0.54F, 0.54F, 0.54F},
-                renderView(desc).yawDegrees - 10.0F,
-                {0.58F, 0.78F, 0.72F, 0.92F},
-                stats,
-                (renderView(desc).pitchDegrees * 0.28F) - 8.0F,
-                desc.player.cameraRollDegrees * 0.42F,
-                novacore::render::RenderMeshLayer::ViewModel,
-                false);
-            if (!armMeshAppended) {
-                appendBox(
-                    frame,
-                    armCenter,
-                    {0.045F, 0.028F, 0.035F},
-                    {0.98F, 0.42F, 0.14F, 1.0F},
-                    stats);
-            }
-        }
     }
 
     if (tech.doubleJumpPlatformThrown || tech.energyPlatformSeconds > 0.0F) {
@@ -1549,60 +1521,6 @@ void DevRangeRenderSceneBuilder::appendMovementTechVisuals(
             {0.88F, 0.98F, 1.0F, 1.0F},
             stats);
 
-        const auto throwArmCenter =
-            eye +
-            (vectors.forward * 0.56F) -
-            (vectors.horizontalRight * 0.28F) +
-            novacore::math::Vec3{0.0F, -0.40F, 0.0F};
-        (void)appendMesh(
-            frame,
-            desc,
-            "chr_a1_fp_arms_01",
-            throwArmCenter,
-            {0.50F, 0.50F, 0.50F},
-            renderView(desc).yawDegrees - 16.0F,
-            {0.58F, 0.84F, 0.92F, 0.90F},
-            stats,
-            (renderView(desc).pitchDegrees * 0.30F) - 12.0F,
-            desc.player.cameraRollDegrees * 0.25F,
-            novacore::render::RenderMeshLayer::ViewModel,
-            false);
-    }
-
-    if (tech.mantleReachTriggered || tech.mantleReachSeconds > 0.0F) {
-        const float progress = easeOut01(desc.player.mantleProgress01);
-        const auto handCenter =
-            eye +
-            (vectors.forward * (0.62F + (progress * 0.34F))) -
-            (vectors.horizontalRight * (0.24F - (progress * 0.10F))) +
-            novacore::math::Vec3{0.0F, -0.30F + (progress * 0.22F), 0.0F};
-        const bool mantleArmMeshAppended = appendMesh(
-            frame,
-            desc,
-            "chr_a1_fp_arms_01",
-            handCenter,
-            {0.50F, 0.50F, 0.50F},
-            renderView(desc).yawDegrees - 8.0F,
-            {0.68F, 0.88F, 0.92F, 0.94F},
-            stats,
-            (renderView(desc).pitchDegrees * 0.24F) - (progress * 10.0F),
-            desc.player.cameraRollDegrees * 0.20F,
-            novacore::render::RenderMeshLayer::ViewModel,
-            false);
-        if (!mantleArmMeshAppended) {
-            appendBox(
-                frame,
-                handCenter,
-                {0.035F, 0.035F, 0.16F},
-                {0.72F, 0.94F, 1.0F, 1.0F},
-                stats);
-            appendBox(
-                frame,
-                handCenter - (vectors.forward * 0.18F) + novacore::math::Vec3{0.0F, -0.04F, 0.0F},
-                {0.045F, 0.032F, 0.14F},
-                {0.48F, 0.64F, 0.70F, 1.0F},
-                stats);
-        }
     }
 
     if (tech.mantleClimbTriggered || tech.mantleClimbSeconds > 0.0F) {

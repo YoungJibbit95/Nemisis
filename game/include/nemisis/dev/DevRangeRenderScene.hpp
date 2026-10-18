@@ -118,6 +118,7 @@ struct DevRangeRenderSceneDesc final {
     float nearPlane = 0.03F;
     float farPlane = 120.0F;
     const novacore::render::MeshCatalog* meshCatalog = nullptr;
+    bool showFirstPersonRigDiagnostics = false;
 };
 
 class DevRangeRenderSceneBuilder final {
