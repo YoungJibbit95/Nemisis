@@ -3,14 +3,16 @@
 ## Integration candidate, 2026-10-19
 
 The current headless game runtime candidate is
-`ed99f79116ffd702b6a844340aee90f9da326120` on
-`recovery/phase5-followup-integration`; both engine pins use
-`130c4fdadd05d7cb0e7d8f808deeec35f29f10fa` (engine Draft #21). It adds native
-sensor/material/impact diagnostics to the existing optional range fixture.
-The complete Release game builds and all48 non-GPU suites pass. An unfiltered
-CTest invocation additionally attempted six GPU suites, which fail explicitly
-under the null renderer: total48/54, exit1, not GPU acceptance. New hosted game
-CI follows; earlier #33 has all six standard/native-UI/Jolt compiler jobs green.
+`60cd2596bfb2bbfd072d9f9a33edd44d7385f49f` on
+`recovery/phase5-material-preview`; both engine pins use
+`14d33a77a9eedef6a48227226d1ef80d593015b9` (engine Draft #23). It retains the
+native sensor/material/impact fixture and adds opt-in actual material textures.
+The complete211-step Release game builds; all48 non-GPU suites pass in51.77s.
+The combined preview boots headlessly with one pose owner and correct zero GPU
+texture-readiness counters. New hosted game CI follows; #33/#34 already have all
+six standard/native-UI/Jolt compiler jobs green and engine #21 has all four green.
+The earlier sensor unfiltered test invocation remains recorded as48/54, exit1:
+its six explicit GPU suites fail under null and are not graphics acceptance.
 
 The separately frozen Vulkan runtime remains `c04c78b` / engine `cca45a41` (#33/#19),
 with unchanged build/content hashes. Its freshly authorized actual Ready review
@@ -26,9 +28,19 @@ config/CLI preview, not a persisted interactive GameSettings menu. Agree validat
 UI actions with main before adding controls. Local FPS submissions have explicit
 per-instance shadow exclusions; shared world resources remain eligible.
 
+R3 adds `RenderFrameInfo::materialTexturesEnabled` (default false), optional
+`material_textures.enabled` in the existing render config and `--material-textures`.
+Only gameplay World mesh submissions are eligible; legacy ViewModel and greybox
+RenderBox surfaces do not gain maps. Actual embedded base-color/normal/MR/emissive
+sources and UV1 survive subset/skinning copies. Unsupported alpha/UV-transform
+materials use explicit factor fallback. `RenderBackendFrameStats` exposes actual
+readiness, texture/fallback draw counts, resident images/bytes, budget/rejections.
+These are real developer-preview contracts, not persisted quality menu controls.
+The 48 CPU tests and27 SPIR-V checks do not establish texture appearance or cost.
+
 `--physics-props` is a local Dev Range fixture, not replicated match state or a
 new source of authoritative damage/ammo. The existing gameplay state APIs below
-retain ownership. R3 texture/sampler descriptors are subsequent work and remain
+retain ownership. R3 texture/sampler descriptors are implemented and remain
 separate from UI atlas descriptors, slot fences and final overlay order. No
 offscreen character/weapon preview or backdrop blur is promised by this change.
 
@@ -121,7 +133,7 @@ before depending on them; retain honest fallbacks. Native CPU layout tests at
 > eigenständige angewinkelte/chamferte Shapes, geschichtete Glass-/Metal-/Carbon-
 > Oberflächen, klarere Hierarchie und subtile animierte Hintergründe/Transitions.
 > Competitive-Lesbarkeit und Reduced Motion erhalten. Hauptagent koordiniert
-> die Kombination mit Sky/Normals und den kommenden Shadow-/Texture-Ressourcen.
+> die Kombination mit Sky/Normals und den vorhandenen Shadow-/Texture-Ressourcen.
 > Nutze docs/coordination/UI_HANDOFF.md am veröffentlichten Integrations-Commit:
 > dort stehen exakte SHAs, bestehende Ammo/Reload/Health/Loadout/Settings-Daten
 > und Renderer-Lifetimes. UI liest State und gibt validierte Aktionen zurück;

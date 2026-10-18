@@ -1,5 +1,23 @@
 # Recovery progress
 
+## 2026-10-19 Full material-texture consumer gate passed
+
+- Exact game `60cd2596bfb2bbfd072d9f9a33edd44d7385f49f` / public engine
+  `14d33a77a9eedef6a48227226d1ef80d593015b9`: complete211-step Release build
+  with native RmlUi/FreeType, Project/IK and Jolt passes. All48 non-GPU suites
+  pass in51.77s, including refreshed upstream UI code/assets from main `0beffd5`.
+  Only the conflicting UI engine pin required resolution; both pins retain14d.
+- Combined headless boot with `--material-textures --physics-props
+  --project-rifle-ready --no-vulkan --smoke-test` exits0:125 samples/skins/resource
+  updates per subset, one logical pose owner, zero invalid/unreachable IK,
+  125 native prop ticks. Texture readiness/images/bytes correctly stay0 on null.
+  Mixed `--ui-showcase --material-textures` exits2 before application creation.
+- Engine14d passes complete headless/server/sandbox and10/10 CPU(.99s), full
+  separate74-step SDL3/Vulkan engine/server/sandbox and27 SPIR-V checks. The old
+  23 shader modules are byte-identical. This does not execute the GPU path.
+  Source #33's frozen actual Vulkan framing failure remains open; no new GUI.
+  Query and direct-light work remain separate reviewed specialist slices.
+
 ## 2026-10-19 Optional material-texture consumer integration
 
 - Both pins now select engine `14d33a77a9eedef6a48227226d1ef80d593015b9`
