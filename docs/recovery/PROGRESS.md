@@ -89,6 +89,20 @@
   build and45/45 CPU tests passed156.03s, Vulkan link passed. No merges performed.
 - Continue with W1 art/stock/finger acceptance, then geometry-specific FR17 W2;
   the remaining arsenal, class animation states and R2-R5 remain open as below.
+## 2026-10-19 Ready transition measurement and offline correction
+
+- Proper-camera runtime gate exposed three hip-side failures at Sprint-to-Idle
+  ticks216-218, worst -.0554923m. All 288 contact checks still passed, maximum
+  .000979131m; original unarmed ancestors turn beneath the Ready rotation mask.
+  Added signed eye/chest/mount diagnostics while retaining strict positive side,
+  1mm contact, anatomical skin and frustum assertions.
+- Revised the existing offline solve from X=-.11,Z=.21 to X=-.16,Z=.17m;
+  Y=1.54m and torso pose stay unchanged. Both physical chains remain reachable:
+  Blender R/L residuals11.45um/.364um; original T/S deltas below7.37e-7m/1.13e-6.
+  Pose SHA256 bc60ff4b2927764eaa702853a1dcea8c9331a7311c17fb38841df9f5e13b39eb.
+  Physical-contact mutation checks pass. Runtime recook/288-tick gate and hosted
+  CI are pending for this revised pose; no visual-quality result is claimed.
+
 ## 2026-10-19 Phase 5 camera/presentation source checkpoint
 
 - Pair with engine f4d7c99b0c522ae872ae05a6eb42818629b16607, Draft #16 on #15.

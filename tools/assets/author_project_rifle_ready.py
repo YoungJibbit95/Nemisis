@@ -308,12 +308,16 @@ require("spine_fk.003" in rig.pose.bones, "Actual chest control absent")
 # Restore the anatomical right mount after correcting the camera's reflected
 # +Z-depth view. A proper camera facing gameplay +Z has screen-right at world
 # -X; the character's actual .R shoulder is on that side too. The W1 positive-X
-# placement compensated for the old camera and crossed the firing arm.
+# placement compensated for the old camera and crossed the firing arm. The
+# original unarmed Sprint -> Idle ancestors still turn relative to the eye;
+# measured tick 216 crossed the eye by .0554923m at X=-.11,Z=.21. Shift five
+# centimetres right and four rearward, then solve both real arm chains again.
+# The rearward component avoids relying on a larger lateral extension of .L.
 twist("spine_fk.003", -40)
 retarget_spines()
 if "head" in rig.pose.bones:
     twist("head", 40)
-world_weapon = Matrix.Translation(Vector((-0.11, 1.54, 0.21)))
+world_weapon = Matrix.Translation(Vector((-0.16, 1.54, 0.17)))
 results = {side: arm_constraint(side, world_weapon) for side in ["R", "L"]}
 
 # Reproducible developer finger controls, baked offline. Each curl axis comes
