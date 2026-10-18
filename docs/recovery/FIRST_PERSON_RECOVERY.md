@@ -568,3 +568,42 @@ locomotion, hip/held ADS, fire/reload, camera yaw/pitch, slide/wallrun, and exte
 body appearance on a usable GPU before calling the recovery visually complete.
 No new GUI control is authorized after the earlier physical Escape stop; this
 phase has so far used source, CPU tests and logs only.
+
+## 2026-10-18 Phase 3: affine Project hand adapter
+
+The isolated review base `recovery/phase3-baseline` (78bf2b7) combines merged
+#18 with the still-draft #19/#20/#21. It is a review dependency, not a merge into
+main. NovaCore remains exactly a687c8816fbcc8a7f4d313cf092c6dc17a59f8f7.
+
+The existing PlayerHandConstraints API now recognizes the actual Project chain:
+upper_arm -> upper_arm.001 -> forearm -> forearm.001 -> hand, on each side.
+It reuses ozz IKTwoBoneJob with bounded affine correction passes and a polar
+wrist orientation solve. Source local translations/scales, weighted .001 joints,
+fingers, inverse binds and weights remain unchanged. Final world-space socket
+residuals decide success (1 mm position, 0.5 degrees orientation); ozz's reach
+flag alone is insufficient. Invalid inputs roll back both arms transactionally;
+unreachable inputs retain the best finite bounded pose and report its error.
+
+This step uses #21's proposal sockets for technical tests. It does not approve
+their physical contact depth/normal, author finger wrap, activate Project weapon
+IK in GameApp, or claim an armed animation. The old explicit Project/legacy-IK
+CLI rejection remains until an actual authored Ready variant is integrated.
+No second skeleton runtime or engine/private-header dependency was added.
+Two CMake calls now use the game's own MinGW runtime helper so the public
+installed NovaCore package works as documented.
+
+Validation: complete GCC13.2 Release build against the exact public engine
+package; 42/42 CPU CTest cases passed in 99.54 s. The new adapter test covers
+24 real bind/clip-phase/world-transform cases, including nonuniform model scale:
+maximum measured world contact residual 0.000469843 m. Independent affine
+orientation, real vertex deformation, all T/S and nonselected rotations,
+malformed ancestry, unreachable targets and aliased invalid rollback are checked.
+An earlier complete-suite attempt exhausted process memory in an existing scene
+test while Blender authoring overlapped; the isolated scene and complete serial
+suite subsequently pass, without changing tests or tolerances. GPU tests were
+not run. Physical Escape authorization has not been renewed for Phase 3.
+
+Status: Technically Integrated (adapter/test boundary only); Animation Complete:
+no; Visually Accepted: no. Next executable step: finish the non-destructive
+Blender Ready source variant, measure actual palm/M4 surfaces, and feed body and
+arms from one logical pose before enabling the armed preview.
