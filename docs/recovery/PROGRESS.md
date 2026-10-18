@@ -2,6 +2,9 @@
 
 ## 2026-10-18 Phase 2C candidate / visual and integration gates OPEN
 
+- Published DRAFT https://github.com/YoungJibbit95/Nemisis/pull/18, implementation
+  bdd03b3, review base #16. Hosted MSVC/Clang checks belong to that PR head.
+
 - Reverified engine #10/#11 and game #12–#16. Game #12 was merged by the user:
   main f5399961da9e01c341b141785f116d76bc931731. Game #13/#14/#15/#16 remain
   open drafts with green MSVC/Clang checks. Engine #10 ready/#11 draft are open
