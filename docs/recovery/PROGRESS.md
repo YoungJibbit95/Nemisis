@@ -1,5 +1,33 @@
 # Recovery progress
 
+## 2026-10-18 Phase 4 GUI Escape stop / limited evidence
+
+- User explicitly renewed GUI permission for baseline/R0/R1 Hip/Look-down and
+  sun/horizon comparison. Actual baseline native Vulkan capture was saved to
+  F:/Coding/Project/recovery/phase4/visual/baseline_hip.jpg after P reset. Source
+  manifest verifies identical W1 arms/body/rifle cooked hashes across baseline
+  and R0/R1, same low-sun config and1280x720 client viewport. HUD time/tick was
+  not frozen: this is qualitative evidence, not a pixel/performance benchmark.
+- Baseline a687c88 ran on NVIDIA RTX3070Ti. Shutdown reports4685 samples/skins/
+  vertex updates per subset, one logical pose owner, invalid0/unreachable0.
+  M4 is visible on the right with the new W1 cook, but the open support fingers,
+  wrist/arm silhouette and contact appearance remain below F01 quality. W1 is
+  NOT visually accepted. These counters do not prove artist-quality contact.
+- Physical Escape then stopped Computer Use. No further Computer Use API call
+  followed. A root-agent orchestration mistake had chained the R0 Start-Process
+  after the GUI close call without inspecting its stop result; R0 therefore
+  still opened (PID100908). It was left unoperated; do not claim an R0 capture.
+  No R0/R1 after images, Look-down, controlled sun/normal comparison or GPU
+  timings were completed. Renew explicit GUI permission before any continuation.
+- Exact hashes, paths, observations and stop are saved in visual/review-manifest.json.
+  All13 reference images/local board remain in phase4/visual-references.
+- Published Draft stack: game #25 -> #26 -> #27 (source2264e27, this followup
+  documentation only), engine #12 -> #13. W1, game R0 and both engine PRs have
+  green hosted MSVC/Clang CI. Game R1 hosted CI remains pending; its full local
+  build and45/45 CPU tests passed156.03s, Vulkan link passed. No merges performed.
+- Continue with W1 art/stock/finger acceptance, then geometry-specific FR17 W2;
+  the remaining arsenal, class animation states and R2-R5 remain open as below.
+
 ## 2026-10-18 Phase 4 R1 exact runtime integration
 
 - Separate renderer Draft https://github.com/YoungJibbit95/Novacore-Engine/pull/13
