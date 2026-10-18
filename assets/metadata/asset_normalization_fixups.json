@@ -309,33 +309,97 @@
       "category": "weapon",
       "source": "assets/project_assets/weapon_sidearm_glock19.glb",
       "output": "assets/processed/normalized/project_assets/wpn_project_sidearm_glock19.glb",
-      "aliases": ["weapon_sidearm_glock19", "glock19"],
-      "findings": [
-        "Sidearm height is on Blender +X while Nemisis target assets use Blender +Z up, so the configured fix rolls source +X to target +Z.",
-        "Source length is about 0.29m before scaling; configured normalization scales uniformly to a 0.187m Glock 19 reference length.",
-        "No authored socket_muzzle, grip sockets, eject socket, or col_ collision proxy."
+      "aliases": [
+        "weapon_sidearm_glock19",
+        "glock19"
       ],
-      "target_dimensions_m": [0.02257, 0.187, 0.12885],
+      "findings": [
+        "Source actual bore/front ring points raw +Z and sights lie above the barrel along raw +X. Previous cook retained up but reversed barrel/stock; declared muzzle was behind the pistol.",
+        "Correct only Glock19 with existing Blender Euler [0,-90,0], positive uniform187mm-length scale; source mesh is unchanged. Canonical +Y up/+Z physical muzzle forward.",
+        "Firing anchor is inside actual upper pistol-grip side surfaces, behind and below the trigger. Support is the opposite-side grip surface within20mm of primary, not a forward rifle hold.",
+        "Single mesh/primitive has no authored slide/magazine separation or animation. Grip anchors are positional proposals; Project pistol fingers/ADS/reload require a separate authored profile."
+      ],
+      "target_dimensions_m": [
+        0.02257,
+        0.187,
+        0.12885
+      ],
       "normalization": {
-        "remove_mesh_names": ["Icosphere"],
-        "rotation_euler_deg": [0.0, -90.0, 180.0],
+        "remove_mesh_names": [
+          "Icosphere"
+        ],
+        "rotation_euler_deg": [
+          0.0,
+          -90.0,
+          0.0
+        ],
         "scale_to_dimension_m": {
           "axis": "Y",
           "size": 0.187
         },
         "origin": {
           "mode": "bounds_floor_center",
-          "center_axes": ["X", "Y"],
+          "center_axes": [
+            "X",
+            "Y"
+          ],
           "floor_axis": "Z"
         },
         "ensure_root_empty": true,
         "add_sockets": [
-          {"name": "socket_muzzle", "location": [0.0, -0.095, 0.08], "display_size": 0.022},
-          {"name": "socket_grip_r", "location": [0.012, 0.04, 0.035], "display_size": 0.028},
-          {"name": "socket_grip_l", "location": [-0.008, 0.035, 0.035], "display_size": 0.028},
-          {"name": "socket_eject", "location": [0.014, -0.015, 0.09], "display_size": 0.022},
-          {"name": "socket_vfx", "location": [0.0, -0.095, 0.08], "display_size": 0.026}
+          {
+            "name": "socket_muzzle",
+            "location": [
+              -0.000671009,
+              -0.0934898184,
+              0.1150076615
+            ],
+            "display_size": 0.022
+          },
+          {
+            "name": "socket_grip_r",
+            "location": [
+              -0.000685405,
+              0.0618606897,
+              0.0613734483
+            ],
+            "display_size": 0.028
+          },
+          {
+            "name": "socket_grip_l",
+            "location": [
+              0.0098448811,
+              0.0489641379,
+              0.066532069
+            ],
+            "display_size": 0.028
+          },
+          {
+            "name": "socket_eject",
+            "location": [
+              0.014,
+              -0.015,
+              0.09
+            ],
+            "display_size": 0.022
+          },
+          {
+            "name": "socket_vfx",
+            "location": [
+              -0.000671009,
+              -0.0934898184,
+              0.1150076615
+            ],
+            "display_size": 0.026
+          }
         ]
+      },
+      "source_sha256": "63c70be2f34477552c6d0f3b545efaa9d654ef47ad20c6d9993361df756b6dda",
+      "socket_notes": {
+        "socket_grip_r": "Actual upper pistol handle, raw(-.02,.0177960826,-.025)m, midpoint of independently intersected left/right side surfaces.",
+        "socket_grip_l": "Actual opposite grip side surface, raw(-.012,0.0014656925,-.005)m. Two-handed pistol support stays near primary firing grip, away from muzzle.",
+        "socket_muzzle": "Center of actual foremost barrel ring, raw max Z within0.1mm; measured raw(.0631760526,.0177737572,.2159179002)m.",
+        "socket_eject": "Legacy provisional proposal; actual port and ejection direction remain unaccepted. No slide/magazine motion frames are authored."
       }
     },
     {
