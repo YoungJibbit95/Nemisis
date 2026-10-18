@@ -399,7 +399,7 @@ void testFR17PhysicalGripOwnership() {
         }
         return result;
     };
-    const auto *handle = part("Plane.012"), *trigger = part("Plane.009"), *foreEnd = part("Plane.003"),
+    const auto *handle = part("Plane.010"), *trigger = part("Plane.009"), *foreEnd = part("Plane.003"),
                *barrel = part("Cylinder.010"), *stock = part("Plane.024");
     const auto *firing = marker("socket_grip_r"), *support = marker("socket_grip_l"), *muzzle = marker("socket_muzzle");
     expect(handle && trigger && foreEnd && barrel && stock && firing && support && muzzle,
@@ -409,6 +409,22 @@ void testFR17PhysicalGripOwnership() {
     const auto r = firing->worldPosition, l = support->worldPosition;
     expect(r.x > h[0].x && r.x < h[1].x && r.y > h[0].y && r.y < h[1].y && r.z > h[0].z && r.z < h[1].z,
            "firing anchor is inside the actual pistol handle, independent of socket naming");
+    float handleLeft = 100, handleRight = -100;
+    for (std::size_t i = 0; i + 2 < handle->indices.size(); i += 3) {
+        const auto a = handle->positions[handle->indices[i]],
+                   v = handle->positions[handle->indices[i + 1]] - a,
+                   w = handle->positions[handle->indices[i + 2]] - a;
+        const float denominator = v.y * w.z - w.y * v.z;
+        if (std::abs(denominator) < 1.e-10F) { continue; }
+        const float u = ((r.y - a.y) * w.z - (r.z - a.z) * w.y) / denominator;
+        const float q = (v.y * (r.z - a.z) - v.z * (r.y - a.y)) / denominator;
+        if (u >= 0 && q >= 0 && u + q <= 1) {
+            const float x = a.x + u * v.x + q * w.x;
+            handleLeft = std::min(handleLeft, x); handleRight = std::max(handleRight, x);
+        }
+    }
+    expect(handleLeft < r.x && handleRight > r.x && handleRight - handleLeft < .03F,
+           "firing anchor lies between actual upper pistol-grip side surfaces, not its lower extension or empty bounds");
     expect(t[0].z > r.z && t[0].y > r.y && h[0].y < b[0].y,
            "pistol grip lies below the barrel and behind actual trigger geometry");
     expect(s[1].z < r.z && b[1].z > l.z && l.z > r.z + .15F && b[1].z - l.z > .07F,
