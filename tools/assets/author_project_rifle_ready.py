@@ -313,11 +313,14 @@ require("spine_fk.003" in rig.pose.bones, "Actual chest control absent")
 # measured tick 216 crossed the eye by .0554923m at X=-.11,Z=.21. Shift five
 # centimetres right and four rearward, then solve both real arm chains again.
 # The rearward component avoids relying on a larger lateral extension of .L.
+# At Y=1.54 the real firing hand had 446 horizontally visible vertices but none
+# vertically visible at the unchanged 74-degree FOV. Raise the complete authored
+# weapon seven centimetres; contacts and both arm chains are solved together.
 twist("spine_fk.003", -40)
 retarget_spines()
 if "head" in rig.pose.bones:
     twist("head", 40)
-world_weapon = Matrix.Translation(Vector((-0.16, 1.54, 0.17)))
+world_weapon = Matrix.Translation(Vector((-0.16, 1.61, 0.17)))
 results = {side: arm_constraint(side, world_weapon) for side in ["R", "L"]}
 
 # Reproducible developer finger controls, baked offline. Each curl axis comes
