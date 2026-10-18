@@ -1482,6 +1482,24 @@ void testProjectReadyUsesOneConstrainedPose() {
            "both original palettes are skinned from the common pose");
     expect(arms.animationData->skins[0].joints.size() == 81 && body.animationData->skins[0].joints.size() == 57,
            "optimized input palettes remain independent and unchanged");
+    // Project palms blend several hand/finger bones: no vertex has >.75 weight
+    // on DEF-hand alone (actual maximum is .572). Select the real anatomical
+    // hand subtree by source hierarchy, retaining the .75 total-weight threshold.
+    const auto& handPalette = arms.animationData->skins[0].joints;
+    std::vector<std::array<bool, 2>> handOwnership(handPalette.size());
+    for (std::size_t slot = 0; slot < handPalette.size(); ++slot) {
+        for (std::size_t side = 0; side < 2; ++side) {
+            int cursor = static_cast<int>(slot);
+            for (std::size_t depth = 0; cursor >= 0 && depth < handPalette.size(); ++depth) {
+                const auto& joint = handPalette[static_cast<std::size_t>(cursor)];
+                if (joint.name == (side == 0 ? "DEF-hand.R" : "DEF-hand.L")) {
+                    handOwnership[slot][side] = true;
+                    break;
+                }
+                cursor = joint.parentJointIndex;
+            }
+        }
+    }
     render::MeshCatalog catalog;
     render::Renderer renderer;
     auto resources = registerSceneMeshes(renderer);
@@ -1607,14 +1625,14 @@ void testProjectReadyUsesOneConstrainedPose() {
                 for (std::size_t p = 0; p < arms.primitives.size(); ++p) {
                     const auto& source = arms.primitives[p];
                     if (source.skinIndex < 0) { continue; }
-                    const auto& palette = arms.animationData->skins[source.skinIndex].joints;
                     for (std::size_t v = 0; v < source.positions.size(); ++v) {
-                        bool hand = false;
+                        float handWeight = 0;
                         for (std::size_t slot = 0; slot < 4; ++slot) {
-                            const auto& name = palette[source.joints[v][slot]].name;
-                            hand |= source.weights[v][slot] > .75F && name == (side == 0 ? "DEF-hand.R" : "DEF-hand.L");
+                            if (handOwnership[source.joints[v][slot]][side]) { handWeight += source.weights[v][slot]; }
                         }
-                        if (hand) { skinCenter = skinCenter + animator.skinnedMesh()->primitives[p].positions[v]; ++handVertices; }
+                        if (handWeight > .75F) {
+                            skinCenter = skinCenter + animator.skinnedMesh()->primitives[p].positions[v]; ++handVertices;
+                        }
                     }
                 }
                 expect(handVertices > 0, "actual visible Project hand skin is weighted to its independently selected source bone");
