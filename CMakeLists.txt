@@ -160,6 +160,21 @@ if(NEMISIS_BUILD_PROJECT_FPS_CANDIDATE)
                 "${project_fps_candidate_dir}/arms_runtime.glb" "${project_fps_candidate_dir}/body_runtime.glb"
                 "${project_fps_candidate_dir}/arms_runtime.metadata.json" "${project_fps_candidate_dir}/body_runtime.metadata.json")
     add_dependencies(nemisis_game nemisis_project_fps_candidate)
+    add_custom_command(
+        OUTPUT "${project_fps_candidate_dir}/ready_assets.json"
+               "${project_fps_candidate_dir}/arms_ready.glb" "${project_fps_candidate_dir}/body_ready.glb"
+               "${project_fps_candidate_dir}/rifle_ready.glb"
+               "${project_fps_candidate_dir}/arms_ready.metadata.json" "${project_fps_candidate_dir}/body_ready.metadata.json"
+               "${project_fps_candidate_dir}/rifle_ready.metadata.json"
+        COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tools/assets/cook_project_rifle_ready.py"
+                --candidate-dir "${project_fps_candidate_dir}"
+        DEPENDS nemisis_project_fps_candidate "${project_fps_candidate_dir}/arms_runtime.glb"
+                "${project_fps_candidate_dir}/body_runtime.glb" "${project_fps_candidate_dir}/preview_assets.json"
+                assets/metadata/project_rifle_ready_pose.json tools/assets/cook_project_rifle_ready.py
+                assets/processed/normalized/project_assets/wpn_project_rifle_m4a1.glb
+        VERBATIM)
+    add_custom_target(nemisis_project_rifle_ready DEPENDS "${project_fps_candidate_dir}/ready_assets.json")
+    add_dependencies(nemisis_game nemisis_project_rifle_ready)
     target_compile_definitions(nemisis_game PRIVATE NEMISIS_PROJECT_FPS_PREVIEW=1
         NEMISIS_PROJECT_FPS_BUILD_ROOT="${CMAKE_BINARY_DIR}")
     add_custom_command(TARGET nemisis_game POST_BUILD
@@ -774,6 +789,21 @@ if(NEMISIS_ENABLE_HAND_IK)
         target_link_libraries(${hand_target} PRIVATE nemisis_hand_ik)
         nemisis_copy_ozz_notice(${hand_target})
     endforeach()
+    if(NEMISIS_BUILD_PROJECT_FPS_CANDIDATE)
+        target_link_libraries(nemisis_dev_range_render_scene_tests PRIVATE nemisis_hand_ik)
+        nemisis_copy_ozz_notice(nemisis_dev_range_render_scene_tests)
+        add_dependencies(nemisis_dev_range_render_scene_tests nemisis_project_rifle_ready)
+        add_test(NAME nemisis_project_rifle_ready_tests COMMAND nemisis_dev_range_render_scene_tests --ready-only)
+        add_test(NAME nemisis_project_rifle_ready_smoke
+            COMMAND "${CMAKE_COMMAND}" "-DGAME_EXECUTABLE=$<TARGET_FILE:nemisis_game>"
+                "-DSMOKE_ARGUMENT=--smoke-test;--project-rifle-ready" -DREQUIRE_PROJECT_FPS=ON
+                -DREQUIRE_HAND_IK=ON -DREQUIRE_VULKAN=OFF -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/RunGameSmoke.cmake")
+        set_tests_properties(nemisis_project_rifle_ready_smoke PROPERTIES
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" TIMEOUT 120)
+        add_test(NAME nemisis_project_rifle_ready_cook_tests
+            COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/project_rifle_ready_cook_tests.py"
+                "${project_fps_candidate_dir}")
+    endif()
 
     add_executable(nemisis_player_hand_constraints_tests
         tests/player_hand_constraints_tests.cpp

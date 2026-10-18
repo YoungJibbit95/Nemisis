@@ -16,6 +16,11 @@ No shipping-menu replacement or automatic merge is included in this PR.
 
 ## Exact revisions and review boundary
 
+Game implementation: 2b16367870ae63dc360bfac19046c1f37460c6a9,
+draft https://github.com/YoungJibbit95/Nemisis/pull/28. The branch also integrates
+main f15bc0e after the parallel Ready PR landed; its content is preserved.
+
+
 - Normal game NovaCore pin remains a687c8816fbcc8a7f4d313cf092c6dc17a59f8f7.
 - Optional UI build: fb33cb5502e6a4ea59ddc6183329529f25c0c279, recorded separately
   in cmake/novacore-ui-revision.txt. Engine draft:

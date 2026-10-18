@@ -57,6 +57,7 @@ struct GameAppOptions final {
     int uiPreviewHeight = 720;
     bool firstPersonHandIK = false;
     bool projectFPSPreview = false;
+    bool projectRifleReady = false;
     bool projectFPSLookDown = false;
 };
 
@@ -129,7 +130,6 @@ private:
     player::CharacterAnimationFrame latestCharacterAnimationFrame_;
     player::PlayerSkeletalAnimator skeletalBodyAnimator_;
     player::PlayerSkeletalAnimator skeletalArmsAnimator_;
-    player::PlayerSkeletalAnimator skeletalFPSBodyAnimator_;
     std::optional<dev::FirstPersonPresentation> firstPersonPresentation_;
     std::uint64_t armVertexUpdateCount_ = 0;
     std::uint64_t fpsBodyVertexUpdateCount_ = 0;

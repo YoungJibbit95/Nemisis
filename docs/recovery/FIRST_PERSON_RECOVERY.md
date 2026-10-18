@@ -548,3 +548,132 @@ Status: Technically Integrated (adapter/test boundary only); Animation Complete:
 no; Visually Accepted: no. Next executable step: finish the non-destructive
 Blender Ready source variant, measure actual palm/M4 surfaces, and feed body and
 arms from one logical pose before enabling the armed preview.
+## 2026-10-18 Phase 3: developer Rifle Ready and one logical pose
+
+The opt-in `--project-rifle-ready` mode uses the actual Project arms/body and
+corrected M4A1. It enables the candidate and Project hand constraints together;
+normal gameplay remains on the prior path until visual acceptance. The older
+unarmed `--project-fps-preview` stays available for comparison and still rejects
+its legacy hand-IK combination. The Ready mode is a developer animation slice,
+not the complete Phase 3 combat/locomotion milestone.
+
+`PlayerSkeletalAnimator` owns one NovaCore AnimationRuntime for both optimized
+subsets. It validates common source-node hierarchy, bind matrices and overlapping
+clip keys, merges their channels once, and caches maps to the original 81/57
+skin palettes. `samplePose` advances once; an unconsumed sample cannot advance
+again. The sampled eye drives camera position. The new chest socket then drives
+one rigid Shared Weapon Pose, followed by both Project palm constraints, final
+FK and skinning of each visible subset. `skinPose` consumes the sample once.
+Render-only frames use the cached weapon/mesh snapshot. The hidden full world
+body receives no additional pose or GPU updates.
+
+The authored mount is attached to ORG-spine.003, the measured common ancestor of
+both shoulder branches, also retained in both original skin palettes. Its local
+frame is calibrated in the actual Blender Ready pose. The rigid weapon takes
+its forward and projected up axes from that sampled affine socket; the skeleton
+retains all affine scale/shear for IK/skinning. This avoids both a static world
+mount and hand-to-weapon feedback. Rendering, muzzle and both contact goals use
+exactly the resulting weapon transform and the same world projection as body
+and arms. Camera orientation and authoritative movement/shots remain gameplay
+state; this slice adds no gameplay recoil or root motion.
+
+The new source `assets/metadata/project_rifle_ready_pose.json` contains 72
+Blender-authored rotation tracks, an explicit upper-body rotation mask, physical
+palm surface frames, real M4 surface contacts and the calibrated chest mount.
+The mask includes unchanged rotations in the actual spine/shoulder/twist
+branches: selecting only visibly changed joints allowed unarmed Run helpers to
+leak into the Ready layer. Moving poses keep every original sampled translation
+and nonuniform scale. The Project solver preserves the authored elbow plane
+and all weighted .001 local corrections; its bind plane is only a degenerate-arm
+fallback. The existing proposal and original hand sockets remain available.
+
+The standard-library cook appends `Developer Rifle Ready Idle` and new socket
+nodes/accessors to build-only variants. It preserves old geometry, weights,
+original 81/57 palettes, inverse binds, node transforms and every original clip
+accessor/BIN prefix. No Walk/Run clip is renamed into an armed or directional
+clip. No large new GLB or .blend is committed. Source character and M4 hashes
+are enforced. Finger curl is a reproducible offline developer authoring seed;
+its final contact/trigger/thumb quality still needs artist review.
+
+To reproduce the source, first build the existing FPS candidate, then:
+
+```powershell
+python tools/assets/prepare_project_rifle_authoring.py --candidate-dir build/local-debug-no-deps/project-fps-candidate --output build/ready-authoring/rig.glb
+# Blender 5.1.0, build adfe2921d5f3; run in background, with a writable TEMP/TMP.
+blender --background --factory-startup --offline-mode -noaudio --threads 1 --python-exit-code 1 --python tools/assets/author_project_rifle_ready.py -- --source build/ready-authoring/rig.glb --output build/ready-authoring
+# Review the .blend / source JSON before replacing the checked-in authoring JSON.
+```
+
+The authoring code checks actual rest/pose conversion, local TRS reconstruction
+and unchanged bone translation/scale. CI needs Python only and deterministically
+cooks the reviewed JSON. Blender is neither a runtime dependency nor required
+on hosted CI. Authorship/license: developer pose on the user's original Project
+assets; no external game animations.
+
+Configure the normal pinned-source build with both
+`-DNEMISIS_BUILD_PROJECT_FPS_CANDIDATE=ON -DNEMISIS_ENABLE_HAND_IK=ON` and a usable
+SDL3/Vulkan SDK for graphical review. Launch explicitly with
+`tools/run_project_rifle_ready.ps1 -Executable <absolute-vulkan-exe>`; add
+`-LookDown` for the body check. The launcher reports the exact EXE and SHA256,
+uses this checkout as working directory, and requires the Vulkan backend. It
+was syntax-checked without launching a GUI. An old CLion/start-script EXE does
+not establish validation of this new mode.
+
+Manual visual gate after renewed authorization: inspect Ready from the
+anatomical eye, primary/support wrist and fingers, stock/shoulder placement,
+look-down torso/legs and head clipping, then movement/stop/turn continuity.
+Offline Blender images inspect the authored subset pose only, not game pixels,
+materials, GPU synchronization or full third-person acceptance.
+
+Technically Integrated: developer Ready/shared-pose/contact boundary. Animation
+Complete: NO. Visually Accepted: NO. Original Walk/Run remain the lower-body
+motion beneath a Ready rotation layer; backward/strafe/diagonal clips, a distinct
+Sprint hold, ADS/aim, recoil distribution, reload hand release/magazine handling,
+advanced movement and the corresponding full world-model states are still open.
+Do not remove legacy paths or make this developer slice the default yet.
+
+Next executable step: review the explicit Ready Vulkan build, refine the authored
+finger/stock/shoulder pose, then author and separately validate directional
+lower-body clips and ADS. Keep further work in bounded PRs; no automatic merges.
+Final local Ready evidence (GCC13.2 Release, exact public NovaCore package at the
+pin above): complete build and 45/45 CPU CTest cases pass in 83.19 s. The Ready
+end-to-end test covers 288 fixed ticks across complete Idle/Walk/Run/stop cycles,
+yaw plus body pitch/roll, two render-only submissions per tick, original palette
+sizes, immutable eye/chest mount across hand IK, no A1 fallback, actual M4
+muzzle/contact reconstruction and exactly-once pose consumption. Maximum actual
+Ready world contact error: 0.000979131 m; orientation <=0.5 degrees. Both hands
+intersect the hip camera frustum (106 right / 2275 left weighted vertices); this
+is not a pixel/occlusion check. Shared unarmed poses also match both independently
+skinned original palettes. The separate 24 affine rig cases pass, maximum error
+0.00099753 m. The final 72-track authoring JSON reproduces byte-for-byte under
+Blender 5.1.0/adfe2921d5f3: SHA256
+f6fe115bb008e447ac52fcd9fc40728a8a631062f928e9d54570e0365933ec2b.
+No GPU test or in-game visual acceptance is inferred from these CPU results.
+Published Ready follow-up: https://github.com/YoungJibbit95/Nemisis/pull/23,
+implementation b06ec18, canonical source-newline fix
+12de58466f2c883caae36f1f35a0eda16b009ba4; base is draft #22. No automatic merges.
+
+Subsequent GUI evidence supersedes the earlier pre-GUI status above. The user
+explicitly renewed Phase 3 Ready/Look-down/movement GUI authorization. The
+separate Release Vulkan executable built successfully at
+F:/Coding/Project/recovery/phase3/integration/Nemisis/build/phase3-vulkan/nemisis_game.exe,
+SHA256 4cd67d719e7d2c94bbb3c64534797d94e943d8b8b07957701b8ac0cf65aa7ebc.
+It uses the pinned public engine/SDL3 package and Vulkan SDK 1.4.350.0. The local
+installed-engine export needs its public static SDL3 dependency supplied by the
+build-only graphical-package-dependencies.cmake hint; the normal documented
+pinned-source build does not require that local package hint.
+
+The real NVIDIA GeForce RTX 3070 Ti backend and both Project subsets/new M4
+variant were logged. An actual Ready game image was inspected and saved locally:
+F:/Coding/Project/recovery/phase3/visual/ready_hip_vulkan.jpg. Bent, attached arms
+and the M4 are visible. Finger/trigger/stock/shoulder quality and lateral weapon
+placement remain provisional; this is not visual acceptance. Offline Blender
+previews are a separate reference and use a different projection convention.
+
+The user subsequently stopped Computer Use with the physical Escape key. All
+further GUI input stopped immediately. Look-down and the controlled movement
+comparison were not completed. No post-stop relaunch, GUI action or GPU-smoke
+claim follows from this evidence. Renew explicit GUI permission before resuming.
+Technically Integrated: developer Ready/shared pose/contact only. Animation
+Complete: NO. Visually Accepted: NO. CI status at the published runtime head is
+tracked on PR #23; this final evidence update is documentation only.

@@ -241,8 +241,10 @@ bool buildProjectHandConstraintRig(const animation::Skeleton& skeleton, PlayerHa
         const auto shoulder = animation::findJoint(skeleton, "DEF-upper_arm." + suffix),
                    elbow = animation::findJoint(skeleton, "DEF-forearm." + suffix),
                    wrist = animation::findJoint(skeleton, "DEF-hand." + suffix);
-        const auto socket =
-            animation::findSocket(skeleton, side == 0 ? "socket_palm_r_proposal" : "socket_palm_l_proposal");
+        auto socket = animation::findSocket(skeleton, side == 0 ? "socket_palm_r" : "socket_palm_l");
+        if (!socket) {
+            socket = animation::findSocket(skeleton, side == 0 ? "socket_palm_r_proposal" : "socket_palm_l_proposal");
+        }
         if (!shoulder || !elbow || !wrist || !socket) {
             return false;
         }
@@ -320,6 +322,22 @@ PlayerHandConstraintResult applyProjectHandConstraints(const PlayerHandConstrain
             return invalid();
         }
         const auto target = animation::matrixTranslation(modelGrip);
+        // Preserve the authored elbow plane. The bind calibration is only a
+        // fallback for a straight/degenerate base arm, never a T-pose override.
+        const auto startPosition = animation::matrixTranslation(baseGlobal.joints[a.shoulder]);
+        const auto elbowPosition = animation::matrixTranslation(baseGlobal.joints[a.elbow]);
+        const auto wristPosition = animation::matrixTranslation(baseGlobal.joints[a.wrist]);
+        math::Vec3 direction, authoredPole;
+        const auto parent = skeleton.joints[a.shoulder].parent;
+        if (!unit(wristPosition - startPosition, direction) ||
+            !unit((elbowPosition - startPosition) - direction * dot(elbowPosition - startPosition, direction),
+                  authoredPole)) {
+            if (parent < 0 ||
+                !unit(animation::transformDirection(baseGlobal.joints[static_cast<std::size_t>(parent)], a.poleParent),
+                      authoredPole)) {
+                return invalid();
+            }
+        }
         auto bestLocal = outLocal;
         auto bestGlobal = outGlobal;
         double bestScore = 1.e30;
@@ -335,7 +353,7 @@ PlayerHandConstraintResult applyProjectHandConstraints(const PlayerHandConstrain
             if (!affineInverse(mid, invMid)) {
                 return invalid();
             }
-            math::Vec3 axis, pole;
+            math::Vec3 axis;
             if (!unit(cross(animation::transformPoint(invMid, animation::matrixTranslation(start)),
                             animation::transformPoint(invMid, animation::matrixTranslation(outGlobal.joints[a.wrist]))),
                       axis)) {
@@ -343,12 +361,6 @@ PlayerHandConstraintResult applyProjectHandConstraints(const PlayerHandConstrain
             }
             if (dot(axis, a.bendAxisMid) < 0) {
                 axis = axis * -1.0F;
-            }
-            const auto parent = skeleton.joints[a.shoulder].parent;
-            if (parent < 0 ||
-                !unit(animation::transformDirection(outGlobal.joints[static_cast<std::size_t>(parent)], a.poleParent),
-                      pole)) {
-                return invalid();
             }
             const auto goal = target - offset;
             const auto m0 = toOzz(start), m1 = toOzz(mid), m2 = toOzz(outGlobal.joints[a.wrist]);
@@ -359,7 +371,7 @@ PlayerHandConstraintResult applyProjectHandConstraints(const PlayerHandConstrain
             job.end_joint = &m2;
             job.target = ozz::math::simd_float4::Load(goal.x, goal.y, goal.z, 0);
             job.mid_axis = ozz::math::simd_float4::Load(axis.x, axis.y, axis.z, 0);
-            job.pole_vector = ozz::math::simd_float4::Load(pole.x, pole.y, pole.z, 0);
+            job.pole_vector = ozz::math::simd_float4::Load(authoredPole.x, authoredPole.y, authoredPole.z, 0);
             job.start_joint_correction = &q0;
             job.mid_joint_correction = &q1;
             if (!job.Run()) {
