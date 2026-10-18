@@ -1,5 +1,25 @@
 # Recovery progress
 
+## 2026-10-19 Combined CPU gate and camera-roll continuity followup
+
+- Exact game `ff539763302683212406a8b38bad751394cb3faf` with public engine
+  `cca45a41aded8b13171943553e27f85071c76ed3`, RmlUi/IK/Project/Jolt ON:
+  complete Release build and all 48 CPU tests pass in 102.17s. This includes
+  actual FR17/Glock geometry, Ready source skin, real GameApp physics boot,
+  original movement/network/weapon tests and native UI documents. Engine #19
+  has four green hosted jobs (standard/Jolt, MSVC/Clang). No graphical run.
+- Independent review then found the FPS body still used positive camera roll
+  while arms/eye/IK used negative roll. Commit `34930ca` reuses the same existing
+  Project root for all subsets; legacy world-body behavior remains unchanged.
+  The new 288-pose regression varies camera roll through both signs and checks
+  all matrix elements. Old code fails 574 checks; fixed code passes both scene
+  suites (2/2,9.14s), retaining 1mm contact and anatomical hand/frustum tests.
+- Last measured rolled sample: maximum contact .00099167m, minimum physical
+  camera-right margin +.0103469m,158/2275 actual R/L hand-frustum vertices.
+  Full followup build/tests and separate Vulkan game build are in progress.
+  Shutdown now logs actual shadow readiness/resolution/caster counts for future
+  authorized captures, without treating counters as visual/GPU acceptance.
+
 ## 2026-10-19 Directional-shadow game preview
 
 - `--directional-shadows` enters the existing Dev Range with real R2 enabled;

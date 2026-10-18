@@ -260,6 +260,14 @@ void GameApp::onShutdown() {
         std::to_string(renderer_.backendFrameStats().lastUiGeometryDrawCount));
     uiShowcase_.reset();
 #endif
+    if (options_.directionalShadows || renderTuning_.directionalShadows.enabled) {
+        const auto stats = renderer_.backendFrameStats();
+        novacore::core::logInfo("game", "Directional shadow preview: ready=" +
+            std::to_string(stats.directionalShadowsReady) + " resolution=" +
+            std::to_string(stats.directionalShadowResolution) + " caster_draws=" +
+            std::to_string(stats.lastDirectionalShadowCasterDrawCount) + " skinned_caster_draws=" +
+            std::to_string(stats.lastDirectionalShadowDynamicCasterDrawCount));
+    }
     if (physicsProps_) {
         novacore::core::logInfo("game", "Dev Range rigid-body fixture: ticks=" +
             std::to_string(physicsProps_->tickCount()) + " dynamic_props=6");
