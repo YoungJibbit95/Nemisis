@@ -862,3 +862,29 @@ MSVC/Clang CI are pending integration at this commit. No GUI was launched.
 F01-F03 remain art direction: actual right trigger hand, left front support,
 natural wrists/fingers, clear center and readable ADS. Vulkan visual acceptance,
 camera chirality/composition and performance remain open after the Escape stop.
+
+### Phase 5 camera/presentation pairing, 2026-10-19
+
+The renderer audit confirmed that the former camera reflected actual source
+chirality. Engine Draft #16 `f4d7c99b0c522ae872ae05a6eb42818629b16607`
+changes the view/projection to proper RH rotations while retaining gameplay
+forward. This game counterpart preserves human-right look/strafe, uses proper
+camera-relative artistic offsets, negates camera roll for mesh rotation and
+keeps authored socket coordinates in the actual asset basis. View-relative
+camera sway/roll follows the same input semantics at every heading.
+
+The existing Blender authoring tool restores Ready X=-.11m and solves the actual
+deform chains again. Blender wrist errors: R=.0000246802m, L=.0000003054m;
+maximum original local-translation delta .0000008204m, scale delta .0000015232.
+Source pose SHA256 `f6fe115bb008e447ac52fcd9fc40728a8a631062f928e9d54570e0365933ec2b`.
+This removes the W1 screen-side compensation without changing source geometry,
+weights, bone identity, weapon sockets or runtime asset axes. Finger polish and
+class-specific armed clips remain open.
+
+Standalone GCC13.2 tests pass for PlayerView, CameraRig and FirstPersonRig against
+the public R1 headers/library. The attachment regression covers81 yaw/pitch/roll
+combinations, verifies proper determinant and distinct camera/asset X, and keeps
+right/left semantic arm proxies consistent. Old +cameraRoll mesh expectations
+are replaced by -cameraRoll expectations at the same tolerance. Full integration,
+hosted MSVC/Clang and Vulkan visual review remain pending at this source checkpoint.
+No GUI launched and the default launch path was not changed.

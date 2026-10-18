@@ -1,5 +1,20 @@
 # Recovery progress
 
+## 2026-10-19 Phase 5 camera/presentation source checkpoint
+
+- Pair with engine f4d7c99b0c522ae872ae05a6eb42818629b16607, Draft #16 on #15.
+  Renderer audit confirmed the old camera reflected the actual glTF anatomy.
+  This source preserves positive human-right input while using proper camera
+  right/up/forward artistic offsets and separate asset-local socket transforms.
+  No source mirror, L/R exchange, movement-policy or command-wire change.
+- Restored the offline Ready mount X=-.11m and re-solved actual .R firing/.L
+  support arms. Blender residuals24.7um/.31um; original local T/S preserved
+  within8.3e-7m/1.6e-6. Pose JSON SHA256 f6fe115bb008e447ac52fcd9fc40728a8a631062f928e9d54570e0365933ec2b.
+- Standalone GCC13.2 PlayerView, CameraRig and FirstPersonRig tests pass,
+  including81 yaw/pitch/roll attachment cases and human-right input/sway checks.
+  Full cross-repo build/tests and MSVC/Clang CI remain pending at this checkpoint.
+  Integration lead owns pin migration; no GUI launch or default-path change.
+
 ## 2026-10-18 Phase 5 FP-1 implementation checkpoint
 
 - Isolated branch starts at game2264e27 (#27); engine pin3d673b7 unchanged.

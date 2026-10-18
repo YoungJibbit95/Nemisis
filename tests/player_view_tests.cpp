@@ -27,7 +27,7 @@ void testApplyLookWrapsYawAndClampsPitch() {
 
     nemisis::player::applyLook(view, novacore::math::Vec2{190.0F, 120.0F});
 
-    expectNear(view.yawDegrees, -170.0F, 0.001F, "yaw wraps into signed range");
+    expectNear(view.yawDegrees, 170.0F, 0.001F, "positive human-right look wraps clockwise world yaw into signed range");
     expectNear(view.pitchDegrees, 89.0F, 0.001F, "pitch clamps upward");
 
     nemisis::player::applyLook(view, novacore::math::Vec2{0.0F, -220.0F});
@@ -42,7 +42,7 @@ void testViewVectorsUseYaw() {
 
     expect(vectors.horizontalForward.x > 0.99F, "90 degree yaw forward points along x");
     expect(std::abs(vectors.horizontalForward.z) < 0.01F, "90 degree yaw forward has near-zero z");
-    expect(vectors.horizontalRight.z < -0.99F, "90 degree yaw right points negative z");
+    expect(vectors.horizontalRight.z > 0.99F, "proper camera right at 90 degree world yaw points positive z");
 }
 
 void testCommandMovesRelativeToView() {
@@ -58,12 +58,39 @@ void testCommandMovesRelativeToView() {
     expect(std::abs(transformed.move.y) < 0.01F, "forward input loses world z at 90 degree yaw");
 }
 
+void testHumanRightMatchesProperCameraAtEveryYaw() {
+    using namespace nemisis::player;
+    const auto dot = [](novacore::math::Vec3 a, novacore::math::Vec3 b) {
+        return a.x * b.x + a.y * b.y + a.z * b.z;
+    };
+    for (float yaw : {-179.F, -90.F, -37.F, 0.F, 48.F, 90.F, 179.F}) {
+        PlayerViewComponent view{yaw, 25};
+        const auto before = viewVectors(view);
+        const auto f = before.horizontalForward;
+        expectNear(before.horizontalRight.x, -f.z, .00001F, "camera right equals forward cross world-up X");
+        expectNear(before.horizontalRight.z, f.x, .00001F, "camera right equals forward cross world-up Z");
+        PlayerInputCommand rightInput; rightInput.move = {1, 0}; rightInput.look = {2, 0};
+        const auto worldRight = commandRelativeToView(rightInput, view);
+        expect(dot({worldRight.move.x, 0, worldRight.move.y}, before.horizontalRight) > .999F,
+               "positive right strafe moves along the proper rendered camera right");
+        expect(worldRight.look.x == rightInput.look.x, "wire input retains positive human-right look semantics");
+        applyLook(view, rightInput.look);
+        expect(dot(viewVectors(view).horizontalForward, before.horizontalRight) > .03F,
+               "positive human-right look turns toward the same side as positive right strafe");
+        PlayerInputCommand forwardInput; forwardInput.move = {0, 1};
+        const auto worldForward = commandRelativeToView(forwardInput, PlayerViewComponent{yaw, -80});
+        expect(dot({worldForward.move.x, 0, worldForward.move.y}, before.horizontalForward) > .999F,
+               "world forward/yaw and horizontal movement remain independent of pitch");
+    }
+}
+
 } // namespace
 
 int main() {
     testApplyLookWrapsYawAndClampsPitch();
     testViewVectorsUseYaw();
     testCommandMovesRelativeToView();
+    testHumanRightMatchesProperCameraAtEveryYaw();
 
     if (failures > 0) {
         std::cerr << failures << " player view test(s) failed\n";

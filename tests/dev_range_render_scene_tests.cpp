@@ -323,7 +323,7 @@ void testDevRangeRenderSceneBuildsExpectedSubmissions() {
     if (firstPersonRifle.has_value()) {
         expect(firstPersonRifle->position.z > player.position.z + 0.45F, "first-person rifle sits in front of the camera");
         expect(firstPersonRifle->yawDegrees > 31.0F && firstPersonRifle->yawDegrees < 33.0F, "first-person rifle uses normalized Project asset forward axis");
-        expect(std::abs(firstPersonRifle->rollDegrees - player.cameraRollDegrees) < 5.0F,
+        expect(std::abs(firstPersonRifle->rollDegrees + player.cameraRollDegrees) < 5.0F,
                "rifle stays upright relative to the rolled camera without legacy import correction");
         expect(firstPersonRifle->scale.x > 0.9F && firstPersonRifle->scale.x < 1.1F, "first-person rifle uses normalized Project asset scale");
         expect(firstPersonRifle->material.specularScale > 1.30F, "first-person rifle uses a weapon material fallback profile");
@@ -401,10 +401,10 @@ void testDevRangeRenderSceneViewmodelFollowsCameraAngles() {
     if (weapon.has_value() && arms.has_value()) {
         expect(std::abs(weapon->yawDegrees - 47.0F) < 0.01F, "weapon mesh follows camera yaw");
         expect(std::abs(weapon->pitchDegrees + 28.0F) < 0.01F, "weapon mesh converts camera pitch to renderer pitch");
-        expect(std::abs(weapon->rollDegrees - 13.0F) < 0.01F, "weapon mesh follows camera roll");
+        expect(std::abs(weapon->rollDegrees + 13.0F) < 0.01F, "proper mesh roll uses the opposite sign to camera roll");
         expect(std::abs(arms->yawDegrees - 47.0F) < 0.01F, "arms mesh follows camera yaw");
         expect(std::abs(arms->pitchDegrees + 28.0F) < 0.01F, "arms mesh converts camera pitch to renderer pitch");
-        expect(std::abs(arms->rollDegrees - 13.0F) < 0.01F, "arms mesh follows camera roll");
+        expect(std::abs(arms->rollDegrees + 13.0F) < 0.01F, "proper arms mesh roll uses the opposite sign to camera roll");
     }
 }
 
@@ -1569,7 +1569,7 @@ void testProjectReadyUsesOneConstrainedPose() {
             // Semantic right-hand contract: camera-relative side, real firing
             // grip and original .R/.L anatomy. No fixed screenshot pixel oracle.
             const float yaw = desc.player.cameraView.yawDegrees * (3.14159265358979323846F / 180.F);
-            const math::Vec3 cameraRight{std::cos(yaw), 0, -std::sin(yaw)};
+            const math::Vec3 cameraRight{-std::cos(yaw), 0, std::sin(yaw)};
             const auto firingOffset = animation::matrixTranslation(targets.rightGripWorld) - desc.player.cameraPosition;
             const auto dot = [](math::Vec3 a, math::Vec3 b) { return a.x * b.x + a.y * b.y + a.z * b.z; };
             expect(dot(firingOffset, cameraRight) > 0,

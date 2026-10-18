@@ -167,8 +167,8 @@ void testReloadFireAndWallrunDriveSocketTransforms() {
 
     expect(frame.reloadArc > 0.95F, "half reload produces full reload arc");
     expect(frame.weapon.pitchDegrees > 7.0F, "reload and recoil pitch weapon through the rig socket");
-    expectNear(frame.weapon.rollDegrees, 1.0F, 0.01F, "weapon keeps full camera roll while applying its reload arc");
-    expectNear(frame.arms.rollDegrees, 2.0F, 0.01F, "arms keep full camera roll while applying animation and reload arcs");
+    expectNear(frame.weapon.rollDegrees, -19.0F, 0.01F, "proper weapon mesh negates camera roll before authored reload arc");
+    expectNear(frame.arms.rollDegrees, -18.0F, 0.01F, "proper arms mesh negates camera roll before animation and reload arcs");
     expectNear(frame.wallRunRollDegrees, 10.0F, 0.01F, "wallrun roll diagnostic matches the camera roll");
     expect(frame.supportElbow.position.y < frame.leftHand.position.y, "support elbow stays below the support hand");
 }
@@ -224,7 +224,7 @@ void testCameraBasisDrivesWeaponSocketsAndHands() {
 
     expectNear(frame.weapon.yawDegrees, 33.0F, 0.01F, "weapon yaw follows camera yaw");
     expectNear(frame.weapon.pitchDegrees, -22.0F, 0.01F, "mesh pitch uses the renderer sign needed to follow camera pitch");
-    expectNear(frame.weapon.rollDegrees, -14.0F, 0.01F, "weapon roll follows camera roll");
+    expectNear(frame.weapon.rollDegrees, 14.0F, 0.01F, "proper mesh roll uses the opposite sign to camera roll");
     expectVecNear(muzzle.worldPosition - weaponRoot.worldPosition, expectedForward, 0.0001F, "muzzle follows the same camera basis as the weapon mesh");
     expectVecNear(frame.rightHand.position, rightGrip.worldPosition, 0.0001F, "right hand remains on the firing grip");
     expectVecNear(frame.leftHand.position, leftGrip.worldPosition, 0.0001F, "left hand remains on the support grip");
@@ -259,6 +259,46 @@ void testRigSocketsExposeCameraHandsAndWeaponAttachments() {
     expect(std::abs(adsWeapon.worldPosition.x) < std::abs(weapon.worldPosition.x), "ADS moves weapon socket toward the sightline");
 }
 
+void testProperCameraOffsetsPreserveActualAssetBasis() {
+    using namespace nemisis::player;
+    using novacore::math::Vec3;
+    const auto dot = [](Vec3 a, Vec3 b) { return a.x * b.x + a.y * b.y + a.z * b.z; };
+    const auto cross = [](Vec3 a, Vec3 b) {
+        return Vec3{a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x};
+    };
+    constexpr float radians = 3.14159265358979323846F / 180;
+    for (float yaw : {-130.F, 0.F, 67.F}) for (float pitch : {-70.F, 0.F, 60.F}) for (float roll : {-35.F, 0.F, 28.F}) {
+        auto input = baseInput(); input.animation = {};
+        input.view = {yaw, pitch}; input.cameraRollDegrees = roll;
+        const float y = yaw * radians, p = pitch * radians, r = roll * radians;
+        const Vec3 forward{std::sin(y) * std::cos(p), std::sin(p), std::cos(y) * std::cos(p)};
+        const Vec3 right0{-std::cos(y), 0, std::sin(y)};
+        const Vec3 up0{-std::sin(y) * std::sin(p), std::cos(p), -std::cos(y) * std::sin(p)};
+        const auto right = right0 * std::cos(r) + up0 * std::sin(r);
+        const auto up = up0 * std::cos(r) - right0 * std::sin(r);
+        const auto frame = evaluateFirstPersonRig(input);
+        const auto offset = input.weaponMount.hipOffset;
+        expectVecNear(frame.weapon.position, input.cameraPosition + right * offset.x + up * offset.y + forward * offset.z,
+                      .00001F, "artistic +X mount offsets follow proper camera-right through yaw/pitch/roll");
+        const auto matrix = firstPersonAttachmentMatrix(frame.weapon);
+        const auto modelX = novacore::animation::transformDirection(matrix, {1, 0, 0});
+        const auto modelY = novacore::animation::transformDirection(matrix, {0, 1, 0});
+        const auto modelZ = novacore::animation::transformDirection(matrix, {0, 0, 1});
+        expectVecNear(modelX, right * -1, .00001F, "actual asset +X remains opposite camera-right rather than reflected");
+        expectVecNear(modelY, up, .00001F, "proper asset up follows camera up");
+        expectVecNear(modelZ, forward, .00001F, "proper asset forward follows gameplay forward");
+        expect(dot(cross(modelX, modelY), modelZ) > .9999F, "rendered attachment remains a proper positive-determinant rotation");
+        const auto socket = input.weaponSockets.rightGrip;
+        expectVecNear(frame.rightHand.position,
+                      frame.weapon.position + modelX * socket.x + modelY * socket.y + modelZ * socket.z,
+                      .00001F, "authored firing socket uses asset-local X, never camera-relative X");
+        const auto& rightArm = firstPersonRigJoint(frame, FirstPersonRigJoint::RightClavicle);
+        const auto& leftArm = firstPersonRigJoint(frame, FirstPersonRigJoint::LeftClavicle);
+        expect(dot(rightArm.worldPosition - leftArm.worldPosition, right) > .30F,
+               "semantic proxy right clavicle stays camera-right of left while real asset geometry stays proper");
+    }
+}
+
 } // namespace
 
 int main() {
@@ -269,6 +309,7 @@ int main() {
     testSidearmUsesShorterMuzzleAndUprightRoll();
     testCameraBasisDrivesWeaponSocketsAndHands();
     testRigSocketsExposeCameraHandsAndWeaponAttachments();
+    testProperCameraOffsetsPreserveActualAssetBasis();
 
     if (failures > 0) {
         std::cerr << failures << " first-person rig test(s) failed\n";
