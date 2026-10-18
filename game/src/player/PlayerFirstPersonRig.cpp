@@ -480,6 +480,18 @@ const FirstPersonRigSocketPose& firstPersonRigSocket(
         kFirstPersonRigSocketCount - 1U)];
 }
 
+novacore::animation::Mat4 firstPersonAttachmentMatrix(const FirstPersonRigAttachment& attachment) {
+    const float yaw = degreesToRadians(attachment.yawDegrees) * 0.5F;
+    const float pitch = degreesToRadians(attachment.pitchDegrees) * 0.5F;
+    const float roll = degreesToRadians(attachment.rollDegrees) * 0.5F;
+    const auto rotation = novacore::animation::multiply(
+        novacore::math::Quat{0.0F, std::sin(yaw), 0.0F, std::cos(yaw)},
+        novacore::animation::multiply(
+            novacore::math::Quat{std::sin(pitch), 0.0F, 0.0F, std::cos(pitch)},
+            novacore::math::Quat{0.0F, 0.0F, std::sin(roll), std::cos(roll)}));
+    return novacore::animation::matrixFromTransform({attachment.position, rotation, attachment.scale});
+}
+
 FirstPersonRigFrame evaluateFirstPersonRig(const FirstPersonRigInput& input) {
     FirstPersonRigFrame frame{};
     const auto& animation = input.animation;

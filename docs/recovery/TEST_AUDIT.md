@@ -174,3 +174,11 @@ functions (179 after Phase1 plus2), unchanged registrations. Existing submission
 counts intentionally drop proxy boxes when actual arms exist. The reconstructed
 grip test explicitly enables diagnostic proxies; it checks target transforms,
 not anatomical contact by skinned hands. All original functions remain.
+
+Phase 2B shared-pose extraction adds two CONTRACT/INTEGRATION functions in the
+existing scene suite. Actual M4 markers and independently reconstructed render
+matrices cover hip, ADS, combined camera/recoil/reload/procedural input, cached
+loadout ownership, one arms submission and authored/invalid grip orientation.
+All previous functions/assertions remain. Missing-primary/fallback accounting is
+preserved as well as geometry. Registrations remain 34 standard CPU cases, 35
+with the optional ozz probe; no GPU acceptance follows from these assertions.

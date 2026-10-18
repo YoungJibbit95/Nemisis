@@ -115,6 +115,7 @@ private:
     player::CharacterAnimationFrame latestCharacterAnimationFrame_;
     player::PlayerSkeletalAnimator skeletalBodyAnimator_;
     player::PlayerSkeletalAnimator skeletalArmsAnimator_;
+    std::optional<dev::FirstPersonPresentation> firstPersonPresentation_;
     player::CameraRigState cameraRig_;
     player::AccountStats accountStats_ = player::prototypeAccountStats();
     novacore::ecs::EntityId localPlayerEntity_;

@@ -1,5 +1,37 @@
 # Recovery progress
 
+## 2026-10-18 Phase 2B shared presentation pose
+
+- Rechecked engine #10 e22d39708f09a80472c185ab52cc59b90a3f8c14 and game #12
+  ab63baa72bf145798e2f7177a5666da8cc0519e3, #13
+  8ba69f7a79dc087d3d829e7d83713ae0a3cdbf86, #14
+  eab9c3966899f19f5f38388b5eaff89ac28c5faa: all OPEN, MSVC/Clang green;
+  #13/#14 draft, #14 bases on #12. No PR/main merges or old-worktree edits.
+- New frozen integration branch recovery/phase2b-integration at
+  5baab6137dc5e0a3a81a2b0e9ec62ac4f8a78fa0 combines those exact game heads
+  without conflicts (intermediate geometry merge retained in Git history).
+  Fresh complete GCC13.2/Ninja build and 35/35 CPU cases pass, including real
+  headless boot and ozz probe; 38 registered, three GPU-labelled cases excluded.
+  NovaCore rerun: 5/5. Game built against detached exact engine pin
+  15c1b684a430bb70235ea9407f78106d958812b6; engine #10's later change is docs only.
+- PR A branch recovery/08-shared-weapon-pose bases on that integration, not main.
+  Final weapon/muzzle/grip pose now has one pure evaluation and a fixed-tick
+  cached owner. Renderer consumes its selected asset and instance unchanged;
+  marker orientation is included. Camera is fixed-tick, with no interpolation.
+  No extra animation advance, skinning or upload was introduced. Reset clears
+  the snapshot; a loadout changed between ticks cannot change its weapon mesh.
+- Legacy whole-arms averaging remains the baseline in this behavior-preserving
+  extraction. Real M4 hip/ADS/combined camera/recoil and authored orientation
+  tests cover the shared renderer/constraint input. Visual gate remains OPEN;
+  no GUI launch, control or GPU-image claim is authorized by this work.
+- Post-extraction complete local build and 35/35 CPU cases pass; focused real
+  asset/shared pose suite passes. The missing-handle regression caught during
+  extraction was corrected without weakening its existing assertion.
+
+Next: publish/validate PR A, then stack production hand constraints after NovaCore
+sampling and before its single skinning/upload. Bypass legacy averaging only in
+the opt-in IK path; keep default off until manual/authorized GPU acceptance.
+
 ## 2026-10-18 Phase 2 selected character and authored hierarchy integration
 
 - GitHub rechecked: engine #9 merged, main a727930; game #10/#11 merged, main
