@@ -1,289 +1,102 @@
 # AGENTS.md
 
-## Primary Directive
+Nemisis is the game built on NovaCore. The immediate milestone is one complete
+server-authoritative two-player match: one arena, a primary and sidearm, movement,
+damage/death/respawn, score/timer/end, minimal HUD, and basic audio/hit feedback.
+Defer matchmaking, accounts, progression, extra modes/maps/rosters, broad frontend
+work, new renderer technology, and speculative multiplayer optimization.
+Existing features need not be deleted, but must not expand the shipping path.
 
-Nemisis is the game built on NovaCore.
+## Ownership
 
-Work implementation-first. Maximize useful game code, assets, tests, validation, and playable progress per session. Minimize conversational output.
+Dependency direction is always `Nemisis -> NovaCore`. Use only public NovaCore
+headers/targets. Do not copy engine internals, fork the engine inside the game,
+or include private headers. Keep engine changes separate and record dependencies.
 
-Spend tokens in this order:
+NovaCore owns reusable runtime, rendering, import, ECS, physics/KCC mechanics,
+animation runtime, networking primitives, and headless support. Nemisis owns
+movement policy/feel, weapon/damage/TTK, teams/matches/spawns, gameplay UI, maps,
+asset mounts, input tuning, and game presentation choices.
 
-1. Inspect existing code and assets.
-2. Modify or add code/assets/data.
-3. Build and run relevant tests or playable validation.
-4. Fix failures.
-5. Update documentation only when needed.
-6. Report briefly.
+Reduce GameApp toward lifecycle/composition by incremental extraction. Keep Dev
+Range drills, telemetry, KCC visualization, showcases, and performance overlays
+separate from match simulation/rendering and HUD. Preserve useful developer tools
+without introducing a new debug framework.
 
-Do not spend tokens on obvious explanations, repeated summaries, tutorials, or speculative architecture discussion unless explicitly requested.
+## Contracts to preserve
 
-## Agent Operating Mode
+* Deterministic fixed-tick movement, input edge retention, replay coverage,
+  grounding/jump-buffer/mantle/collision fixes, and working movement mechanics.
+  Keep camera/animation/visual cues separate from authoritative physics state.
+  Do not expand abilities during recovery.
+* Weapon definitions separate from runtime state; preserve ammo, reload, cadence,
+  recoil/spread, ADS, damage, and feedback. Clients never decide authoritative
+  damage, hits, score, spawns, objectives, or match results.
+* Serialization/sequence, entity lifetime, existing prediction/reconciliation,
+  and headless/dedicated-server contracts.
+* Stable asset IDs/handles through the engine registry/import/resource path.
+  Separate source/cooked/metadata, CPU assets, and GPU resources. Never load
+  `.blend` at runtime or silently ignore invalid required metadata/assets.
+* Canonicalize coordinates exactly once offline. Runtime mounts use sockets and
+  artistic poses, not per-asset axis repairs. Verify one representative weapon's
+  view, ADS, muzzle/grips, scale, and animation before removing old fixes.
+* Keep gameplay-driven HUD separate from developer overlays. Frontend work must
+  serve the two-player match rather than expand placeholder screens.
 
-Primary behavior: produce a large, coherent implementation patch per task while keeping chat minimal.
+Record the exact NovaCore revision for every integration validation. Use playable
+validation for visible changes before claiming success. Do not migrate/delete
+large source assets or rewrite their Git history implicitly.
+## Recovery workflow
 
-Hard rules:
+Prioritize stability, simplification, playability, and shipping. Prefer small to
+medium, coherent, validated changes with one responsibility per PR. Simplifying
+code and deleting unnecessary complexity are valuable outcomes. Historical
+feature lists are reference, not the active backlog.
 
-* Spend most context on repository inspection, code edits, tests, and fixes.
-* Do not stop after a small cleanup unless the user explicitly requested a small cleanup.
-* Do not choose the smallest safe slice by default.
-* If the task is broad, implement the largest coherent slice that can be safely built and tested in the session.
-* Prefer 5-15 meaningful file edits over 1-3 tiny edits when the task scope allows it.
-* Prefer complete gameplay/render/UI/asset systems over cosmetic cleanup.
-* Remove dead code only when it is part of enabling a larger feature or requested directly.
-* Do not add filler, dead code, duplicate systems, artificial abstractions, or line-count padding.
-* Do not optimize for raw line count. Optimize for meaningful shipped functionality.
-* Do not narrate routine edits.
-* Do not summarize every file after changing it.
-* Stay quiet during work unless blocked, a command fails, or user input is required.
+At every session start check Git status, branches/remotes, open PRs, and
+`docs/recovery/PROGRESS.md` plus `ROADMAP.md` when present. Preserve uncommitted
+user changes and isolate work in a separate worktree when needed.
 
-At task start, output at most 2 short bullets:
-* implementation target
-* expected validation
+* Preserve behavior during refactoring; avoid full rewrites.
+* Reuse existing structures before adding files/classes or interfaces.
+* Add abstractions only for real, current ownership boundaries. Do not create
+  managers, registries, frameworks, service locators, event buses, or generic
+  interfaces for one-off problems.
+* Add features only for a current product need or concrete stability blocker.
+* After implementation, search for obsolete code, duplicate paths, workarounds,
+  tests, and documentation. Verify replacements before removing old behavior.
+* Do not combine broad renderer, KCC, networking, assets, and gameplay changes.
+* Give concise progress updates for meaningful findings; keep routine edits quiet.
 
-During work:
-* continue implementing until the largest coherent slice is complete
-* when one file is changed, immediately inspect adjacent systems and finish the connected feature path
-* do not stop at cleanup if a playable/rendered/testable improvement is possible
-* run build/tests, fix failures, and keep going if time/context remains
+## Validation and Git discipline
 
-Final response must be short and contain only:
-* files changed
-* build/test/playable validation commands run
-* result
-* real blockers or skipped validation, if any
-
-## Work Output Standard
-
-A successful session should usually produce one substantial outcome, such as:
-
-* a playable Dev Range improvement
-* a complete movement mechanic slice
-* a complete weapon/HUD interaction slice
-* a renderable asset or scene pipeline improvement
-* a test-covered gameplay system
-* a real UI/settings/loadout flow
-* a bug fix plus regression test plus cleanup of the affected path
-
-Avoid ending a session with only:
-
-* dead-code deletion
-* comment/doc edits
-* tiny cosmetic changes
-* one isolated helper function
-* refactors that do not unlock visible or testable behavior
-
-Small patches are acceptable only when the user explicitly asks for a small fix or the repository state makes a larger safe change impossible.
-
-## Silence Policy
-
-During implementation, do not send status updates.
-
-Allowed messages:
-1. One initial message before tool use, maximum one sentence.
-2. One blocking message if user input is required.
-3. One final report after build/test.
-
-Forbidden during implementation:
-* "I am checking..."
-* "I will now..."
-* "Next I will..."
-* "I found..."
-* "I am going to..."
-* progress summaries
-* per-file summaries
-* reasoning updates
-* Kanban/GitHub/project-board narration
-* repeated validation plans
-
-Use tool calls silently instead of describing tool calls.
-
-## Repository Boundary
-
-Nemisis may depend on NovaCore public headers and targets.
-
-Dependency direction is always:
-
-```text
-Nemisis -> NovaCore
-```
-
-Rules:
-
-* Do not copy NovaCore internals into Nemisis.
-* Do not create engine forks inside the game repository.
-* Do not include NovaCore private headers.
-* Do not implement reusable engine technology in Nemisis if it belongs in NovaCore.
-* Game-specific content, tuning, UI screens, weapons, levels, movement feel, match rules, and assets belong in Nemisis.
-
-When an engine change is required, keep the Nemisis-side work clean and clearly separate from NovaCore changes.
-
-## Product Quality Bar
-
-Nemisis targets a long-term high-quality FPS experience in graphics, technical reliability, performance, movement feel, gunplay, UI, assets, audio, and multiplayer foundations.
-
-Treat this as an engineering standard:
-
-* build durable game systems instead of throwaway prototypes
-* keep gameplay aligned with NovaCore architecture
-* make visible features feed real game systems, not isolated demos
-* prefer coherent feature slices over scattered cosmetic patches
-* keep player-facing progress playable whenever practical
-* avoid hacks that block future networking, prediction, replay, animation, or asset-pipeline work
-
-## Highest-Value Gameplay Priorities
-
-Prefer work that advances playable Nemisis directly:
-
-1. Playable Vulkan Dev Range.
-2. First-person camera, arms, weapon hold, ADS, recoil, sway, and HUD.
-3. Deterministic movement: sprint, slide, wallrun, mantle, double jump, crouch, and air control.
-4. KCC integration with NovaCore physics.
-5. Weapon data, attachments, hit feedback, TTK tests, and range drills.
-6. Multiplayer-ready input commands, prediction hooks, reconciliation hooks, and server validation hooks.
-7. Menu, settings, loadout, character, account, and debug UI inside `nemisis_game`.
-8. Asset pipeline from Blender/source data to cooked glTF/GLB and runtime handles.
-9. Playable greybox scenes that validate movement, weapons, UI, assets, and renderer integration.
-
-Avoid spending long sessions on infrastructure that does not improve playable validation.
-
-## Movement and Physics Rules
-
-Movement is part of Nemisis' identity.
-
-Rules:
-
-* Keep movement deterministic and fixed-tick.
-* Keep camera presentation separate from authoritative physics state.
-* Preserve replay-test coverage for feel changes.
-* Expose debug telemetry for grounding, coyote time, jump buffer, wallrun, mantle, slide, collision state, and velocity.
-* Design every mechanic for future prediction, reconciliation, replay, and server validation.
-* Treat wallrunning, sliding, mantling, double jump, crouch, sprint, air control, and camera response as core movement, not optional abilities.
-* Do not implement movement as a camera-only transform hack.
-
-Known lore constraints:
-
-* Wallrunning is enabled by gravity-inverter boots and an arm-button cue.
-* Double jump is an energy-platform air-step gesture.
-* Mantle/climb should support authored reach and climb animation later.
-
-## Weapons and Combat Rules
-
-Weapon systems should support real FPS iteration.
-
-Rules:
-
-* Keep weapon behavior data-driven where practical.
-* Separate weapon data from runtime weapon state.
-* Keep hit feedback, recoil, spread, ADS, sway, reload, fire cadence, and damage testable.
-* Add range drills or tests for TTK, hit confirmation, recoil, and weapon state changes when practical.
-* Design combat logic for future server validation.
-* Do not let the client authoritatively decide damage, score, match results, or authoritative hit outcomes.
-
-## UI and Text Rules
-
-The current UI path is a bridge, not the end state.
-
-Priorities:
-
-* HUD widgets driven by gameplay data.
-* Modern menu visuals with gamepad and mouse/keyboard navigation.
-* Settings, loadout, character, account, pause, debug, and loading screens in `nemisis_game`.
-* Font rendering, layout, batching, clipping, scaling, safe areas, localization readiness, and theme control.
-* Clear separation between debug overlays and player-facing UI.
-
-Debug text and rectangles are acceptable for validation, but player-facing UI must evolve beyond debug overlays.
-
-## Rendering and Assets
-
-Visible progress should use real renderer and asset systems whenever practical.
-
-Rules:
-
-* Prefer Vulkan Dev Range validation over SDL debug-only paths.
-* Use NovaCore asset registry, importer, mesh handles, GPU residency paths, and runtime handles.
-* Keep asset IDs stable.
-* Do not load source `.blend` files directly at runtime.
-* Keep source assets, generated assets, metadata, cooked GLB, runtime handles, and GPU resources distinct.
-* Update asset manifests and tests when adding required renderables.
-* Missing required assets should fail loudly but gracefully.
-* Do not silently ignore invalid asset metadata.
-
-## Build and Test Commands
-
-Common Windows validation:
+Start with the dependency-light build:
 
 ```powershell
-cmake --build --preset windows-msvc-debug --config Debug
-ctest --test-dir build/windows-msvc-debug -C Debug --output-on-failure
-.\build\windows-msvc-debug\Debug\nemisis_game.exe --vulkan-dev-range-smoke-test
+cmake --preset local-debug-no-deps
+cmake --build --preset local-debug-no-deps
+ctest --test-dir build/local-debug-no-deps --output-on-failure
 ```
 
-Use targeted tests when available for movement, collision, UI, weapon, asset, command, render-scene, and gameplay systems.
+On MSVC use `windows-vs2022-no-deps` and CTest with `-C Debug`. For visible
+Windows validation use `windows-msvc-debug`; use `windows-ninja-vcpkg-debug`
+only when its toolchain is available. Missing GPU/SDK support is not a successful
+Vulkan test. Preserve graphics code when the environment cannot validate it.
 
-If Vulkan SDK, assets, or runtime dependencies are unavailable, do not remove Vulkan or asset code. Report the missing dependency clearly in the final response.
+Run relevant existing tests and the available full build. Add/update tests for
+new behavior or real bugs, not merely to justify an AI-generated workaround.
+Refactors retain behavior coverage. Before deleting/substantially changing a
+test, record its original contract, current validity, and replacement coverage.
+Never disable failures merely to obtain green CI. Separate passed, failed before
+the change, not run, and environment-blocked checks in reports.
 
-## Testing and Validation Rules
+Work on focused recovery branches, never directly on `main`. When authorized,
+commit, push, and open PRs with validation evidence. Never auto-merge, force-push
+protected branches, rewrite history, or delete irreplaceable source assets
+without separate explicit authorization. Do not message others or update project
+boards without authorization.
 
-After game changes, run the most relevant validation available.
-
-Add or update tests when changing:
-
-* movement
-* collision
-* weapon behavior
-* command processing
-* prediction/reconciliation hooks
-* UI state
-* asset loading
-* render-scene setup
-* gameplay data parsing
-
-Use playable validation when a change affects visible gameplay.
-
-Do not claim a feature works unless it was built and validated, or clearly state that validation was skipped.
-
-## Documentation Rules
-
-Update documentation only when architecture, gameplay systems, visible test flow, or actual project status changes.
-
-Important docs:
-
-* `docs/00_MASTER_ROADMAP.md`
-* `docs/01_GAMEPLAY_ARCHITECTURE.md`
-* `docs/19_PROJECT_KANBAN.md`
-* `docs/20_GREYBOX_PHASE_PLAN.md`
-* `docs/PROJECT_STATUS.md`
-
-Rules:
-
-* Keep `PROJECT_STATUS.md` focused on actual current state and next concrete game blocks.
-* Do not document aspirational features as implemented.
-* Do not perform documentation-only work unless explicitly requested or required by a real implementation change.
-
-## Git and GitHub Rules
-
-Do not commit, push, or update GitHub Projects unless explicitly requested.
-
-When explicitly asked to commit or update GitHub tracking:
-
-* keep commits focused
-* include what changed
-* include how it was validated
-* do not mix unrelated gameplay, renderer, UI, asset, and documentation changes unless requested
-
-## Current Highest-Value Next Steps
-
-Prefer visible, playable progress:
-
-1. Vulkan Dev Range as the main playable validation scene.
-2. FPS camera, arms, weapon hold, ADS, recoil, sway, and HUD.
-3. Movement loop: sprint, slide, wallrun, mantle, double jump, crouch, and air control.
-4. KCC integration and replay tests.
-5. Weapon data, range drills, hit feedback, and TTK validation.
-6. Multiplayer-ready command/prediction/reconciliation hooks.
-7. Menu/settings/loadout/account UI.
-8. Asset manifest and cooked GLB pipeline.
-9. Real renderables in the Dev Range.
-10. Audio and feedback hooks for movement, weapons, and UI.
-
-Avoid tiny cosmetic patches unless explicitly requested.
+Update the lightweight recovery record with commits/PRs, exact engine revisions,
+validation, baseline failures, blockers, and the next executable step. Keep
+ownership, architecture, and build instructions accurate. Do not describe plans
+as implemented or add large competing documentation systems.
