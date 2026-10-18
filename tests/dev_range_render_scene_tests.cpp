@@ -10,6 +10,7 @@
 #include <array>
 #include <cmath>
 #include <cstdlib>
+#include <filesystem>
 #include <iostream>
 #include <optional>
 #include <string>
@@ -101,7 +102,9 @@ nemisis::dev::MeshResourceLookup registerSceneMeshes(novacore::render::Renderer&
     return lookup;
 }
 
-novacore::render::MeshCatalog makeSocketCatalogForFirstPersonWeapon() {
+novacore::render::MeshCatalog makeSocketCatalogForFirstPersonWeapon(
+    bool rotatedGrips = false,
+    bool invalidGrips = false) {
     novacore::assets::AssetRecord record{};
     record.id = "wpn_project_rifle_m4a1";
     record.kind = novacore::assets::AssetKind::Mesh;
@@ -123,6 +126,15 @@ novacore::render::MeshCatalog makeSocketCatalogForFirstPersonWeapon() {
         novacore::assets::GltfNodeMarker{"socket_grip_l", {-0.02F, 0.10F, 0.16F}, {0.0F, 0.0F, 1.0F}, {0.0F, 1.0F, 0.0F}, -1},
         novacore::assets::GltfNodeMarker{"socket_eject", {0.04F, 0.14F, 0.08F}, {1.0F, 0.0F, 0.0F}, {0.0F, 1.0F, 0.0F}, -1},
      };
+    if (rotatedGrips) {
+        meshData.nodeMarkers[1].worldForward = {1.0F, 0.0F, 0.0F};
+        meshData.nodeMarkers[2].worldForward = {0.0F, 1.0F, 0.0F};
+        meshData.nodeMarkers[2].worldUp = {0.0F, 0.0F, -1.0F};
+    }
+    if (invalidGrips) {
+        meshData.nodeMarkers[1].worldForward = {};
+        meshData.nodeMarkers[2].worldForward = meshData.nodeMarkers[2].worldUp;
+    }
 
     novacore::render::MeshCatalog catalog;
     (void)catalog.registerImportedGltfAsset(record, metadata, std::move(meshData));
@@ -178,6 +190,52 @@ void useFirstPersonCamera(nemisis::dev::DevRangePlayerRenderState& player) {
     player.hasCameraRig = true;
     player.cameraPosition = player.position + novacore::math::Vec3{0.0F, 1.65F, 0.0F};
     player.cameraView = player.view;
+}
+
+novacore::animation::Mat4 renderedMeshMatrix(const novacore::render::RenderMesh3D& mesh) {
+    // Independent oracle for the renderer's published T * Ry * Rx * Rz * S
+    // convention. Do not use the presentation conversion under test here.
+    constexpr float halfRadians = 3.14159265358979323846F / 360.0F;
+    const float yaw = mesh.yawDegrees * halfRadians;
+    const float pitch = mesh.pitchDegrees * halfRadians;
+    const float roll = mesh.rollDegrees * halfRadians;
+    const auto rotation = novacore::animation::multiply(
+        novacore::math::Quat{0.0F, std::sin(yaw), 0.0F, std::cos(yaw)},
+        novacore::animation::multiply(
+            novacore::math::Quat{std::sin(pitch), 0.0F, 0.0F, std::cos(pitch)},
+            novacore::math::Quat{0.0F, 0.0F, std::sin(roll), std::cos(roll)}));
+    return novacore::animation::matrixFromTransform({mesh.position, rotation, mesh.scale});
+}
+
+bool matricesNear(const novacore::animation::Mat4& lhs, const novacore::animation::Mat4& rhs) {
+    for (std::size_t index = 0; index < lhs.values.size(); ++index) {
+        if (!std::isfinite(lhs.values[index]) || !std::isfinite(rhs.values[index]) ||
+            std::abs(lhs.values[index] - rhs.values[index]) > 0.000003F) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void expectMarkerFrame(
+    const novacore::animation::Mat4& markerWorld,
+    const novacore::animation::Mat4& renderedWorld,
+    const novacore::assets::GltfNodeMarker& marker) {
+    const auto near = [](novacore::math::Vec3 lhs, novacore::math::Vec3 rhs) {
+        return (lhs - rhs).lengthSquared() < 0.000000001F;
+    };
+    const auto normalized = [](novacore::math::Vec3 vector) {
+        return vector * (1.0F / std::sqrt(vector.lengthSquared()));
+    };
+    expect(near(novacore::animation::matrixTranslation(markerWorld),
+                novacore::animation::transformPoint(renderedWorld, marker.worldPosition)),
+        "shared socket position comes from the exact submitted weapon transform");
+    expect(near(normalized(novacore::animation::transformDirection(markerWorld, {0.0F, 0.0F, 1.0F})),
+                normalized(novacore::animation::transformDirection(renderedWorld, marker.worldForward))),
+        "shared socket forward retains the authored marker orientation");
+    expect(near(normalized(novacore::animation::transformDirection(markerWorld, {0.0F, 1.0F, 0.0F})),
+                normalized(novacore::animation::transformDirection(renderedWorld, marker.worldUp))),
+        "shared socket up retains the authored marker orientation");
 }
 
 void testDevRangeRenderSceneBuildsExpectedSubmissions() {
@@ -455,6 +513,178 @@ void testCookedMuzzleAndGripsFollowRenderedWeaponTransform() {
             }
         }
     }
+}
+
+void testSharedPresentationUsesActualCookedM4AndOneSnapshot() {
+    novacore::render::MeshCatalog catalog;
+    for (const auto& [id, relativePath] : std::array{
+             std::pair{"wpn_project_rifle_m4a1", "assets/processed/normalized/project_assets/wpn_project_rifle_m4a1.glb"},
+             std::pair{"chr_a1_fp_arms_01", "assets/export/gltf/characters/chr_a1_fp_arms_01.glb"}}) {
+        novacore::assets::GltfMeshData imported;
+        const auto load = novacore::assets::loadGltfMeshData(
+            std::filesystem::path(NEMISIS_SOURCE_ROOT) / relativePath, imported);
+        expect(load.ok(), "shared presentation imports its actual cooked weapon and arms assets");
+        if (!load.ok()) {
+            return;
+        }
+        novacore::assets::AssetRecord record;
+        record.id = id;
+        record.kind = novacore::assets::AssetKind::Mesh;
+        record.cookedPath = relativePath;
+        novacore::assets::GltfAssetMetadata metadata;
+        metadata.id = id;
+        metadata.exportPath = relativePath;
+        metadata.scaleMeters = true;
+        metadata.runtimeUpAxis = "Y";
+        metadata.gameplayForwardAxis = "+Z";
+        metadata.license = "original_project_asset";
+        expect(catalog.registerImportedGltfAsset(record, metadata, std::move(imported)).isValid(),
+            "actual cooked asset registers for shared presentation");
+    }
+    const auto* weaponSource = catalog.findByAssetId("wpn_project_rifle_m4a1");
+    expect(weaponSource != nullptr && weaponSource->meshData.has_value(), "actual M4 has imported marker data");
+    if (weaponSource == nullptr || !weaponSource->meshData.has_value()) {
+        return;
+    }
+
+    novacore::render::Renderer renderer;
+    const auto lookup = registerSceneMeshes(renderer);
+    const auto world = nemisis::dev::createDevRangeGreyboxWorld();
+    const auto targets = nemisis::dev::makeDefaultDevTargetRange();
+    const nemisis::dev::DevRangeRenderSceneBuilder builder;
+    for (int poseIndex = 0; poseIndex < 3; ++poseIndex) {
+        nemisis::dev::DevRangePlayerRenderState player;
+        player.position = {3.0F, 2.0F, -5.0F};
+        player.adsAlpha = poseIndex == 0 ? 0.0F : poseIndex == 1 ? 1.0F : 0.65F;
+        player.weapon.adsAlpha = player.adsAlpha;
+        player.hasAnimationFrame = true;
+        if (poseIndex == 2) {
+            player.view.yawDegrees = 37.0F;
+            player.view.pitchDegrees = 19.0F;
+            player.cameraRollDegrees = -13.0F;
+            player.weapon.recoilPitchOffsetDegrees = 3.0F;
+            player.weapon.recoilYawOffsetDegrees = -2.0F;
+            player.weapon.reloading = true;
+            player.weapon.reloadProgress = 0.4F;
+            player.weaponSwayOffset = {0.03F, -0.015F, -0.02F};
+            player.animation.reloadAlpha = 0.8F;
+            player.animation.firstPersonWeaponOffset = {0.01F, -0.02F, 0.025F};
+            player.animation.firstPersonWeaponYawAddDegrees = 1.5F;
+            player.animation.firstPersonWeaponPitchAddDegrees = -2.0F;
+            player.animation.firstPersonWeaponRollAddDegrees = 3.0F;
+        }
+        useFirstPersonCamera(player);
+        nemisis::dev::DevRangeRenderSceneDesc desc{&world, &targets, nullptr, &lookup, player};
+        desc.meshCatalog = &catalog;
+        const auto presentation = nemisis::dev::evaluateFirstPersonPresentation(desc);
+        expect(presentation.weaponAssetId == "wpn_project_rifle_m4a1", "actual M4 owns the evaluated snapshot");
+        expect(presentation.muzzleWorld.has_value() && presentation.rightGripWorld.has_value() &&
+                presentation.leftGripWorld.has_value(),
+            "actual M4 exposes complete muzzle and both grip targets");
+
+        novacore::render::RenderFrameInfo immediate;
+        const auto immediateStats = builder.append(immediate, desc);
+        desc.firstPersonPresentation = &presentation;
+        novacore::render::RenderFrameInfo cached;
+        const auto cachedStats = builder.append(cached, desc);
+        const auto weapon = findLastMesh(cached, "wpn_project_rifle_m4a1");
+        const auto arms = findLastMesh(cached, "chr_a1_fp_arms_01");
+        const auto immediateWeapon = findLastMesh(immediate, "wpn_project_rifle_m4a1");
+        const auto immediateArms = findLastMesh(immediate, "chr_a1_fp_arms_01");
+        expect(weapon.has_value() && arms.has_value() && immediateWeapon.has_value() && immediateArms.has_value(),
+            "cached and immediate presentation submit weapon and arms");
+        if (!weapon || !arms || !immediateWeapon || !immediateArms) {
+            continue;
+        }
+        const auto renderedWorld = renderedMeshMatrix(*weapon);
+        expect(matricesNear(presentation.weaponWorld, renderedWorld),
+            "renderer uses the exact final weapon matrix offered to hand IK");
+        expect(matricesNear(nemisis::player::firstPersonAttachmentMatrix(presentation.rig.weapon), renderedWorld),
+            "attachment conversion matches the renderer model convention");
+        expect(matricesNear(renderedMeshMatrix(*immediateWeapon), renderedWorld) &&
+                matricesNear(renderedMeshMatrix(*immediateArms), renderedMeshMatrix(*arms)),
+            "extracting a cached presentation preserves legacy weapon and arms transforms");
+        expect(immediateStats.firstPersonCookedSocketCount == cachedStats.firstPersonCookedSocketCount &&
+                immediateStats.firstPersonArmsSocketBoundCount == cachedStats.firstPersonArmsSocketBoundCount &&
+                cachedStats.firstPersonSocketAlignedMeshCount == 1U && cachedStats.firstPersonGripSocketBoundCount == 2U,
+            "cached presentation preserves socket diagnostics and applies muzzle alignment once");
+
+        for (const auto& marker : weaponSource->meshData->nodeMarkers) {
+            const std::optional<novacore::animation::Mat4>* target = nullptr;
+            if (marker.name == "socket_muzzle") {
+                target = &presentation.muzzleWorld;
+            } else if (marker.name == "socket_grip_r") {
+                target = &presentation.rightGripWorld;
+            } else if (marker.name == "socket_grip_l") {
+                target = &presentation.leftGripWorld;
+            }
+            if (target != nullptr && target->has_value()) {
+                expectMarkerFrame(**target, renderedWorld, marker);
+            }
+        }
+        // A frame may select a loadout after the most recent fixed update.
+        // Its existing snapshot must stay paired with the already skinned hands.
+        desc.player.activeWeaponId = "sidearm_01";
+        desc.player.activeWeaponClass = nemisis::weapons::WeaponClass::Sidearm;
+        desc.player.weapon.recoilPitchOffsetDegrees = 25.0F;
+        desc.player.adsAlpha = 1.0F - player.adsAlpha;
+        desc.player.weapon.adsAlpha = desc.player.adsAlpha;
+        novacore::render::RenderFrameInfo changedState;
+        (void)builder.append(changedState, desc);
+        const auto retainedWeapon = findLastMesh(changedState, "wpn_project_rifle_m4a1");
+        const auto retainedArms = findLastMesh(changedState, "chr_a1_fp_arms_01");
+        expect(retainedWeapon && retainedWeapon->layer == novacore::render::RenderMeshLayer::ViewModel &&
+                matricesNear(renderedMeshMatrix(*retainedWeapon), renderedWorld),
+            "a cached tick retains its selected M4 and exact pose despite subsequent loadout state changes");
+        expect(retainedArms && matricesNear(renderedMeshMatrix(*retainedArms), renderedMeshMatrix(*arms)),
+            "cached arms and weapon retain the same presentation snapshot");
+        expect(std::ranges::count_if(changedState.worldMeshes, [](const auto& mesh) {
+                   return mesh.assetId == "chr_a1_fp_arms_01" && mesh.layer == novacore::render::RenderMeshLayer::ViewModel;
+               }) == 1,
+            "consuming a shared snapshot emits exactly one arms submission");
+    }
+}
+
+void testSharedPresentationPreservesAuthoredGripOrientations() {
+    const auto catalog = makeSocketCatalogForFirstPersonWeapon(true);
+    novacore::render::Renderer renderer;
+    const auto lookup = registerSceneMeshes(renderer);
+    const auto world = nemisis::dev::createDevRangeGreyboxWorld();
+    nemisis::dev::DevRangePlayerRenderState player;
+    player.view = {28.0F, -17.0F};
+    player.cameraRollDegrees = 9.0F;
+    player.adsAlpha = 0.7F;
+    player.weapon.adsAlpha = player.adsAlpha;
+    useFirstPersonCamera(player);
+    nemisis::dev::DevRangeRenderSceneDesc desc{&world, nullptr, nullptr, &lookup, player};
+    desc.meshCatalog = &catalog;
+    const auto presentation = nemisis::dev::evaluateFirstPersonPresentation(desc);
+    desc.firstPersonPresentation = &presentation;
+    novacore::render::RenderFrameInfo frame;
+    (void)nemisis::dev::DevRangeRenderSceneBuilder{}.append(frame, desc);
+    const auto weapon = findLastMesh(frame, "wpn_project_rifle_m4a1");
+    const auto* source = catalog.findByAssetId("wpn_project_rifle_m4a1");
+    expect(weapon && source && source->meshData, "rotated-grip fixture renders its weapon");
+    if (!weapon || !source || !source->meshData) {
+        return;
+    }
+    expect(presentation.rightGripWorld.has_value() && presentation.leftGripWorld.has_value(),
+        "authored non-canonical grip rotations yield complete transforms");
+    for (const auto& marker : source->meshData->nodeMarkers) {
+        if (marker.name == "socket_grip_r" && presentation.rightGripWorld) {
+            expectMarkerFrame(*presentation.rightGripWorld, renderedMeshMatrix(*weapon), marker);
+        } else if (marker.name == "socket_grip_l" && presentation.leftGripWorld) {
+            expectMarkerFrame(*presentation.leftGripWorld, renderedMeshMatrix(*weapon), marker);
+        }
+    }
+    const auto invalidCatalog = makeSocketCatalogForFirstPersonWeapon(false, true);
+    desc.meshCatalog = &invalidCatalog;
+    desc.firstPersonPresentation = nullptr;
+    const auto invalidPresentation = nemisis::dev::evaluateFirstPersonPresentation(desc);
+    expect(!invalidPresentation.rightGripWorld && !invalidPresentation.leftGripWorld,
+        "zero and collinear authored grip bases are rejected as IK targets");
+    expect(matricesNear(invalidPresentation.weaponWorld, invalidPresentation.weaponWorld),
+        "invalid grip orientation does not contaminate the final weapon matrix with non-finite values");
 }
 
 void testDevRangeRenderSceneKeepsCookedWeaponAxes() {
@@ -1038,6 +1268,8 @@ int main() {
     testDevRangeRenderSceneViewmodelFollowsCameraAngles();
     testDevRangeRenderSceneAlignsWeaponMeshToCookedMuzzleSocket();
     testCookedMuzzleAndGripsFollowRenderedWeaponTransform();
+    testSharedPresentationUsesActualCookedM4AndOneSnapshot();
+    testSharedPresentationPreservesAuthoredGripOrientations();
     testDevRangeRenderSceneKeepsCookedWeaponAxes();
     testDevRangeRenderScenePlacesShowcaseAssetsInSpawnView();
     testDevRangeRenderSceneHidesLocalWorldBodyWhenCameraRigIsActive();

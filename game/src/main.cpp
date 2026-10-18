@@ -3,6 +3,7 @@
 #include "novacore/core/Application.hpp"
 
 #include <string_view>
+#include <iostream>
 
 int main(int argc, char** argv) {
     novacore::core::ApplicationDesc desc{};
@@ -16,6 +17,13 @@ int main(int argc, char** argv) {
         const std::string_view argument(argv[i]);
         if (argument == "--smoke-test") {
             smokeTest = true;
+        } else if (argument == "--first-person-hand-ik") {
+#if defined(NEMISIS_ENABLE_HAND_IK)
+            gameOptions.firstPersonHandIK = true;
+#else
+            std::cerr << "Hand IK requires -DNEMISIS_ENABLE_HAND_IK=ON at configure time\n";
+            return 2;
+#endif
         } else if (argument == "--menu") {
             gameOptions.autoEnterDevRange = false;
             gameOptions.lockDevRange = false;
@@ -59,7 +67,7 @@ int main(int argc, char** argv) {
     }
 
     if (smokeTest) {
-        desc.maxFrames = gameOptions.runMenuFlowSmoke ? 44 : 5;
+        desc.maxFrames = gameOptions.runMenuFlowSmoke ? 44 : gameOptions.firstPersonHandIK ? 60 : 5;
     }
 
     nemisis::game::GameApp game(gameOptions);

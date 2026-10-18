@@ -7,6 +7,7 @@
 #include "nemisis/movement/MovementSystem.hpp"
 #include "nemisis/player/PlayerAnimation.hpp"
 #include "nemisis/player/PlayerComponents.hpp"
+#include "nemisis/player/PlayerFirstPersonRig.hpp"
 #include "nemisis/weapons/WeaponTypes.hpp"
 
 #include "novacore/math/Types.hpp"
@@ -16,6 +17,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -85,6 +87,25 @@ struct DevRangeRenderSceneStats final {
     std::size_t contactShadowCount = 0;
 };
 
+// One evaluated fixed-tick snapshot, shared by rendering and hand constraints.
+// Marker matrices are asset-scene relative before the single weapon instance.
+struct FirstPersonPresentation final {
+    player::FirstPersonRigFrame rig{};
+    std::string_view weaponAssetId;
+    std::string_view armsAssetId;
+    std::array<float, 4> weaponColor{};
+    std::array<float, 4> armsColor{};
+    novacore::animation::Mat4 weaponWorld{};
+    std::optional<novacore::animation::Mat4> muzzleWorld;
+    std::optional<novacore::animation::Mat4> rightGripWorld;
+    std::optional<novacore::animation::Mat4> leftGripWorld;
+    std::size_t cookedSocketCount = 0;
+    std::size_t alignedMeshCount = 0;
+    std::size_t gripBoundCount = 0;
+    std::size_t armsBoundCount = 0;
+    std::size_t skippedWeaponMeshCount = 0;
+};
+
 struct DevRangeRenderSceneDesc final {
     const GreyboxWorld* greyboxWorld = nullptr;
     const DevTargetRangeState* targetRange = nullptr;
@@ -123,7 +144,12 @@ struct DevRangeRenderSceneDesc final {
     float farPlane = 120.0F;
     const novacore::render::MeshCatalog* meshCatalog = nullptr;
     bool showFirstPersonRigDiagnostics = false;
+    const FirstPersonPresentation* firstPersonPresentation = nullptr;
+    // Temporary visual acceptance switch. Legacy averaging remains default.
+    bool useHandConstraints = false;
 };
+
+[[nodiscard]] FirstPersonPresentation evaluateFirstPersonPresentation(const DevRangeRenderSceneDesc& desc);
 
 class DevRangeRenderSceneBuilder final {
 public:

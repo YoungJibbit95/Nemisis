@@ -257,6 +257,7 @@ target_include_directories(nemisis_dev_range_render_scene_tests
 )
 
 target_link_libraries(nemisis_dev_range_render_scene_tests PRIVATE Novacore::Engine)
+target_compile_definitions(nemisis_dev_range_render_scene_tests PRIVATE NEMISIS_SOURCE_ROOT="${CMAKE_CURRENT_SOURCE_DIR}")
 add_test(NAME nemisis_dev_range_render_scene_tests COMMAND nemisis_dev_range_render_scene_tests)
 
 add_executable(nemisis_player_animation_tests
@@ -685,6 +686,49 @@ foreach(nemisis_runtime_target IN ITEMS
 endforeach()
 
 option(NEMISIS_BUILD_OZZ_IK_PROBE "Build the opt-in CPU arm-IK adoption probe" OFF)
+option(NEMISIS_ENABLE_HAND_IK "Build opt-in first-person hand constraints (visual acceptance pending)" OFF)
+if(NEMISIS_BUILD_OZZ_IK_PROBE OR NEMISIS_ENABLE_HAND_IK)
+    include(cmake/OzzAnimation.cmake)
+endif()
 if(NEMISIS_BUILD_OZZ_IK_PROBE)
     include(cmake/OzzIKProbe.cmake)
+endif()
+if(NEMISIS_ENABLE_HAND_IK)
+    add_library(nemisis_hand_ik STATIC game/src/player/PlayerHandConstraints.cpp)
+    target_include_directories(nemisis_hand_ik PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/game/include)
+    target_compile_definitions(nemisis_hand_ik PUBLIC NEMISIS_ENABLE_HAND_IK=1)
+    target_link_libraries(nemisis_hand_ik PUBLIC Novacore::Engine PRIVATE ozz_animation)
+    if(MSVC)
+        target_compile_options(nemisis_hand_ik PRIVATE /W4 /permissive-)
+    else()
+        target_compile_options(nemisis_hand_ik PRIVATE -Wall -Wextra -Wpedantic)
+    endif()
+    foreach(hand_target IN ITEMS nemisis_game nemisis_player_skeletal_animator_tests)
+        target_link_libraries(${hand_target} PRIVATE nemisis_hand_ik)
+        nemisis_copy_ozz_notice(${hand_target})
+    endforeach()
+
+    add_executable(nemisis_player_hand_constraints_tests
+        tests/player_hand_constraints_tests.cpp
+        game/src/player/PlayerSkeletalAnimator.cpp
+        game/src/dev/DevRangeRenderScene.cpp
+        game/src/dev/DebugTarget.cpp
+        game/src/dev/DevTargetRange.cpp
+        game/src/dev/GreyboxWorld.cpp
+        game/src/player/PlayerAnimation.cpp
+        game/src/player/PlayerFirstPersonRig.cpp
+        game/src/player/PlayerView.cpp)
+    target_link_libraries(nemisis_player_hand_constraints_tests PRIVATE nemisis_hand_ik)
+    target_compile_definitions(nemisis_player_hand_constraints_tests PRIVATE NEMISIS_SOURCE_ROOT="${CMAKE_CURRENT_SOURCE_DIR}")
+    nemisis_copy_mingw_runtime(nemisis_player_hand_constraints_tests)
+    nemisis_copy_ozz_notice(nemisis_player_hand_constraints_tests)
+    add_test(NAME nemisis_player_hand_constraints_tests COMMAND nemisis_player_hand_constraints_tests)
+    add_test(NAME nemisis_hand_ik_headless_smoke
+        COMMAND ${CMAKE_COMMAND}
+            "-DGAME_EXECUTABLE=$<TARGET_FILE:nemisis_game>"
+            "-DSMOKE_ARGUMENT=--smoke-test;--first-person-hand-ik;--dev-range"
+            -DREQUIRE_VULKAN=OFF -DREQUIRE_HAND_IK=ON
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/RunGameSmoke.cmake")
+    set_tests_properties(nemisis_hand_ik_headless_smoke PROPERTIES
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" TIMEOUT 120)
 endif()

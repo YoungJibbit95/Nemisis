@@ -1,6 +1,7 @@
 #pragma once
 
 #include "nemisis/player/PlayerAnimation.hpp"
+#include "nemisis/player/PlayerHandConstraints.hpp"
 
 #include "novacore/animation/AnimationRuntime.hpp"
 #include "novacore/assets/GltfAnimationBridge.hpp"
@@ -20,6 +21,12 @@ struct PlayerSkeletalAnimatorStats final {
     std::size_t skinnedVertexCount = 0;
     std::uint64_t evaluatedFrameCount = 0;
     std::uint64_t failedFrameCount = 0;
+    std::uint64_t sampledFrameCount = 0;
+    std::uint64_t skinnedFrameCount = 0;
+    std::uint64_t constrainedFrameCount = 0;
+    std::uint64_t unreachableHandFrameCount = 0;
+    std::uint64_t invalidHandFrameCount = 0;
+    PlayerHandConstraintResult handConstraints{};
     std::string currentClip;
     std::string upperBodyClip;
     float upperBodyWeight = 0.0F;
@@ -34,7 +41,8 @@ public:
 
     [[nodiscard]] bool update(
         const CharacterAnimationFrame& frame,
-        float deltaSeconds);
+        float deltaSeconds,
+        const PlayerHandTargets* handTargets = nullptr);
 
     [[nodiscard]] const novacore::assets::GltfMeshData* skinnedMesh() const;
     [[nodiscard]] const novacore::animation::GlobalPose* globalPose() const;
@@ -59,6 +67,10 @@ private:
     novacore::assets::GltfMeshData skinnedMesh_;
     novacore::assets::GltfAnimationAsset animationAsset_;
     novacore::animation::AnimationRuntime runtime_;
+    PlayerHandConstraintRig handRig_{};
+    novacore::animation::LocalPose constrainedLocal_;
+    novacore::animation::GlobalPose constrainedGlobal_;
+    bool constrainedPoseReady_ = false;
     const novacore::animation::AnimationClip* activeClip_ = nullptr;
     novacore::animation::LayerMask upperBodyMask_;
     bool upperBodyMaskReady_ = false;

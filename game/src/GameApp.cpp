@@ -207,6 +207,15 @@ void GameApp::onStartup() {
 }
 
 void GameApp::onShutdown() {
+    if (options_.firstPersonHandIK) {
+        const auto& stats = skeletalArmsAnimator_.stats();
+        novacore::core::logInfo("game", "Hand IK frames: applied=" + std::to_string(stats.constrainedFrameCount) +
+            " samples=" + std::to_string(stats.sampledFrameCount) +
+            " skins=" + std::to_string(stats.skinnedFrameCount) +
+            " vertex_updates=" + std::to_string(armVertexUpdateCount_) +
+            " invalid=" + std::to_string(stats.invalidHandFrameCount) +
+            " unreachable=" + std::to_string(stats.unreachableHandFrameCount));
+    }
     releaseDevMeshResources();
     renderer_.shutdown();
     window_.shutdown();
@@ -572,6 +581,15 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
             });
         hasCharacterAnimationFrame_ = true;
 
+        // Camera and procedural animation are fixed-tick presentation inputs.
+        // Evaluate final cooked weapon/grips once, before arm skinning/upload.
+        dev::DevRangeRenderSceneDesc presentationDesc{};
+        presentationDesc.player = currentPlayerRenderState();
+        presentationDesc.meshResources = &devMeshResources_;
+        presentationDesc.meshCatalog = &devAssetBindings_.meshCatalog();
+        presentationDesc.useHandConstraints = options_.firstPersonHandIK;
+        firstPersonPresentation_ = dev::evaluateFirstPersonPresentation(presentationDesc);
+
         const float animationDelta = static_cast<float>(context.fixedDeltaSeconds);
         const auto bodyMesh = devMeshResources_.find(std::string(dev::kLocalPlayerBodyResourceId));
         // Until an authored FPS body mask exists, this full body is visible only
@@ -588,11 +606,20 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
             armsAnimationFrame.upperBodyClip == player::CharacterAnimationClip::Idle
             ? player::CharacterAnimationClip::Idle
             : player::CharacterAnimationClip::Ads;
+        std::optional<player::PlayerHandTargets> handTargets;
+        if (options_.firstPersonHandIK && firstPersonPresentation_->rightGripWorld &&
+            firstPersonPresentation_->leftGripWorld) {
+            handTargets = player::PlayerHandTargets{
+                player::firstPersonAttachmentMatrix(firstPersonPresentation_->rig.arms),
+                *firstPersonPresentation_->rightGripWorld, *firstPersonPresentation_->leftGripWorld};
+        }
         const auto armsMesh = devMeshResources_.find("chr_a1_fp_arms_01");
         if (armsMesh != devMeshResources_.end() &&
-            skeletalArmsAnimator_.update(armsAnimationFrame, animationDelta)) {
+            skeletalArmsAnimator_.update(armsAnimationFrame, animationDelta, handTargets ? &*handTargets : nullptr)) {
             if (const auto* skinnedMesh = skeletalArmsAnimator_.skinnedMesh(); skinnedMesh != nullptr) {
-                (void)renderer_.updateMeshResourceVertices(armsMesh->second, *skinnedMesh);
+                if (renderer_.updateMeshResourceVertices(armsMesh->second, *skinnedMesh)) {
+                    ++armVertexUpdateCount_;
+                }
             }
         }
     }
@@ -726,6 +753,8 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
                 renderTuning_.nearPlane,
                 renderTuning_.farPlane,
                 &devAssetBindings_.meshCatalog(),
+                false,
+                firstPersonPresentation_ ? &*firstPersonPresentation_ : nullptr,
             });
     } else {
         latestDevRangeRenderStats_ = {};
@@ -1009,6 +1038,7 @@ void GameApp::ensureLocalPlayer() {
     pendingAuthoritativeSnapshot_.reset();
     player::resetCharacterAnimation(characterAnimation_);
     latestCharacterAnimationFrame_ = {};
+    firstPersonPresentation_.reset();
     hasCharacterAnimationFrame_ = false;
     player::resetCameraRig(cameraRig_);
     gameplayInputBuffer_.clear();
@@ -1054,6 +1084,7 @@ void GameApp::resetDevRangeState() {
     pendingAuthoritativeSnapshot_.reset();
     player::resetCharacterAnimation(characterAnimation_);
     latestCharacterAnimationFrame_ = {};
+    firstPersonPresentation_.reset();
     hasCharacterAnimationFrame_ = false;
     player::resetCameraRig(cameraRig_);
     gameplayInputBuffer_.clear();
