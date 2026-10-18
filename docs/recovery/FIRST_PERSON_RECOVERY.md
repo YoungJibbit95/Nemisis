@@ -1,5 +1,32 @@
 # First-person recovery: diagnosis and bounded implementation
 
+## Phase 2B shared weapon presentation
+
+The immutable combined base is 5baab6137dc5e0a3a81a2b0e9ec62ac4f8a78fa0
+(exact #12/#13/#14 heads in PROGRESS.md), tested with engine
+15c1b684a430bb70235ea9407f78106d958812b6. It builds and passes 35 CPU cases.
+
+`evaluateFirstPersonPresentation` extracts the existing game mounts, procedural
+rig, single cooked muzzle alignment and legacy arms placement. It returns the
+final weapon instance plus complete cooked grip/muzzle frames: markers already
+contain asset-node ancestry, followed by exactly one instance transform.
+Forward/up define the authored socket rotation; invalid axes yield no IK target.
+No asset Euler repair or new rig manager is involved.
+
+`GameApp::onFixedTick` updates simulation, camera and procedural animation at
+60 Hz, then owns this cached presentation before the arm animator's one update,
+skinning and dynamic vertex upload. `onFrame` has no interpolation or animation
+advance and submits the exact cached weapon and arms transform. Repeated render
+frames reuse the upload. The selected asset is part of the snapshot, including
+when the UI changes the loadout before the next tick. Reset invalidates it;
+tool/initial render callers without a snapshot evaluate the same pure function.
+
+This slice preserves the old average whole-arms correction. It supplies the
+shared targets for the following IK slice; it does not establish hand contact.
+GPU acceptance remains open after the earlier Escape stop. Do not remove the
+legacy path or start the Project body asset split before the replacement is
+visually accepted. The A1 arms remain a temporary different-character asset.
+
 Baseline: Nemisis 741aeae2edeb2df67564ae0b2379ab06a3df5505, engine pin dbdfc38,
 2026-10-18. The user explicitly selected **chr_project_male1**. FP arms remain the
 existing A1 temporary asset; do not present it as a matching split of that model.

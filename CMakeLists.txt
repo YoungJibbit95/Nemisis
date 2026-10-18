@@ -257,6 +257,7 @@ target_include_directories(nemisis_dev_range_render_scene_tests
 )
 
 target_link_libraries(nemisis_dev_range_render_scene_tests PRIVATE Novacore::Engine)
+target_compile_definitions(nemisis_dev_range_render_scene_tests PRIVATE NEMISIS_SOURCE_ROOT="${CMAKE_CURRENT_SOURCE_DIR}")
 add_test(NAME nemisis_dev_range_render_scene_tests COMMAND nemisis_dev_range_render_scene_tests)
 
 add_executable(nemisis_player_animation_tests

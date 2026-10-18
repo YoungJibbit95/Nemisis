@@ -572,6 +572,14 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
             });
         hasCharacterAnimationFrame_ = true;
 
+        // Camera and procedural animation are fixed-tick presentation inputs.
+        // Evaluate final cooked weapon/grips once, before arm skinning/upload.
+        dev::DevRangeRenderSceneDesc presentationDesc{};
+        presentationDesc.player = currentPlayerRenderState();
+        presentationDesc.meshResources = &devMeshResources_;
+        presentationDesc.meshCatalog = &devAssetBindings_.meshCatalog();
+        firstPersonPresentation_ = dev::evaluateFirstPersonPresentation(presentationDesc);
+
         const float animationDelta = static_cast<float>(context.fixedDeltaSeconds);
         const auto bodyMesh = devMeshResources_.find(std::string(dev::kLocalPlayerBodyResourceId));
         // Until an authored FPS body mask exists, this full body is visible only
@@ -726,6 +734,8 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
                 renderTuning_.nearPlane,
                 renderTuning_.farPlane,
                 &devAssetBindings_.meshCatalog(),
+                false,
+                firstPersonPresentation_ ? &*firstPersonPresentation_ : nullptr,
             });
     } else {
         latestDevRangeRenderStats_ = {};
@@ -1009,6 +1019,7 @@ void GameApp::ensureLocalPlayer() {
     pendingAuthoritativeSnapshot_.reset();
     player::resetCharacterAnimation(characterAnimation_);
     latestCharacterAnimationFrame_ = {};
+    firstPersonPresentation_.reset();
     hasCharacterAnimationFrame_ = false;
     player::resetCameraRig(cameraRig_);
     gameplayInputBuffer_.clear();
@@ -1054,6 +1065,7 @@ void GameApp::resetDevRangeState() {
     pendingAuthoritativeSnapshot_.reset();
     player::resetCharacterAnimation(characterAnimation_);
     latestCharacterAnimationFrame_ = {};
+    firstPersonPresentation_.reset();
     hasCharacterAnimationFrame_ = false;
     player::resetCameraRig(cameraRig_);
     gameplayInputBuffer_.clear();

@@ -6,6 +6,7 @@
 #include "nemisis/weapons/WeaponTypes.hpp"
 
 #include "novacore/math/Types.hpp"
+#include "novacore/animation/AnimationTypes.hpp"
 
 #include <array>
 #include <cstddef>
@@ -153,5 +154,8 @@ struct FirstPersonRigFrame final {
     FirstPersonRigSocket socket);
 
 [[nodiscard]] FirstPersonRigFrame evaluateFirstPersonRig(const FirstPersonRigInput& input);
+
+// Matches RenderMesh3D's T * Ry * Rx * Rz * S instance convention.
+[[nodiscard]] novacore::animation::Mat4 firstPersonAttachmentMatrix(const FirstPersonRigAttachment& attachment);
 
 } // namespace nemisis::player
