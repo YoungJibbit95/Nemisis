@@ -69,6 +69,12 @@ int main() {
         showcase.key(Rml::Input::KI_DOWN,true); showcase.key(Rml::Input::KI_DOWN,false); tick();
         require(showcase.value("quality-value")=="High","dropdown keyboard selection failed");
         showcase.key(Rml::Input::KI_RETURN,true); showcase.key(Rml::Input::KI_RETURN,false); tick();
+        input.setButton({novacore::platform::InputControlKind::GamepadButton,input::gamepad_buttons::DPadUp},true,novacore::platform::InputDeviceKind::Controller);
+        tick(); input.beginFrame(); input.setButton({novacore::platform::InputControlKind::GamepadButton,input::gamepad_buttons::DPadUp},false,novacore::platform::InputDeviceKind::Controller); tick(); input.beginFrame();
+        require(showcase.value("quality-value")=="Standard","controller dropdown adjustment lost the owning control");
+        input.setButton({novacore::platform::InputControlKind::GamepadButton,input::gamepad_buttons::DPadRight},true,novacore::platform::InputDeviceKind::Controller);
+        tick(); input.beginFrame(); input.setButton({novacore::platform::InputControlKind::GamepadButton,input::gamepad_buttons::DPadRight},false,novacore::platform::InputDeviceKind::Controller); tick(); input.beginFrame();
+        require(showcase.focusId()=="hitmarkers","controller focus cannot leave dropdown");
         click("tab-components");
         click("click-test");
         const auto counter = showcase.value("click-count");
