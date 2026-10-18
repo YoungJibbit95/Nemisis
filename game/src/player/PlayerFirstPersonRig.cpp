@@ -523,7 +523,9 @@ FirstPersonRigFrame evaluateFirstPersonRig(const FirstPersonRigInput& input) {
 
     const bool sidearm = isSidearm(input.weaponClass);
     const float recoilLift = input.weapon.recoilPitchOffsetDegrees * 0.010F;
-    const float recoilSide = input.weapon.recoilYawOffsetDegrees * 0.014F;
+    // Recoil yaw is a world rotation; +yaw turns toward camera-left. Convert
+    // only its artistic lateral translation to camera-right coordinates.
+    const float recoilSide = -input.weapon.recoilYawOffsetDegrees * 0.014F;
     const float mantleLift = clamp01(input.mantleProgress01) * 0.13F;
     const auto weaponSway = input.weaponSwayOffset * (sidearm ? 0.52F : 0.82F) * (1.0F - (ads * 0.70F));
     const auto armsSway = input.weaponSwayOffset * 0.36F * (1.0F - (ads * 0.60F));

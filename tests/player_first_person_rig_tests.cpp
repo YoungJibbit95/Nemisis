@@ -299,6 +299,28 @@ void testProperCameraOffsetsPreserveActualAssetBasis() {
     }
 }
 
+void testLateralRecoilTranslationMatchesUnchangedWorldYaw() {
+    using namespace nemisis::player;
+    constexpr float radians = 3.14159265358979323846F / 180;
+    for (float yaw : {-90.F, 0.F, 120.F}) for (float recoil : {-2.F, 2.F}) {
+        auto input = baseInput(); input.animation = {}; input.view = {yaw, 0};
+        const auto rest = evaluateFirstPersonRig(input);
+        input.weapon.recoilYawOffsetDegrees = recoil;
+        const auto fired = evaluateFirstPersonRig(input);
+        const novacore::math::Vec3 right{-std::cos(yaw * radians), 0, std::sin(yaw * radians)};
+        const auto dot = [](auto a, auto b) { return a.x * b.x + a.y * b.y + a.z * b.z; };
+        const auto translation = dot(fired.weapon.position - rest.weapon.position, right);
+        const auto baselineForward = novacore::animation::transformDirection(firstPersonAttachmentMatrix(rest.weapon), {0, 0, 1});
+        const auto firedForward = novacore::animation::transformDirection(firstPersonAttachmentMatrix(fired.weapon), {0, 0, 1});
+        const auto angularSide = dot(firedForward - baselineForward, right);
+        expect(translation * recoil < 0 && translation * angularSide > 0,
+               "lateral recoil presentation follows unchanged world-yaw kick on the same physical camera side");
+        expectNear(fired.weapon.yawDegrees - rest.weapon.yawDegrees,
+                   recoil * input.weaponMount.recoilYawScale, .00001F,
+                   "camera pairing preserves actual weapon recoil yaw values");
+    }
+}
+
 } // namespace
 
 int main() {
@@ -310,6 +332,7 @@ int main() {
     testCameraBasisDrivesWeaponSocketsAndHands();
     testRigSocketsExposeCameraHandsAndWeaponAttachments();
     testProperCameraOffsetsPreserveActualAssetBasis();
+    testLateralRecoilTranslationMatchesUnchangedWorldYaw();
 
     if (failures > 0) {
         std::cerr << failures << " first-person rig test(s) failed\n";
