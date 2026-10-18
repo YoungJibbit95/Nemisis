@@ -1,0 +1,61 @@
+<rml>
+<head><title>Nemisis / Interface lab</title><link type="text/rcss" href="theme.rcss" /></head>
+<body>
+<div class="header">
+  <div class="brand">NEM<span>I</span>SIS</div>
+  <p class="small">TACTICAL COMBAT / INTERFACE LAB</p>
+  <div class="header-status"><div class="status">NATIVE UI / RMLUI + FREETYPE</div><p class="small">Technology preview &nbsp; / &nbsp; 00.01</p></div>
+</div>
+<div class="shell">
+  <div class="rail">
+    <div class="eyebrow">DESIGN SYSTEM</div>
+    <button type="button" id="tab-components" class="selected">01 &nbsp; Components</button>
+    <button type="button" id="tab-type">02 &nbsp; Typography</button>
+    <button type="button" id="tab-input">03 &nbsp; Input lab</button>
+    <div class="separator" />
+    <button type="button" id="launch-range" class="primary">Launch Dev Range</button>
+    <button type="button" id="back-menu" class="ghost">Back to menu</button>
+    <button type="button" id="quit" class="ghost">Quit game</button>
+    <p class="rail-note small">One Vulkan frame.<br />Real controls.<br />No simulated game data.</p>
+  </div>
+  <div class="workspace">
+    <div id="view-components" class="view">
+      <div class="title-row"><div class="eyebrow">PRECISION IN EVERY INTERACTION</div><h2>Combat interface.</h2><p>A native foundation for the next Nemisis frontend.</p></div>
+      <div class="columns">
+        <div class="card card-main">
+          <div class="card-label">01 / ACTIONS &amp; STATES</div>
+          <div class="button-row"><button type="button" id="click-test" class="primary">Confirm input</button><button type="button" id="toast-button">Notify</button></div>
+          <div class="button-row"><button type="button" id="open-modal" class="ghost">Open modal</button><button type="button" id="disabled-button" disabled="disabled">Unavailable</button></div>
+          <p id="click-count" class="small">0 confirmed inputs</p>
+          <div class="separator" />
+          <div class="control-head"><label>Preview intensity</label><span id="intensity-value" class="value">50%</span></div>
+          <input id="intensity" class="range" type="range" min="0" max="100" step="1" value="50" />
+          <div class="control-row"><label><input id="motion" class="checkbox" type="checkbox" />Reduced motion <span id="motion-value" class="value small">Standard</span></label></div>
+        </div>
+        <div class="card card-side">
+          <div class="card-label">02 / MATERIAL &amp; FEEDBACK</div>
+          <div class="effect-well"><div id="effect-preview" class="effect-gradient" style="opacity: 0.5;"/><div class="halo"><div class="halo-inner"><div class="halo-core">FOCUS ACQUIRED</div></div></div></div>
+          <div class="badge">BLUR: TRANSPARENT FALLBACK</div>
+          <p class="small">Native gradient geometry. Layered focus halo. Backdrop blur is pending renderer support.</p>
+          <div class="separator" />
+          <div class="control-head"><span class="small">Progress specimen</span><span class="value">68%</span></div>
+          <div class="progress"><div class="progress-fill" /></div>
+          <p class="small">Demonstration value / no loading claim</p>
+        </div>
+      </div>
+    </div>
+    <div id="view-type" class="view hidden">
+      <div class="title-row"><div class="eyebrow">SPACE GROTESK / SIL OPEN FONT LICENSE 1.1</div><h2>Clarity under pressure.</h2><p>FreeType glyph metrics, kerning, UTF-8 and two native font weights.</p></div>
+      <div class="card type-card"><div class="card-label">DISPLAY / BOLD</div><div class="type-large">READY FOR DEPLOYMENT.</div><p><span id="metric-narrow">iiiiii</span> &nbsp; <span id="metric-wide">WWWWWW</span> &nbsp; 0123456789</p></div>
+      <div class="card"><div class="card-label">BODY / REGULAR</div><h3>Präzision. Übersicht. Kontrolle.</h3><p>Ä Ö Ü ä ö ü ß / Straße / Größe / Schärfe</p><p class="small">Proportional text wraps naturally inside the panel. Narrow and wide glyphs use their actual font advances.</p><div class="swatches"><div class="swatch" style="background-color: #16d9eb;"/><div class="swatch" style="background-color: #4d7dff;"/><div class="swatch" style="background-color: #8cf7ff;"/><div class="swatch" style="background-color: #35e3a1;"/><div class="swatch" style="background-color: #ffb65c;"/><div class="swatch" style="background-color: #ff5b72;"/></div></div>
+    </div>
+    <div id="view-input" class="view hidden">
+      <div class="title-row"><div class="eyebrow">MOUSE / KEYBOARD / CONTROLLER</div><h2>Stay in control.</h2><p>Preview-only controls. Your game settings remain untouched.</p></div>
+      <div class="columns"><div class="card card-main"><div class="card-label">SELECTION CONTROLS</div><label>Effect profile</label><select id="quality"><option value="Reduced">Reduced</option><option value="Standard" selected="selected">Standard</option><option value="High">High</option></select><p id="quality-value" class="small">Standard</p><div class="separator"/><label><input id="hitmarkers" class="checkbox" type="checkbox" checked="checked"/>Hitmarker specimen</label><p id="hitmarker-value" class="small">On (preview)</p><div class="separator"/><label><input class="radio" type="radio" name="input-profile" value="tactical" checked="checked"/>Tactical</label><label><input class="radio" type="radio" name="input-profile" value="minimal"/>Minimal</label></div>
+      <div class="card card-side"><div class="card-label">NAVIGATION CONTRACT</div><h3>Every input counts.</h3><p><kbd>TAB</kbd> Next focus<br/><kbd>SHIFT + TAB</kbd> Previous focus<br/><kbd>ENTER</kbd> Confirm<br/><kbd>LEFT / RIGHT</kbd> Adjust slider<br/><kbd>ESC</kbd> Close modal / back</p><div class="separator"/><p class="small">Controller: D-pad / left stick to navigate, A to confirm, B to go back. Modal input stays inside the modal.</p></div></div>
+    </div>
+  </div>
+</div>
+<div class="footer"><kbd>TAB</kbd> Navigate &nbsp; <kbd>ENTER / A</kbd> Confirm &nbsp; <kbd>ESC / B</kbd> Back <span class="footer-right">NEMISIS / UI FOUNDATION</span></div>
+<div id="toast">Input received. Native notification delivered.</div>
+</body></rml>

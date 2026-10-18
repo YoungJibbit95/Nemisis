@@ -1,0 +1,2 @@
+<rml><head><title>Modal</title><link type="text/rcss" href="theme.rcss" /></head>
+<body class="modal-body"><div class="modal-panel"><div class="eyebrow">FOCUS / INPUT CAPTURE</div><h2>Hold position.</h2><p>This is a native modal document. Background controls cannot receive input while it is open.</p><button type="button" id="confirm-modal" class="primary">Confirmed</button><button type="button" id="close-modal" class="ghost">Cancel</button></div></body></rml>

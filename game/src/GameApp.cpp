@@ -173,8 +173,8 @@ void GameApp::onStartup() {
 
     novacore::platform::WindowDesc windowDesc{};
     windowDesc.title = menu_.title();
-    windowDesc.width = 1280;
-    windowDesc.height = 720;
+    windowDesc.width = options_.uiShowcase ? options_.uiPreviewWidth : 1280;
+    windowDesc.height = options_.uiShowcase ? options_.uiPreviewHeight : 720;
     windowDesc.preferVulkan = options_.preferVulkanRenderer;
 
     window_.create(windowDesc);
@@ -184,6 +184,15 @@ void GameApp::onStartup() {
     rendererInfo.requireVulkan = options_.requireVulkanRenderer;
     renderer_.create(window_, rendererInfo);
     registerDevMeshResources();
+#if NEMISIS_HAS_RMLUI
+    if (options_.uiShowcase) {
+        if (window_.isHeadless() || renderer_.backendName() != "vulkan-world" || !renderer_.backendFrameStats().uiGeometryReady)
+            throw std::runtime_error("UI showcase requires an active NovaCore Vulkan renderer");
+        menu_.showMainMenu();
+        uiShowcase_ = std::make_unique<ui::UiShowcase>();
+        uiShowcase_->initialize();
+    }
+#endif
 
     cameraEntity_ = world_.createEntity();
     world_.addComponent(cameraEntity_, novacore::ecs::NameComponent{"main_camera"});
@@ -235,13 +244,18 @@ void GameApp::onShutdown() {
             " invalid=" + std::to_string(stats.invalidHandFrameCount) +
             " unreachable=" + std::to_string(stats.unreachableHandFrameCount));
     }
+#if NEMISIS_HAS_RMLUI
+    if (uiShowcase_) novacore::core::logInfo("ui", "Native UI Vulkan draws: " +
+        std::to_string(renderer_.backendFrameStats().lastUiGeometryDrawCount));
+    uiShowcase_.reset();
+#endif
     releaseDevMeshResources();
     renderer_.shutdown();
     window_.shutdown();
 }
 
 void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
-    if (!menu_.gameplayActive()) {
+    if (!menu_.gameplayActive() || uiConfirmReleasePending_) {
         return;
     }
 
@@ -749,9 +763,25 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
 void GameApp::onFrame(const novacore::core::FrameContext& context) {
     window_.pollEvents(input_);
     actions_.update(window_.inputSnapshot());
+    if (uiConfirmReleasePending_ && !actions_.stateOrDefault(input::actions::MenuConfirm).down &&
+        !actions_.stateOrDefault(input::actions::Fire).down) uiConfirmReleasePending_ = false;
+#if NEMISIS_HAS_RMLUI
+    if (uiShowcase_) {
+        const auto action = uiShowcase_->update(context.deltaSeconds, window_.inputSnapshot(), actions_, window_.width(), window_.height());
+        if (action == ui::ShowcaseAction::Quit) uiQuitRequested_ = true;
+        if (action == ui::ShowcaseAction::Menu || action == ui::ShowcaseAction::DevRange) {
+            uiShowcase_.reset();
+            if (action == ui::ShowcaseAction::DevRange) {
+                menu_.showDevRange(); resetDevRangeState();
+                uiConfirmReleasePending_ = true; // A/Enter/click must not leak into the first gameplay command.
+            }
+            else menu_.showMainMenu();
+        }
+    } else
+#endif
     menu_.update(actions_, settings_, activeLoadout_, attachmentRegistry_, buildMenuPointerState(window_, actions_));
     menu_.updateFrame(context.deltaSeconds);
-    if (menu_.gameplayActive()) {
+    if (menu_.gameplayActive() && !uiConfirmReleasePending_) {
         gameplayInputBuffer_.captureFrameEdges(actions_);
     } else {
         gameplayInputBuffer_.clear();
@@ -770,7 +800,11 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
     }
     advanceMenuFlowSmoke(context);
     syncRelativeMouseMode();
+#if NEMISIS_HAS_RMLUI
+    window_.setTitle(uiShowcase_ ? "NEMISIS | UI Showcase" : menu_.title());
+#else
     window_.setTitle(menu_.title());
+#endif
 
     for (const auto& event : configRegistry_.pollReloads()) {
         if (event.loaded) {
@@ -814,6 +848,9 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
     } else {
         latestDevRangeRenderStats_ = {};
     }
+#if NEMISIS_HAS_RMLUI
+    if (!uiShowcase_)
+#endif
     menu_.appendRenderCommands(
         frameInfo,
         devSandbox_.latestSample(),
@@ -830,12 +867,17 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
         attachmentRegistry_,
         activeAttachmentBuild_,
         accountStats_);
+#if NEMISIS_HAS_RMLUI
+    if (uiShowcase_) {
+        uiShowcase_->render(frameInfo.ui);
+    }
+#endif
     renderer_.beginFrame(frameInfo);
     renderer_.endFrame();
 }
 
 bool GameApp::shouldQuit() const {
-    return window_.shouldClose();
+    return uiQuitRequested_ || window_.shouldClose();
 }
 
 bool GameApp::isHeadless() const {
