@@ -76,11 +76,52 @@ GPU-performance conclusion follows from these timings.
 Sources: upstream release licenses/CMake/CI, ozz
 [IKTwoBoneJob](https://github.com/guillaumeblanc/ozz-animation/blob/0.17.0/include/ozz/animation/runtime/ik_two_bone_job.h)
 and [official application order](https://github.com/guillaumeblanc/ozz-animation/blob/0.17.0/samples/framework/utils.cc).
-Build-time/binary-size deltas were not measured; no dependency was installed by
-this evaluation. Any adoption must pin its commit, retain licenses/notices and
+The initial comparison did not measure build-time/binary-size deltas or install a
+dependency; the subsequent opt-in probe is recorded below. Any adoption must pin its commit, retain licenses/notices and
 validate both platforms. Keep IK presentation-only; no claim of cross-platform
 bit-identical library output. Jolt/VMA/network replacements solve no current
 first-person blocker and remain outside scope.
+
+## Optional ozz adoption probe
+
+`-DNEMISIS_BUILD_OZZ_IK_PROBE=ON` builds `nemisis_ozz_arm_ik_probe` and adds one CPU
+CTest case (35 CPU cases with the option, 34 without). The default game path has
+no new dependency or solver; disabled configuration was checked to have no ozz
+population/targets. CI explicitly enables the probe on MSVC and Clang.
+
+The exact ozz0.17.0 commit above is fetched using source-archive SHA256
+`a29a8a014b571487d9a6dabebeed57627fc19bf1f0ebf531b0c76384840c3b74`.
+The MIT notice is retained in third_party/licenses and copied beside the probe.
+Only ozz_animation/ozz_base build; tools, samples, importers, FBX and data are off.
+The opt-in configuration requires CMake3.30; the default game's minimum remains
+3.27. CRT selection follows the parent. No ozz Skeleton, SamplingJob or second
+clip runtime is used: NovaCore samples and skins the actual A1 arms asset.
+
+The probe converts row-major matrices by elements, derives the current bend
+plane, runs IKTwoBoneJob, applies local quaternion corrections on the right and
+preserves authored hand-socket orientation/offsets. It checks both real arm
+chains for bind/Idle/Aim poses and three small reachable targets per pose:
+18 successful solves, preserved bone lengths/orientation and actual weighted
+mesh deformation. Local residuals were1.49e-8..1.69e-7m. These are model-space
+CPU targets, **not final M4 grip integration or visual approval**.
+
+First isolated GCC Debug ozz configure/build took23.55s with an already-built
+engine (uncontrolled diagnostic measurement). Debug archives: base556,154 bytes,
+animation2,005,102 bytes; full linked probe10,882,991 bytes. Those are artifact
+sizes, not the incremental cost of adding ozz to the game. No GPU/release
+performance claim. Full local opt-in build passes35 CPU cases; final skinning
+assertions also pass the affected probe. Product adoption still requires final
+weapon/grip ownership, runtime integration, the authored FPS-body decision and
+the renewed visual gate. The probe replaces the need to invent a new IK solver;
+it does not yet replace the game's whole-mesh placement workaround.
+
+Published [draft probe PR #14](https://github.com/YoungJibbit95/Nemisis/pull/14),
+implementation c6a2d7e4dddeacb13c4a4a82024c056e740b2418. Fresh hosted Windows/MSVC
+and Ubuntu/Clang builds and35 CPU cases pass, with archive hash verification:
+https://github.com/YoungJibbit95/Nemisis/actions/runs/39128535291.
+Merge order: engine #10, selected-character/pin #12, then this optional probe.
+Geometry #13 is independent and combines cleanly. Main and all user changes remain
+untouched; no GUI authorization/visual acceptance is inferred from these results.
 
 ## Remaining acceptance
 
