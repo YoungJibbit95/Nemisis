@@ -1541,6 +1541,7 @@ void testProjectReadyUsesOneConstrainedPose() {
     desc.player.activeWeaponId = "ar_01";
     float largestResidual = 0;
     float smallestForwardDot = 1;
+    float smallestRightMargin = 1000;
     std::size_t ticks = 0;
     std::array<std::size_t, 2> visibleHandVertices{};
     for (auto clip : {player::CharacterAnimationClip::Idle, player::CharacterAnimationClip::Walk,
@@ -1590,7 +1591,13 @@ void testProjectReadyUsesOneConstrainedPose() {
             const math::Vec3 cameraRight{-std::cos(yaw), 0, std::sin(yaw)};
             const auto firingOffset = animation::matrixTranslation(targets.rightGripWorld) - desc.player.cameraPosition;
             const auto dot = [](math::Vec3 a, math::Vec3 b) { return a.x * b.x + a.y * b.y + a.z * b.z; };
-            expect(dot(firingOffset, cameraRight) > 0,
+            const float rightMargin = dot(firingOffset, cameraRight);
+            smallestRightMargin = std::min(smallestRightMargin, rightMargin);
+            if (rightMargin <= 0) {
+                std::cerr << "Ready hip side tick=" << ticks << " locomotion=" << static_cast<int>(clip)
+                          << " camera_right_margin_m=" << rightMargin << '\n';
+            }
+            expect(rightMargin > 0,
                    "hip firing grip stays right of anatomical camera across movement and yaw");
             const auto weaponForward = animation::transformPoint(presentation.weaponWorld, {0, 0, 1}) -
                                        animation::matrixTranslation(presentation.weaponWorld);
@@ -1712,6 +1719,7 @@ void testProjectReadyUsesOneConstrainedPose() {
     }
     std::cout << "Project Ready common-pose ticks=" << ticks << " max_world_contact_m=" << largestResidual
               << " min_weapon_camera_forward_dot=" << smallestForwardDot
+              << " min_firing_camera_right_m=" << smallestRightMargin
               << " hip_hand_frustum_vertices=" << visibleHandVertices[0] << ',' << visibleHandVertices[1]
               << "; developer Ready over original locomotion, no directional/ADS/reload completeness claim\n";
     expect(visibleHandVertices[0] > 10 && visibleHandVertices[1] > 10,
