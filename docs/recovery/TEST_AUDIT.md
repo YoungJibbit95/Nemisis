@@ -182,3 +182,13 @@ loadout ownership, one arms submission and authored/invalid grip orientation.
 All previous functions/assertions remain. Missing-primary/fallback accounting is
 preserved as well as geometry. Registrations remain 34 standard CPU cases, 35
 with the optional ozz probe; no GPU acceptance follows from these assertions.
+
+Phase 2B opt-in constraints add one bounded integration unit and one actual-game
+headless smoke. The unit imports filtered A1 geometry/M4 and tests real sockets,
+bind/Idle/Aim, continuous ADS, both bone chains, length/orientation/topology,
+deformation, unreachable/invalid data and final Animator skinning ownership.
+These are CONTRACT/REGRESSION/INTEGRATION, KEEP/H. The smoke requires nonzero,
+equal sample/constraint/skin/accepted-vertex-update counts with no invalid/unreachable updates. Existing
+tests remain; 34 CPU cases with both new options off, 35 with probe only, 37 with
+probe plus productive capability. Three explicit GPU cases remain excluded from
+headless CI and cannot supply visual acceptance.

@@ -2,7 +2,7 @@
 # alone would ignore a nonzero exit status after a matching startup message.
 set(smoke_arguments "${SMOKE_ARGUMENT}")
 if(NOT REQUIRE_VULKAN)
-    list(APPEND smoke_arguments --no-vulkan)
+    list(PREPEND smoke_arguments --no-vulkan)
 endif()
 
 execute_process(
@@ -27,4 +27,13 @@ if(smoke_output MATCHES "Initial config load failed|Dev asset binding failed|Dev
 endif()
 if(REQUIRE_VULKAN AND NOT smoke_output MATCHES "Vulkan backend active:")
     message(FATAL_ERROR "Graphics smoke requires an active Vulkan backend; headless/null fallback is not graphics validation")
+endif()
+
+if(REQUIRE_HAND_IK)
+    if(NOT smoke_output MATCHES "Hand IK frames: applied=([1-9][0-9]*) samples=([1-9][0-9]*) skins=([1-9][0-9]*) vertex_updates=([1-9][0-9]*) invalid=0 unreachable=0")
+        message(FATAL_ERROR "Opt-in hand IK smoke did not apply valid reachable constraints")
+    endif()
+    if(NOT CMAKE_MATCH_1 STREQUAL CMAKE_MATCH_2 OR NOT CMAKE_MATCH_2 STREQUAL CMAKE_MATCH_3 OR NOT CMAKE_MATCH_3 STREQUAL CMAKE_MATCH_4)
+        message(FATAL_ERROR "Hand IK smoke must sample, constrain, skin and submit one accepted vertex update per pose")
+    endif()
 endif()

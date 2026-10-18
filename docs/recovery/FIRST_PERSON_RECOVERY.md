@@ -1,5 +1,139 @@
 # First-person recovery: diagnosis and bounded implementation
 
+## Phase 2B opt-in production hand constraints (visual gate OPEN)
+
+Published [draft game #16](https://github.com/YoungJibbit95/Nemisis/pull/16),
+stacked after [shared-pose draft #15](https://github.com/YoungJibbit95/Nemisis/pull/15).
+PROGRESS.md records exact pins, integration ancestry, local results and the next
+executable session step. Hosted checks belong to the PRs; no merge is automatic.
+
+The game now has an opt-in constraint path using ozz-animation **0.17.0**, exact
+commit `744eb9d99f606eda849acb0b1204f7a3dc20bca1`. Archive SHA256 and MIT notice
+are unchanged. `cmake/OzzAnimation.cmake` shares that one dependency between
+the probe and game. NovaCore remains the only skeleton/clip-sampling/skinning
+runtime; ozz supplies only `IKTwoBoneJob` quaternion corrections.
+
+Build capability `NEMISIS_ENABLE_HAND_IK` defaults OFF. Even when built ON,
+normal launch keeps legacy presentation; `--first-person-hand-ik` selects the
+replacement. The flag is rejected when capability was not compiled. The CI
+matrix builds both the probe and capability; a dedicated headless Dev Range
+smoke requires nonzero, equal sample/constraint/skin/accepted-vertex-update counts and no invalid or
+unreachable frames. Those are CPU mesh updates, not evidence of GPU execution.
+
+Actual dataflow is fixed at 60 Hz:
+
+1. Authoritative movement/weapons update; camera and procedural animation follow.
+2. One final presentation snapshot evaluates weapon mount, ADS, sway, recoil,
+   reload/procedural offsets, scale and exactly one cooked muzzle alignment.
+3. Its final M4 grip matrices and the arms instance become model-space targets.
+4. `PlayerSkeletalAnimator::update` advances/samples NovaCore once. After this
+   base pose, each wrist target removes its authored hand-socket translation
+   and rotation. Bind-calibrated per-side poles follow the shoulder parent;
+   current-pose bend axes supply the ozz corrections. Only local rotations change.
+5. NovaCore evaluates the corrected globals and skins the weighted mesh once.
+   `globalPose()` and `socketTransform()` expose those same final globals.
+6. The existing dynamic arms resource receives one vertex update for that tick.
+7. `onFrame` submits the cached weapon and the exact arms instance used above,
+   with one arms ViewModel submission. There is no render interpolation here;
+   repeated render frames do not advance, skin or upload again. Multiple fixed
+   ticks retain the existing per-tick update policy, with no added uploads.
+
+The original engine pin wrote a dynamic pose only to the current Vulkan frame
+slot and immediately discarded its payload. Since two slots alternate, a render
+without a new fixed tick could draw old vertices. A separate engine correction
+must retain the latest payload until each slot is refreshed after its own fence;
+the tested replacement pin is `a687c8816fbcc8a7f4d313cf092c6dc17a59f8f7`
+([engine draft #11](https://github.com/YoungJibbit95/Novacore-Engine/pull/11)).
+CPU scheduling tests and graphical compilation are separate from actual GPU
+execution; the latter still requires the visual gate.
+
+The raw old mount could not reach the left real M4 grip (hip/ADS wrist distances
+0.787/0.884 m against a 0.660 m chain). The replacement retunes the **existing**
+artistic A1 mount to hip `(0.28,-0.15,1.00)`, ADS `(0.055,-0.015,0.82)`, uniform
+scale `0.90` throughout ADS. Weapon placement stays unchanged. The replacement
+does not run the average correction before or after IK. No axis repair, new
+mount-correction layer, bone stretch or source/cooked asset change was added.
+
+Invalid chains, indices, nonfinite data, singular/nonuniform/reflected frames
+return the base pose transactionally. Unreachable targets use bounded closest
+two-bone output, preserve translation/scale and report reach flags/residuals.
+The temporary A1 rig is explicitly calibrated by its verified authored chains;
+this is not a finished or automatically retargeted Project-character rig.
+
+### Manual Vulkan acceptance and legacy removal
+
+No new GUI authorization exists after the physical Escape stop. No graphical
+launch, inputs, screenshots or GPU smoke were performed for this phase. Both
+new PRs remain draft until the appropriate acceptance is recorded.
+
+From the `recovery/09-production-hand-ik` checkout with its recorded engine pin:
+
+```powershell
+# CMake >=3.30; Windows with VS2022, Vulkan SDK and SDL3 fetch access.
+cmake --preset windows-msvc-debug -DNOVACORE_ENGINE_ROOT=F:/Coding/Project/recovery/phase2b/Novacore-Engine -DNEMISIS_ENABLE_HAND_IK=ON -DNEMISIS_BUILD_OZZ_IK_PROBE=ON
+cmake --build --preset windows-msvc-debug --parallel 4
+# Run separately, from the source checkout. Normal launch is the baseline.
+.\build\windows-msvc-debug\Debug\nemisis_game.exe --vulkan --dev-range
+.\build\windows-msvc-debug\Debug\nemisis_game.exe --vulkan --dev-range --first-person-hand-ik
+```
+
+The machine used for CPU work has GCC, not MSVC. The equivalent local graphical
+build commands/results, exact commits and hosted checks are recorded in
+PROGRESS.md. A successful build does not mean either command above was launched.
+
+Actual default controls are defined in `InputBindings.cpp` and
+`configs/input/default_input.json`: WASD move, mouse look, left mouse fire,
+**hold** right mouse for ADS, R reload after firing, Shift sprint (double tap for
+tactical sprint), C slide, Space jump/double-jump/mantle, LeftAlt dash, 4 rifle,
+5 SMG, 6 sidearm, F pickup, P reset range, V cycle drill, F1 debug/Tab next page.
+Use the range wallrun geometry while airborne/moving; no new wallrun key exists.
+
+For each launch select rifle with 4 and reset with P. Compare the same idle/hip,
+held ADS, yaw, high/low pitch, recoil while firing, reload, walk/sprint and
+slide/wallrun views. Retain a small image for each case and record build SHA,
+mode, input and frame; confirm both hand contacts/orientation, no elbow flips,
+one arms mesh, no major view obstruction, forward weapon and coherent muzzle
+feedback/aim. Reload/fire remain existing procedural presentation plus Idle/Aim
+fallback, not newly authored clips. Gameplay ray origin/balance are unchanged.
+Compare legacy and IK on identical CPU inputs first; manual images supply the
+remaining visible-geometry acceptance. Record any unreachable/invalid shutdown
+counts and inspect the corresponding case before enabling by default.
+
+Remove `bindFirstPersonArmsMeshToRigSockets`, its legacy mount variant and the
+temporary activation switch **only after** CPU contracts and MSVC/Clang CI pass,
+the combined Vulkan image matrix confirms both contacts throughout all cases,
+and visual approval is recorded. Then choose the new default in a separate PR;
+do not leave two permanent productive rig paths. PR C is intentionally pending.
+
+### Deferred Project head-safe migration (plan only)
+
+PR D starts after hand-IK visual acceptance. Preserve `chr_project_male1` and all
+source GLBs. In an isolated asset change, duplicate the Project mesh non-
+destructively offline using the existing Blender cooking entry points. Author
+explicit face/region selections for head/neck, torso/legs, arms/hands and every
+clothing layer; material exclusion alone is unsafe. Store the selection recipe
+with a source hash so topology changes cannot silently reuse stale face indices.
+Inspect seams and triangles with mixed neck/arm weights in Blender rather than
+adding runtime vertex heuristics.
+
+Export separate canonical FPS arms and head-safe visible-body variants, retaining
+actual weights, bind matrices, animation channels, attachment sockets and the
+necessary ancestor closure. Establish the actual Project deforming arm chains,
+twist bones and socket frames explicitly before adapting the small constraint
+mapping; A1 names/calibration are not a Project retargeting solution. Keep the
+world-body resource and static showcase/targets separate. First-person variants
+replace, rather than overlap, the hidden complete local world body.
+
+Cook only retained visible primitives/vertices and remap the used skin palette
+plus required ancestors consistently; verify JOINTS/WEIGHTS, bind parity, socket
+parity and clip deformation before measuring actual subset skin/upload cost.
+Do not claim savings from joint counts alone. Preserve clothing, prevent head
+visibility at maximum pitch/camera movement and validate external view, near
+clip, hip/ADS/reload/movement on Vulkan. No binary migration or new asset platform
+has begun in this session; the expensive full FPS body remains suppressed.
+
+The sections below record the preceding extraction and historical diagnosis.
+
 ## Phase 2B shared weapon presentation
 
 The immutable combined base is 5baab6137dc5e0a3a81a2b0e9ec62ac4f8a78fa0

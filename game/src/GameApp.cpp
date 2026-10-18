@@ -207,6 +207,15 @@ void GameApp::onStartup() {
 }
 
 void GameApp::onShutdown() {
+    if (options_.firstPersonHandIK) {
+        const auto& stats = skeletalArmsAnimator_.stats();
+        novacore::core::logInfo("game", "Hand IK frames: applied=" + std::to_string(stats.constrainedFrameCount) +
+            " samples=" + std::to_string(stats.sampledFrameCount) +
+            " skins=" + std::to_string(stats.skinnedFrameCount) +
+            " vertex_updates=" + std::to_string(armVertexUpdateCount_) +
+            " invalid=" + std::to_string(stats.invalidHandFrameCount) +
+            " unreachable=" + std::to_string(stats.unreachableHandFrameCount));
+    }
     releaseDevMeshResources();
     renderer_.shutdown();
     window_.shutdown();
@@ -578,6 +587,7 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
         presentationDesc.player = currentPlayerRenderState();
         presentationDesc.meshResources = &devMeshResources_;
         presentationDesc.meshCatalog = &devAssetBindings_.meshCatalog();
+        presentationDesc.useHandConstraints = options_.firstPersonHandIK;
         firstPersonPresentation_ = dev::evaluateFirstPersonPresentation(presentationDesc);
 
         const float animationDelta = static_cast<float>(context.fixedDeltaSeconds);
@@ -596,11 +606,20 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
             armsAnimationFrame.upperBodyClip == player::CharacterAnimationClip::Idle
             ? player::CharacterAnimationClip::Idle
             : player::CharacterAnimationClip::Ads;
+        std::optional<player::PlayerHandTargets> handTargets;
+        if (options_.firstPersonHandIK && firstPersonPresentation_->rightGripWorld &&
+            firstPersonPresentation_->leftGripWorld) {
+            handTargets = player::PlayerHandTargets{
+                player::firstPersonAttachmentMatrix(firstPersonPresentation_->rig.arms),
+                *firstPersonPresentation_->rightGripWorld, *firstPersonPresentation_->leftGripWorld};
+        }
         const auto armsMesh = devMeshResources_.find("chr_a1_fp_arms_01");
         if (armsMesh != devMeshResources_.end() &&
-            skeletalArmsAnimator_.update(armsAnimationFrame, animationDelta)) {
+            skeletalArmsAnimator_.update(armsAnimationFrame, animationDelta, handTargets ? &*handTargets : nullptr)) {
             if (const auto* skinnedMesh = skeletalArmsAnimator_.skinnedMesh(); skinnedMesh != nullptr) {
-                (void)renderer_.updateMeshResourceVertices(armsMesh->second, *skinnedMesh);
+                if (renderer_.updateMeshResourceVertices(armsMesh->second, *skinnedMesh)) {
+                    ++armVertexUpdateCount_;
+                }
             }
         }
     }

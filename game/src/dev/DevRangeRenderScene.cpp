@@ -1106,6 +1106,13 @@ FirstPersonPresentation evaluateFirstPersonPresentation(const DevRangeRenderScen
     rigInput.weaponSwayOffset = desc.player.weaponSwayOffset;
     rigInput.weaponMount = toRigMount(mount);
     rigInput.armsMount = toRigMount(armsMount);
+    if (desc.useHandConstraints) {
+        // One artistic A1 mount with reach margin for the real M4 grips.
+        // Same uniform scale throughout ADS; no whole-mesh socket correction.
+        rigInput.armsMount.hipOffset = {0.28F, -0.15F, 1.00F};
+        rigInput.armsMount.adsOffset = {0.055F, -0.015F, 0.82F};
+        rigInput.armsMount.scale = {0.90F, 0.90F, 0.90F};
+    }
     rigInput.bodyMount = toRigMount(bodyMount);
     rigInput.weaponSockets = mount.sockets;
     rigInput.cameraRollDegrees = desc.player.cameraRollDegrees;
@@ -1155,7 +1162,9 @@ FirstPersonPresentation evaluateFirstPersonPresentation(const DevRangeRenderScen
         weaponRoll);
     const auto cookedArmsRig = cookedArmsSocketRig(desc, armsMount.assetId);
     result.cookedSocketCount += cookedArmsRig.socketCount;
-    result.armsBoundCount += bindFirstPersonArmsMeshToRigSockets(presentedRig, cookedArmsRig);
+    if (!desc.useHandConstraints) {
+        result.armsBoundCount += bindFirstPersonArmsMeshToRigSockets(presentedRig, cookedArmsRig);
+    }
     result.rig = presentedRig;
     result.weaponAssetId = selectedWeaponAssetId;
     result.armsAssetId = armsMount.assetId;
