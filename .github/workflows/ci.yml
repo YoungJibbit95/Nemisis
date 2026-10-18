@@ -26,7 +26,7 @@ jobs:
             os: ubuntu-24.04
             preset: ci-headless-linux
           - name: Windows MSVC
-            os: windows-2025
+            os: windows-2022
             preset: ci-headless-windows
     defaults:
       run:
@@ -73,3 +73,4 @@ jobs:
             Nemisis/build/**/CMakeFiles/CMakeConfigureLog.yaml
           retention-days: 7
           if-no-files-found: warn
+

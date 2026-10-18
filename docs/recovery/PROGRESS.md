@@ -51,3 +51,6 @@ uncommitted source/GLB changes in the original checkout.
 - Hosted fresh MSVC/Clang runs pending. Next: inspect/fix those runs, record final
   PRs/commits, then classify test contracts and inspect the canonical asset path.
   Do not delete weapon fixups until representative-asset visual validation exists.
+- Initial hosted matrix is running. Switched Windows to the documented
+  Windows-2022 / VS2022 runner after the engine's Windows-2025 job could not
+  resolve a VS2022 instance. This changes the environment, not test coverage.
