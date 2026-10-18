@@ -840,10 +840,10 @@ was introduced. The image-space anatomical interpretation still needs review.
 FR17 had a separate proven content error. Its raw physical muzzle is +Z and its
 pistol grip extends toward raw +X. The old [0,-90,180] recipe inverted physical
 up and forward; its muzzle marker pointed at the stock. Only this asset now uses
-the existing Blender normalizer with Euler [0,+90,0]. New R is inside Plane.012
+the existing Blender normalizer with Euler [0,+90,0]. New R is inside Plane.010 upper
 pistol handle, L intersects the forward Plane.003 underside, and muzzle is the
-actual Cylinder.010 front-ring center. Canonical R=(0,0,0), L=(0,.0850358,.1997735),
-muzzle=(-.0000289,.1328695,.2916486)m. The real stock is behind R. These geometry
+actual Cylinder.010 front-ring center. Canonical R=(0,0,0), L=(0,.0379693,.212),
+muzzle=(-.0000289,.0858030,.3038751)m. The real stock is behind R. These geometry
 contracts are checked through the actual public engine importer, not metadata
 axis declarations. FR17 eject and full finger/ADS/animation profiles stay open.
 
@@ -856,7 +856,7 @@ blender --background --factory-startup --threads 1 --python tools/blender/normal
 Unchanged FR17 source SHA256:
 `72dc57988cfbc84b018fd9687e26d2885ac2ceb57f7a7a13b45892944ac21a2e`.
 Two independent exports produced cooked SHA256:
-`e1f3ee9bb2cabdb36150d7ecf3a93cbb147047ab1250d8c45ea7bb7ebc6a7038`.
+`8099362f8974b65c81fb3883e0739042b8521d08d2e840cc9b247731a4036130`.
 Python cook and mutation checks pass (2 cases). C++ build/full tests and hosted
 MSVC/Clang CI are pending integration at this commit. No GUI was launched.
 F01-F03 remain art direction: actual right trigger hand, left front support,

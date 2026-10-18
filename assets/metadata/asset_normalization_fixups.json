@@ -223,7 +223,7 @@
       "findings": [
         "Source muzzle Cylinder.010 points along raw +Z, while pistol grip Plane.012 and magazine extend toward raw +X. The previous recipe inverted both physical forward and up.",
         "Correct only FR17 offline: Blender Euler [0,+90,0], runtime +Y up/+Z muzzle forward, positive unit scales. Source GLB remains unchanged.",
-        "Firing grip measured inside physical Plane.012 pistol handle; support anchor intersects the forward Plane.003 underside at raw Z+.13m. These positional anchors do not assert final finger-wrap quality."
+        "Firing grip measured inside physical Plane.010 upper pistol handle behind the trigger; lower Plane.012 is an extended assembly, not the firing palm. Support intersects forward Plane.003 underside at raw Z+.13m."
       ],
       "target_dimensions_m": [
         0.05652,
@@ -262,8 +262,8 @@
             "name": "socket_grip_r",
             "location": [
               -0.0010228316,
-              0.0469134952,
-              0.0953684994
+              0.05914,
+              0.1424350054
             ],
             "display_size": 0.04
           },
@@ -298,8 +298,8 @@
       },
       "source_sha256": "72dc57988cfbc84b018fd9687e26d2885ac2ceb57f7a7a13b45892944ac21a2e",
       "socket_notes": {
-        "socket_grip_r": "Physical Plane.012 pistol grip, raw midpoint (.0814315006,.0247771684,-.0697734952)m; behind the trigger, primary firing-hand anchor.",
-        "socket_grip_l": "Physical Plane.003 forward underside at raw (-.0036042801,.0247771684,+.13)m; .1997735m ahead of firing grip, .0918751m behind physical muzzle.",
+        "socket_grip_r": "Physical Plane.010 upper pistol grip, raw midpoint (.0343649946,.0247771684,-.082)m; behind and immediately below the trigger. Plane.012 lower extension is not the firing grip.",
+        "socket_grip_l": "Physical Plane.003 forward underside at raw (-.0036042801,.0247771684,+.13)m; .212m ahead of firing grip, .0918751m behind physical muzzle.",
         "socket_muzzle": "Center of actual Cylinder.010 foremost ring (raw max Z within .1mm); previous marker pointed at stock Plane.024.",
         "socket_eject": "Legacy provisional ejection proposal; actual port/direction is not visually or physically accepted."
       }

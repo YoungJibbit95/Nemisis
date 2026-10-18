@@ -55,7 +55,7 @@
   weighted-skin/physical-grip regression coverage. Python2/2 checks pass.
 - Corrected FR17 physical up/forward in the existing offline normalizer and
   recooked its own measured pistol/support/front-ring sockets. Two exports are
-  byte-identical, cooked SHA256 e1f3ee9bb2cabdb36150d7ecf3a93cbb147047ab1250d8c45ea7bb7ebc6a7038.
+  byte-identical, cooked SHA256 8099362f8974b65c81fb3883e0739042b8521d08d2e840cc9b247731a4036130.
   Actual imported geometry tests cover stock/firing/support/muzzle order and
   contact surfaces. Source remains unchanged; no runtime axis/mirror fix.
 - Existing legacy IK regression now tests actual M4/FR17 skin ownership through
@@ -181,7 +181,7 @@
 
 ## 2026-10-18 Phase 2D actual Project FPS runtime preview
 
-- User has merged engine#11 and game#13–#17; current game main is
+- User has merged engine#11 and game#13â€“#17; current game main is
   58e55df. Candidate#18 remains open, now based on main, with green MSVC/Clang
   checks on45363f8. Runtime preview branch stacks on that exact candidate head.
   No engine pin change: a687c8816fbcc8a7f4d313cf092c6dc17a59f8f7.
@@ -238,7 +238,7 @@
 - Published DRAFT https://github.com/YoungJibbit95/Nemisis/pull/18, implementation
   bdd03b3, review base #16. Hosted MSVC/Clang checks belong to that PR head.
 
-- Reverified engine #10/#11 and game #12–#16. Game #12 was merged by the user:
+- Reverified engine #10/#11 and game #12â€“#16. Game #12 was merged by the user:
   main f5399961da9e01c341b141785f116d76bc931731. Game #13/#14/#15/#16 remain
   open drafts with green MSVC/Clang checks. Engine #10 ready/#11 draft are open
   with green checks. User-created game #17 has also passed MSVC/Clang; it includes
