@@ -12,6 +12,8 @@ import math
 from pathlib import Path
 import struct
 
+from asset_readiness_check import gltf_node_local_matrix, mat4_multiply, mat4_transform_origin
+
 ROOT = Path(__file__).resolve().parents[2]
 POSE = ROOT / "assets/metadata/project_rifle_ready_pose.json"
 WEAPON = "wpn_project_rifle_m4a1_ready_preview"
@@ -57,6 +59,45 @@ def marker(doc, name, rows, parent=None):
         doc["scenes"][doc.get("scene", 0)]["nodes"].append(index)
     else:
         doc["nodes"][parent].setdefault("children", []).append(index)
+
+
+def validate_physical_contacts(pose, weapon_doc):
+    """Reject exchanged anatomical/physical ownership before writing a GLB.
+
+    The original M4 anchors are measured against its pistol handle/handguard;
+    the import tests independently retain those actual geometry contracts.
+    A name or camera-right X coordinate alone is not the ownership oracle.
+    """
+    nodes = weapon_doc["nodes"]
+    parents = {child: i for i, node in enumerate(nodes) for child in node.get("children", [])}
+
+    def world(i):
+        local = gltf_node_local_matrix(nodes[i])
+        return mat4_multiply(world(parents[i]), local) if i in parents else local
+
+    anchors = {}
+    for side, tolerance in (("R", .02), ("L", .01)):
+        require(pose["palms"][side]["source_bone"] == "DEF-hand." + side,
+                "Physical palm source must retain its actual anatomical deform hand")
+        for rows in (pose["palms"][side]["matrix"], pose["weapon_contact_frames"][side]["matrix"]):
+            matrix_rows(rows)
+            a, b, c = ([rows[r][column] for r in range(3)] for column in range(3))
+            determinant = (a[0] * (b[1] * c[2] - b[2] * c[1]) -
+                           b[0] * (a[1] * c[2] - a[2] * c[1]) +
+                           c[0] * (a[1] * b[2] - a[2] * b[1]))
+            require(abs(determinant - 1) < 1e-5 and
+                    all(abs(sum(x * y for x, y in zip(u, v)) - float(i == j)) < 1e-5
+                        for i, u in enumerate((a, b, c)) for j, v in enumerate((a, b, c))),
+                    "Physical palm/contact frame must be a proper rotation, never reflection/negative scale")
+        matches = [i for i, node in enumerate(nodes) if node.get("name") == "socket_grip_" + side.lower()]
+        require(len(matches) == 1, "Expected one actual measured weapon grip")
+        anchor = mat4_transform_origin(world(matches[0]))
+        contact = [row[3] for row in pose["weapon_contact_frames"][side]["matrix"][:3]]
+        require(sum((x - y) ** 2 for x, y in zip(contact, anchor)) < tolerance * tolerance,
+                "Anatomical " + side + " contact is not on its physical pistol/support grip")
+        anchors[side] = contact
+    require(anchors["L"][2] > anchors["R"][2] + .15,
+            "Left support must remain forward of right firing contact along physical weapon +Z")
 
 
 def append_ready(doc, binary, pose):
@@ -108,6 +149,7 @@ def cook(candidate):
     weapon = ROOT / "assets/processed/normalized/project_assets/wpn_project_rifle_m4a1.glb"
     for path, key in ((character, "source_character_sha256"), (weapon, "weapon_sha256")):
         require(hashlib.sha256(path.read_bytes()).hexdigest() == pose[key], "Authored source hash changed")
+    validate_physical_contacts(pose, read(weapon)[0])
     outputs = {}
     manifest = json.loads((candidate / "preview_assets.json").read_text())
     report = json.loads((candidate / "report.json").read_text())
