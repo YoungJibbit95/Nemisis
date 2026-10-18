@@ -1,4 +1,5 @@
 #include "nemisis/player/PlayerHandConstraints.hpp"
+#include "ProjectHandConstraints.hpp"
 
 #include "ozz/animation/runtime/ik_two_bone_job.h"
 #include "ozz/base/maths/simd_quaternion.h"
@@ -126,6 +127,9 @@ bool buildPlayerHandConstraintRig(const animation::Skeleton& skeleton, PlayerHan
     if (!animation::validateSkeleton(skeleton).valid()) {
         return false;
     }
+    if (animation::findJoint(skeleton, "DEF-upper_arm.R")) {
+        return detail::buildProjectHandConstraintRig(skeleton, outRig);
+    }
     PlayerHandConstraintRig candidate;
     constexpr std::array names{
         std::array<std::string_view, 4>{"upper_arm.R", "lower_arm.R", "hand.R", "socket_hand_r"},
@@ -193,6 +197,9 @@ PlayerHandConstraintResult applyPlayerHandConstraints(
     const PlayerHandConstraintRig& rig, const animation::Skeleton& skeleton,
     const animation::LocalPose& baseLocal, const animation::GlobalPose& baseGlobal,
     const PlayerHandTargets& targets, animation::LocalPose& outLocal, animation::GlobalPose& outGlobal) {
+    if (animation::findJoint(skeleton, "DEF-upper_arm.R")) {
+        return detail::applyProjectHandConstraints(rig, skeleton, baseLocal, baseGlobal, targets, outLocal, outGlobal);
+    }
     // The normal caller uses distinct reusable outputs. Preserve transactional
     // behavior for an explicitly in-place call as well.
     animation::LocalPose aliasLocal;
