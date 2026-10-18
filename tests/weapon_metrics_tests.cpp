@@ -58,7 +58,7 @@ void testRangeBandsAndDamage() {
     expect(near(nemisis::weapons::damageAtDistance(weapon, 10.0F, true), 37.8F), "headshot damage");
 }
 
-void testArTtkTargetsBoLikeBaseline() {
+void testArTtkUsesShotCountAndFireRate() {
     const auto weapon = prototypeAr();
     const auto body = nemisis::weapons::estimateTimeToKill(weapon, 150.0F, 10.0F);
     const auto head = nemisis::weapons::estimateTimeToKill(weapon, 150.0F, 10.0F, true);
@@ -83,7 +83,7 @@ void testSmgCloseTtk() {
 
 int main() {
     testRangeBandsAndDamage();
-    testArTtkTargetsBoLikeBaseline();
+    testArTtkUsesShotCountAndFireRate();
     testSmgCloseTtk();
 
     if (failures > 0) {

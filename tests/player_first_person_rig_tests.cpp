@@ -37,7 +37,6 @@ nemisis::player::FirstPersonRigMountDesc longGunMount() {
     mount.hipOffset = {0.26F, -0.30F, 0.90F};
     mount.adsOffset = {0.035F, -0.165F, 0.72F};
     mount.scale = {1.0F, 1.0F, 1.0F};
-    mount.yawCorrectionDegrees = 0.0F;
     mount.recoilYawScale = 0.46F;
     mount.recoilPitchScale = 0.34F;
     mount.reloadPitchDegrees = 9.5F;
@@ -50,7 +49,6 @@ nemisis::player::FirstPersonRigMountDesc sidearmMount() {
     mount.hipOffset = {0.18F, -0.245F, 0.68F};
     mount.adsOffset = {0.020F, -0.125F, 0.54F};
     mount.scale = {1.35F, 1.35F, 1.35F};
-    mount.rollCorrectionDegrees = 0.0F;
     mount.recoilYawScale = 0.58F;
     mount.recoilPitchScale = 0.42F;
     return mount;
@@ -175,7 +173,7 @@ void testReloadFireAndWallrunDriveSocketTransforms() {
     expect(frame.supportElbow.position.y < frame.leftHand.position.y, "support elbow stays below the support hand");
 }
 
-void testSidearmUsesShorterMuzzleAndPistolRoll() {
+void testSidearmUsesShorterMuzzleAndUprightRoll() {
     auto rifle = baseInput();
     auto sidearm = rifle;
     sidearm.weaponClass = nemisis::weapons::WeaponClass::Sidearm;
@@ -246,7 +244,6 @@ void testRigSocketsExposeCameraHandsAndWeaponAttachments() {
     const auto& eject = nemisis::player::firstPersonRigSocket(hipFrame, nemisis::player::FirstPersonRigSocket::EjectionPort);
     const auto& rightGrip = nemisis::player::firstPersonRigSocket(hipFrame, nemisis::player::FirstPersonRigSocket::RightGrip);
     const auto& leftGrip = nemisis::player::firstPersonRigSocket(hipFrame, nemisis::player::FirstPersonRigSocket::LeftGrip);
-    const auto& hipWeapon = nemisis::player::firstPersonRigSocket(hipFrame, nemisis::player::FirstPersonRigSocket::WeaponRoot);
     const auto& adsWeapon = nemisis::player::firstPersonRigSocket(adsFrame, nemisis::player::FirstPersonRigSocket::WeaponRoot);
 
     expect(camera.valid, "camera socket is valid for first-person render anchoring");
@@ -259,7 +256,7 @@ void testRigSocketsExposeCameraHandsAndWeaponAttachments() {
     expect(eject.worldPosition.z > weapon.worldPosition.z + 0.25F, "ejection port is on the receiver behind the muzzle");
     expect(rightGrip.worldPosition.z < muzzle.worldPosition.z, "right grip is behind the muzzle");
     expect(leftGrip.worldPosition.z < muzzle.worldPosition.z, "left grip is behind the muzzle");
-    expect(std::abs(adsWeapon.worldPosition.x) < std::abs(hipWeapon.worldPosition.x), "ADS moves weapon socket toward the sightline");
+    expect(std::abs(adsWeapon.worldPosition.x) < std::abs(weapon.worldPosition.x), "ADS moves weapon socket toward the sightline");
 }
 
 } // namespace
@@ -269,7 +266,7 @@ int main() {
     testAdsMovesWeaponAndHandsTowardSightline();
     testLookDownRevealsBodyWithoutLiftingItIntoCamera();
     testReloadFireAndWallrunDriveSocketTransforms();
-    testSidearmUsesShorterMuzzleAndPistolRoll();
+    testSidearmUsesShorterMuzzleAndUprightRoll();
     testCameraBasisDrivesWeaponSocketsAndHands();
     testRigSocketsExposeCameraHandsAndWeaponAttachments();
 

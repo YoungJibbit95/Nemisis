@@ -106,7 +106,7 @@ void testFastLookProducesBoundedWeaponInertia() {
     expect(-ads.weaponSwayOffset.x < -hip.weaponSwayOffset.x, "ADS damps look inertia for sight stability");
 }
 
-void testLandingKickRecoversWithoutMovingPhysicsState() {
+void testLandingKickStartsAndRecovers() {
     nemisis::player::CameraRigState state{};
     nemisis::player::CameraRigInput input{};
     input.fixedDeltaSeconds = 1.0F / 60.0F;
@@ -134,7 +134,7 @@ int main() {
     testWeaponRecoilAffectsVisualView();
     testAdsNarrowsVisualFov();
     testFastLookProducesBoundedWeaponInertia();
-    testLandingKickRecoversWithoutMovingPhysicsState();
+    testLandingKickStartsAndRecovers();
 
     if (failures > 0) {
         std::cerr << failures << " player camera rig test(s) failed\n";

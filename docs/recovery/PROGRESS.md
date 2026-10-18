@@ -1,9 +1,28 @@
 # Recovery progress
 
-Current: Phase 0 and the inactive mount-slot cleanup are validated and published
-for review. PR stack: #7 -> #8 -> #9; none merged. Original main checkout remains
-dirty with user work and must not be overwritten. Next: full test classification
-and a code-backed coordinate contract before any representative asset recook.
+Current: GitHub verified PR #7, #8 and #9 merged; main is ff88eb0. The original
+main checkout remains dirty with user work and must not be overwritten. Earlier
+unmerged/pending notes below are historical. Phase 1 starts clean from this main;
+the runtime pin remains dbdfc38. Test audit and coordinate work use independent PRs.
+
+## 2026-10-18 Phase 1 game test audit
+
+- Inspected all 33 sources / 177 test functions, 37 CTest registrations and the
+  runtime-smoke runner. TEST_AUDIT.md records invariants, categories, overlap,
+  KEEP/REVIEW/MOVE candidates and removal risk at function/behavior-group level.
+- Consolidated one identical WeaponRoot socket reference and two redundant zero
+  assignments. Renamed five tests whose old names overstated pistol correction,
+  shipped balance, nearest-hit ordering, physics immutability or asset scope.
+  Every test function, assertion and CTest registration remains.
+- Exact camera yaw/negative mesh pitch/full roll are valid coordinate contracts;
+  stage counts remain review candidates, not automatically deleted scaffolding.
+  Four pure physics cases are later MOVE candidates with distinct edge scenarios.
+- Fresh baseline built against detached, exact pinned NovaCore dbdfc38: all
+  34 CPU cases pass locally (GCC 13.2/Ninja). No engine pin/API/runtime change.
+- PR A is independent NovaCore test/doc cleanup. PR C will independently establish
+  coordinate/socket evidence from main. No new test framework or asset migration.
+- Next: validate/publish this audit, then close the demonstrated coordinate-test
+  gaps without weakening current camera/socket or movement/weapon/net contracts.
 
 ## 2026-10-18 baseline and rules
 
@@ -122,3 +141,6 @@ Euler fixes still exist: current weapon mount angles were already all zero.
   Both use the exact published NovaCore pin dbdfc38d092e018952ead43d9cb669333ebf70bc.
 - No active alignment change, asset migration, test deletion, or GPU validation.
   Final follow-up only records this evidence; implementation is already tested.
+- Post-change: complete local build and all 34/34 CPU CTest cases pass against
+  exact detached pin dbdfc38 (GCC 13.2/Ninja). Function count remains 177; all
+  assertions remain. `git diff --check` passes. Hosted MSVC/Clang pending.
