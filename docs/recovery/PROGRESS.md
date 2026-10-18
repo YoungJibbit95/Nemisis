@@ -1,5 +1,22 @@
 # Recovery progress
 
+## 2026-10-19 Actual Vulkan review: Ready framing fails
+
+- Following the explicit fresh GUI grant, the frozen `c04c78b` / engine
+  `cca45a41` Vulkan build was launched for Ready hipfire and then look-down.
+  [Original captures and exact hashes](visual/phase5/README.md) record the result.
+  The hipfire receiver occupies too much of the right side and hides the firing
+  hand; support fingers remain open. CPU contact/frustum tests did not establish
+  a readable grip. This is a failed presentation gate, not visual acceptance.
+- The first window shut down normally after 6238 accepted body/arm skin updates,
+  one logical pose owner and zero invalid/unreachable IK samples. The look-down
+  capture includes concurrent user movement and cannot validate body continuity.
+  The user is inspecting that window; automation is paused at their request.
+  No crate or shadow-on GUI comparison has run. Frozen artifacts remain unchanged.
+- All six hosted integration jobs for #33 pass: MSVC/Clang standard, native UI
+  and Jolt. A genuine M4 Armed Idle/finger correction is being authored separately;
+  these green builds do not override the actual failed visual result.
+
 ## 2026-10-19 Reviewed integration build ready for optional visual gate
 
 - Exact runtime `c04c78bf6d95d30e69a611619ad8b30b4430d0da` with engine
