@@ -1,5 +1,129 @@
 # First-person recovery: diagnosis and bounded implementation
 
+## Phase 2D: actual Project FPS runtime preview (2026-10-18)
+
+`--project-fps-preview` now loads, animates and submits the real Project subsets.
+This is **Technically Integrated as a developer preview**, **not Visually
+Accepted**, **not Weapon Rig Completed**. Seam/camera/animation limitations below
+remain release blockers. Normal launch keeps the existing A1 path unchanged.
+
+Build with `-DNEMISIS_BUILD_PROJECT_FPS_CANDIDATE=ON`; the existing cook generates
+the same geometry plus its registry manifest/metadata. The game target depends
+on this cook and stages `project-fps-candidate` beside the EXE (including MSVC
+configuration subdirectories). Runtime checks the staged folder, then the
+configured build root; it never loads Blender files. Missing/invalid preview
+assets fail explicitly before graphics startup. No new manager or asset loader.
+
+| Asset ID | Dedicated GPU resource | Render layer |
+| --- | --- | --- |
+| chr_project_male1_fp_body_preview | player/local/fps_body | World |
+| chr_project_male1_fp_arms_preview | player/local/fps_arms | World, same projection/root as body |
+| chr_project_male1 (complete external player) | player/local/body | World, suppressed in FPS |
+
+The two candidate records are mounted into the existing AssetRegistry/MeshCatalog
+only for the preview. Body uses the actual player feet/root, metre scale and
+player yaw, plus existing movement-presentation offsets. It is not a static
+mesh in front of the camera. Its head/neck/hair geometry remains excluded by the
+validated offline recipe. Following the user's GPU rejection, arms use exactly
+the same player root, metre scale, body yaw/pitch/roll and World projection as
+the body. The floating camera mount[0,-1.28,.45] is removed. Hands remain unbound
+to the weapon; no A1 whole-mesh averaging or forced ready-pose is substituted.
+
+The old supposedly normalized character actually faces -Z: both toe joints are
+over0.05m behind their corresponding foot joints along Z, contrary to gameplay
++Z. The existing subset cook now additionally emits arms_runtime.glb and
+body_runtime.glb. One shared offline scene parent turns that measured forward
+direction to+Z and centers the rig's horizontal root at the player pivot.
+Original subset GLBs/maps, source GLBs, every original local TRS/key/weight and
+the complete binary chunks remain unchanged; no runtime Euler repair is added.
+Independent tests verify anatomical forward, root centering, unchanged bytes
+and actual skinned vertices transformed exactly once.
+
+New socket_fps_eye is authored from the midpoint of ORG-eye.L/R in the actual
+head-parent frame, not the displaced eye-control handles or old guessed camera
+socket. Its bind position matches that anatomical midpoint. The sampled body
+pose supplies this eye point each tick; the camera's position is transformed
+through the same player/body matrix before the shared weapon pose is evaluated.
+Aim orientation stays under the existing player camera controls. Body/arms share
+the authored locomotion clock and shoulder placement. This is a skeleton-linked
+camera position, not a camera floating beside an independently mounted model.
+
+The existing PlayerSkeletalAnimator evaluates authored Hard stand/Walk/Run on
+both subsets using the same locomotion input/delta/transition clock. Unsupported
+ADS/reload/fire upper-body layering is disabled for these subsets; source keys,
+nonuniform scales and all weighted intermediate segments are retained. The same
+fixed tick samples/skins each visible subset once and submits one accepted
+vertex update each. Extra render frames only consume the cached presentation.
+The hidden full78,456-vertex world body receives no FPS skin/update passes.
+Its existing independent animated external representation remains available.
+
+The first renewed Vulkan run exposed a gameplay adapter bug during rapid movement
+changes: NovaCore rejects a second crossfade while the first is active. The
+adapter now finishes that short fade before consuming the latest locomotion
+request. A real-subset regression exercises repeated interrupted requests and
+settling back to idle; no engine/runtime or animation data changes are needed.
+Preview failures now distinguish missing resources, animator diagnostics and
+GPU vertex update rejection.
+
+The preview fixes the initial loadout to ar_01 / wpn_project_rifle_m4a1 and
+suppresses loadout switching/pickups and user-settings persistence in this mode.
+No A1 GPU resource is registered or drawn in the Project mode; missing Project
+resources never fall back to A1 or procedural arm/body proxies. The full Project
+showcase/targets retain their separate static resource.
+
+Start from a graphical build's runtime data directory:
+
+```powershell
+& ./build/phase2c-vulkan/nemisis_game.exe --vulkan --dev-range --project-fps-preview
+& ./build/phase2c-vulkan/nemisis_game.exe --vulkan --dev-range --project-fps-preview --project-fps-look-down
+```
+
+The second command initializes real player look pitch to-70 degrees (also on P
+reset) for a repeatable body screenshot; subsequent ordinary mouse input still
+controls look. It requires preview mode. These commands do not authorize GUI
+control after the latest physical Escape stop; renewed permission is required.
+For manual proof, record both views with the same commit/EXE hash/engine pin,
+then walk, crouch, sprint/slide, shoot/reload and inspect camera intersections.
+
+The earlier local GCC13.2 Release build and40/40 CPU cases passed (39 prior +1 actual game
+preview smoke). Real subset render tests cover three authored locomotion states,
+hip/high/low camera angles, exactly one dynamic submission each, correct layers,
+player-root placement, repeat-render stability, separate external representation
+and missing-resource rejection. The earlier8,188 hip arm vertices were measured
+with the rejected floating mount, not evidence for correct shoulder placement.
+That visibility-only assertion is replaced by anatomical root/projection and
+skinned-coordinate parity coverage. With the source's unarmed idle/walk clips,
+hands may leave the hipfire frustum; a genuine weapon-ready animation/constraint
+is required rather than moving disconnected arms into view again.
+Runtime smoke records equal body/arms sample/skin/update counts, world_updates=0
+and both actual Project submissions. Invalid metadata fails startup explicitly.
+
+`--project-fps-preview --first-person-hand-ik` rejects with exit2 and a concrete
+reason. Project palm frames have not been authored/approved; A1's adapter assumes
+uniform frames and direct parents and cannot compute the Project wrist rotation
+from a product of only the selected joints. **ozz itself does support non-direct
+ancestor joints**; five segments alone are not an upstream solver limitation.
+The intermediate .001 bones must stay weighted and retain their TRS. Upstream
+nonuniform-scale tests cover a common transformed parent, not proof of arbitrary
+per-segment animated scale/shear plus a rigid palm orientation. A bounded
+full-affine ancestor-chain adapter/authoring proposal still needs verification.
+No new solver or stripped-scale workaround was introduced.
+
+Other open visual/animation limitations: no authored weapon-ready/reload/fire/
+crouch/slide Project clips; corresponding states currently use authored idle/run
+fallbacks and existing whole-body presentation offsets. Crouch torso-camera and
+foot/ground behavior, sleeve joins and unbound hand contact are not accepted.
+The separate M4 source-up fix is draft PR#19, implementation336cf73; combine it
+for corrected weapon images, without including its asset changes in this PR.
+
+Renewed actual RTX3070Ti Vulkan run at integration d60ce1f16437ef4ea6355168d4f9d1a89c9b166d
+(preview6302df8 + M4#19) produced real hipfire and movement/look-down images.
+User inspection **rejected** the floating/high arms, reversed character and
+independent camera placement. Those images are findings, not visual acceptance.
+The run ended normally after4619 samples/skins/vertex updates for each subset,
+world_updates=0 and one active submission per subset. Corrected anatomical
+placement must be reviewed again; weapon-ready/ADS/reload contact remains open.
+
 ## Phase 2C Project FPS technical candidate (2026-10-18)
 
 **Technically Correct for subset skinning; not Visually Accepted; not Character

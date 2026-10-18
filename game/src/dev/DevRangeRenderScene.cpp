@@ -1065,13 +1065,30 @@ void appendWeaponPickupPads(
 
 } // namespace
 
+player::FirstPersonRigAttachment projectFPSPlayerAttachment(const DevRangePlayerRenderState& state) {
+    player::FirstPersonRigAttachment attachment{};
+    attachment.position = state.position + (state.hasAnimationFrame ? state.animation.thirdPersonBodyOffset : novacore::math::Vec3{});
+    attachment.scale = {1, 1, 1};
+    attachment.yawDegrees = state.view.yawDegrees;
+    attachment.pitchDegrees = state.hasAnimationFrame ? state.animation.thirdPersonBodyPitchDegrees : 0.0F;
+    attachment.rollDegrees = state.cameraRollDegrees * 0.18F +
+        (state.hasAnimationFrame ? state.animation.thirdPersonBodyRollDegrees : 0.0F);
+    attachment.alpha = 1.0F;
+    return attachment;
+}
+
 FirstPersonPresentation evaluateFirstPersonPresentation(const DevRangeRenderSceneDesc& desc) {
     FirstPersonPresentation result{};
     const auto view = renderView(desc);
     const auto eye = playerEyePosition(desc);
     const auto& mount = firstPersonWeaponMount(desc.player.activeWeaponId);
     const auto& bodyMount = firstPersonBodyMount();
-    const auto& armsMount = firstPersonArmMount(desc.player.adsAlpha > 0.35F);
+    // Identity placeholder: Project arms are attached to the same animated
+    // player root as the body below, never floated in front of the camera.
+    static constexpr FirstPersonArmMount projectArms{
+        kProjectFPSArmsAssetId, {}, {},
+        {1.0F, 1.0F, 1.0F}, {1.0F, 1.0F, 1.0F, 1.0F}};
+    const auto& armsMount = desc.projectFPSPreview ? projectArms : firstPersonArmMount(desc.player.adsAlpha > 0.35F);
 
     player::CharacterAnimationFrame animation = desc.player.animation;
     if (!desc.player.hasAnimationFrame) {
@@ -1106,7 +1123,7 @@ FirstPersonPresentation evaluateFirstPersonPresentation(const DevRangeRenderScen
     rigInput.weaponSwayOffset = desc.player.weaponSwayOffset;
     rigInput.weaponMount = toRigMount(mount);
     rigInput.armsMount = toRigMount(armsMount);
-    if (desc.useHandConstraints) {
+    if (desc.useHandConstraints && !desc.projectFPSPreview) {
         // One artistic A1 mount with reach margin for the real M4 grips.
         // Same uniform scale throughout ADS; no whole-mesh socket correction.
         rigInput.armsMount.hipOffset = {0.28F, -0.15F, 1.00F};
@@ -1162,8 +1179,11 @@ FirstPersonPresentation evaluateFirstPersonPresentation(const DevRangeRenderScen
         weaponRoll);
     const auto cookedArmsRig = cookedArmsSocketRig(desc, armsMount.assetId);
     result.cookedSocketCount += cookedArmsRig.socketCount;
-    if (!desc.useHandConstraints) {
+    if (!desc.useHandConstraints && !desc.projectFPSPreview) {
         result.armsBoundCount += bindFirstPersonArmsMeshToRigSockets(presentedRig, cookedArmsRig);
+    }
+    if (desc.projectFPSPreview) {
+        presentedRig.arms = projectFPSPlayerAttachment(desc.player);
     }
     result.rig = presentedRig;
     result.weaponAssetId = selectedWeaponAssetId;
@@ -1421,7 +1441,8 @@ void DevRangeRenderSceneBuilder::appendLocalPlayerBodyMesh(
     novacore::render::RenderFrameInfo& frame,
     const DevRangeRenderSceneDesc& desc,
     DevRangeRenderSceneStats& stats) const {
-    if (!desc.player.hasMovementState || desc.player.hasCameraRig) {
+    const bool fpsBody = desc.projectFPSPreview && desc.player.hasCameraRig;
+    if (!desc.player.hasMovementState || (desc.player.hasCameraRig && !fpsBody)) {
         return;
     }
 
@@ -1435,18 +1456,20 @@ void DevRangeRenderSceneBuilder::appendLocalPlayerBodyMesh(
     const float animationRoll = desc.player.hasAnimationFrame
         ? desc.player.animation.thirdPersonBodyRollDegrees
         : 0.0F;
-    const auto bodyResource = findMesh(desc, kLocalPlayerBodyResourceId);
+    const auto bodyResource = findMesh(desc, fpsBody ? kProjectFPSBodyResourceId : kLocalPlayerBodyResourceId);
     if (!bodyResource.isValid()) {
         ++stats.skippedMeshInstanceCount;
         return;
     }
     // This cooked character has a metre-scale, feet-at-zero pivot. Keep its
     // local animated resource separate from static targets/showcases.
-    stats.localWorldModelActive = appendMesh(
-        frame, desc, kLocalPlayerBodyAssetId, desc.player.position + animationOffset,
-        {1.0F, 1.0F, 1.0F}, view.yawDegrees, {1.0F, 1.0F, 1.0F, 1.0F}, stats,
+    const bool appended = appendMesh(
+        frame, desc, fpsBody ? kProjectFPSBodyAssetId : kLocalPlayerBodyAssetId, desc.player.position + animationOffset,
+        {1.0F, 1.0F, 1.0F}, fpsBody ? desc.player.view.yawDegrees : view.yawDegrees, {1.0F, 1.0F, 1.0F, 1.0F}, stats,
         animationPitch, (desc.player.cameraRollDegrees * 0.18F) + animationRoll,
         novacore::render::RenderMeshLayer::World, true, bodyResource);
+    stats.projectFPSBodyActive = fpsBody && appended;
+    stats.localWorldModelActive = !fpsBody && appended;
 }
 
 void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
@@ -1495,9 +1518,10 @@ void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
         stats,
         presentedRig.arms.pitchDegrees,
         presentedRig.arms.rollDegrees,
-        novacore::render::RenderMeshLayer::ViewModel,
-        false);
-    if (!armsMeshAppended) {
+        desc.projectFPSPreview ? novacore::render::RenderMeshLayer::World : novacore::render::RenderMeshLayer::ViewModel,
+        desc.projectFPSPreview,
+        desc.projectFPSPreview ? findMesh(desc, kProjectFPSArmsResourceId) : novacore::render::MeshResourceHandle{});
+    if (!armsMeshAppended && !desc.projectFPSPreview) {
         armsMeshAppended = appendMesh(
             frame,
             desc,
@@ -1515,7 +1539,8 @@ void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
     if (armsMeshAppended) {
         ++stats.firstPersonMeshCount;
     }
-    if (!armsMeshAppended || desc.showFirstPersonRigDiagnostics) {
+    stats.projectFPSArmsActive = desc.projectFPSPreview && armsMeshAppended;
+    if (!desc.projectFPSPreview && (!armsMeshAppended || desc.showFirstPersonRigDiagnostics)) {
         appendFirstPersonRigPrimitives(frame, presentedRig, stats);
     }
 }

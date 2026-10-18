@@ -137,24 +137,35 @@ endif()
 
 enable_testing()
 
-option(NEMISIS_BUILD_PROJECT_FPS_CANDIDATE "Cook and contract-test the offline Project FPS candidate" OFF)
+option(NEMISIS_BUILD_PROJECT_FPS_CANDIDATE "Cook, test and stage the optional Project FPS runtime preview" OFF)
 if(NEMISIS_BUILD_PROJECT_FPS_CANDIDATE)
     find_package(Python3 3.10 REQUIRED COMPONENTS Interpreter)
     set(project_fps_candidate_dir "${CMAKE_BINARY_DIR}/project-fps-candidate")
     add_custom_command(
         OUTPUT "${project_fps_candidate_dir}/arms.glb" "${project_fps_candidate_dir}/body.glb"
+               "${project_fps_candidate_dir}/arms_runtime.glb" "${project_fps_candidate_dir}/body_runtime.glb"
                "${project_fps_candidate_dir}/arms.map" "${project_fps_candidate_dir}/body.map"
-               "${project_fps_candidate_dir}/report.json"
+               "${project_fps_candidate_dir}/report.json" "${project_fps_candidate_dir}/preview_assets.json"
+               "${project_fps_candidate_dir}/arms_runtime.metadata.json" "${project_fps_candidate_dir}/body_runtime.metadata.json"
         COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tools/assets/cook_project_fps_candidate.py"
                 --output "${project_fps_candidate_dir}"
-        DEPENDS tools/assets/cook_project_fps_candidate.py assets/metadata/project_fps_candidate_regions.json
+        DEPENDS tools/assets/cook_project_fps_candidate.py tools/assets/asset_readiness_check.py assets/metadata/project_fps_candidate_regions.json
                 assets/processed/normalized/project_assets/chr_project_male1.glb assets/project_assets/character_male1.glb
         VERBATIM
     )
     add_custom_target(nemisis_project_fps_candidate
         DEPENDS "${project_fps_candidate_dir}/report.json" "${project_fps_candidate_dir}/arms.glb"
                 "${project_fps_candidate_dir}/body.glb" "${project_fps_candidate_dir}/arms.map"
-                "${project_fps_candidate_dir}/body.map")
+                "${project_fps_candidate_dir}/body.map" "${project_fps_candidate_dir}/preview_assets.json"
+                "${project_fps_candidate_dir}/arms_runtime.glb" "${project_fps_candidate_dir}/body_runtime.glb"
+                "${project_fps_candidate_dir}/arms_runtime.metadata.json" "${project_fps_candidate_dir}/body_runtime.metadata.json")
+    add_dependencies(nemisis_game nemisis_project_fps_candidate)
+    target_compile_definitions(nemisis_game PRIVATE NEMISIS_PROJECT_FPS_PREVIEW=1
+        NEMISIS_PROJECT_FPS_BUILD_ROOT="${CMAKE_BINARY_DIR}")
+    add_custom_command(TARGET nemisis_game POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" "-DSOURCE=${project_fps_candidate_dir}"
+                "-DDEST=$<TARGET_FILE_DIR:nemisis_game>/project-fps-candidate"
+                -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/StageProjectFpsPreview.cmake" VERBATIM)
     add_executable(nemisis_project_fps_candidate_tests tests/project_fps_candidate_tests.cpp)
     target_link_libraries(nemisis_project_fps_candidate_tests PRIVATE Novacore::Engine)
     target_compile_definitions(nemisis_project_fps_candidate_tests PRIVATE
@@ -290,6 +301,18 @@ target_include_directories(nemisis_dev_range_render_scene_tests
 target_link_libraries(nemisis_dev_range_render_scene_tests PRIVATE Novacore::Engine)
 target_compile_definitions(nemisis_dev_range_render_scene_tests PRIVATE NEMISIS_SOURCE_ROOT="${CMAKE_CURRENT_SOURCE_DIR}")
 add_test(NAME nemisis_dev_range_render_scene_tests COMMAND nemisis_dev_range_render_scene_tests)
+if(NEMISIS_BUILD_PROJECT_FPS_CANDIDATE)
+    target_sources(nemisis_dev_range_render_scene_tests PRIVATE game/src/player/PlayerSkeletalAnimator.cpp)
+    target_compile_definitions(nemisis_dev_range_render_scene_tests PRIVATE
+        NEMISIS_PROJECT_FPS_CANDIDATE_ROOT="${project_fps_candidate_dir}")
+    add_dependencies(nemisis_dev_range_render_scene_tests nemisis_project_fps_candidate)
+    add_test(NAME nemisis_project_fps_preview_smoke
+        COMMAND "${CMAKE_COMMAND}" "-DGAME_EXECUTABLE=$<TARGET_FILE:nemisis_game>"
+                "-DSMOKE_ARGUMENT=--smoke-test;--project-fps-preview" -DREQUIRE_PROJECT_FPS=ON
+                -DREQUIRE_VULKAN=OFF -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/RunGameSmoke.cmake")
+    set_tests_properties(nemisis_project_fps_preview_smoke PROPERTIES
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" TIMEOUT 120)
+endif()
 
 add_executable(nemisis_player_animation_tests
     game/src/player/PlayerAnimation.cpp
