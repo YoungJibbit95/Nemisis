@@ -21,11 +21,20 @@
   Hidden full-body skinning/uploads are skipped while FPS camera rig is active.
 - Fresh old-pin baseline full build / 34 CPU tests passed. Full changed-engine
   C++23 GCC 13.2/Ninja build and all 34/34 CPU tests pass. Engine full 5/5 local and
-  hosted MSVC/Clang pass. Game hosted matrix pending publication.
+  hosted MSVC/Clang pass. Game hosted matrix also passes at e48c6e3:
+  https://github.com/YoungJibbit95/Nemisis/actions/runs/39127318199.
 - No GLBs/fixups, balance, movement/network simulation, renderer API or GPU test
   requirements changed. No GUI control / visual validation after Escape.
 - This is a completed import/selected-world-body slice, not the complete FPS rig:
   authored head-safe Project FPS split and actual hand constraints remain open.
+- Published PR https://github.com/YoungJibbit95/Nemisis/pull/12, implementation
+  e48c6e38605a3c3abf971646ffd8901c63583c16. Engine PR #10 should integrate first;
+  the exact published pin already works independently of the engine merge commit.
+- Geometry PR #13 is independent and also hosted-green. Local review branch
+  recovery/phase2-review combines both published implementations at259755f;
+  complete CPU build/34 cases and SDL3 3.2.22/Vulkan SDK1.4.350.0 build pass.
+  No GUI launch/inputs or GPU images: new authorization question remains pending.
+  Optional ozz probe is being isolated from the productive game path.
 
 Next: replace the whole-arms average translation with current-pose hand constraints
 after final weapon/grip computation and before skinning; reviewed ozz TwoBoneIK
@@ -33,10 +42,10 @@ is the targeted library candidate. Separate presentation cleanup removes proven
 extra geometry. Require a renewed authorized GPU image matrix before visual
 acceptance or a binary asset migration. Do not merge automatically.
 
-Current: GitHub verified PR #7, #8 and #9 merged; main is ff88eb0. The original
+Historical Phase 1 start: GitHub verified PR #7, #8 and #9 merged; main was ff88eb0. The original
 main checkout remains dirty with user work and must not be overwritten. Earlier
 unmerged/pending notes below are historical. Phase 1 starts clean from this main;
-the runtime pin remains dbdfc38. Test audit and coordinate work use independent PRs.
+the runtime pin was dbdfc38. Test audit and coordinate work used independent PRs.
 
 ## 2026-10-18 baseline and rules
 
