@@ -1,5 +1,26 @@
 # Recovery progress
 
+## 2026-10-19 Reviewed integration build ready for optional visual gate
+
+- Exact runtime `c04c78bf6d95d30e69a611619ad8b30b4430d0da` with engine
+  `cca45a41aded8b13171943553e27f85071c76ed3`: complete followup Release build
+  and all 48 CPU tests pass again in 94.07s, including the nonzero-roll fix.
+- Complete separate SDL3/Vulkan game with Jolt, native RmlUi/FreeType,
+  Project candidate and hand IK builds successfully (310 steps, plus final
+  GameApp refresh). All dependencies use public installed engine targets.
+  EXE: `C:/Users/Administrator/.codex/tmp/nemisis-phase5-vulkan/nemisis_game.exe`.
+  SHA256 `5be1c86eb12f55055e247ed312bfb90770e92a360e16bb2e870b3b4d52c8fc78`.
+  Pose SHA256 remains `f59c8151c3950778ae457f748b2bb4341ff62d6b623597b5c1c2ea716cd5cc5e`.
+- Reproducible candidates use `--project-rifle-ready`, optionally
+  `--project-fps-look-down`, `--physics-props`, `--directional-shadows`.
+  Legacy anatomical comparison uses `--dev-range --first-person-hand-ik`
+  with weapon keys 4/5/6. These are prepared commands, not executed GUI tests.
+- No Phase 5 graphical application/window automation has run. A fresh explicit
+  grant is still required for captures/control. Default legacy no-IK presentation,
+  finger/stock quality, complete Project arsenal/armed states/third person and
+  dynamic-character shadow acceptance remain open. R3 and sensor/material event
+  source work continue in their isolated specialist branches.
+
 ## 2026-10-19 Combined CPU gate and camera-roll continuity followup
 
 - Exact game `ff539763302683212406a8b38bad751394cb3faf` with public engine

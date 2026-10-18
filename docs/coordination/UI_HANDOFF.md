@@ -2,12 +2,13 @@
 
 ## Integration candidate, 2026-10-19
 
-The current game runtime candidate is `ff539763302683212406a8b38bad751394cb3faf`
+The current game runtime candidate is `c04c78bf6d95d30e69a611619ad8b30b4430d0da`
 on `recovery/phase5-dev-range-physics`; both engine pins use
 `cca45a41aded8b13171943553e27f85071c76ed3` (engine Draft #19). This combines
 the existing native UI with the proper RH camera, optional rigid bodies and
-directional shadows. Engine standard/Jolt MSVC and Clang jobs are green; full
-combined game regression is in progress. Earlier checkpoints below remain
+directional shadows. Engine standard/Jolt MSVC and Clang jobs are green; the
+complete game build and48/48 CPU tests pass94.07s, and the full separate Vulkan
+game builds. Hosted game integration CI follows. Earlier checkpoints below remain
 historical. No Phase 5 GUI acceptance has occurred.
 
 The actual new quality API is `RenderFrameInfo::directionalShadows`, configured
