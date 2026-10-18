@@ -153,7 +153,18 @@ Euler fixes still exist: current weapon mount angles were already all zero.
   logged; one live hipfire image was inspected. Physical Escape stopped Computer
   Use; no further UI actions/captures. Held ADS, grip/muzzle images and animation
   are not fully visually validated. Three GPU CTest smokes were not run here.
-- Hosted Windows/MSVC and Ubuntu/Clang for this PR are pending publication.
+- Published implementation 65ea16e4986831003298197080487ca1caeea171 in independent
+  PR https://github.com/YoungJibbit95/Nemisis/pull/11 (base: main ff88eb0).
+- Hosted complete builds and all 34/34 CPU cases pass on Windows/MSVC and
+  Ubuntu/Clang at that exact implementation commit:
+  https://github.com/YoungJibbit95/Nemisis/actions/runs/39123958512.
+  This final evidence follow-up changes docs only. `git diff --check` passes.
+- Independent game audit PR #10 preserves all 177 baseline functions; the two
+  new contract functions here give 179 when combined. A merge-tree check against
+  audit f13f325 passes without conflicts; no actual merge was performed.
+- The interactive visual session used the separate game-audit worktree and
+  created untracked configs/user/ there. Preserve those user settings; they are
+  excluded from both PRs. Both original dirty user checkouts remain untouched.
 
 Next executable step: review the M4A1 current/candidate image matrix in the
 existing Dev Range with a usable backend before any recook/catalog switch.
