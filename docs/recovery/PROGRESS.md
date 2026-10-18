@@ -1,5 +1,10 @@
 # Recovery progress
 
+Current: Phase 0 and the inactive mount-slot cleanup are validated and published
+for review. PR stack: #7 -> #8 -> #9; none merged. Original main checkout remains
+dirty with user work and must not be overwritten. Next: full test classification
+and a code-backed coordinate contract before any representative asset recook.
+
 ## 2026-10-18 baseline and rules
 
 - Published baseline: 6b0f411eab1a717656adfd7f70f10e2f76a5dcbf.
@@ -82,3 +87,38 @@ axis assertions. This is behavior-preserving cleanup, not an asset recook.
 Then classify all test contracts and verify runtime axes/units/transform order
 before migrating a representative weapon. Actual asset/fixup removal still
 requires representative-asset visual/ADS/socket/animation validation.
+
+## Phase 1 bounded cleanup: inactive mount correction slots
+
+- Removed yaw/pitch/roll correction members from the two private per-asset mount
+  structs in DevRangeRenderScene.cpp, plus 18 explicit zero initializer values
+  and their forwarding. All four weapon and both arm definitions were already
+  zero; the shared rig descriptor still supplies the same zero defaults.
+- Used named initialization for the remaining weapon pose/recoil/reload data.
+  Socket binding, hip/ADS offsets, scale, recoil/reload response, the generic rig
+  API, fallback assets and cooked/source binaries are unchanged.
+- Renamed testDevRangeRenderSceneUsesPerWeaponImportAxisCorrections to
+  testDevRangeRenderSceneKeepsCookedWeaponAxes. The contract remains valid:
+  cooked SMG/sidearm submission retains forward/upright axes and mount scale.
+  Every assertion and test invocation is retained; no replacement test needed.
+- Executed complete incremental game/test build and all 34 CPU CTest cases:
+  pass on GCC 13.2 / Ninja. Source-tree headless asset boot also passes.
+  Engine checkout: 15485df, runtime identical to pinned dbdfc38. Diff check passes.
+- This is removal of inactive data, not recooking or changing asset orientation.
+  GPU visual/ADS/socket/animation validation remains required before any actual
+  alignment-fix or cooked-asset migration. Hosted MSVC/Clang follow-up pending.
+
+Next: classify the full test portfolio and verify the actual coordinate/transform
+contract, then select wpn_project_rifle_m4a1 as a representative migration only
+after visual validation is available. Do not assume the recovery plan's historical
+Euler fixes still exist: current weapon mount angles were already all zero.
+
+### Hosted cleanup validation
+
+- Implementation commit f38b3b4; PR:
+  https://github.com/YoungJibbit95/Nemisis/pull/9 (base: recovery/01-ci-baseline).
+- Fresh hosted Windows/MSVC and Ubuntu/Clang builds both pass all 34 CPU tests:
+  https://github.com/YoungJibbit95/Nemisis/actions/runs/39120683593.
+  Both use the exact published NovaCore pin dbdfc38d092e018952ead43d9cb669333ebf70bc.
+- No active alignment change, asset migration, test deletion, or GPU validation.
+  Final follow-up only records this evidence; implementation is already tested.

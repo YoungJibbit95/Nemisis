@@ -379,7 +379,7 @@ void testDevRangeRenderSceneAlignsWeaponMeshToCookedMuzzleSocket() {
     }
 }
 
-void testDevRangeRenderSceneUsesPerWeaponImportAxisCorrections() {
+void testDevRangeRenderSceneKeepsCookedWeaponAxes() {
     novacore::render::Renderer renderer;
     auto lookup = registerSceneMeshes(renderer);
     const auto world = nemisis::dev::createDevRangeGreyboxWorld();
@@ -906,7 +906,7 @@ int main() {
     testDevRangeRenderSceneMovesWeaponTowardSightlineInAds();
     testDevRangeRenderSceneViewmodelFollowsCameraAngles();
     testDevRangeRenderSceneAlignsWeaponMeshToCookedMuzzleSocket();
-    testDevRangeRenderSceneUsesPerWeaponImportAxisCorrections();
+    testDevRangeRenderSceneKeepsCookedWeaponAxes();
     testDevRangeRenderScenePlacesA2AssetsInSpawnView();
     testDevRangeRenderSceneHidesLocalWorldBodyWhenCameraRigIsActive();
     testDevRangeRenderSceneRigsFirstPersonBodyForLookDown();
