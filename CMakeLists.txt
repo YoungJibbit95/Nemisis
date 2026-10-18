@@ -382,6 +382,9 @@ target_include_directories(nemisis_dev_asset_bindings_tests
 )
 
 target_link_libraries(nemisis_dev_asset_bindings_tests PRIVATE Novacore::Engine)
+target_compile_definitions(nemisis_dev_asset_bindings_tests PRIVATE
+    NEMISIS_SOURCE_ROOT="${CMAKE_CURRENT_SOURCE_DIR}"
+)
 add_test(NAME nemisis_dev_asset_bindings_tests COMMAND nemisis_dev_asset_bindings_tests)
 
 add_executable(nemisis_command_messages_tests

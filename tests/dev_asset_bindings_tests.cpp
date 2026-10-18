@@ -1,12 +1,15 @@
 #include "nemisis/assets/DevAssetBindings.hpp"
 
 #include <array>
+#include <algorithm>
+#include <cmath>
 #include <cstdlib>
 #include <cstdint>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <limits>
 #include <span>
 #include <string>
 #include <string_view>
@@ -268,11 +271,69 @@ void testMissingMetadataIsReported() {
     std::filesystem::remove_all(root);
 }
 
+void testRepresentativeCookedWeaponContract() {
+    const std::filesystem::path sourceRoot{NEMISIS_SOURCE_ROOT};
+    nemisis::assets::GameAssetCatalog catalog;
+    const auto catalogLoad = catalog.loadFromJson(sourceRoot / "configs/assets/nemisis_assets.json");
+    expect(catalogLoad.ok(), "real asset catalog loads for canonical weapon contract");
+    const auto* record = catalog.find("wpn_project_rifle_m4a1");
+    expect(record != nullptr, "representative weapon is selected through the actual catalog");
+    if (record == nullptr) {
+        return;
+    }
+    novacore::assets::GltfAssetMetadata metadata{};
+    const auto metadataLoad = novacore::assets::loadGltfAssetMetadataFromJson(
+        sourceRoot / novacore::assets::metadataPathForCookedAsset(*record), metadata);
+    expect(metadataLoad.ok(), "representative weapon metadata loads");
+    expect(novacore::assets::validateGltfAssetMetadata(*record, metadata).empty(), "representative metadata agrees with catalog");
+    expect(metadata.scaleMeters && metadata.runtimeUpAxis == "Y" && metadata.gameplayForwardAxis == "+Z", "cooked weapon declares metre Y-up/+Z-forward convention");
+    novacore::assets::GltfMeshData mesh{};
+    const auto meshLoad = novacore::assets::loadGltfMeshData(sourceRoot / record->cookedPath, mesh);
+    expect(meshLoad.ok() && mesh.vertexCount() > 0U, "representative cooked GLB contains valid geometry");
+    if (!meshLoad.ok() || mesh.vertexCount() == 0U) {
+        return;
+    }
+    const auto marker = [&](std::string_view name) {
+        return std::ranges::find_if(mesh.nodeMarkers, [name](const auto& value) { return value.name == name; });
+    };
+    for (const auto name : {"socket_muzzle", "socket_grip_r", "socket_grip_l"}) {
+        expect(std::ranges::count(metadata.sockets, name) == 1, "required weapon socket is declared once in metadata");
+        expect(std::ranges::count_if(mesh.nodeMarkers, [name](const auto& value) { return value.name == name; }) == 1,
+            "required weapon socket name is unique in the cooked scene");
+        const auto socket = marker(name);
+        expect(socket != mesh.nodeMarkers.end(), "required weapon socket exists in actual GLB hierarchy");
+        if (socket != mesh.nodeMarkers.end()) {
+            expect(socket->worldForward.z > 0.999F && socket->worldUp.y > 0.999F, "canonical weapon socket frame faces +Z with +Y up");
+            expect(std::isfinite(socket->worldPosition.x) && std::isfinite(socket->worldPosition.y) && std::isfinite(socket->worldPosition.z), "weapon socket position is finite");
+        }
+    }
+    const auto muzzle = marker("socket_muzzle");
+    const auto grip = marker("socket_grip_r");
+    if (muzzle != mesh.nodeMarkers.end() && grip != mesh.nodeMarkers.end()) {
+        expect(grip->worldPosition.lengthSquared() < 0.000001F, "cooked weapon origin is firing grip");
+        expect(muzzle->worldPosition.z > grip->worldPosition.z + 0.1F, "muzzle is ahead of firing grip in canonical local space");
+    }
+    auto minimum = novacore::math::Vec3{std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max()};
+    auto maximum = minimum * -1.0F;
+    for (const auto& primitive : mesh.primitives) {
+        expect(primitive.nodeTransformBaked && primitive.skinIndex < 0, "representative rigid weapon has static baked geometry");
+        for (const auto position : primitive.positions) {
+            expect(std::isfinite(position.x) && std::isfinite(position.y) && std::isfinite(position.z), "cooked weapon vertex is finite");
+            minimum = {std::min(minimum.x, position.x), std::min(minimum.y, position.y), std::min(minimum.z, position.z)};
+            maximum = {std::max(maximum.x, position.x), std::max(maximum.y, position.y), std::max(maximum.z, position.z)};
+        }
+    }
+    const auto dimensions = maximum - minimum;
+    expect(dimensions.z > dimensions.x && dimensions.z > dimensions.y, "rifle's long axis is runtime forward");
+    expect(dimensions.z > 0.5F && dimensions.z < 1.5F, "rifle is metre-scale, not centimetre or authoring-unit scale");
+}
+
 } // namespace
 
 int main() {
     testRequiredDevAssetsBindToMeshCatalog();
     testMissingMetadataIsReported();
+    testRepresentativeCookedWeaponContract();
 
     if (failures > 0) {
         std::cerr << failures << " dev asset binding test(s) failed\n";

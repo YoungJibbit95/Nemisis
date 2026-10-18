@@ -1,9 +1,9 @@
 # Recovery progress
 
-Current: Phase 0 and the inactive mount-slot cleanup are validated and published
-for review. PR stack: #7 -> #8 -> #9; none merged. Original main checkout remains
-dirty with user work and must not be overwritten. Next: full test classification
-and a code-backed coordinate contract before any representative asset recook.
+Current: GitHub verified PR #7, #8 and #9 merged; main is ff88eb0. The original
+main checkout remains dirty with user work and must not be overwritten. Earlier
+unmerged/pending notes below are historical. Phase 1 starts clean from this main;
+the runtime pin remains dbdfc38. Test audit and coordinate work use independent PRs.
 
 ## 2026-10-18 baseline and rules
 
@@ -122,3 +122,43 @@ Euler fixes still exist: current weapon mount angles were already all zero.
   Both use the exact published NovaCore pin dbdfc38d092e018952ead43d9cb669333ebf70bc.
 - No active alignment change, asset migration, test deletion, or GPU validation.
   Final follow-up only records this evidence; implementation is already tested.
+
+## 2026-10-18 canonical asset coordinate contract
+
+- Independent branch from Nemisis main ff88eb0; no dependency on game test-audit
+  PR #10. NovaCore runtime pin stays dbdfc38d092e018952ead43d9cb669333ebf70bc.
+- ASSET_COORDINATE_CONTRACT.md traces source/import/cook, hierarchy, skinning,
+  buffers, model/view/projection, mounts, ADS/recoil and static/animated sockets
+  to concrete functions. Cooked GLB is the single canonical runtime boundary.
+- Verified C(x,y,z)=(x,z,-y), model T*Ry*Rx*Rz*S, camera pitch sign and separate
+  viewmodel projection. Documented that metadata dimensions use Blender order,
+  axis reports describe grip-to-muzzle displacement, and static scene bindings
+  ignore marker orientation. Animated bridge uses name hints/identity offsets;
+  normal/lighting transforms have separate limitations. No workaround added.
+- Chose wpn_project_rifle_m4a1 from the real catalog. Read source/cooked geometry,
+  hierarchy and sockets, recorded hashes/bounds/origins and classified active
+  offline fixups, neutral/removed runtime slots, art poses and report aliases.
+  Both GLBs, metadata/fixups and runtime placement remain unchanged.
+- Added two game contract functions: actual M4A1 metadata/required unique sockets,
+  node frames, finite geometry, metre scale and +Z length; exact reconstructed
+  muzzle/hand positions across rotated/recoiling hip and ADS submissions.
+  Resulting game function count is 179, with 37 CTest entries / 34 CPU cases.
+- The generic nested TRS/matrix/nonuniform-scale marker test belongs to NovaCore
+  and is included in engine audit PR #9 using its existing tiny GLB writer.
+- Local validation against exact detached dbdfc38: fresh complete C++23 build and
+  all 34/34 CPU cases pass via ci-headless (GCC 13.2/Ninja). Final unique-name
+  checks also pass in both affected test executables. No tests disabled/deleted.
+- Separate graphical build succeeded with pinned engine, SDL3 release-3.2.22 and
+  Vulkan SDK 1.4.350.0. Active RTX 3070 Ti backend and 36/36 ready mesh assets were
+  logged; one live hipfire image was inspected. Physical Escape stopped Computer
+  Use; no further UI actions/captures. Held ADS, grip/muzzle images and animation
+  are not fully visually validated. Three GPU CTest smokes were not run here.
+- Hosted Windows/MSVC and Ubuntu/Clang for this PR are pending publication.
+
+Next executable step: review the M4A1 current/candidate image matrix in the
+existing Dev Range with a usable backend before any recook/catalog switch.
+Acceptance: canonical CPU checks pass, hip/held ADS/muzzle/grips/scale and
+procedural reload/recoil are visually reviewed, no game-test regression. Preserve
+existing source/cooked binaries and active offline fixups until that gate passes.
+A separate authored-animation socket-offset fixture/fix can be planned without
+mixing it into the rigid-weapon migration. No automatic merges.

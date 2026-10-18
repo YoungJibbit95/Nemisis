@@ -4,9 +4,11 @@
 #include "nemisis/player/PlayerFirstPersonRig.hpp"
 
 #include "novacore/assets/GltfDocument.hpp"
+#include "novacore/animation/AnimationTypes.hpp"
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstdlib>
 #include <iostream>
 #include <optional>
@@ -376,6 +378,78 @@ void testDevRangeRenderSceneAlignsWeaponMeshToCookedMuzzleSocket() {
         expect(socketRifle->position.z > fallbackRifle->position.z + 0.25F, "positive runtime muzzle socket keeps the weapon root behind the barrel and in front of the camera");
         expect(std::abs(socketRifle->yawDegrees - fallbackRifle->yawDegrees) < 0.01F, "socket alignment keeps normalized asset yaw stable");
         expect(std::abs(socketRifle->rollDegrees - fallbackRifle->rollDegrees) < 0.01F, "socket alignment keeps normalized asset roll stable");
+    }
+}
+
+void testCookedMuzzleAndGripsFollowRenderedWeaponTransform() {
+    novacore::render::Renderer renderer;
+    const auto lookup = registerSceneMeshes(renderer);
+    const auto catalog = makeSocketCatalogForFirstPersonWeapon();
+    const auto world = nemisis::dev::createDevRangeGreyboxWorld();
+    auto targets = nemisis::dev::makeDefaultDevTargetRange();
+    const auto* source = catalog.findByAssetId("wpn_project_rifle_m4a1");
+    expect(source != nullptr && source->meshData.has_value(), "socket fixture has imported markers");
+    if (source == nullptr || !source->meshData.has_value()) {
+        return;
+    }
+    const auto near = [](novacore::math::Vec3 a, novacore::math::Vec3 b) {
+        return (a - b).lengthSquared() < 0.0000001F;
+    };
+    // Use the animation matrix implementation as an independent column-vector
+    // oracle for the renderer's T * Ry * Rx * Rz * S model convention.
+    const auto worldPoint = [](const novacore::render::RenderMesh3D& mesh, novacore::math::Vec3 point) {
+        constexpr float halfRadians = 3.14159265358979323846F / 360.0F;
+        const float y = mesh.yawDegrees * halfRadians;
+        const float x = mesh.pitchDegrees * halfRadians;
+        const float z = mesh.rollDegrees * halfRadians;
+        const auto rotation = novacore::animation::multiply(
+            novacore::math::Quat{0.0F, std::sin(y), 0.0F, std::cos(y)},
+            novacore::animation::multiply(
+                novacore::math::Quat{std::sin(x), 0.0F, 0.0F, std::cos(x)},
+                novacore::math::Quat{0.0F, 0.0F, std::sin(z), std::cos(z)}));
+        return novacore::animation::transformPoint(
+            novacore::animation::matrixFromTransform({mesh.position, rotation, mesh.scale}), point);
+    };
+    for (const float ads : {0.0F, 1.0F}) {
+        nemisis::dev::DevRangePlayerRenderState player{};
+        player.position = {3.0F, 2.0F, -5.0F};
+        player.view.yawDegrees = 37.0F;
+        player.view.pitchDegrees = 19.0F;
+        player.cameraRollDegrees = -13.0F;
+        player.adsAlpha = ads;
+        player.weapon.adsAlpha = ads;
+        player.weapon.recoilPitchOffsetDegrees = 3.0F;
+        player.weapon.recoilYawOffsetDegrees = 2.0F;
+        player.hasAnimationFrame = true;
+        useFirstPersonCamera(player);
+        novacore::render::RenderFrameInfo fallbackFrame{};
+        nemisis::dev::DevRangeRenderSceneDesc desc{&world, &targets, nullptr, &lookup, player};
+        (void)nemisis::dev::DevRangeRenderSceneBuilder{}.append(fallbackFrame, desc);
+        desc.meshCatalog = &catalog;
+        novacore::render::RenderFrameInfo cookedFrame{};
+        (void)nemisis::dev::DevRangeRenderSceneBuilder{}.append(cookedFrame, desc);
+        const auto fallback = findLastMesh(fallbackFrame, "wpn_project_rifle_m4a1");
+        const auto cooked = findLastMesh(cookedFrame, "wpn_project_rifle_m4a1");
+        expect(fallback.has_value() && cooked.has_value(), "hip and ADS submit the representative viewmodel");
+        if (!fallback.has_value() || !cooked.has_value()) {
+            continue;
+        }
+        const auto muzzle = std::ranges::find_if(source->meshData->nodeMarkers, [](const auto& marker) { return marker.name == "socket_muzzle"; });
+        expect(muzzle != source->meshData->nodeMarkers.end(), "cooked fixture contains muzzle");
+        if (muzzle != source->meshData->nodeMarkers.end()) {
+            expect(near(worldPoint(*cooked, muzzle->worldPosition),
+                        worldPoint(*fallback, nemisis::player::FirstPersonRigSocketLayout{}.muzzle)),
+                "cooked muzzle reaches the procedural target under yaw, pitch, roll, recoil and ADS scale");
+        }
+        for (const auto name : {"socket_grip_r", "socket_grip_l"}) {
+            const auto grip = std::ranges::find_if(source->meshData->nodeMarkers, [name](const auto& marker) { return marker.name == name; });
+            expect(grip != source->meshData->nodeMarkers.end(), "cooked fixture contains required grip");
+            if (grip != source->meshData->nodeMarkers.end()) {
+                const auto expected = worldPoint(*cooked, grip->worldPosition);
+                expect(std::ranges::any_of(cookedFrame.worldBoxes, [&](const auto& box) { return near(box.center, expected); }),
+                    "presented hand primitive coincides with the transformed cooked grip without fixing stage counts");
+            }
+        }
     }
 }
 
@@ -906,6 +980,7 @@ int main() {
     testDevRangeRenderSceneMovesWeaponTowardSightlineInAds();
     testDevRangeRenderSceneViewmodelFollowsCameraAngles();
     testDevRangeRenderSceneAlignsWeaponMeshToCookedMuzzleSocket();
+    testCookedMuzzleAndGripsFollowRenderedWeaponTransform();
     testDevRangeRenderSceneKeepsCookedWeaponAxes();
     testDevRangeRenderScenePlacesA2AssetsInSpawnView();
     testDevRangeRenderSceneHidesLocalWorldBodyWhenCameraRigIsActive();
