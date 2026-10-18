@@ -19,10 +19,27 @@ the runtime pin remains dbdfc38. Test audit and coordinate work use independent 
   Four pure physics cases are later MOVE candidates with distinct edge scenarios.
 - Fresh baseline built against detached, exact pinned NovaCore dbdfc38: all
   34 CPU cases pass locally (GCC 13.2/Ninja). No engine pin/API/runtime change.
-- PR A is independent NovaCore test/doc cleanup. PR C will independently establish
-  coordinate/socket evidence from main. No new test framework or asset migration.
-- Next: validate/publish this audit, then close the demonstrated coordinate-test
-  gaps without weakening current camera/socket or movement/weapon/net contracts.
+- Published implementation ccdfa63744c88ed4562876a2a5bfa6d92063e233 in independent
+  PR https://github.com/YoungJibbit95/Nemisis/pull/10 (base: main ff88eb0).
+- Post-change complete local build and 34/34 CPU cases pass on GCC 13.2/Ninja;
+  all 177 functions/assertions remain. `git diff --check` passes.
+- Hosted complete builds and 34/34 CPU cases pass on both Windows/MSVC and
+  Ubuntu/Clang at that exact implementation commit:
+  https://github.com/YoungJibbit95/Nemisis/actions/runs/39122629852.
+- Independent NovaCore PR #9 adds its generic hierarchy contract. Independent
+  Nemisis PR #11 documents coordinates and adds two game contract functions;
+  neither introduces a runtime/API/pin dependency or asset migration.
+- Separate graphical build: SDL3 3.2.22 / Vulkan SDK 1.4.350.0, active RTX 3070 Ti,
+  36/36 ready mesh assets. One live hipfire image inspected; physical Escape
+  stopped Computer Use. Held ADS, grip/muzzle placement and animation remain
+  visually unverified. The three GPU CTest cases were not run or disabled.
+- The interactive session created untracked configs/user/ in this recovery
+  worktree. Preserve these user settings; they are excluded from this PR. Original
+  dirty user checkouts remain untouched. This evidence follow-up changes docs only.
+- Next: use the existing Dev Range to review the current/candidate M4A1 image
+  matrix in ASSET_COORDINATE_CONTRACT.md (PR #11): hip/held ADS, forward/up,
+  muzzle/grips, scale and procedural reload/recoil. Require passing CPU contracts
+  and reviewed images before a separate cook/catalog migration. No automatic merge.
 
 ## 2026-10-18 baseline and rules
 
@@ -141,6 +158,3 @@ Euler fixes still exist: current weapon mount angles were already all zero.
   Both use the exact published NovaCore pin dbdfc38d092e018952ead43d9cb669333ebf70bc.
 - No active alignment change, asset migration, test deletion, or GPU validation.
   Final follow-up only records this evidence; implementation is already tested.
-- Post-change: complete local build and all 34/34 CPU CTest cases pass against
-  exact detached pin dbdfc38 (GCC 13.2/Ninja). Function count remains 177; all
-  assertions remain. `git diff --check` passes. Hosted MSVC/Clang pending.
