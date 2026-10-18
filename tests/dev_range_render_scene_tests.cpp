@@ -1589,7 +1589,14 @@ void testProjectReadyUsesOneConstrainedPose() {
             // Semantic right-hand contract: camera-relative side, real firing
             // grip and original .R/.L anatomy. No fixed screenshot pixel oracle.
             const float yaw = desc.player.cameraView.yawDegrees * (3.14159265358979323846F / 180.F);
-            const math::Vec3 cameraRight{-std::cos(yaw), 0, std::sin(yaw)};
+            const float pitch = desc.player.cameraView.pitchDegrees * (3.14159265358979323846F / 180.F);
+            const float roll = desc.player.cameraRollDegrees * (3.14159265358979323846F / 180.F);
+            const math::Vec3 horizontalRight{-std::cos(yaw), 0, std::sin(yaw)};
+            const math::Vec3 unrolledUp{-std::sin(yaw) * std::sin(pitch), std::cos(pitch),
+                                        -std::cos(yaw) * std::sin(pitch)};
+            // Physical view-right includes camera roll, not only world-up strafe.
+            // Derive it independently from the public camera angles.
+            const auto cameraRight = horizontalRight * std::cos(roll) + unrolledUp * std::sin(roll);
             const auto firingOffset = animation::matrixTranslation(targets.rightGripWorld) - desc.player.cameraPosition;
             const auto dot = [](math::Vec3 a, math::Vec3 b) { return a.x * b.x + a.y * b.y + a.z * b.z; };
             const float rightMargin = dot(firingOffset, cameraRight);
