@@ -1,5 +1,16 @@
 # Recovery progress
 
+## 2026-10-19 Local animation direction follows actual view
+
+- GameApp now supplies the existing animation input's horizontal forward/right
+  from actual PlayerView vectors. Previously the trailing aggregate fields used
+  fixed world-axis defaults, so turning changed movement without its local gait
+  direction. Proper physical right at yaw zero is -X, consistent with the camera.
+- Aim pitch/yaw/turn addends remain unchanged: the Project presentation root
+  already applies view orientation. No new pose/simulation owner or authored-clip
+  completeness claim. Game rebuild plus six existing view/animation/Ready and
+  actual headless game smoke suites pass in23.69s against engine `130c4fd`.
+
 ## 2026-10-19 Native sensor/material integration in the existing range
 
 - Both engine pins now use public combined runtime

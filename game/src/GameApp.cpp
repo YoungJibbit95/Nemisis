@@ -625,6 +625,7 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
                     1.0F)
                 : 0.0F;
 
+        const auto animationView = player::viewVectors(view != nullptr ? *view : player::PlayerViewComponent{});
         latestCharacterAnimationFrame_ = player::updateCharacterAnimation(
             characterAnimation_,
             player::CharacterAnimationInput{
@@ -641,6 +642,8 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
                 command.sprintHeld,
                 command.tacticalSprintHeld,
                 command.crouchHeld,
+                animationView.horizontalForward,
+                animationView.horizontalRight,
             });
         hasCharacterAnimationFrame_ = true;
 
