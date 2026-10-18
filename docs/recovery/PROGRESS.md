@@ -1,5 +1,36 @@
 # Recovery progress
 
+## 2026-10-19 Proper camera / physical grip integration candidate
+
+- Enginef4d7c99 (Draft #16, on UI integration #15) preserves glTF chirality
+  with a standard proper RH camera: physical view rows right/up/-forward and
+  perspective W=-viewZ. Logical world yaw/pitch/forward remain unchanged.
+  Actual asymmetric wrist/index/thumb fixtures reject the old551 camera with
+  112 failures. Shared sky/world ray round trips and Vulkan depth remain valid.
+- Main reviewed the six camera-math changes and independently rebuilt the full
+  exact engine/server/sandbox:7/7 CPU suites pass5.06s. Complete SDL3/Vulkan
+  static library builds and installs. Public headers and17 shader sources are
+  identical to551; those modules already passed Vulkan1.0 SPIR-V validation.
+  Both hosted MSVC/Clang checks pass, run39170676045.
+- Game candidate source combines UI #28/#29, physical FR17 #30 and camera #31.
+  Human-right input stays positive on the wire; applyLook converts it to world
+  yaw, strafe follows physical camera-right, artistic camera offsets remain
+  distinct from proper asset transforms, mesh roll counters camera roll. The
+  offline Ready mount removes W1's screen-side compensation (+.11 -> -.11m),
+  re-solving actual chr_project_male1 bones without changing skin topology.
+  Positional recoil now agrees with unchanged authoritative world-yaw recoil.
+- Both local candidate pins name exactf4d7c99; the full game+native-RmlUi+IK+
+  Project build is running against its public library. This candidate pin will
+  be published only after the local integration gate; main/defaults are not
+  changed. The earlier local stop to raise compilation parallelism1->2 was
+  scheduling, not a source/test failure. Graphical execution remains prohibited
+  until a renewed explicit GUI grant. No visual or GPU performance acceptance.
+- FP-1's first hosted Clang run passed44/45: the new geometry oracle assumed
+  a single hand bone had >.75 weight. Actual Project palms blend hand/finger
+  descendants (single hand max.572). The replacement uses the real source skin
+  hand subtree, retains >.75 and the same geometric thresholds; R2591/L2553
+  eligible vertices. Final FP-1/Cam CI is rerunning; no assertions disabled.
+
 ## 2026-10-19 Combined UI candidate dependency correction
 
 - The first #29 native-UI CI jobs failed compiling DevRangeRenderScene.cpp:
