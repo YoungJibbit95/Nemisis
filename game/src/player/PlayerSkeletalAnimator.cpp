@@ -172,7 +172,9 @@ bool PlayerSkeletalAnimator::update(
     }
 
     const auto* requestedClip = selectClip(frame.locomotionClip);
-    if (requestedClip != nullptr && requestedClip != activeClip_ &&
+    // NovaCore deliberately rejects overlapping fades. Finish the short active
+    // fade, then consume the latest gameplay request on a subsequent tick.
+    if (requestedClip != nullptr && requestedClip != activeClip_ && !runtime_.transitioning() &&
         !activateClip(*requestedClip, transitionDuration(frame.locomotionClip))) {
         ++stats_.failedFrameCount;
         stats_.poseReady = false;

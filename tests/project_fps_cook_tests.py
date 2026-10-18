@@ -4,9 +4,11 @@ import importlib.util
 import json
 from pathlib import Path
 import sys
+import struct
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "tools/assets"))
 spec = importlib.util.spec_from_file_location("cook", ROOT / "tools/assets/cook_project_fps_candidate.py")
 cook = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(cook)
@@ -14,6 +16,38 @@ OUTPUT = Path(sys.argv.pop(1))
 
 
 class CandidateCookTests(unittest.TestCase):
+    def test_runtime_frame_preserves_data_and_aligns_real_anatomy(self):
+        def document(data):
+            size = struct.unpack_from("<I", data, 12)[0]
+            return json.loads(data[20:20+size]), data[20+size:]
+        for name in ("arms", "body"):
+            old, binary = document((OUTPUT / f"{name}.glb").read_bytes())
+            new, runtime_binary = document((OUTPUT / f"{name}_runtime.glb").read_bytes())
+            self.assertEqual(binary, runtime_binary, "all vertices, normals, weights, binds and animation bytes retained")
+            for key in old:
+                if key not in ("nodes", "scenes"):
+                    self.assertEqual(old[key], new[key])
+            for before, after in zip(old["nodes"], new["nodes"]):
+                self.assertEqual({k:v for k,v in before.items() if k != "children"},
+                                 {k:v for k,v in after.items() if k != "children"})
+            nodes = new["nodes"]
+            names = {n.get("name"):i for i,n in enumerate(nodes)}
+            parents = {c:i for i,n in enumerate(nodes) for c in n.get("children", [])}
+            def world(i):
+                local = cook.gltf_node_local_matrix(nodes[i])
+                return cook.mat4_multiply(world(parents[i]), local) if i in parents else local
+            def position(name):
+                return cook.mat4_transform_origin(world(names[name]))
+            for side in ("L", "R"):
+                self.assertGreater(position(f"DEF-toe.{side}")[2]-position(f"DEF-foot.{side}")[2], 0.05)
+            eye = position("socket_fps_eye")
+            left, right = position("ORG-eye.L"), position("ORG-eye.R")
+            for axis in range(3):
+                self.assertAlmostEqual(eye[axis], (left[axis]+right[axis])*0.5, places=6)
+            pivot = position("rig")
+            self.assertAlmostEqual(pivot[0], 0, places=6)
+            self.assertAlmostEqual(pivot[2], 0, places=6)
+
     def test_source_hash_gate_precedes_cooking(self):
         recipe = json.loads(cook.RECIPE.read_text(encoding="utf-8"))
         for field in ("source", "original_source"):

@@ -29,6 +29,10 @@ using MeshResourceLookup = std::unordered_map<std::string, novacore::render::Mes
 inline constexpr std::string_view kLocalPlayerBodyAssetId = "chr_project_male1";
 // Local animation must not mutate the shared showcase/target asset resource.
 inline constexpr std::string_view kLocalPlayerBodyResourceId = "player/local/body";
+inline constexpr std::string_view kProjectFPSBodyAssetId = "chr_project_male1_fp_body_preview";
+inline constexpr std::string_view kProjectFPSArmsAssetId = "chr_project_male1_fp_arms_preview";
+inline constexpr std::string_view kProjectFPSBodyResourceId = "player/local/fps_body";
+inline constexpr std::string_view kProjectFPSArmsResourceId = "player/local/fps_arms";
 
 struct DevRangePlayerRenderState final {
     novacore::math::Vec3 position{};
@@ -67,6 +71,8 @@ struct DevRangeRenderSceneStats final {
     bool skyPassEnabled = false;
     bool firstPersonViewmodelActive = false;
     bool localWorldModelActive = false;
+    bool projectFPSBodyActive = false;
+    bool projectFPSArmsActive = false;
     std::size_t skyFallbackMeshCount = 0;
     std::size_t worldBoxCount = 0;
     std::size_t meshInstanceCount = 0;
@@ -147,9 +153,11 @@ struct DevRangeRenderSceneDesc final {
     const FirstPersonPresentation* firstPersonPresentation = nullptr;
     // Temporary visual acceptance switch. Legacy averaging remains default.
     bool useHandConstraints = false;
+    bool projectFPSPreview = false;
 };
 
 [[nodiscard]] FirstPersonPresentation evaluateFirstPersonPresentation(const DevRangeRenderSceneDesc& desc);
+[[nodiscard]] player::FirstPersonRigAttachment projectFPSPlayerAttachment(const DevRangePlayerRenderState& state);
 
 class DevRangeRenderSceneBuilder final {
 public:

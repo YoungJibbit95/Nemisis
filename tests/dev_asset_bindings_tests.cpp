@@ -326,6 +326,50 @@ void testRepresentativeCookedWeaponContract() {
     const auto dimensions = maximum - minimum;
     expect(dimensions.z > dimensions.x && dimensions.z > dimensions.y, "rifle's long axis is runtime forward");
     expect(dimensions.z > 0.5F && dimensions.z < 1.5F, "rifle is metre-scale, not centimetre or authoring-unit scale");
+
+    // Marker axes alone accepted the old upside-down mesh. Check named physical
+    // parts and the actual front barrel ring independently of generated sockets.
+    const auto part = [&](std::string_view name) -> const novacore::assets::GltfPrimitiveData* {
+        for (const auto& primitive : mesh.primitives) {
+            const auto node = std::ranges::find_if(mesh.nodes, [&](const auto& n) {
+                return primitive.nodeIndex >= 0 && n.nodeIndex == static_cast<std::size_t>(primitive.nodeIndex);
+            });
+            if (node != mesh.nodes.end() && node->name == name) { return &primitive; }
+        }
+        return nullptr;
+    };
+    const auto* magazine = part("Magazine");
+    const auto* sight = part("Sight_2");
+    // The normalizer names its largest mesh (source Barrel) as the LOD0 node.
+    const auto* barrel = part("wpn_project_rifle_m4a1_lod0");
+    expect(magazine != nullptr && sight != nullptr && barrel != nullptr, "real M4 exposes audited named geometry");
+    if (magazine && sight && barrel && muzzle != mesh.nodeMarkers.end()) {
+        float magazineTop = -100.0F, magazineBottom = 100.0F, sightBottom = 100.0F, front = -100.0F;
+        for (const auto v : magazine->positions) { magazineTop = std::max(magazineTop, v.y); magazineBottom = std::min(magazineBottom, v.y); }
+        for (const auto v : sight->positions) { sightBottom = std::min(sightBottom, v.y); }
+        for (const auto v : barrel->positions) { front = std::max(front, v.z); }
+        expect(magazineTop < sightBottom && magazineBottom < -0.08F && sightBottom > 0.10F,
+               "physical magazine hangs below the sights in runtime +Y up");
+        novacore::math::Vec3 capMin{100.0F, 100.0F, front}, capMax{-100.0F, -100.0F, front};
+        for (const auto v : barrel->positions) {
+            if (front - v.z <= 0.0001F) {
+                capMin.x = std::min(capMin.x, v.x); capMin.y = std::min(capMin.y, v.y);
+                capMax.x = std::max(capMax.x, v.x); capMax.y = std::max(capMax.y, v.y);
+            }
+        }
+        const auto capCenter = (capMin + capMax) * 0.5F;
+        expect((capCenter - muzzle->worldPosition).lengthSquared() < 0.000001F,
+               "muzzle is within 1mm of the actual front barrel ring, not a guessed metadata axis");
+        const auto support = marker("socket_grip_l");
+        if (support != mesh.nodeMarkers.end()) {
+            float underside = 100.0F;
+            for (const auto v : barrel->positions) {
+                if (std::abs(v.z - support->worldPosition.z) <= 0.0051F) { underside = std::min(underside, v.y); }
+            }
+            expect(std::abs(underside - support->worldPosition.y) < 0.001F,
+                   "provisional support anchor touches the real handguard underside");
+        }
+    }
 }
 
 void testFirstPersonArmsExcludeAuthoringHelpers() {

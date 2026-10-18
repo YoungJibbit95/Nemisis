@@ -1,21 +1,58 @@
 # Recovery progress
 
-## 2026-10-18 Phase 2D bounded Project palm proposal
+## 2026-10-18 Phase 2D actual Project FPS runtime preview
 
-- Separate authoring candidate adds two finger-bone-derived palm reference
-  sockets to a new build-only arms_palm_proposal.glb. Existing source/candidate
-  assets, original sockets, binary data, all weighted segments, scales and clips
-  are preserved. Recipe/source hashes and deterministic --check pass.
-- Public-engine C++ contract passes at pin
-  a687c8816fbcc8a7f4d313cf092c6dc17a59f8f7: independent landmark frame checks,
-  original bind/clip socket/joint and actual skinned-vertex parity.
-- Hand-local origins are approximately(+/-0.0007583,0.0570446,-0.0021107)m.
-  Full orientations and outstanding palm-normal/contact-depth/finger-wrap artist
-  decisions are recorded in FIRST_PERSON_RECOVERY.md and generated report.
-- No production IK activation. ozz supports non-direct ancestors; the current
-  A1 adapter's direct-parent/uniform-frame and wrist-rotation assumptions block
-  safe Project use. Full affine chain adaptation and M4 contact validation remain
-  open. Runtime preview and isolated M4 correction remain separate PRs.
+- User has merged engine#11 and game#13–#17; current game main is
+  58e55df. Candidate#18 remains open, now based on main, with green MSVC/Clang
+  checks on45363f8. Runtime preview branch stacks on that exact candidate head.
+  No engine pin change: a687c8816fbcc8a7f4d313cf092c6dc17a59f8f7.
+- `--project-fps-preview` now mounts generated metadata into the existing asset
+  registry and loads/animates the actual9,536-arm/40,532-body-vertex subsets.
+  Own DynamicVertices resources player/local/fps_arms and player/local/fps_body
+  initially submitted in ViewModel and World layers respectively; the corrected
+  placement below uses World for both to share the same anatomical projection. No A1 GPU resource,
+  fallback/proxy, or hidden full-world-body skin/update passes in FPS preview.
+- Existing authored locomotion sampling, original weights/scales/hierarchy and
+  shared final weapon snapshot are retained. Missing data fails explicitly.
+  Project hand contact remains blocked and the incompatible A1 IK flag is
+  rejected explicitly; no silent substitution or guessed bone-scale removal.
+- Full local GCC13.2 Release build and40/40 CPU cases pass, including real mesh
+  submission/animation and actual GameApp preview smoke. The candidate's source
+  hash/topology/vertex parity checks remain intact. Invalid-metadata negative
+  control fails before graphics startup. See FIRST_PERSON_RECOVERY.md for IDs,
+  launch commands, staging, camera test pose and known release blockers.
+- Isolated M4 correction336cf7346abd65b29062625d6d9a42a62e97b220 published as
+  DRAFT https://github.com/YoungJibbit95/Nemisis/pull/19 against the newly merged
+  main.37/37 IK and34/34 default-OFF CPU cases passed previously; corrected GPU
+  approval remains open after Escape. Source GLB is unchanged.
+- No current GUI permission is inferred from the Phase2D request. Prepare a
+  combined preview+M4 graphical build, then request fresh permission for the two
+  required images or use the documented manual commands. Runtime integration,
+  visual acceptance and completed Project weapon rig remain separate milestones.
+- User subsequently approved the two preview screenshots. First actual RTX3070Ti
+  Vulkan run loaded/submitted both real subsets but rapid movement exposed
+  overlapping-crossfade rejection in the existing game animator. Fixed by
+  finishing the active short fade before applying the latest request; real
+  Project regression covers repeated rapid transitions and settling to idle.
+  Initial image is a failed finding, not visual acceptance; repeat images pending.
+- User rejected d60ce1f GPU placement: character180degrees reversed, camera
+  independent of skeleton, floating/high arms and no weapon contact. Preserve
+  this as failed acceptance, despite4619 successful updates per real subset.
+- Corrected preview cook adds a single offline canonical scene parent to separate
+  runtime GLBs; both measured foot-to-toe vectors now face gameplay+Z and rig XZ
+  pivot is centered. Baseline subset/source assets and binary/key/weight data
+  stay unchanged. New bone-authored eye reference follows the sampled head.
+  Camera position, body and arms now share the real player/body transform;
+  detached camera-relative arms mount and mismatched arms projection are removed.
+  No forced visible hand pose: missing weapon-ready clips/constraints remain an
+  explicit acceptance blocker. Corrected GPU inspection remains required.
+- Corrected placement passes full local GCC Release40/40 CPU cases. Canonical
+  skinning/data/anatomy contracts and actual GameApp smoke pass. In the source's
+  unarmed idle pose there are0 arm vertices in the hipfire frustum (body look-down
+  has37242); hipfire arm visibility is therefore still **FAILED**, pending real
+  weapon-ready posing/constraints. Do not restore the floating mount to hide it.
+- Separate palm authoring draft#21 at75ce615 has green MSVC/Clang CI (40 cases).
+  M4 draft#19 remains separate and green; runtime draft#20 is not promoted.
 
 ## 2026-10-18 Phase 2C candidate / visual and integration gates OPEN
 

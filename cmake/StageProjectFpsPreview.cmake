@@ -1,0 +1,5 @@
+file(REAL_PATH "${SOURCE}" source_path)
+file(REAL_PATH "${DEST}" destination_path)
+if(NOT source_path STREQUAL destination_path)
+    file(COPY "${SOURCE}/" DESTINATION "${DEST}")
+endif()
