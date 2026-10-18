@@ -17,18 +17,36 @@ assets fail explicitly before graphics startup. No new manager or asset loader.
 | Asset ID | Dedicated GPU resource | Render layer |
 | --- | --- | --- |
 | chr_project_male1_fp_body_preview | player/local/fps_body | World |
-| chr_project_male1_fp_arms_preview | player/local/fps_arms | ViewModel |
+| chr_project_male1_fp_arms_preview | player/local/fps_arms | World, same projection/root as body |
 | chr_project_male1 (complete external player) | player/local/body | World, suppressed in FPS |
 
 The two candidate records are mounted into the existing AssetRegistry/MeshCatalog
 only for the preview. Body uses the actual player feet/root, metre scale and
 player yaw, plus existing movement-presentation offsets. It is not a static
 mesh in front of the camera. Its head/neck/hair geometry remains excluded by the
-validated offline recipe. Arms use an explicit camera-relative Project art
-mount (root offset[0,-1.28,.45], scale1), preserving authored axes and actual
-hands/fingers/clothing. It is intentionally unbound and has no A1 whole-mesh
-socket averaging. Separate World/ViewModel projections and sleeve joins require
-visual/artist review; this mount is not a completed anatomical shoulder rig.
+validated offline recipe. Following the user's GPU rejection, arms use exactly
+the same player root, metre scale, body yaw/pitch/roll and World projection as
+the body. The floating camera mount[0,-1.28,.45] is removed. Hands remain unbound
+to the weapon; no A1 whole-mesh averaging or forced ready-pose is substituted.
+
+The old supposedly normalized character actually faces -Z: both toe joints are
+over0.05m behind their corresponding foot joints along Z, contrary to gameplay
++Z. The existing subset cook now additionally emits arms_runtime.glb and
+body_runtime.glb. One shared offline scene parent turns that measured forward
+direction to+Z and centers the rig's horizontal root at the player pivot.
+Original subset GLBs/maps, source GLBs, every original local TRS/key/weight and
+the complete binary chunks remain unchanged; no runtime Euler repair is added.
+Independent tests verify anatomical forward, root centering, unchanged bytes
+and actual skinned vertices transformed exactly once.
+
+New socket_fps_eye is authored from the midpoint of ORG-eye.L/R in the actual
+head-parent frame, not the displaced eye-control handles or old guessed camera
+socket. Its bind position matches that anatomical midpoint. The sampled body
+pose supplies this eye point each tick; the camera's position is transformed
+through the same player/body matrix before the shared weapon pose is evaluated.
+Aim orientation stays under the existing player camera controls. Body/arms share
+the authored locomotion clock and shoulder placement. This is a skeleton-linked
+camera position, not a camera floating beside an independently mounted model.
 
 The existing PlayerSkeletalAnimator evaluates authored Hard stand/Walk/Run on
 both subsets using the same locomotion input/delta/transition clock. Unsupported
@@ -67,12 +85,16 @@ control after the latest physical Escape stop; renewed permission is required.
 For manual proof, record both views with the same commit/EXE hash/engine pin,
 then walk, crouch, sprint/slide, shoot/reload and inspect camera intersections.
 
-Full local GCC13.2 Release build and40/40 CPU cases pass (39 prior +1 actual game
+The earlier local GCC13.2 Release build and40/40 CPU cases passed (39 prior +1 actual game
 preview smoke). Real subset render tests cover three authored locomotion states,
 hip/high/low camera angles, exactly one dynamic submission each, correct layers,
 player-root placement, repeat-render stability, separate external representation
-and missing-resource rejection. CPU frustum sanity:8,188 actual arm vertices in
-hipfire and40,025 body vertices in look-down; this is not a GPU/pixel oracle.
+and missing-resource rejection. The earlier8,188 hip arm vertices were measured
+with the rejected floating mount, not evidence for correct shoulder placement.
+That visibility-only assertion is replaced by anatomical root/projection and
+skinned-coordinate parity coverage. With the source's unarmed idle/walk clips,
+hands may leave the hipfire frustum; a genuine weapon-ready animation/constraint
+is required rather than moving disconnected arms into view again.
 Runtime smoke records equal body/arms sample/skin/update counts, world_updates=0
 and both actual Project submissions. Invalid metadata fails startup explicitly.
 
@@ -93,6 +115,14 @@ fallbacks and existing whole-body presentation offsets. Crouch torso-camera and
 foot/ground behavior, sleeve joins and unbound hand contact are not accepted.
 The separate M4 source-up fix is draft PR#19, implementation336cf73; combine it
 for corrected weapon images, without including its asset changes in this PR.
+
+Renewed actual RTX3070Ti Vulkan run at integration d60ce1f16437ef4ea6355168d4f9d1a89c9b166d
+(preview6302df8 + M4#19) produced real hipfire and movement/look-down images.
+User inspection **rejected** the floating/high arms, reversed character and
+independent camera placement. Those images are findings, not visual acceptance.
+The run ended normally after4619 samples/skins/vertex updates for each subset,
+world_updates=0 and one active submission per subset. Corrected anatomical
+placement must be reviewed again; weapon-ready/ADS/reload contact remains open.
 
 ## Phase 2C Project FPS technical candidate (2026-10-18)
 

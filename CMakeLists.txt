@@ -143,12 +143,13 @@ if(NEMISIS_BUILD_PROJECT_FPS_CANDIDATE)
     set(project_fps_candidate_dir "${CMAKE_BINARY_DIR}/project-fps-candidate")
     add_custom_command(
         OUTPUT "${project_fps_candidate_dir}/arms.glb" "${project_fps_candidate_dir}/body.glb"
+               "${project_fps_candidate_dir}/arms_runtime.glb" "${project_fps_candidate_dir}/body_runtime.glb"
                "${project_fps_candidate_dir}/arms.map" "${project_fps_candidate_dir}/body.map"
                "${project_fps_candidate_dir}/report.json" "${project_fps_candidate_dir}/preview_assets.json"
-               "${project_fps_candidate_dir}/arms.metadata.json" "${project_fps_candidate_dir}/body.metadata.json"
+               "${project_fps_candidate_dir}/arms_runtime.metadata.json" "${project_fps_candidate_dir}/body_runtime.metadata.json"
         COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tools/assets/cook_project_fps_candidate.py"
                 --output "${project_fps_candidate_dir}"
-        DEPENDS tools/assets/cook_project_fps_candidate.py assets/metadata/project_fps_candidate_regions.json
+        DEPENDS tools/assets/cook_project_fps_candidate.py tools/assets/asset_readiness_check.py assets/metadata/project_fps_candidate_regions.json
                 assets/processed/normalized/project_assets/chr_project_male1.glb assets/project_assets/character_male1.glb
         VERBATIM
     )
@@ -156,7 +157,8 @@ if(NEMISIS_BUILD_PROJECT_FPS_CANDIDATE)
         DEPENDS "${project_fps_candidate_dir}/report.json" "${project_fps_candidate_dir}/arms.glb"
                 "${project_fps_candidate_dir}/body.glb" "${project_fps_candidate_dir}/arms.map"
                 "${project_fps_candidate_dir}/body.map" "${project_fps_candidate_dir}/preview_assets.json"
-                "${project_fps_candidate_dir}/arms.metadata.json" "${project_fps_candidate_dir}/body.metadata.json")
+                "${project_fps_candidate_dir}/arms_runtime.glb" "${project_fps_candidate_dir}/body_runtime.glb"
+                "${project_fps_candidate_dir}/arms_runtime.metadata.json" "${project_fps_candidate_dir}/body_runtime.metadata.json")
     add_dependencies(nemisis_game nemisis_project_fps_candidate)
     target_compile_definitions(nemisis_game PRIVATE NEMISIS_PROJECT_FPS_PREVIEW=1
         NEMISIS_PROJECT_FPS_BUILD_ROOT="${CMAKE_BINARY_DIR}")

@@ -9,7 +9,8 @@
 - `--project-fps-preview` now mounts generated metadata into the existing asset
   registry and loads/animates the actual9,536-arm/40,532-body-vertex subsets.
   Own DynamicVertices resources player/local/fps_arms and player/local/fps_body
-  submit once in ViewModel and World layers respectively. No A1 GPU resource,
+  initially submitted in ViewModel and World layers respectively; the corrected
+  placement below uses World for both to share the same anatomical projection. No A1 GPU resource,
   fallback/proxy, or hidden full-world-body skin/update passes in FPS preview.
 - Existing authored locomotion sampling, original weights/scales/hierarchy and
   shared final weapon snapshot are retained. Missing data fails explicitly.
@@ -34,6 +35,24 @@
   finishing the active short fade before applying the latest request; real
   Project regression covers repeated rapid transitions and settling to idle.
   Initial image is a failed finding, not visual acceptance; repeat images pending.
+- User rejected d60ce1f GPU placement: character180degrees reversed, camera
+  independent of skeleton, floating/high arms and no weapon contact. Preserve
+  this as failed acceptance, despite4619 successful updates per real subset.
+- Corrected preview cook adds a single offline canonical scene parent to separate
+  runtime GLBs; both measured foot-to-toe vectors now face gameplay+Z and rig XZ
+  pivot is centered. Baseline subset/source assets and binary/key/weight data
+  stay unchanged. New bone-authored eye reference follows the sampled head.
+  Camera position, body and arms now share the real player/body transform;
+  detached camera-relative arms mount and mismatched arms projection are removed.
+  No forced visible hand pose: missing weapon-ready clips/constraints remain an
+  explicit acceptance blocker. Corrected GPU inspection remains required.
+- Corrected placement passes full local GCC Release40/40 CPU cases. Canonical
+  skinning/data/anatomy contracts and actual GameApp smoke pass. In the source's
+  unarmed idle pose there are0 arm vertices in the hipfire frustum (body look-down
+  has37242); hipfire arm visibility is therefore still **FAILED**, pending real
+  weapon-ready posing/constraints. Do not restore the floating mount to hide it.
+- Separate palm authoring draft#21 at75ce615 has green MSVC/Clang CI (40 cases).
+  M4 draft#19 remains separate and green; runtime draft#20 is not promoted.
 
 ## 2026-10-18 Phase 2C candidate / visual and integration gates OPEN
 

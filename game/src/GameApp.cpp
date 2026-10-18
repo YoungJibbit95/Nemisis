@@ -600,31 +600,9 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
             });
         hasCharacterAnimationFrame_ = true;
 
-        // Camera and procedural animation are fixed-tick presentation inputs.
-        // Evaluate final cooked weapon/grips once, before arm skinning/upload.
-        dev::DevRangeRenderSceneDesc presentationDesc{};
-        presentationDesc.player = currentPlayerRenderState();
-        presentationDesc.meshResources = &devMeshResources_;
-        presentationDesc.meshCatalog = &devAssetBindings_.meshCatalog();
-        presentationDesc.useHandConstraints = options_.firstPersonHandIK;
-        presentationDesc.projectFPSPreview = options_.projectFPSPreview;
-        firstPersonPresentation_ = dev::evaluateFirstPersonPresentation(presentationDesc);
-
         const float animationDelta = static_cast<float>(context.fixedDeltaSeconds);
-        const auto bodyMesh = devMeshResources_.find(std::string(dev::kLocalPlayerBodyResourceId));
-        // Until an authored FPS body mask exists, this full body is visible only
-        // outside the camera rig. Avoid skinning/uploading 78k hidden vertices.
-        if (!cameraRig_.initialized && bodyMesh != devMeshResources_.end() &&
-            skeletalBodyAnimator_.update(latestCharacterAnimationFrame_, animationDelta)) {
-            if (const auto* skinnedMesh = skeletalBodyAnimator_.skinnedMesh(); skinnedMesh != nullptr) {
-                if (renderer_.updateMeshResourceVertices(bodyMesh->second, *skinnedMesh)) { ++worldBodyVertexUpdateCount_; }
-            }
-        }
-
         auto armsAnimationFrame = latestCharacterAnimationFrame_;
         if (options_.projectFPSPreview) {
-            // Both subsets keep the authored locomotion clip and clock. Project
-            // has no authored ADS/reload/fire layer; never substitute A1 clips.
             armsAnimationFrame.upperBodyAlpha = 0.0F;
             const auto fpsBody = devMeshResources_.find(std::string(dev::kProjectFPSBodyResourceId));
             if (fpsBody == devMeshResources_.end()) {
@@ -635,11 +613,42 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
                 throw std::runtime_error("Project FPS body pose failed: " +
                     (errors.empty() ? std::string("no animator diagnostic") : errors.back()));
             }
+            novacore::animation::Mat4 eye;
+            if (!skeletalFPSBodyAnimator_.socketTransform("socket_fps_eye", eye)) {
+                throw std::runtime_error("Project FPS animated eye attachment is unavailable");
+            }
+            const auto bodyWorld = player::firstPersonAttachmentMatrix(dev::projectFPSPlayerAttachment(currentPlayerRenderState()));
+            cameraRig_.position = novacore::animation::transformPoint(bodyWorld, novacore::animation::matrixTranslation(eye));
+            if (auto* cameraTransform = world_.getComponent<novacore::ecs::TransformComponent>(cameraEntity_); cameraTransform != nullptr) {
+                cameraTransform->position = cameraRig_.position;
+            }
             if (!renderer_.updateMeshResourceVertices(fpsBody->second, *skeletalFPSBodyAnimator_.skinnedMesh())) {
                 throw std::runtime_error("Project FPS body dynamic GPU vertex update failed");
             }
             ++fpsBodyVertexUpdateCount_;
-        } else {
+        }
+
+        // Camera and procedural animation are fixed-tick presentation inputs.
+        // Evaluate final cooked weapon/grips once, before arm skinning/upload.
+        dev::DevRangeRenderSceneDesc presentationDesc{};
+        presentationDesc.player = currentPlayerRenderState();
+        presentationDesc.meshResources = &devMeshResources_;
+        presentationDesc.meshCatalog = &devAssetBindings_.meshCatalog();
+        presentationDesc.useHandConstraints = options_.firstPersonHandIK;
+        presentationDesc.projectFPSPreview = options_.projectFPSPreview;
+        firstPersonPresentation_ = dev::evaluateFirstPersonPresentation(presentationDesc);
+
+        const auto bodyMesh = devMeshResources_.find(std::string(dev::kLocalPlayerBodyResourceId));
+        // Until an authored FPS body mask exists, this full body is visible only
+        // outside the camera rig. Avoid skinning/uploading 78k hidden vertices.
+        if (!cameraRig_.initialized && bodyMesh != devMeshResources_.end() &&
+            skeletalBodyAnimator_.update(latestCharacterAnimationFrame_, animationDelta)) {
+            if (const auto* skinnedMesh = skeletalBodyAnimator_.skinnedMesh(); skinnedMesh != nullptr) {
+                if (renderer_.updateMeshResourceVertices(bodyMesh->second, *skinnedMesh)) { ++worldBodyVertexUpdateCount_; }
+            }
+        }
+
+        if (!options_.projectFPSPreview) {
             armsAnimationFrame.locomotionClip = armsAnimationFrame.upperBodyClip == player::CharacterAnimationClip::Idle
                 ? player::CharacterAnimationClip::Idle : player::CharacterAnimationClip::Ads;
         }
@@ -1412,6 +1421,13 @@ dev::DevRangePlayerRenderState GameApp::currentPlayerRenderState() const {
     if (hasCharacterAnimationFrame_) {
         state.animation = latestCharacterAnimationFrame_;
         state.hasAnimationFrame = true;
+    }
+    if (options_.projectFPSPreview) {
+        novacore::animation::Mat4 eye;
+        if (skeletalFPSBodyAnimator_.socketTransform("socket_fps_eye", eye)) {
+            const auto bodyWorld = player::firstPersonAttachmentMatrix(dev::projectFPSPlayerAttachment(state));
+            state.cameraPosition = novacore::animation::transformPoint(bodyWorld, novacore::animation::matrixTranslation(eye));
+        }
     }
     if (const auto* weapon = world_.getComponent<weapons::WeaponRuntimeState>(localPlayerEntity_);
         weapon != nullptr) {

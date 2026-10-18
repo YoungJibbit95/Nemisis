@@ -157,6 +157,7 @@ struct DevRangeRenderSceneDesc final {
 };
 
 [[nodiscard]] FirstPersonPresentation evaluateFirstPersonPresentation(const DevRangeRenderSceneDesc& desc);
+[[nodiscard]] player::FirstPersonRigAttachment projectFPSPlayerAttachment(const DevRangePlayerRenderState& state);
 
 class DevRangeRenderSceneBuilder final {
 public:

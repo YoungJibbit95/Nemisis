@@ -13,6 +13,8 @@ import json
 from pathlib import Path
 import struct
 
+from asset_readiness_check import gltf_node_local_matrix, mat4_multiply, mat4_transform_origin
+
 
 ROOT = Path(__file__).resolve().parents[2]
 RECIPE = ROOT / "assets/metadata/project_fps_candidate_regions.json"
@@ -220,6 +222,58 @@ def cook_variant(source, binary, recipe, name):
     return {f"{name}.glb": result, f"{name}.map": struct.pack("<I", len(stats)) + mapping, **textures}, report
 
 
+def runtime_player_frame(source, glb):
+    """Canonicalize the existing subset once offline; retain its skin/keys/BIN.
+
+    The legacy normalized file's toes face -Z. A common scene parent turns its
+    real rig forward to +Z and puts the rig's horizontal root at the player pivot.
+    The eye reference uses ORG-eye bones (not displaced eye control handles).
+    """
+    nodes = source["nodes"]
+    names = {n.get("name"): i for i, n in enumerate(nodes)}
+    parents = {c: i for i, n in enumerate(nodes) for c in n.get("children", [])}
+
+    def world(i):
+        local = gltf_node_local_matrix(nodes[i])
+        return mat4_multiply(world(parents[i]), local) if i in parents else local
+
+    root = mat4_transform_origin(world(names["rig"]))
+    for side in ("L", "R"):
+        foot = mat4_transform_origin(world(names[f"DEF-foot.{side}"]))
+        toe = mat4_transform_origin(world(names[f"DEF-toe.{side}"]))
+        require(toe[2] < foot[2] - 0.05, "Character forward changed; review canonical player frame")
+    eyes = [mat4_transform_origin(world(names[f"ORG-eye.{s}"])) for s in ("L", "R")]
+    eye = [(eyes[0][i] + eyes[1][i]) * 0.5 for i in range(3)]
+    parent = parents[names["socket_camera"]]
+    p = world(parent)
+    # Invert the actual affine parent, preserving its scale rather than assuming
+    # an orthonormal rotation. This is an offline attachment authoring operation.
+    a, b, c = p[0][:3]; d, e, f = p[1][:3]; g, h, i = p[2][:3]
+    det = a*(e*i-f*h)-b*(d*i-f*g)+c*(d*h-e*g)
+    require(abs(det) > 1e-9, "Singular eye attachment parent")
+    inverse = [[e*i-f*h, c*h-b*i, b*f-c*e],
+               [f*g-d*i, a*i-c*g, c*d-a*f],
+               [d*h-e*g, b*g-a*h, a*e-b*d]]
+    local_eye = [sum(row[k]*(eye[k]-p[k][3]) for k in range(3))/det for row in inverse]
+    size = struct.unpack_from("<I", glb, 12)[0]
+    doc = json.loads(glb[20:20+size])
+    old_nodes = len(doc["nodes"])
+    roots = doc["scenes"][doc.get("scene", 0)]["nodes"]
+    doc["nodes"].append({"name": "project_fps_canonical_player_frame", "children": roots,
+                         "rotation": [0, 1, 0, 0], "translation": [root[0], 0, root[2]]})
+    doc["scenes"][doc.get("scene", 0)]["nodes"] = [old_nodes]
+    doc["nodes"][parent].setdefault("children", []).append(len(doc["nodes"]))
+    doc["nodes"].append({"name": "socket_fps_eye", "translation": local_eye})
+    header = json.dumps(doc, ensure_ascii=True, separators=(",", ":")).encode()
+    header += b" " * (-len(header) % 4)
+    tail = glb[20+size:]
+    result = struct.pack("<III", 0x46546C67, 2, 20+len(header)+len(tail)) + struct.pack("<II", len(header), 0x4E4F534A) + header + tail
+    return result, {"root_translation": [root[0], 0, root[2]], "rotation_xyzw": [0, 1, 0, 0],
+                    "eye_source_world": eye, "eye_parent": nodes[parent]["name"], "eye_parent_local": local_eye,
+                    "source_forward": "-Z proven by both foot-to-toe vectors", "runtime_forward": "+Z",
+                    "sha256": digest(result), "binary_chunk_unchanged": True}
+
+
 def cook(recipe):
     source, binary = load_source(recipe)
     outputs, reports = {}, {}
@@ -227,23 +281,26 @@ def cook(recipe):
         files, reports[name] = cook_variant(source, binary, recipe, name)
         outputs.update(files)
     assets = []
+    player_frames = {}
     sockets = [node["name"] for node in source["nodes"] if node.get("name", "").startswith("socket_")]
     for name in ("arms", "body"):
         asset_id = f"chr_project_male1_fp_{name}_preview"
-        cooked = f"project-fps-candidate/{name}.glb"
+        runtime, player_frames[name] = runtime_player_frame(source, outputs[f"{name}.glb"])
+        outputs[f"{name}_runtime.glb"] = runtime
+        cooked = f"project-fps-candidate/{name}_runtime.glb"
         assets.append({"id": asset_id, "kind": "mesh", "source": recipe["source"]["path"],
                        "cooked": cooked, "tags": ["project_fps_preview"], "streamable": False})
         metadata = {"id": asset_id, "source": recipe["source"]["path"], "export": cooked,
                     "category": "character", "scale_meters": True, "runtime_up_axis": "Y",
-                    "gameplay_forward_axis": "+Z", "sockets": sockets, "collision": "none",
+                    "gameplay_forward_axis": "+Z", "sockets": sockets + ["socket_fps_eye"], "collision": "none",
                     "license": "original_project_asset", "generated_by": "tools/assets/cook_project_fps_candidate.py",
                     "status": "developer preview; seams and palm frames unapproved"}
-        outputs[f"{name}.metadata.json"] = (json.dumps(metadata, indent=2) + "\n").encode()
+        outputs[f"{name}_runtime.metadata.json"] = (json.dumps(metadata, indent=2) + "\n").encode()
     outputs["preview_assets.json"] = (json.dumps({"manifest": {"name": "project_fps_preview"},
                                                  "assets": assets}, indent=2) + "\n").encode()
     report = {"source": recipe["source"], "recipe_sha256": digest(RECIPE.read_bytes()),
               "status": "technical candidate; not visually accepted or registered for gameplay",
-              "variants": reports, "artist_review": recipe["artist_review"]}
+              "variants": reports, "runtime_player_frames": player_frames, "artist_review": recipe["artist_review"]}
     outputs["report.json"] = (json.dumps(report, indent=2) + "\n").encode()
     return outputs, report
 

@@ -1272,14 +1272,35 @@ void testActualProjectFPSPreviewSubmitsAnimatedSubsets() {
     auto resources = registerSceneMeshes(renderer); // Includes A1 to detect accidental fallback.
     assets::GltfMeshData body, arms;
     const std::filesystem::path root{NEMISIS_PROJECT_FPS_CANDIDATE_ROOT};
-    const bool loaded = assets::loadGltfMeshData(root / "body.glb", body).ok() &&
-        assets::loadGltfMeshData(root / "arms.glb", arms).ok();
+    const bool loaded = assets::loadGltfMeshData(root / "body_runtime.glb", body).ok() &&
+        assets::loadGltfMeshData(root / "arms_runtime.glb", arms).ok();
     expect(loaded && body.vertexCount() == 40532U && arms.vertexCount() == 9536U,
            "preview imports actual Project candidate geometry");
     if (!loaded) { return; }
     player::PlayerSkeletalAnimator bodyAnimator, armsAnimator;
     if (!bodyAnimator.initialize(body) || !armsAnimator.initialize(arms)) {
         expect(false, "both actual Project preview subsets initialize authored animation"); return;
+    }
+    for (const auto name : {"arms", "body"}) {
+        assets::GltfMeshData baseline;
+        player::PlayerSkeletalAnimator reference;
+        if (!assets::loadGltfMeshData(root / (std::string(name) + ".glb"), baseline).ok() || !reference.initialize(baseline)) {
+            expect(false, "original subset initializes for independent canonical-frame parity"); return;
+        }
+        const auto* corrected = std::string_view(name) == "arms" ? armsAnimator.skinnedMesh() : bodyAnimator.skinnedMesh();
+        for (std::size_t p = 0; p < corrected->primitives.size(); ++p) {
+            const auto& before = reference.skinnedMesh()->primitives[p];
+            const auto& after = corrected->primitives[p];
+            expect(before.indices == after.indices && before.weights == after.weights && before.joints == after.joints,
+                   "canonical frame preserves original topology, fingers and weights");
+            for (std::size_t v = 0; v < before.positions.size(); ++v) {
+                const auto q = before.positions[v];
+                const math::Vec3 expected{0.10315F-q.x, q.y, 0.10893F-q.z};
+                if ((expected-after.positions[v]).lengthSquared() > 0.000000001F) {
+                    expect(false, "actual skinned vertices receive the canonical scene transform exactly once"); break;
+                }
+            }
+        }
     }
     resources[std::string(dev::kProjectFPSBodyResourceId)] = renderer.registerMeshResource(
         std::string(dev::kProjectFPSBodyResourceId), *bodyAnimator.skinnedMesh(), render::MeshResourceUsage::DynamicVertices);
@@ -1294,7 +1315,9 @@ void testActualProjectFPSPreviewSubmitsAnimatedSubsets() {
     desc.player.hasCameraRig = true;
     desc.player.hasAnimationFrame = true;
     desc.player.position = {3, 0, -5};
-    desc.player.cameraPosition = desc.player.position + math::Vec3{0, 1.65F, 0};
+    animation::Mat4 eye;
+    expect(bodyAnimator.socketTransform("socket_fps_eye", eye), "actual Project body exposes an animated anatomical eye reference");
+    desc.player.cameraPosition = desc.player.position + animation::matrixTranslation(eye);
     desc.showWorldDebugLines = true;
     dev::DevRangeRenderSceneBuilder builder;
     const auto initialArmVertex = armsAnimator.skinnedMesh()->primitives[0].positions[0];
@@ -1317,7 +1340,7 @@ void testActualProjectFPSPreviewSubmitsAnimatedSubsets() {
             if (depth > 0.03F && std::abs(screenY) < depth * 0.7536F && std::abs(v.x) < depth * 1.3397F) { ++lookDownVertices; }
         }
     }
-    expect(hipVertices > 100U && lookDownVertices > 100U, "real Project meshes intersect hipfire and look-down camera frusta");
+    expect(lookDownVertices > 100U, "actual player-root body intersects the anatomical eye look-down frustum");
     std::cout << "Project preview CPU frustum: hip_arm_vertices=" << hipVertices << " look_down_body_vertices=" << lookDownVertices << '\n';
     for (const auto clip : {player::CharacterAnimationClip::Idle, player::CharacterAnimationClip::Walk,
                             player::CharacterAnimationClip::Sprint}) {
@@ -1356,8 +1379,10 @@ void testActualProjectFPSPreviewSubmitsAnimatedSubsets() {
                 } else if (mesh.assetId == dev::kProjectFPSArmsAssetId) {
                     ++armsCount;
                     expect(mesh.mesh == resources.at(std::string(dev::kProjectFPSArmsResourceId)) &&
-                           mesh.layer == render::RenderMeshLayer::ViewModel,
-                           "one actual Project arms resource enters the viewmodel pass");
+                           mesh.layer == render::RenderMeshLayer::World &&
+                           (mesh.position - desc.player.position - desc.player.animation.thirdPersonBodyOffset).lengthSquared() < 0.000001F &&
+                           mesh.yawDegrees == view.yawDegrees && mesh.pitchDegrees == desc.player.animation.thirdPersonBodyPitchDegrees,
+                           "actual Project arms share the body's player root, projection and depth");
                 }
             }
             expect(bodyCount == 1 && armsCount == 1 && stats.firstPersonBodyPrimitiveCount == 0,
