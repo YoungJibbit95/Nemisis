@@ -1517,6 +1517,7 @@ void testProjectReadyUsesOneConstrainedPose() {
     desc.player.hasMovementState = true;
     desc.player.activeWeaponId = "ar_01";
     float largestResidual = 0;
+    float smallestForwardDot = 1;
     std::size_t ticks = 0;
     std::array<std::size_t, 2> visibleHandVertices{};
     for (auto clip : {player::CharacterAnimationClip::Idle, player::CharacterAnimationClip::Walk,
@@ -1547,6 +1548,23 @@ void testProjectReadyUsesOneConstrainedPose() {
                 return;
             }
             const player::PlayerHandTargets targets{model, *presentation.rightGripWorld, *presentation.leftGripWorld};
+            // Semantic right-hand contract: camera-relative side, real firing
+            // grip and original .R/.L anatomy. No fixed screenshot pixel oracle.
+            const float yaw = desc.player.cameraView.yawDegrees * (3.14159265358979323846F / 180.F);
+            const math::Vec3 cameraRight{std::cos(yaw), 0, -std::sin(yaw)};
+            const auto firingOffset = animation::matrixTranslation(targets.rightGripWorld) - desc.player.cameraPosition;
+            const auto dot = [](math::Vec3 a, math::Vec3 b) { return a.x * b.x + a.y * b.y + a.z * b.z; };
+            expect(dot(firingOffset, cameraRight) > 0,
+                   "hip firing grip stays right of anatomical camera across movement and yaw");
+            const auto weaponForward = animation::transformPoint(presentation.weaponWorld, {0, 0, 1}) -
+                                       animation::matrixTranslation(presentation.weaponWorld);
+            const float forwardDot = dot(weaponForward, {std::sin(yaw), 0, std::cos(yaw)});
+            smallestForwardDot = std::min(smallestForwardDot, forwardDot);
+            expect(forwardDot > 0,
+                   "right-handed weapon points ahead rather than toward the player");
+            expect(presentation.rig.weapon.scale.x > 0 && presentation.rig.weapon.scale.y > 0 &&
+                       presentation.rig.weapon.scale.z > 0,
+                   "right-handed pose never uses negative mesh scale");
             expect(animator.skinPose(&targets), "common constrained pose skins both original meshes");
             const auto& result = animator.stats().handConstraints;
             if (result.status != player::HandConstraintStatus::Applied) {
@@ -1634,6 +1652,7 @@ void testProjectReadyUsesOneConstrainedPose() {
         }
     }
     std::cout << "Project Ready common-pose ticks=" << ticks << " max_world_contact_m=" << largestResidual
+              << " min_weapon_camera_forward_dot=" << smallestForwardDot
               << " hip_hand_frustum_vertices=" << visibleHandVertices[0] << ',' << visibleHandVertices[1]
               << "; developer Ready over original locomotion, no directional/ADS/reload completeness claim\n";
     expect(visibleHandVertices[0] > 10 && visibleHandVertices[1] > 10,
