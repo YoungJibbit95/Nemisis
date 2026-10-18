@@ -683,3 +683,8 @@ foreach(nemisis_runtime_target IN ITEMS
 )
     nemisis_copy_mingw_runtime(${nemisis_runtime_target})
 endforeach()
+
+option(NEMISIS_BUILD_OZZ_IK_PROBE "Build the opt-in CPU arm-IK adoption probe" OFF)
+if(NEMISIS_BUILD_OZZ_IK_PROBE)
+    include(cmake/OzzIKProbe.cmake)
+endif()

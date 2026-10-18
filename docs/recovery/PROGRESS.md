@@ -42,6 +42,34 @@ is the targeted library candidate. Separate presentation cleanup removes proven
 extra geometry. Require a renewed authorized GPU image matrix before visual
 acceptance or a binary asset migration. Do not merge automatically.
 
+## 2026-10-18 optional ozz arm-IK adoption probe
+
+- This separate branch is based on selected-character PR #12 (ab63baa), because
+  it needs the exact authored-hierarchy engine pin15c1b68. No main/PR auto-merge.
+- Added an opt-in CPU tool using ozz0.17.0, exact commit744eb9d and verified
+  archive SHA256. Retained/copy MIT notice. Default game build remains free of
+  the dependency; CI enables the option and runs35 CPU cases (plus3 excluded GPU
+  entries). CMake3.30 is required only when opting in. No importer/tools/windowing.
+- Uses NovaCore's existing skeleton, sampling and skinning plus IKTwoBoneJob
+  quaternion corrections. Actual bind/Idle/Aim arms, both chains, three small
+  reachable targets:18 solves. Tests preserve bone lengths, socket orientation/
+  authored offsets, finite residuals below1mm, and actual weighted deformation.
+  No productive dual animation runtime and no new custom IK solver.
+- Full local GCC13.2/Ninja opt-in build and35 CPU tests pass. Final weighted-
+  deformation assertions also pass the affected probe. Default-off configure has
+  no ozz population/targets; actionlint and diff check pass. Source/hash/diagnostic
+  build-size measurements and reproduction are in FIRST_PERSON_RECOVERY.md.
+- This is a reproducible temporary adoption probe, not a solved M4/game hand rig.
+  Whole-arms average translation still exists in production. The user's desired
+  Project model still needs a safe authored FPS mask/split. GPU/UI permission
+  remains pending; no further GUI launch/input/capture after the earlier stop.
+
+Next: with an authorized visual baseline, integrate one final weapon transform,
+derive actual M4 grips in arms model space, apply the reviewed constraints after
+base animation and before final skinning/upload. Then remove the average-shift
+workaround and prove hip/ADS/reload/fire/movement contact with CPU + GPU evidence.
+Do not turn this probe into a permanent second runtime/backend choice.
+
 Historical Phase 1 start: GitHub verified PR #7, #8 and #9 merged; main was ff88eb0. The original
 main checkout remains dirty with user work and must not be overwritten. Earlier
 unmerged/pending notes below are historical. Phase 1 starts clean from this main;
