@@ -761,3 +761,44 @@ SMG Hip/ADS; W3 Glock; W4 suitable shotgun source or explicitly approved proxy;
 W5 alternatives only if selected; W6 class state authoring and switching; W7 real
 game matrix. All GUI acceptance requires renewed explicit permission after the
 last physical Escape stop. No Phase 4 GUI inspection has occurred.
+
+### Phase 4 visual reference handoff
+
+The user's `Nemisis_Visual_References_Codex.zip` is extracted locally at
+`F:/Coding/Project/recovery/phase4/visual-references`. All 13 external images
+were downloaded with the provided standard-library script and decoded/verified;
+F01 initially returned HTTP403, then its original URL succeeded with the original
+source Referer. `download-status.json` preserves hashes, original sources, image
+formats/dimensions and rights. `reference_board_local.html` uses the downloaded
+images; the original board/JSON/README are unchanged. No reference binaries are
+committed, republished or imported as textures/models.
+
+- F01 ([The Finals](https://the-finals.it.malavida.com/windows/)): Hip weapon and
+  actual firing wrist in the lower right; central target area free; continuous
+  arm/wrist/grip silhouettes and visible fore-end support without gaps or gross
+  penetration. The mathematical W1 side check is only a prerequisite.
+- F02 ([Titanfall 2](https://www.eneba.com/hub/games/most-underrated-games/)) and
+  F03 ([Apex ADS](https://www.gamestar.de/artikel/apex-legends-guide-so-verbessert-ihr-euren-aim,3341325.html)):
+  actual centered sight aperture, visible target through the sight and stable
+  anatomical hand identities during enter/hold/exit and motion. The supplied F02
+  still is ADS, not proof of animated movement; use it for sight readability.
+- S01-S03 guide sky/sun/haze; M01-M02 real materials; P01-P02 metal/roughness/
+  reflections; L01-L03 cast shadows/industrial lighting. Renderer packages own
+  these criteria; later atmospheric/PBR/shadow targets are not claimed by R0.
+
+Reproducible Vulkan comparison must record game and engine commits, EXE and
+cooked-asset hashes, viewport/FOV, camera position/yaw/pitch/roll, fixed-tick or
+held presentation state and scene. Match those values before/after. Capture
+Hip, ADS, look-down and each supported movement/fire/reload/switch state
+separately; missing states stay open. `00_Nemisis_IST_Zustand` contains genuine
+historical user screenshots from different builds, not a matched current
+baseline. The Phase 3 Ready image is also historical evidence, not Phase 4 pixels.
+New GUI input/captures require renewed explicit permission, or user-supplied
+matched screenshots. No visible Phase 4 improvement is inferred from CPU tests.
+
+FR17 audit refinement: an actual side projection of the existing vertices places
+the muzzle/barrel `Cylinder.010` at negative Z (front extremity -.18478m), while
+stock `Plane.024` reaches positive Z (.30477m). The current +.310Z muzzle marker
+therefore points at the stock as well as the grips being upside down. W2 must
+correct forward and up together in the existing offline cook, then recalibrate
+that asset's own contacts/sights. Do not attach hands to these old targets.

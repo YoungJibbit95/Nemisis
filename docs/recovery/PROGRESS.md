@@ -1,5 +1,39 @@
 # Recovery progress
 
+## 2026-10-18 Phase 4 R0 integration and visual reference handoff
+
+- W1 Draft https://github.com/YoungJibbit95/Nemisis/pull/25 at e2b0488 has green
+  Windows/MSVC and Ubuntu/Clang CI, run39165450688. It depends on still-open #23;
+  no merges performed. Its PR body includes explicit F01-F03 visual targets.
+- Exactly one renderer agent implemented R0 in its own engine worktree. Draft
+  https://github.com/YoungJibbit95/Novacore-Engine/pull/12 targets main d4eee3a.
+  New game pin: fa37f17cb77649434ce4893acc25437dbc0bb910. Runtime f0c90b7 plus
+  documentation-only followup fa37f17; inspected diff contains only two docs.
+- R0 replaces fixed sky ray factors/opposite screen-Y with the world camera's
+  actual FOV/aspect/projection and yaw/pitch/roll basis. Sun remains the shared
+  world-space toward-light direction. Game forwards presented camera roll and
+  config/fallbacks use azimuth25/elevation20 degrees instead of elevation62.7.
+- Engine full dependency-light build and6/6 CPU tests pass1.49s. Vulkan backend
+  and all15 shaders compile; SPIR-V validation passes, sky push block128bytes.
+  Exact-public-package Nemisis full Release build and45/45 CPU tests pass133.77s.
+  First integration run caught one test's zero-roll assumption after its fixture
+  gained12-degree camera roll. Assert now checks the same5-degree import-roll
+  tolerance relative to camera; complete suite rerun passes. No test disabled.
+- Separate Vulkan game directory build/phase4-r0-vulkan is configured; binary
+  compilation/real GPU acceptance are still pending at this checkpoint. Original
+  Phase3 EXE/DLLs copied to recovery/phase4/baseline-vulkan, EXE SHA256
+  4cd67d719e7d2c94bbb3c64534797d94e943d8b8b07957701b8ac0cf65aa7ebc.
+  R0 shaders/packages are frozen separately from the following R1 work.
+- User reference ZIP extracted to recovery/phase4/visual-references,13/13 external
+  images downloaded, decoded/verified, source/rights/hashes in download-status.json;
+  original board/README/JSON preserved, local board also available. Reference
+  binaries stay outside Git/game assets. FIRST_PERSON_RECOVERY records concrete
+  F/S/M/P/L criteria, historical-image limits and matched Vulkan capture metadata.
+- No renewed GUI authorization after physical Escape: no Phase4 GUI actions,
+  Vulkan screenshots or performance improvements claimed. R1 instance normals
+  remains a separate engine branch/PR. Current stable weapon slice is W1 only;
+  W2 begins with actual FR17 forward/up/socket corrections, not the old markers.
+
 ## 2026-10-18 Phase 4 W1: inventory and right-handed developer reference
 
 - Fresh GitHub audit: #19, #20, #21, #22 and baseline #24 merged; #23 remains

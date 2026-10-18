@@ -20,7 +20,7 @@ struct DevRenderTuning final {
         0.22F,
     };
     novacore::render::RenderWorldLighting lighting{
-        {0.30F, 0.88F, 0.34F},
+        {0.397131F, 0.342020F, 0.851651F},
         0.34F,
         {-0.52F, 0.36F, -0.68F},
         0.22F,
