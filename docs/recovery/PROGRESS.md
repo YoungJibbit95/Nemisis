@@ -14,8 +14,12 @@
 - The real fixture test passes tagged floor contacts, one native player Enter
   and Exit from bounded KCC walking, physical hit tags/static occlusion, reset
   cleanup and a 1.21828m walked crate push. Independent source review found no
-  actionable issue. Full combined Release game/48-suite regression is running.
-  No new sensor GUI result, networking replication or performance claim.
+  actionable issue. Exact game runtime `ed99f79116ffd702b6a844340aee90f9da326120`
+  builds completely (205 steps); all 48 non-GPU suites pass. The accidentally
+  unfiltered CTest command also attempted six GPU suites: all fail explicitly
+  because this package has no SDL3 backend and uses the null renderer. Overall
+  CTest is 48/54, exit 1,88.91s; it is not a successful graphics/full-CTest gate.
+  No new graphical window, sensor GUI result, networking or performance claim.
 
 ## 2026-10-19 Actual Vulkan review: Ready framing fails
 

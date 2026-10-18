@@ -2,14 +2,22 @@
 
 ## Integration candidate, 2026-10-19
 
-The current game runtime candidate is `c04c78bf6d95d30e69a611619ad8b30b4430d0da`
-on `recovery/phase5-dev-range-physics`; both engine pins use
-`cca45a41aded8b13171943553e27f85071c76ed3` (engine Draft #19). This combines
-the existing native UI with the proper RH camera, optional rigid bodies and
-directional shadows. Engine standard/Jolt MSVC and Clang jobs are green; the
-complete game build and48/48 CPU tests pass94.07s, and the full separate Vulkan
-game builds. Hosted game integration CI follows. Earlier checkpoints below remain
-historical. No Phase 5 GUI acceptance has occurred.
+The current headless game runtime candidate is
+`ed99f79116ffd702b6a844340aee90f9da326120` on
+`recovery/phase5-followup-integration`; both engine pins use
+`130c4fdadd05d7cb0e7d8f808deeec35f29f10fa` (engine Draft #21). It adds native
+sensor/material/impact diagnostics to the existing optional range fixture.
+The complete Release game builds and all48 non-GPU suites pass. An unfiltered
+CTest invocation additionally attempted six GPU suites, which fail explicitly
+under the null renderer: total48/54, exit1, not GPU acceptance. New hosted game
+CI follows; earlier #33 has all six standard/native-UI/Jolt compiler jobs green.
+
+The separately frozen Vulkan runtime remains `c04c78b` / engine `cca45a41` (#33/#19),
+with unchanged build/content hashes. Its freshly authorized actual Ready review
+**failed** weapon/grip framing; [original images](../recovery/visual/phase5/README.md)
+record that result. Automation is paused while the user inspects its window.
+Do not use that pose as an accepted menu-character presentation. Earlier
+checkpoints below remain historical; no Phase5 visual acceptance has occurred.
 
 The actual new quality API is `RenderFrameInfo::directionalShadows`, configured
 through `DevRenderTuning` and `configs/render/dev_range_render.json`. It provides
