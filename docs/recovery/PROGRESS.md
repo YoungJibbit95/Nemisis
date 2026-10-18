@@ -629,3 +629,31 @@ skinned original palettes. The separate 24 affine rig cases pass, maximum error
 Blender 5.1.0/adfe2921d5f3: SHA256
 f6fe115bb008e447ac52fcd9fc40728a8a631062f928e9d54570e0365933ec2b.
 No GPU test or in-game visual acceptance is inferred from these CPU results.
+Published Ready follow-up: https://github.com/YoungJibbit95/Nemisis/pull/23,
+implementation b06ec18, canonical source-newline fix
+12de58466f2c883caae36f1f35a0eda16b009ba4; base is draft #22. No automatic merges.
+
+Subsequent GUI evidence supersedes the earlier pre-GUI status above. The user
+explicitly renewed Phase 3 Ready/Look-down/movement GUI authorization. The
+separate Release Vulkan executable built successfully at
+F:/Coding/Project/recovery/phase3/integration/Nemisis/build/phase3-vulkan/nemisis_game.exe,
+SHA256 4cd67d719e7d2c94bbb3c64534797d94e943d8b8b07957701b8ac0cf65aa7ebc.
+It uses the pinned public engine/SDL3 package and Vulkan SDK 1.4.350.0. The local
+installed-engine export needs its public static SDL3 dependency supplied by the
+build-only graphical-package-dependencies.cmake hint; the normal documented
+pinned-source build does not require that local package hint.
+
+The real NVIDIA GeForce RTX 3070 Ti backend and both Project subsets/new M4
+variant were logged. An actual Ready game image was inspected and saved locally:
+F:/Coding/Project/recovery/phase3/visual/ready_hip_vulkan.jpg. Bent, attached arms
+and the M4 are visible. Finger/trigger/stock/shoulder quality and lateral weapon
+placement remain provisional; this is not visual acceptance. Offline Blender
+previews are a separate reference and use a different projection convention.
+
+The user subsequently stopped Computer Use with the physical Escape key. All
+further GUI input stopped immediately. Look-down and the controlled movement
+comparison were not completed. No post-stop relaunch, GUI action or GPU-smoke
+claim follows from this evidence. Renew explicit GUI permission before resuming.
+Technically Integrated: developer Ready/shared pose/contact only. Animation
+Complete: NO. Visually Accepted: NO. CI status at the published runtime head is
+tracked on PR #23; this final evidence update is documentation only.
