@@ -1,5 +1,22 @@
 # Recovery progress
 
+## 2026-10-19 Native sensor/material integration in the existing range
+
+- Both engine pins now use public combined runtime
+  `130c4fdadd05d7cb0e7d8f808deeec35f29f10fa` (Draft engine #21). The existing
+  opt-in `--physics-props` fixture consumes native bounded contact/sensor events.
+  Six existing crate meshes retain their prior mass/friction/impulse policy.
+- Game-owned Concrete/Metal material IDs and Floor/Prop/Obstacle/Player/Sensor
+  surface IDs reach actual contact and ray-hit records. They do not change KCC
+  tuning. The player proxy and explicit nonblocking sensor use symmetric filters;
+  the sensor has one pre-solve tick latency. Real shot normals and the matching
+  sensor bounds appear only as developer lines in this optional fixture.
+- The real fixture test passes tagged floor contacts, one native player Enter
+  and Exit from bounded KCC walking, physical hit tags/static occlusion, reset
+  cleanup and a 1.21828m walked crate push. Independent source review found no
+  actionable issue. Full combined Release game/48-suite regression is running.
+  No new sensor GUI result, networking replication or performance claim.
+
 ## 2026-10-19 Actual Vulkan review: Ready framing fails
 
 - Following the explicit fresh GUI grant, the frozen `c04c78b` / engine

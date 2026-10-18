@@ -5,6 +5,7 @@
 #include <cmath>
 #include <limits>
 #include <stdexcept>
+#include <utility>
 
 namespace nemisis::dev {
 using namespace novacore;
@@ -12,6 +13,10 @@ namespace {
 constexpr math::Vec3 kPropHalfExtents{.30F, .30F, .30F};
 constexpr float kPlayerRadius = .42F;
 constexpr float kPlayerHeight = 1.80F;
+constexpr math::Vec3 kSensorCenter{-9.25F, 1.F, -12.F};
+constexpr math::Vec3 kSensorHalf{2.5F, 1.5F, 1.5F};
+constexpr const char* kSensorId = "physics_fixture_sensor";
+constexpr const char* kPlayerId = "local_player_prop_proxy";
 
 // Renderer uses Ry*Rx*Rz. Preserve the physical orientation; never transform
 // already-cooked geometry or convert solver coordinates at the rendering seam.
@@ -62,10 +67,16 @@ void DevRangeRigidBodies::setVisual(render::MeshResourceHandle handle, const ass
 
 void DevRangeRigidBodies::reset(const GreyboxWorld& greybox) {
     tick_ = 0;
+    lastStep_ = {};
+    lastImpact_.reset();
+    playerInsideSensor_ = false;
+    sensorEnterCount_ = sensorExitCount_ = 0;
     bodies_.shutdown();
     statics_ = buildGreyboxPhysicsWorld(greybox);
     std::string error;
-    if (!bodies_.initialize({}, error)) {
+    physics::RigidBodyWorldConfig config;
+    config.maxContactEvents = 256;
+    if (!bodies_.initialize(config, error)) {
         throw std::runtime_error("Dev Range rigid bodies: " + error);
     }
     // A small falling stack beside the spawn, clear of existing training lanes.
@@ -77,36 +88,71 @@ void DevRangeRigidBodies::reset(const GreyboxWorld& greybox) {
         prop.halfExtents = kPropHalfExtents;
         prop.massKg = 5.F;
         prop.filter = {1, 0xff};
+        prop.materialId = static_cast<std::uint32_t>(DevRangePhysicsMaterial::Metal);
+        prop.surfaceId = static_cast<std::uint32_t>(DevRangePhysicsSurface::Prop);
         if (!bodies_.createBody(prop, error).valid()) {
             throw std::runtime_error("Dev Range crate: " + error);
         }
     }
     physics::RigidBodyDesc player;
-    player.id = "local_player_prop_proxy";
+    player.id = kPlayerId;
     player.shape = physics::RigidBodyShape::Capsule;
     player.motion = physics::RigidBodyMotion::Kinematic;
     player.radius = kPlayerRadius;
     player.capsuleHalfHeight = kPlayerHeight * .5F - kPlayerRadius;
     player.position = greybox.playerSpawn + math::Vec3{0, kPlayerHeight * .5F, 0};
-    player.filter = {2, 1 << 1}; // Push props only. Competitive motor remains authority.
+    player.filter = {2, (1 << 1) | (1 << 3)}; // Props and nonblocking sensor; no motor feedback.
+    player.surfaceId = static_cast<std::uint32_t>(DevRangePhysicsSurface::Player);
     playerProxy_ = bodies_.createBody(player, error);
     if (!playerProxy_.valid()) { throw std::runtime_error("Dev Range player proxy: " + error); }
+    physics::RigidBodyDesc sensor;
+    sensor.id = kSensorId;
+    sensor.position = kSensorCenter;
+    sensor.halfExtents = kSensorHalf;
+    sensor.motion = physics::RigidBodyMotion::Kinematic;
+    sensor.isSensor = true;
+    sensor.filter = {3, (1 << 1) | (1 << 2)};
+    sensor.surfaceId = static_cast<std::uint32_t>(DevRangePhysicsSurface::Sensor);
+    if (!bodies_.createBody(sensor, error).valid()) { throw std::runtime_error("Dev Range sensor: " + error); }
 }
 
 void DevRangeRigidBodies::tick(math::Vec3 feet) {
     if (!bodies_.moveKinematic(playerProxy_, feet + math::Vec3{0, kPlayerHeight * .5F, 0}, {})) {
         throw std::runtime_error("Invalid Dev Range player proxy target");
     }
-    const auto result = bodies_.step(statics_, tick_ + 1);
+    auto result = bodies_.step(statics_, tick_ + 1);
     if (!result.stepped) { throw std::runtime_error("Dev Range physics tick: " + result.error); }
+    if (tick_ == 0) {
+        // Canonical handles exist after synchronization. Tags are game data;
+        // they never change KCC tuning or infer physics friction from artwork.
+        for (const auto& body : bodies_.bodies()) {
+            if (!body.canonicalCollider) { continue; }
+            const auto collider = std::ranges::find(statics_.staticColliders(), body.id, &physics::StaticCollider::id);
+            const bool floor = collider != statics_.staticColliders().end() && collider->kind == physics::SurfaceKind::Floor;
+            if (!bodies_.setBodyTags(body.handle, static_cast<std::uint32_t>(DevRangePhysicsMaterial::Concrete),
+                static_cast<std::uint32_t>(floor ? DevRangePhysicsSurface::Floor : DevRangePhysicsSurface::Obstacle))) {
+                throw std::runtime_error("Dev Range canonical material tag failed");
+            }
+        }
+    }
     tick_ = result.tick;
+    for (const auto& event : result.sensorEvents) {
+        if (!((event.first.id == kSensorId && event.second.id == kPlayerId) ||
+              (event.second.id == kSensorId && event.first.id == kPlayerId))) { continue; }
+        playerInsideSensor_ = event.phase != physics::RigidBodySensorPhase::Exit;
+        sensorEnterCount_ += event.phase == physics::RigidBodySensorPhase::Enter;
+        sensorExitCount_ += event.phase == physics::RigidBodySensorPhase::Exit;
+    }
+    lastStep_ = std::move(result);
 }
 
 bool DevRangeRigidBodies::impact(math::Vec3 origin, math::Vec3 displacement) {
+    lastImpact_.reset();
     // Canonical static colliders are synchronized by the first successful step.
     if (tick_ == 0) { return false; }
     // Include static occluders in closest-hit selection; exclude player proxy.
     const auto hit = bodies_.raycast(origin, displacement, (1 << 0) | (1 << 1));
+    lastImpact_ = hit;
     if (!hit || hit->canonicalCollider) { return false; }
     const auto body = bodies_.body(hit->handle);
     const float length2 = displacement.lengthSquared();
@@ -134,6 +180,20 @@ void DevRangeRigidBodies::append(render::RenderFrameInfo& frame) const {
         box.yawDegrees = angles.y;
         box.rollDegrees = angles.z;
         frame.worldMeshes.push_back(box);
+    }
+    // Developer wireframe uses the same sensor dimensions as the native body.
+    const auto color = playerInsideSensor_ ? std::array<float,4>{.2F,1.F,.5F,1.F}
+                                          : std::array<float,4>{.2F,.7F,1.F,1.F};
+    for (int axis=0; axis<3; ++axis) for (int a : {-1,1}) for (int b : {-1,1}) {
+        math::Vec3 first, second;
+        if (axis == 0) { first={-kSensorHalf.x,a*kSensorHalf.y,b*kSensorHalf.z}; second={kSensorHalf.x,first.y,first.z}; }
+        if (axis == 1) { first={a*kSensorHalf.x,-kSensorHalf.y,b*kSensorHalf.z}; second={first.x,kSensorHalf.y,first.z}; }
+        if (axis == 2) { first={a*kSensorHalf.x,b*kSensorHalf.y,-kSensorHalf.z}; second={first.x,first.y,kSensorHalf.z}; }
+        frame.worldLines.push_back({kSensorCenter+first,kSensorCenter+second,color});
+    }
+    if (lastImpact_) {
+        frame.worldLines.push_back({lastImpact_->position,
+            lastImpact_->position+lastImpact_->normal*.3F,{1.F,.65F,.1F,1.F}});
     }
 }
 } // namespace nemisis::dev
