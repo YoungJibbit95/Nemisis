@@ -24,6 +24,10 @@ namespace nemisis::dev {
 
 using MeshResourceLookup = std::unordered_map<std::string, novacore::render::MeshResourceHandle>;
 
+inline constexpr std::string_view kLocalPlayerBodyAssetId = "chr_project_male1";
+// Local animation must not mutate the shared showcase/target asset resource.
+inline constexpr std::string_view kLocalPlayerBodyResourceId = "player/local/body";
+
 struct DevRangePlayerRenderState final {
     novacore::math::Vec3 position{};
     player::PlayerViewComponent view{};
@@ -143,7 +147,8 @@ private:
         float pitchDegrees = 0.0F,
         float rollDegrees = 0.0F,
         novacore::render::RenderMeshLayer layer = novacore::render::RenderMeshLayer::World,
-        bool castsContactShadow = true) const;
+        bool castsContactShadow = true,
+        novacore::render::MeshResourceHandle resourceOverride = {}) const;
 
     void appendWorldGeometry(
         novacore::render::RenderFrameInfo& frame,

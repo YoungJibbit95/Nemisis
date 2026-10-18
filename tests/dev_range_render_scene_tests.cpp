@@ -54,7 +54,8 @@ novacore::assets::GltfMeshData makeMesh() {
 }
 
 nemisis::dev::MeshResourceLookup registerSceneMeshes(novacore::render::Renderer& renderer) {
-    static constexpr std::array<std::string_view, 35> kSceneMeshes{
+    static constexpr std::array<std::string_view, 36> kSceneMeshes{
+        nemisis::dev::kLocalPlayerBodyResourceId,
         "env_test_arena_kit_01",
         "env_project_skybox1",
         "prop_target_dummy_01",
@@ -610,6 +611,16 @@ void testDevRangeRenderSceneHidesLocalWorldBodyWhenCameraRigIsActive() {
         nemisis::dev::DevRangeRenderSceneDesc{&world, &targetRange, nullptr, &lookup, cameraRigPlayer});
 
     expect(worldBodyStats.localWorldModelActive, "world presentation enables the local third-person model");
+    const auto localBody = findLastMesh(worldBodyFrame, nemisis::dev::kLocalPlayerBodyAssetId);
+    expect(localBody.has_value(), "external view uses the explicitly selected Project character");
+    if (localBody.has_value()) {
+        expect(localBody->mesh.index == lookup.at(std::string(nemisis::dev::kLocalPlayerBodyResourceId)).index,
+            "player body uses its own animated resource handle");
+        expect(localBody->mesh.index != lookup.at(std::string(nemisis::dev::kLocalPlayerBodyAssetId)).index,
+            "static showcase and targets cannot share the local animated handle");
+        expect(localBody->scale.y == 1.0F && localBody->position.y == worldBodyPlayer.position.y,
+            "selected metre-scale character keeps its grounded feet pivot");
+    }
     expect(!worldBodyStats.firstPersonViewmodelActive, "world presentation does not submit a first-person viewmodel");
     expect(worldBodyStats.firstPersonMeshCount == 0U, "world presentation has no first-person weapon or arms meshes");
     expect(worldBodyStats.firstPersonBodyPrimitiveCount == 0U, "world presentation has no camera-linked arm primitives");

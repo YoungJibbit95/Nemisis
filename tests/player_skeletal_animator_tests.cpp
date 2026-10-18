@@ -3,6 +3,8 @@
 #include "novacore/assets/GltfDocument.hpp"
 
 #include <cmath>
+#include <algorithm>
+#include <chrono>
 #include <filesystem>
 #include <iostream>
 #include <string>
@@ -91,10 +93,85 @@ void testCookedCharacterImportsAndAnimates() {
     expect(animator.socketTransform("socket_hand_r", hand), "right-hand runtime socket follows the animated skeleton");
 }
 
+void testSelectedCharacterAndArmsKeepAuthoredBindHierarchy() {
+    using namespace novacore;
+    for (const auto relativePath : {
+        "assets/export/gltf/characters/chr_a1_fp_arms_01.glb",
+        "assets/processed/normalized/project_assets/chr_project_male1.glb"}) {
+        assets::GltfMeshData mesh;
+        const auto load = assets::loadGltfMeshData(std::filesystem::path(NEMISIS_SOURCE_ROOT) / relativePath, mesh);
+        expect(load.ok() && mesh.animationData != nullptr, "real selected character/arms has imported skin data");
+        if (!load.ok() || mesh.animationData == nullptr) {
+            continue;
+        }
+        assets::GltfAnimationAsset asset;
+        const auto bridge = assets::buildGltfAnimationAsset(*mesh.animationData, 0U, asset);
+        expect(bridge.ok(), "actual character/arms animation bridge succeeds");
+        if (!bridge.ok()) {
+            continue;
+        }
+        animation::GlobalPose bind;
+        expect(animation::evaluateGlobalPose(asset.skeleton, animation::makeBindPose(asset.skeleton), bind), "actual complete bind hierarchy evaluates");
+        for (const auto name : {"socket_camera", "socket_weapon_root", "socket_hand_r", "socket_hand_l"}) {
+            const auto marker = std::ranges::find_if(mesh.nodeMarkers, [name](const auto& node) { return node.name == name; });
+            animation::Mat4 socket;
+            const bool found = animation::evaluateSocket(asset.skeleton, bind, name, socket);
+            expect(found && marker != mesh.nodeMarkers.end(), "selected asset has each required authored attachment");
+            if (found && marker != mesh.nodeMarkers.end()) {
+                expect((animation::matrixTranslation(socket) - marker->worldPosition).lengthSquared() < 0.000001F, "animated bind socket position matches static scene hierarchy");
+                for (const auto axis : {math::Vec3{0,0,1}, math::Vec3{0,1,0}}) {
+                    const auto direction = animation::transformDirection(socket, axis);
+                    const auto length = std::sqrt(direction.lengthSquared());
+                    const auto expected = axis.z > 0.0F ? marker->worldForward : marker->worldUp;
+                    expect(length > 0.00001F && (direction * (1.0F / length) - expected).lengthSquared() < 0.000001F, "animated bind socket orientation matches authored node frame");
+                }
+            }
+        }
+        assets::GltfMeshData skinned;
+        expect(assets::skinGltfMesh(mesh, asset, bind, skinned).ok(), "actual bind-pose skinning succeeds");
+        float maxBindDrift = 0.0F;
+        for (std::size_t p = 0; p < mesh.primitives.size() && p < skinned.primitives.size(); ++p) {
+            if (mesh.primitives[p].skinIndex != 0) {
+                continue;
+            }
+            const auto& before = mesh.primitives[p].positions;
+            const auto& after = skinned.primitives[p].positions;
+            expect(before.size() == after.size(), "bind skinning retains topology");
+            for (std::size_t v = 0; v < before.size() && v < after.size(); ++v) {
+                maxBindDrift = std::max(maxBindDrift, (before[v] - after[v]).lengthSquared());
+            }
+        }
+        expect(maxBindDrift < 0.000001F, "full joint globals cancel inverse binds rather than rotating geometry away from sockets");
+
+        nemisis::player::PlayerSkeletalAnimator animator;
+        expect(animator.initialize(mesh), "selected character/arms initializes one skeletal runtime");
+        if (!animator.stats().initialized || animator.skinnedMesh() == nullptr) {
+            continue;
+        }
+        const auto initial = *animator.skinnedMesh();
+        nemisis::player::CharacterAnimationFrame frame;
+        const bool selectedCharacter = std::string_view(relativePath).find("chr_project_male1") != std::string_view::npos;
+        frame.locomotionClip = selectedCharacter
+            ? nemisis::player::CharacterAnimationClip::Walk : nemisis::player::CharacterAnimationClip::Ads;
+        frame.stride01 = 0.65F;
+        const auto started = std::chrono::steady_clock::now();
+        for (int i = 0; i < 12; ++i) {
+            expect(animator.update(frame, 1.0F / 60.0F), "selected character/arms updates pose and skinned geometry");
+        }
+        const auto frameMs = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - started).count() / 12.0;
+        expect(animator.stats().evaluatedFrameCount == 12U, "exactly one completed pose/skin update per requested frame");
+        expect(positionsDiffer(initial, *animator.skinnedMesh()), "authored movement/aim visibly changes actual mesh vertex positions");
+        std::cout << "skeletal CPU sample: " << relativePath << " joints=" << animator.stats().jointCount
+            << " vertices=" << animator.stats().skinnedVertexCount << " frame_ms=" << frameMs
+            << " max_bind_drift=" << std::sqrt(maxBindDrift) << '\n';
+    }
+}
+
 } // namespace
 
 int main() {
     testCookedCharacterImportsAndAnimates();
+    testSelectedCharacterAndArmsKeepAuthoredBindHierarchy();
     if (failures != 0) {
         std::cerr << failures << " player skeletal animator test(s) failed\n";
         return 1;
