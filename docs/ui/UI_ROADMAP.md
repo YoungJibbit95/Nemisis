@@ -36,7 +36,7 @@ main f15bc0e after the parallel Ready PR landed; its content is preserved.
 - Complete local SDL3/Vulkan game build including real RmlUi and FreeType.
 - Native document test passes: layout bounds/actual font advances/atlas at all
   three resolutions; actual click, disabled control, checkbox, slider keyboard
-  adjustment, tabs, dropdown selection, modal Tab trap, controller A/B routing;
+  adjustment, tabs, dropdown selection, modal Tab trap, controller A/B and dropdown focus routing;
   120 warm idle frames retain stable atlas bytes and command count; no RmlUi
   style/font/render warnings.
 - Separate engine complete Vulkan build and shaders: 5/5 CTest suites.
