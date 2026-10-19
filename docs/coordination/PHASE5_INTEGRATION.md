@@ -64,9 +64,17 @@ The UI chat retains UI documents, components, appearance and screen migration.
 
 ## Visual and performance evidence
 
+On 2026-10-19 the user explicitly granted the exact frozen Phase 5 Vulkan build
+`c04c78b` / engine `cca45a41`. Ready hipfire was inspected and **failed** framing
+and grip readability; see [original evidence](../recovery/visual/phase5/README.md).
+The subsequent look-down capture includes concurrent user input. GUI automation
+is now paused while the user inspects the open window. Shadow/crate comparisons
+remain unrun. CPU intersections and contact residuals are insufficient visual
+acceptance. All six hosted #33 integration jobs pass independently of that result.
+
 Physical Escape ended the previous GUI session. Phase 5 grants implementation,
-builds and PR publication; it does not renew GUI permission. No game launch,
-window input, automated screenshot or GPU acceptance occurs without that grant.
+builds and PR publication; GUI work requires an explicit grant and respects a
+subsequent user pause. The paragraph above supersedes earlier pre-review records.
 
 Phase 4 saved only phase4/visual/baseline_hip.jpg. Its manifest records the
 accidental post-stop R0 launch; no R0/R1 after image exists. It is qualitative

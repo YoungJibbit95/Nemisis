@@ -39,7 +39,22 @@ void testRealRangePropsAndVisuals() {
     props.reset(greybox);
     const auto firstHandle = props.bodies().bodies().front().handle;
     const auto firstPositions = props.bodies().bodies();
-    for (int tick=0; tick<360; ++tick) { props.tick(greybox.playerSpawn); }
+    bool taggedFloorContact = false;
+    for (int tick=0; tick<360; ++tick) {
+        props.tick(greybox.playerSpawn);
+        for (const auto& contact : props.lastStep().contacts) {
+            const auto& floor = contact.first.canonicalCollider ? contact.first : contact.second;
+            const auto& prop = contact.first.canonicalCollider ? contact.second : contact.first;
+            if (floor.surfaceId != static_cast<std::uint32_t>(DevRangePhysicsSurface::Floor)) { continue; }
+            taggedFloorContact |= floor.materialId == static_cast<std::uint32_t>(DevRangePhysicsMaterial::Concrete) &&
+                prop.materialId == static_cast<std::uint32_t>(DevRangePhysicsMaterial::Metal) &&
+                std::isfinite(contact.pointOnFirst.lengthSquared()) && std::isfinite(contact.pointOnSecond.lengthSquared()) &&
+                std::abs(contact.normal.lengthSquared()-1.F) < .001F;
+        }
+    }
+    expect(taggedFloorContact, "real native floor/prop contact reports owned material/surface tags, points and normal");
+    expect(!props.playerInsideSensor() && props.sensorEnterCount() == 0,
+        "spawn stays outside the actual fixture sensor while six sleeping props stay inside");
     expect(props.tickCount() == 360, "Dev Range uses consecutive fixed solver ticks");
     std::size_t dynamicCount = 0, staticCount = 0;
     for (const auto& body : props.bodies().bodies()) {
@@ -68,6 +83,10 @@ void testRealRangePropsAndVisuals() {
     render::RenderFrameInfo frame;
     props.append(frame);
     expect(frame.worldMeshes.size() == 6, "actual crate resource submits six dynamic render instances");
+    expect(frame.worldLines.size() == 13, "sensor wireframe and actual shot normal are developer diagnostics");
+    expect(props.lastImpact() && props.lastImpact()->materialId == static_cast<std::uint32_t>(DevRangePhysicsMaterial::Metal) &&
+        props.lastImpact()->surfaceId == static_cast<std::uint32_t>(DevRangePhysicsSurface::Prop),
+        "actual prop shot carries physical hit position/normal and game-owned material tags");
     const auto physical = props.bodies().bodies();
     for (std::size_t i=0; i<frame.worldMeshes.size(); ++i) {
         const auto& rendered = frame.worldMeshes[i];
@@ -116,8 +135,16 @@ void testRealRangePropsAndVisuals() {
         std::cout << "Dev Range fixture: props=6 fixed_ticks=" << props.tickCount()
                   << " walked_push_dx_m=" << afterCrate->position.x-beforeCrate->position.x << '\n';
     }
+    expect(props.playerInsideSensor() && props.sensorEnterCount() == 1,
+        "resolved KCC walking enters the actual nonblocking native sensor once");
+    for (int tick=1; tick<=20; ++tick) { walk({-9.5F,0,-12.F-tick*.1F}); }
+    walk(feet); // Native pre-solve sensor sample follows MoveKinematic's integrated target.
+    expect(!props.playerInsideSensor() && props.sensorExitCount() == 1,
+        "bounded walking leaves the sensor with one native Exit and no physical blocking");
     props.reset(greybox);
     expect(props.tickCount() == 0 && !props.bodies().body(firstHandle), "range reset invalidates old body handles and restarts tick");
+    expect(!props.playerInsideSensor() && props.sensorEnterCount() == 0 && props.sensorExitCount() == 0 &&
+        props.lastStep().sensorEvents.empty() && !props.lastImpact(), "range reset clears sensor/impact presentation state");
     const auto reset = props.bodies().bodies();
     expect(reset.size() == firstPositions.size(), "range reset recreates bounded initial fixture count");
     for (std::size_t i=0; i<reset.size() && i<firstPositions.size(); ++i) {
@@ -129,6 +156,9 @@ void testRealRangePropsAndVisuals() {
     expect(!props.impact({-10,.5F,-16},{0,0,8}), "shot after reset fails closed before static synchronization");
     props.tick(greybox.playerSpawn);
     expect(!props.impact({-10,.5F,-16},{0,0,8}), "canonical wall occludes prop impulse instead of prop-only ray through wall");
+    expect(props.lastImpact() && props.lastImpact()->canonicalCollider &&
+        props.lastImpact()->materialId == static_cast<std::uint32_t>(DevRangePhysicsMaterial::Concrete),
+        "occluding static wall still supplies its actual impact and material, without a dynamic impulse");
 }
 }
 

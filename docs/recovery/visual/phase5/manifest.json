@@ -1,0 +1,62 @@
+{
+  "game_revision": "c04c78bf6d95d30e69a611619ad8b30b4430d0da",
+  "engine_revision": "cca45a41aded8b13171943553e27f85071c76ed3",
+  "executable": "C:/Users/Administrator/.codex/tmp/nemisis-phase5-vulkan/nemisis_game.exe",
+  "game_exe_sha256": "5be1c86eb12f55055e247ed312bfb90770e92a360e16bb2e870b3b4d52c8fc78",
+  "engine_lib_sha256": "454de078391d8c099ce33f35b53e5e48f73ded834ad237d296b03a9843ee795c",
+  "ready_pose_sha256": "f59c8151c3950778ae457f748b2bb4341ff62d6b623597b5c1c2ea716cd5cc5e",
+  "config": "Release GCC13.2 SDL3/Vulkan/Jolt/RmlUi/IK/Project ON",
+  "gui_launched": true,
+  "visual_acceptance": false,
+  "gui_launch_count": 2,
+  "gui_status": "paused_by_user_for_manual_inspection",
+  "visual_result": "FAIL: oversized receiver and unreadable right firing hand; support fingers open",
+  "directional_shadows_gui_tested": false,
+  "physics_fixture_gui_tested": false,
+  "capture_window_pixels": [
+    1282,
+    752
+  ],
+  "client_pixels": [
+    1280,
+    720
+  ],
+  "hip_fov_degrees": 74,
+  "performance_comparison": false,
+  "captures": [
+    {
+      "file": "ready-hip-initial.png",
+      "sha256": "473a257e7e43ec0e72c1c0ee66f82ab4a7f11ffacd2d2d645539a0e3fc2c1dc0",
+      "controlled": true
+    },
+    {
+      "file": "ready-hip-reset.png",
+      "sha256": "f3c7a3b92104f414891457ee3f09d0c34c4b4d1468ef042bc4968d4fe86957f1",
+      "controlled": true
+    },
+    {
+      "file": "ready-lookdown-uncontrolled.png",
+      "sha256": "e909883d55951101649b6e982f16833c3d085aba602edd52408128cb983febdb",
+      "controlled": false
+    }
+  ],
+  "launches": [
+    {
+      "args": [
+        "--project-rifle-ready"
+      ],
+      "shutdown": "normal",
+      "body_and_arm_accepted_updates": 6238,
+      "invalid_ik_samples": 0,
+      "unreachable_ik_samples": 0
+    },
+    {
+      "args": [
+        "--project-rifle-ready",
+        "--project-fps-look-down"
+      ],
+      "status": "open_for_user_manual_inspection_at_pause",
+      "controlled_capture": false
+    }
+  ]
+}
