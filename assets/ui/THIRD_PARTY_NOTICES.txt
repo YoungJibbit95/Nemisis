@@ -1,0 +1,15 @@
+RmlUi 6.1 (MIT), commit 58c751531f4c1a1eb2dc56f409b8e8a323a0c9ad
+https://github.com/mikke89/RmlUi
+Copyright notices: licenses/RmlUi-MIT.txt.
+
+FreeType 2.13.3, commit 42608f77f20749dd6ddc9e0536788eaad70ea4b5
+https://github.com/freetype/freetype
+Portions of this software are copyright (c) 2024 The FreeType Project
+(www.freetype.org). All rights reserved.
+Distributed under the FreeType License: licenses/FreeType-FTL.txt.
+
+Space Grotesk Regular and Bold (unmodified OpenType fonts), SIL OFL 1.1
+https://github.com/floriankarsten/space-grotesk
+Source commit: 03507d024a01282884232081fc6011c09ff4e849
+Copyright 2020 The Space Grotesk Project Authors.
+Full copyright and license: fonts/OFL.txt. No font modification or renaming.

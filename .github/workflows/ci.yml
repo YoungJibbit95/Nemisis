@@ -73,3 +73,48 @@ jobs:
             Nemisis/build/**/CMakeFiles/CMakeConfigureLog.yaml
           retention-days: 7
           if-no-files-found: warn
+
+  native-ui:
+    name: Native UI / ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Ubuntu Clang
+            os: ubuntu-24.04
+            preset: ci-headless-linux
+          - name: Windows MSVC
+            os: windows-2022
+            preset: ci-headless-windows
+    defaults:
+      run:
+        working-directory: Nemisis
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          path: Nemisis
+          persist-credentials: false
+      - name: Read isolated UI engine adapter pin
+        id: engine
+        shell: pwsh
+        run: |
+          $revision = (Get-Content -Raw cmake/novacore-ui-revision.txt).Trim()
+          if ($revision -cnotmatch '^[0-9a-f]{40}$') { throw 'UI engine pin must be a full commit SHA' }
+          Add-Content $env:GITHUB_OUTPUT "revision=$revision"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: YoungJibbit95/Novacore-Engine
+          ref: ${{ steps.engine.outputs.revision }}
+          path: Novacore-Engine
+          persist-credentials: false
+      - name: Configure actual RmlUi and FreeType
+        run: cmake --preset ${{ matrix.preset }} -DNEMISIS_ENABLE_RMLUI=ON
+      - name: Build native UI and complete game
+        run: cmake --build --preset ${{ matrix.preset }} --parallel 2
+      - name: Test real document, layout, controls and input
+        run: ctest --preset ${{ matrix.preset }} -R nemisis_ui_showcase_tests --output-junit native-ui-results.xml
+      - name: Record boundary
+        shell: pwsh
+        run: Add-Content $env:GITHUB_STEP_SUMMARY 'Native RmlUi/FreeType document tests; no window or GPU. Live Vulkan acceptance is separate.'
