@@ -16,6 +16,13 @@ else()
     set(ozz_build_msvc_rt_dll ON CACHE BOOL "Match the parent CRT" FORCE)
 endif()
 
+# ozz enables CMAKE_COMPILE_WARNING_AS_ERROR inside its own build scripts.
+# Newer GCC releases report a false-positive -Wdangling-reference inside
+# skeleton_utils.cc, which turns the pinned third-party source into a hard build
+# failure before any Nemisis code is compiled. Keep warnings-as-errors off for
+# the fetched dependency only; first-party targets still use their own flags.
+set(CMAKE_COMPILE_WARNING_AS_ERROR OFF)
+
 # 0.17.0, exact commit and verified source archive. No third-party importer,
 # offline tools, windowing or second animation/sampling runtime is selected.
 FetchContent_Declare(ozz
@@ -24,6 +31,16 @@ FetchContent_Declare(ozz
     EXCLUDE_FROM_ALL
 )
 FetchContent_MakeAvailable(ozz)
+
+# Belt and braces: the fetched project sets the property again after the cache
+# variable above, so drop the resulting -Werror from its own targets.
+if(NOT MSVC)
+    foreach(ozz_target IN ITEMS ozz_animation ozz_base)
+        if(TARGET ${ozz_target})
+            target_compile_options(${ozz_target} PRIVATE -Wno-error -Wno-dangling-reference)
+        endif()
+    endforeach()
+endif()
 
 function(nemisis_copy_ozz_notice target_name)
     add_custom_command(TARGET ${target_name} POST_BUILD
