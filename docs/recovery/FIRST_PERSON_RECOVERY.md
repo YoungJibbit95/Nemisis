@@ -922,3 +922,31 @@ remain strict. Full updated hosted CI remains pending at this source checkpoint.
 This establishes a bounded mathematical Ready reference over original unarmed
 locomotion, not polished fingers, true directional armed clips or Vulkan pixels.
 No runtime offset, reflection, contact relaxation or GUI action is used.
+
+### Phase 5 Glock geometry correction, 2026-10-19
+
+The single-mesh Glock was upright but pointed backward. Its source bore extends
+toward raw +Z, while the old cooked bore occupied negativeZ and the declared
+muzzle sat at positiveZ behind the pistol. Correct only Glock's existing offline
+recipe to Blender Euler [0,-90,0]. Preserve its187mm length, source file and
+positive node determinants. No runtime orientation or mesh reflection is added.
+
+Primary R is inside the actual upper pistol handle, measured between side
+surfaces at raw(-.02,.0177960826,-.025)m. Support L touches the opposite-side grip
+surface at raw(-.012,.0014656925,-.005)m. It stays within18mm of primary; it does
+not copy a rifle fore-end hold. The actual front barrel ring determines muzzle.
+Cooked R=(0,0,0), L=(.0105303,.0051586,.0128965),
+muzzle=(.0000144,.0536342,.1553505)m. Actual triangle-surface and ring tests
+complement marker frames; source geometry defines the ownership regions.
+
+Source SHA256 `63c70be2f34477552c6d0f3b545efaa9d654ef47ad20c6d9993361df756b6dda`.
+Two Blender5.1.0 exports produced identical cooked SHA256
+`d5332e6b62fda44b1349bb82c22ada67fa28121ea02c175b601121fe60b9a326`.
+Reproduce with the existing normalizer's --only wpn_project_sidearm_glock19
+--export arguments. Node determinants were checked positive after export.
+
+This source is one rigid mesh/primitive with no clips, slide/magazine separation
+or motion frames. Eject remains an explicitly unaccepted legacy proposal. Actual
+Project pistol palm/finger frames, ADS sightline, release/reload and switching
+need a separate authored profile. This cook does not enable them. C++ full tests
+and hosted CI remain pending at this checkpoint; Vulkan review remains open.
