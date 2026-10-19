@@ -1,5 +1,31 @@
 # Recovery progress
 
+## 2026-10-19 Armed Idle / direct-light / query consumer gate
+
+- Exact game runtime `7d6b9a57a3091bfb014d455b2aec4811d482e8d4` uses both
+  public engine pins at `383505fbf283c14ded424dc7a1d6c1be47ee09e9` (engine #26).
+  The existing UI, Jolt/sensor fixture and material/shadow switches remain.
+- Integrated First-Person #36's distinct M4 Armed Idle and corrected physical
+  finger/stock pose. Explicit developer Walk/Run compositions let the existing
+  runtime blend the actual displayed endpoints. Original clips, palettes,
+  geometry, weights and unmasked channels remain; full armed locomotion/combat
+  and Project weapon switching are still open. Added the metadata cook dependency.
+- Complete212-step Release game build passes; all48 non-GPU suites pass in
+  131.64s, including both350-sample direct/production Ready gates and native UI.
+  Combined headless Ready/material/shadow/props smoke exits0:111 samples/skins/
+  CPU resource updates per subset, one pose owner, zero invalid/unreachable IK,
+  six props/111 native ticks. Texture/shadow GPU readiness is correctly zero.
+  Concurrent Vulkan compilation means these durations are not a performance gate.
+- Engine383505f passes full headless/server/sandbox,10/10 CPU and a fresh74-step
+  Vulkan engine/server/sandbox build; all27 SPIR-V modules validate. Only two
+  opt-in material fragment binaries differ from14d33a7. The later test-only PH7
+  merge also passes10/10 CPU; its runtime/API/shader source is byte-identical.
+- [Offline CPU diagnostic](visual/phase5/armed-idle-offline.md) is explicitly
+  separate from the original failed Vulkan captures. Component #36 has both
+  hosted compilers green. A fresh isolated Vulkan game EXE is building; exact
+  consumer hosted CI and all device/visual/timing gates follow publication.
+  GUI remains paused; no new launch, control or successful sight test is claimed.
+
 ## 2026-10-19 Full material-texture consumer gate passed
 
 - Exact game `60cd2596bfb2bbfd072d9f9a33edd44d7385f49f` / public engine
