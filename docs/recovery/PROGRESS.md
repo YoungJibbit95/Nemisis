@@ -1,5 +1,51 @@
 # Recovery progress
 
+## 2026-10-19 Full material-texture consumer gate passed
+
+- Exact game `60cd2596bfb2bbfd072d9f9a33edd44d7385f49f` / public engine
+  `14d33a77a9eedef6a48227226d1ef80d593015b9`: complete211-step Release build
+  with native RmlUi/FreeType, Project/IK and Jolt passes. All48 non-GPU suites
+  pass in51.77s, including refreshed upstream UI code/assets from main `0beffd5`.
+  Only the conflicting UI engine pin required resolution; both pins retain14d.
+- Combined headless boot with `--material-textures --physics-props
+  --project-rifle-ready --no-vulkan --smoke-test` exits0:125 samples/skins/resource
+  updates per subset, one logical pose owner, zero invalid/unreachable IK,
+  125 native prop ticks. Texture readiness/images/bytes correctly stay0 on null.
+  Mixed `--ui-showcase --material-textures` exits2 before application creation.
+- Engine14d passes complete headless/server/sandbox and10/10 CPU(.99s), full
+  separate74-step SDL3/Vulkan engine/server/sandbox and27 SPIR-V checks. The old
+  23 shader modules are byte-identical. This does not execute the GPU path.
+  Source #33's frozen actual Vulkan framing failure remains open; no new GUI.
+  Query and direct-light work remain separate reviewed specialist slices.
+
+## 2026-10-19 Optional material-texture consumer integration
+
+- Both pins now select engine `14d33a77a9eedef6a48227226d1ef80d593015b9`
+  (Draft engine #23), including R3 #22 and existing UI/R2/physics. Its complete
+  headless engine/server/sandbox build and10/10 CPU suites pass in0.99s; separate
+  fresh Vulkan and full game consumer gates follow before this game is published.
+- `--material-textures` selects the existing range and forwards the actual
+  public frame setting only in gameplay. The optional existing render-config key
+  `material_textures.enabled` defaults false. No persisted UI control is implied.
+  Shutdown exposes actual texture/fallback draws, resident images/bytes and budget.
+  UI showcase rejects mixed preview flags; its separate resource ownership stays.
+- World mesh assets with supported maps are eligible, including the Project
+  FPS World subsets. Greybox RenderBox floors/walls remain untextured. Existing
+  teal prototype surface maps and authored modules are audited for later linking;
+  they are not neutral concrete textures. No texture/GPU/visual acceptance yet.
+  Frozen reviewed Vulkan build/content/shader directories remain unchanged.
+
+## 2026-10-19 Local animation direction follows actual view
+
+- GameApp now supplies the existing animation input's horizontal forward/right
+  from actual PlayerView vectors. Previously the trailing aggregate fields used
+  fixed world-axis defaults, so turning changed movement without its local gait
+  direction. Proper physical right at yaw zero is -X, consistent with the camera.
+- Aim pitch/yaw/turn addends remain unchanged: the Project presentation root
+  already applies view orientation. No new pose/simulation owner or authored-clip
+  completeness claim. Game rebuild plus six existing view/animation/Ready and
+  actual headless game smoke suites pass in23.69s against engine `130c4fd`.
+
 ## 2026-10-19 Native sensor/material integration in the existing range
 
 - Both engine pins now use public combined runtime
