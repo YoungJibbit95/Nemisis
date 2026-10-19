@@ -2,7 +2,7 @@
 
 import bpy, json, sys, math, hashlib, argparse
 from pathlib import Path
-from mathutils import Matrix, Vector
+from mathutils import Matrix, Vector, Quaternion
 from mathutils.bvhtree import BVHTree
 
 parser = argparse.ArgumentParser(description=__doc__)
@@ -141,6 +141,13 @@ for side in ["R", "L"]:
         # This keeps the fingers around the handle instead of at the magazine.
         # The actual surface remains within the existing 20mm firing region.
         start.z -= 0.015
+        # Keep the actual thumb-root flesh below the receiver, still on the
+        # measured pistol-grip surface and inside that same physical region.
+        start.y -= 0.0095
+    if args.profile == "armed-idle" and side == "L":
+        # Move the bottom-surface support a little toward its real fingers;
+        # the unchanged 10mm handguard-region check bounds this calibration.
+        start.x -= 0.0045
     direction = Vector((1, 0, 0) if side == "R" else (0, 1, 0))
     hit, normal, triangle, distance = weapon_tree.ray_cast(
         (C @ start.to_4d()).to_3d(), C.to_3x3() @ direction, 0.2
@@ -319,42 +326,108 @@ def finger_surface(tree, start, direction):
     return (CI @ hit.to_4d()).to_3d(), (CI.to_3x3() @ normal).normalized(), triangle
 
 
-def finger_constraint(side, finger, point, normal, triangle, world_weapon, pole_offset):
-    name = "DEF-" + finger + ".03." + side
-    # Authored on the real weighted skin, not a uniform bone-tip offset. In
-    # particular the short left pinky pad extends beyond its terminal bone.
-    # These proper bend-plane angles retain the actual source hand identity.
-    skin_fit = {
-        "R/f_index": (0, 0), "R/f_middle": (.008, 0),
-        "R/f_ring": (.024, math.pi / 4), "R/f_pinky": (.012, -7 * math.pi / 8),
-        "R/thumb": (0, 5 * math.pi / 8),
-        "L/f_index": (.015, -.642699122428894), "L/f_middle": (0, -3 * math.pi / 8),
-        "L/f_ring": (.024, math.pi / 4), "L/f_pinky": (-.008, -3 * math.pi / 4),
-        "L/thumb": (.004, 5 * math.pi / 8),
-    }
-    clearance, pole_angle = skin_fit[side + "/" + finger]
-    world_target = world_weapon @ (point + normal * clearance).to_4d()
-    target = empty("ArmedIdle_" + name, Matrix.Translation((C @ world_target).to_3d()))
-    base = bone_world("DEF-" + finger + ".01." + side).translation
-    pole = empty("ArmedIdle_pole_" + name,
-                 Matrix.Translation(base + C.to_3x3() @ world_weapon.to_3x3() @ Vector(pole_offset)))
-    for number in ("01", "02", "03"):
-        rig.pose.bones["DEF-" + finger + "." + number + "." + side].ik_stretch = 0
-    ik = rig.pose.bones[name].constraints.new("IK")
-    ik.target = target
-    ik.pole_target = pole
-    ik.chain_count = 3
-    ik.use_tail = True
-    ik.use_stretch = False
+def author_finger_contact(side, finger, point, normal, triangle, world_weapon):
+    # Bake positive flexion around each measured source hinge. No free chain
+    # pole/roll: skin proximity alone previously hid hyperextended knuckles.
+    bones = [rig.pose.bones["DEF-" + finger + "." + n + "." + side] for n in ("01", "02", "03")]
+    for bone in bones:
+        bone.rotation_mode = "QUATERNION"
+        bone.rotation_quaternion = Quaternion((1, 0, 0, 0))
     bpy.context.view_layer.update()
-    ik.pole_angle = pole_angle
-    bpy.context.view_layer.update()
-    actual = rig.matrix_world @ rig.pose.bones[name].tail
-    residual = (actual - target.matrix_world.translation).length
-    require(residual < 0.001, f"{name} finger target unreachable: {residual}m")
+    approach = C.to_3x3() @ world_weapon.to_3x3() @ contacts[side]["matrix"].to_3x3() @ Vector((0, -1 if side == "R" else 1, 0))
+    hinges = []
+    for bone in bones:
+        m = bone_world(bone.name)
+        direction = (rig.matrix_world.to_3x3() @ (bone.tail - bone.head)).normalized()
+        axis = direction.cross(approach).normalized()
+        hinges.append((m.to_3x3().inverted() @ axis).normalized())
+    abduction_axis = (bone_world(bones[0].name).to_3x3().inverted() @ approach).normalized()
+    opposition_world = C.to_3x3() @ world_weapon.to_3x3() @ contacts[side]["matrix"].to_3x3() @ Vector((0, 0, 1))
+    opposition_axis = (bone_world(bones[0].name).to_3x3().inverted() @ opposition_world).normalized()
+    selected = []
+    for obj in character_objects:
+        if obj.type != "MESH" or not obj.find_armature():
+            continue
+        ids = [v.index for v in obj.data.vertices
+               if sum(g.weight for g in v.groups
+                      if obj.vertex_groups[g.group].name.startswith("DEF-" + finger + ".")
+                      and obj.vertex_groups[g.group].name.endswith("." + side)) > .5]
+        if ids:
+            selected.append((obj, ids))
+    deps = bpy.context.evaluated_depsgraph_get()
+    world_to_weapon = C @ world_weapon.inverted() @ CI
+    target_tree = trigger_tree if side == "R" and finger == "f_index" else weapon_tree
+    surface = (C @ point.to_4d()).to_3d()
+    maximum = (90, 95, 85, 60, 60) if finger == "thumb" else (110, 110, 85, 20, 0)
+
+    def fit(values):
+        for i, bone in enumerate(bones):
+            q = Quaternion(hinges[i], math.radians(values[i]))
+            if i == 0:
+                q = Quaternion(abduction_axis, math.radians(values[3])) @ q
+                q = Quaternion(opposition_axis, math.radians(values[4])) @ q
+            bone.rotation_quaternion = q
+        bpy.context.view_layer.update()
+        tip = rig.matrix_world @ bones[2].tail
+        signed, patch, intended = [], [], []
+        for obj, ids in selected:
+            ev = obj.evaluated_get(deps)
+            mesh = ev.to_mesh()
+            for index in ids:
+                p = ev.matrix_world @ mesh.vertices[index].co
+                local = world_to_weapon @ p
+                hit, n, tri, distance = weapon_tree.find_nearest(local)
+                signed.append((local - hit).dot(n))
+                if (p - tip).length < .025:
+                    patch.append(target_tree.find_nearest(local)[3])
+                    intended.append((local - surface).length)
+            ev.to_mesh_clear()
+        if not patch:
+            return (1000, 1, 1, 1)
+        penetration, gap, region = max(0, -min(signed)), min(patch), min(intended)
+        score = (max(0, penetration - .0007) * 100 + max(0, gap - .0015) * 40 +
+                 max(0, region - .020) + penetration * .1 + gap * .1 + abs(values[3]) * .000001)
+        # Prefer a distributed curl instead of hiding all the bend in the
+        # terminal joint. Contact/clearance remain the stronger constraints.
+        if finger != "thumb":
+            score += abs(values[2] - values[1] * .65) * .00002
+        return score, penetration, gap, region
+
+    best = None
+    from itertools import product
+    grids = ((0, 30, 60, 90), (0, 30, 60, 95), (0, 30, 60, 85), (-45, 0, 45), (-60, 0, 60)) if finger == "thumb" else (
+        (0, 30, 60, 90, 110), (0, 35, 70, 110), (0, 30, 60, 85), (-20, 0, 20), (0,))
+    for values in product(*grids):
+        measured = fit(values)
+        if best is None or measured[0] < best[0][0]:
+            best = (measured, values)
+    for step in (10, 5, 2.5):
+        for iteration in range(3):
+            changed = False
+            for axis in range(5):
+                for sign in (-1, 1):
+                    values = list(best[1])
+                    values[axis] = max(-maximum[axis] if axis >= 3 else 0,
+                                       min(maximum[axis], values[axis] + sign * step))
+                    measured = fit(values)
+                    if measured[0] < best[0][0]:
+                        best = (measured, tuple(values))
+                        changed = True
+            if not changed:
+                break
+    measured = fit(best[1])
+    print("FINGER_SOURCE_HINGE", side, finger, best[1], measured, flush=True)
+    require(measured[1] < .001 and measured[2] < .002,
+            f"Anatomical finger skin contact invalid: {side}/{finger}: {measured}")
     return {"surface_point": list(point), "normal": list(normal), "triangle": triangle,
-            "bone_tip_clearance_m": clearance, "pole_angle": pole_angle,
-            "effector_error_m": residual}
+            "curl_degrees": list(best[1][:3]), "mcp_abduction_degrees": best[1][3],
+            "thumb_opposition_degrees": best[1][4],
+            "blender_hinge_axes_local": [list(a) for a in hinges],
+            "gltf_hinge_axes_local": [list((mapping[b.name].to_3x3().inverted() @ a).normalized())
+                                      for b, a in zip(bones, hinges)],
+            "gltf_mcp_abduction_axis_local": list((mapping[bones[0].name].to_3x3().inverted() @ abduction_axis).normalized()),
+            "gltf_thumb_opposition_axis_local": list((mapping[bones[0].name].to_3x3().inverted() @ opposition_axis).normalized()),
+            "max_signed_skin_penetration_m": measured[1], "distal_surface_distance_m": measured[2]}
 
 
 def finger_nearest(tree, probe):
@@ -389,7 +462,7 @@ if args.profile == "armed-idle":
     twist("ORG-shoulder.L", -30)
     twist("ORG-shoulder.R", 35, "Y")
     twist("ORG-shoulder.L", -10, "Y")
-    world_weapon = Matrix.Translation(Vector((-0.13, 1.55, 0.295)))
+    world_weapon = Matrix.Translation(Vector((-0.13, 1.555, 0.295)))
 else:
     world_weapon = Matrix.Translation(Vector((-0.16, 1.61, 0.17)))
 results = {side: arm_constraint(side, world_weapon) for side in ["R", "L"]}
@@ -412,6 +485,16 @@ for side in ["R", "L"]:
             if name not in rig.pose.bones:
                 continue
             pose = rig.pose.bones[name]
+            if args.profile == "armed-idle":
+                # Rigify source axes were measured in the extended finger:
+                # +local X is anatomical flexion; thumbs use signed local Z.
+                # Recomputing direction.cross(palmNormal) after each parent
+                # curl reverses its sign beyond 90 degrees and hyperextends.
+                axis = Vector((0, 0, -1 if side == "R" else 1)) if finger == "thumb" else Vector((1, 0, 0))
+                pose.rotation_mode = "QUATERNION"
+                pose.rotation_quaternion = Quaternion(axis, math.radians(angle))
+                bpy.context.view_layer.update()
+                continue
             m = bone_world(name)
             direction = (rig.matrix_world.to_3x3() @ (pose.tail - pose.head)).normalized()
             axis = direction.cross(normal)
@@ -435,22 +518,20 @@ if args.profile == "armed-idle":
             local = (world_weapon.inverted() @ first.to_4d()).to_3d()
             if side == "R" and finger == "f_index":
                 p, n, tri = finger_nearest(trigger_tree, (0.1, .027, .054))
-                pole = (0, 0, .08)
             elif side == "R" and finger == "thumb":
-                p, n, tri = finger_surface(base_tree, (.1, .035, 0), (-1, 0, 0))
-                pole = (0, .04, -.06)
+                # The firing thumb lies on the same outside face as its palm;
+                # the other fingers wrap onto the opposite handle face.
+                p, n, tri = finger_surface(base_tree, (-.1, .035, .015), (1, 0, 0))
             elif side == "R":
                 front, _, _ = finger_surface(base_tree, (0, local.y, .085), (0, 0, -1))
                 p, n, tri = finger_surface(base_tree, (.1, local.y, front.z - .004), (-1, 0, 0))
-                pole = (0, 0, .08)
             else:
-                height = .075 if finger == "f_pinky" else .10
-                start = (.12, .10, .42) if finger == "thumb" else (-.12, height, local.z)
+                height = .095 if finger == "f_pinky" else .10
+                start = (-.04, .11, .36) if finger == "thumb" else (-.12, height, local.z)
                 direction = (-1, 0, 0) if finger == "thumb" else (1, 0, 0)
                 p, n, tri = (finger_nearest(weapon_tree, start) if finger == "thumb"
                              else finger_surface(weapon_tree, start, direction))
-                pole = (.04, .04, .04) if finger == "thumb" else (-.05, .04, 0)
-            finger_goals[side + "/" + finger] = finger_constraint(side, finger, p, n, tri, world_weapon, pole)
+            finger_goals[side + "/" + finger] = author_finger_contact(side, finger, p, n, tri, world_weapon)
 posed, checks = pose_data()
 mount_parent = "ORG-spine.003"
 require(mount_parent in rest, "Measured common shoulder ancestor is absent")
@@ -503,7 +584,7 @@ if args.profile == "armed-idle":
     for side in ("R", "L"):
         for finger in ("f_index", "f_middle", "f_ring", "f_pinky", "thumb"):
             tip = rig.matrix_world @ rig.pose.bones["DEF-" + finger + ".03." + side].tail
-            sample, patch = [], []
+            sample, patch, trigger_patch = [], [], []
             for obj in character_objects:
                 if obj.type != "MESH" or not obj.find_armature():
                     continue
@@ -520,17 +601,22 @@ if args.profile == "armed-idle":
                     sample.append((p - hit).dot(n))
                     if (p - tip).length < .025:
                         patch.append((distance, v.index))
+                        if side == "R" and finger == "f_index":
+                            trigger_patch.append(actual_trigger.find_nearest(p)[3])
                 ev.to_mesh_clear()
             require(sample and patch, "Missing actual weighted finger skin: " + side + finger)
             distance, vertex = min(patch)
             penetration = max(0, -min(sample))
             require(distance < .002, "Finger skin floats off actual weapon: " + side + finger)
-            require(penetration < .001, "Finger skin penetrates actual weapon: " + side + finger)
+            require(penetration < .001, f"Finger skin penetrates actual weapon: {side}/{finger}: {penetration}m")
             finger_skin[side + "/" + finger] = {
                 "weighted_vertices": len(sample), "distal_patch_vertices": len(patch),
                 "closest_distal_source_vertex": vertex, "distal_surface_distance_m": distance,
                 "max_signed_penetration_m": penetration,
             }
+            if trigger_patch:
+                require(min(trigger_patch) < .002, "Actual right index skin misses the physical Trigger mesh")
+                finger_skin[side + "/" + finger]["actual_trigger_surface_distance_m"] = min(trigger_patch)
     actual_skin = bvh([o for o in character_objects if o.type == "MESH" and o.find_armature()])
     rear = []
     stock = next(o for o in weapon_objects if o.name == "Stock")

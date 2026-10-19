@@ -1,4 +1,4 @@
-"""Append a Blender-authored developer Ready variant without recooking old data.
+"""Append authored M4 Idle and explicit developer locomotion compositions.
 
 Original geometry, weights, skin palettes, inverse binds and clip accessors stay
 byte-identical. Only new rotation keys and explicitly named contact markers are
@@ -118,7 +118,7 @@ def rotation_xyzw(rows):
     return [x / length for x in q]
 
 
-def append_clip(doc, binary, pose, name, animated_mount=False):
+def append_clip(doc, binary, pose, name, animated_mount=False, duration=1.):
     names = {n.get("name"): i for i, n in enumerate(doc["nodes"])}
 
     def accessor(kind, rows):
@@ -137,7 +137,7 @@ def append_clip(doc, binary, pose, name, animated_mount=False):
         return index
 
     clip = {"name": name, "channels": [], "samplers": []}
-    time = accessor("SCALAR", [(0,), (1,)])
+    time = accessor("SCALAR", [(0,), (duration,)])
     for name, authored in sorted(pose["joint_pose"].items()):
         require(name in names, f"Authored joint absent: {name}")
         q = authored["rotation_xyzw"]
@@ -175,6 +175,19 @@ def append_ready(doc, binary, pose, armed_idle):
     mount.update(translation=[r[3] for r in pose["weapon_mount_local_matrix"][:3]],
                  rotation=rotation_xyzw(pose["weapon_mount_local_matrix"]))
     append_clip(doc, binary, armed_idle, "Project M4 Armed Idle", animated_mount=True)
+    for source_hint, name in (("walk", "Developer Rifle Ready Walk Composition"),
+                              ("run", "Developer Rifle Ready Run Composition")):
+        source = next(a for a in doc["animations"] if source_hint in a["name"].lower())
+        duration = max(doc["accessors"][s["input"]]["max"][0] for s in source["samplers"])
+        append_clip(doc, binary, pose, name, animated_mount=True, duration=duration)
+        composed = doc["animations"][-1]
+        masked = {names[n] for n in pose["joint_pose"]}
+        for channel in source["channels"]:
+            if channel["target"]["path"] == "rotation" and channel["target"]["node"] in masked:
+                continue
+            composed["channels"].append({"sampler": len(composed["samplers"]),
+                                         "target": dict(channel["target"])})
+            composed["samplers"].append(dict(source["samplers"][channel["sampler"]]))
 
 
 def cook(candidate):
@@ -259,5 +272,5 @@ if __name__ == "__main__":
         else:
             path.write_bytes(data)
     print(
-        "Developer Rifle Ready variant: old geometry/palettes/clip accessors preserved; visual acceptance pending"
+        "M4 Armed Idle and developer Ready compositions: original geometry/palettes/clips preserved; visual acceptance pending"
     )
