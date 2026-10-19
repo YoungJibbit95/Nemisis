@@ -1,6 +1,7 @@
 """Ready additions preserve the actual previous geometry and animation data."""
 
 import json
+import copy
 from pathlib import Path
 import sys
 import unittest
@@ -12,6 +13,24 @@ OUTPUT = Path(sys.argv.pop(1))
 
 
 class ReadyCookTests(unittest.TestCase):
+    def test_physical_ownership_rejects_swaps_and_reflections(self):
+        pose = json.loads(ready.POSE.read_text())
+        weapon, _ = ready.read(ready.ROOT / "assets/processed/normalized/project_assets/wpn_project_rifle_m4a1.glb")
+        ready.validate_physical_contacts(pose, weapon)
+        for error in ("contacts", "palm_identity", "reflection"):
+            with self.subTest(error=error):
+                bad = copy.deepcopy(pose)
+                if error == "contacts":
+                    bad["weapon_contact_frames"]["R"], bad["weapon_contact_frames"]["L"] = (
+                        bad["weapon_contact_frames"]["L"], bad["weapon_contact_frames"]["R"])
+                elif error == "palm_identity":
+                    bad["palms"]["R"]["source_bone"] = "DEF-hand.L"
+                else:
+                    for row in bad["palms"]["R"]["matrix"][:3]:
+                        row[0] = -row[0]
+                with self.assertRaises(ValueError):
+                    ready.validate_physical_contacts(bad, weapon)
+
     def test_reproducible_additions_and_original_bytes(self):
         for name, generated in ready.cook(OUTPUT).items():
             self.assertEqual((OUTPUT / name).read_bytes(), generated)

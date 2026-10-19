@@ -802,3 +802,63 @@ stock `Plane.024` reaches positive Z (.30477m). The current +.310Z muzzle marker
 therefore points at the stock as well as the grips being upside down. W2 must
 correct forward and up together in the existing offline cook, then recalibrate
 that asset's own contacts/sights. Do not attach hands to these old targets.
+
+## Phase 5 FP-1: physical ownership and FR17 correction
+
+Starting game revision: `2264e27ffb1ca76244d9fb49d377f9af9bc7de32` (#27).
+Engine pin remains `3d673b7345d295588367b466a8877e84dee112a9`. No renderer,
+camera, gameplay balance, ammo state or runtime axis correction changes here.
+
+The M4 Ready producer already sends `DEF-hand.R` to its physical pistol grip
+and `DEF-hand.L` to its handguard. Swapping those bones would introduce a bug.
+Its previous tests, however, did not independently tie palm targets to physical
+grip regions or check the resulting visible hand vertices. The Ready cook now
+rejects exchanged contacts, incorrect source-palm identity and reflected frames.
+The 288-tick Ready regression checks actual physical anchor proximity and the
+original hand-weighted skinned vertices in addition to palm residual/orientation.
+
+The normal launch still uses A1 arms without hand constraints. A1's authored
+right wrist is X=-.125,Z=.775m and left wrist X=+.122,Z=.655m; translating that
+whole mesh toward averaged sockets cannot change their fore/aft order. The new
+legacy compatibility regression uses the existing production IK adapter with
+the actual M4 and corrected FR17. It covers both targets and visible weighted
+hand geometry through 4 alternating weapon selections and 9 ADS/recoil/movement
+samples per selection. It retains the old unconstrained pose as a failing-contact
+negative control. These checks do not make A1 the requested Project character.
+Changing the default launch remains an integration/visual decision.
+
+The actual Project source is anatomically consistent. Source eyes lie .08720m
+ahead of the head toward -Z; toes lie .09450m ahead of feet toward -Z. Source
+right wrist X=.85549, index Z=.08525, pinky Z=.15065, thumb Z=.10575; its palm
+approach normal is (-.07576,-.99712,-.00438). The existing proper 180-degree
+runtime player rotation preserves this chirality: front becomes +Z, right wrist
+X=-.75234, index Z=.02368, pinky Z=-.04172, thumb Z=.00318, palm approach
+(+.07576,-.99712,+.00438). This is a camera/composition acceptance question,
+not evidence of mislabeled source hands. No mesh reflection or bulk L/R exchange
+was introduced. The image-space anatomical interpretation still needs review.
+
+FR17 had a separate proven content error. Its raw physical muzzle is +Z and its
+pistol grip extends toward raw +X. The old [0,-90,180] recipe inverted physical
+up and forward; its muzzle marker pointed at the stock. Only this asset now uses
+the existing Blender normalizer with Euler [0,+90,0]. New R is inside Plane.010 upper
+pistol handle, L intersects the forward Plane.003 underside, and muzzle is the
+actual Cylinder.010 front-ring center. Canonical R=(0,0,0), L=(0,.0379693,.212),
+muzzle=(-.0000289,.0858030,.3038751)m. The real stock is behind R. These geometry
+contracts are checked through the actual public engine importer, not metadata
+axis declarations. FR17 eject and full finger/ADS/animation profiles stay open.
+
+Reproduce the existing cook with Blender5.1.0, build adfe2921d5f3:
+
+```powershell
+blender --background --factory-startup --threads 1 --python tools/blender/normalize_project_assets.py -- --repo-root . --only wpn_project_smg_fr17 --export --report build/fr17-normalization-report.json
+```
+
+Unchanged FR17 source SHA256:
+`72dc57988cfbc84b018fd9687e26d2885ac2ceb57f7a7a13b45892944ac21a2e`.
+Two independent exports produced cooked SHA256:
+`8099362f8974b65c81fb3883e0739042b8521d08d2e840cc9b247731a4036130`.
+Python cook and mutation checks pass (2 cases). C++ build/full tests and hosted
+MSVC/Clang CI are pending integration at this commit. No GUI was launched.
+F01-F03 remain art direction: actual right trigger hand, left front support,
+natural wrists/fingers, clear center and readable ADS. Vulkan visual acceptance,
+camera chirality/composition and performance remain open after the Escape stop.

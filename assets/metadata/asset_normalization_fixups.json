@@ -216,29 +216,92 @@
       "category": "weapon",
       "source": "assets/project_assets/weapon_smg_fr17.glb",
       "output": "assets/processed/normalized/project_assets/wpn_project_smg_fr17.glb",
-      "aliases": ["weapon_smg_fr17", "fr17"],
-      "findings": [
-        "Weapon height is on Blender +X while Nemisis target assets use Blender +Z up, so the configured fix rolls source +X to target +Z.",
-        "Normalized semantic dimensions are [width, forward length, height] = [0.05652, 0.48954, 0.29578] meters.",
-        "No authored socket_muzzle, grip sockets, eject socket, or col_ collision proxy."
+      "aliases": [
+        "weapon_smg_fr17",
+        "fr17"
       ],
-      "target_dimensions_m": [0.05652, 0.48954, 0.29578],
+      "findings": [
+        "Source muzzle Cylinder.010 points along raw +Z, while pistol grip Plane.012 and magazine extend toward raw +X. The previous recipe inverted both physical forward and up.",
+        "Correct only FR17 offline: Blender Euler [0,+90,0], runtime +Y up/+Z muzzle forward, positive unit scales. Source GLB remains unchanged.",
+        "Firing grip measured inside physical Plane.010 upper pistol handle behind the trigger; lower Plane.012 is an extended assembly, not the firing palm. Support intersects forward Plane.003 underside at raw Z+.13m."
+      ],
+      "target_dimensions_m": [
+        0.05652,
+        0.48954,
+        0.29578
+      ],
       "normalization": {
-        "remove_mesh_names": ["Icosphere"],
-        "rotation_euler_deg": [0.0, -90.0, 180.0],
+        "remove_mesh_names": [
+          "Icosphere"
+        ],
+        "rotation_euler_deg": [
+          0.0,
+          90.0,
+          0.0
+        ],
         "origin": {
           "mode": "bounds_floor_center",
-          "center_axes": ["X", "Y"],
+          "center_axes": [
+            "X",
+            "Y"
+          ],
           "floor_axis": "Z"
         },
         "ensure_root_empty": true,
         "add_sockets": [
-          {"name": "socket_muzzle", "location": [0.0, -0.25, 0.16], "display_size": 0.032},
-          {"name": "socket_grip_r", "location": [0.02, 0.06, 0.08], "display_size": 0.04},
-          {"name": "socket_grip_l", "location": [-0.01, -0.10, 0.11], "display_size": 0.04},
-          {"name": "socket_eject", "location": [0.032, -0.02, 0.14], "display_size": 0.032},
-          {"name": "socket_vfx", "location": [0.0, -0.25, 0.16], "display_size": 0.038}
+          {
+            "name": "socket_muzzle",
+            "location": [
+              -0.0010517492,
+              -0.2447350566,
+              0.2282379703
+            ],
+            "display_size": 0.032
+          },
+          {
+            "name": "socket_grip_r",
+            "location": [
+              -0.0010228316,
+              0.05914,
+              0.1424350054
+            ],
+            "display_size": 0.04
+          },
+          {
+            "name": "socket_grip_l",
+            "location": [
+              -0.0010228316,
+              -0.15286,
+              0.1804042801
+            ],
+            "display_size": 0.04
+          },
+          {
+            "name": "socket_eject",
+            "location": [
+              0.032,
+              -0.02,
+              0.14
+            ],
+            "display_size": 0.032
+          },
+          {
+            "name": "socket_vfx",
+            "location": [
+              -0.0010517492,
+              -0.2447350566,
+              0.2282379703
+            ],
+            "display_size": 0.038
+          }
         ]
+      },
+      "source_sha256": "72dc57988cfbc84b018fd9687e26d2885ac2ceb57f7a7a13b45892944ac21a2e",
+      "socket_notes": {
+        "socket_grip_r": "Physical Plane.010 upper pistol grip, raw midpoint (.0343649946,.0247771684,-.082)m; behind and immediately below the trigger. Plane.012 lower extension is not the firing grip.",
+        "socket_grip_l": "Physical Plane.003 forward underside at raw (-.0036042801,.0247771684,+.13)m; .212m ahead of firing grip, .0918751m behind physical muzzle.",
+        "socket_muzzle": "Center of actual Cylinder.010 foremost ring (raw max Z within .1mm); previous marker pointed at stock Plane.024.",
+        "socket_eject": "Legacy provisional ejection proposal; actual port/direction is not visually or physically accepted."
       }
     },
     {
