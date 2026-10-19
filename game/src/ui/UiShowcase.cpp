@@ -171,8 +171,11 @@ ShowcaseAction UiShowcase::update(double delta, const novacore::platform::InputS
         p.held[i] = state.down;
         if (fire) {
             auto* focus = p.context->GetFocusElement();
+            while (focus && focus->GetTagName() != "select" && focus->GetTagName() != "input" && focus->GetTagName() != "button")
+                focus = focus->GetParentNode();
             const bool select = focus && focus->GetTagName() == "select";
-            if (i < 2 && !select) p.tap(Rml::Input::KI_TAB,i == 0 ? Rml::Input::KM_SHIFT : 0);
+            if ((i < 2 && !select) || (i >= 2 && select))
+                p.tap(Rml::Input::KI_TAB,(i == 0 || i == 2) ? Rml::Input::KM_SHIFT : 0);
             else p.tap(i == 0 ? Rml::Input::KI_UP : i == 1 ? Rml::Input::KI_DOWN : i == 2 ? Rml::Input::KI_LEFT : Rml::Input::KI_RIGHT);
         }
     }
@@ -212,5 +215,9 @@ std::array<float,4> UiShowcase::bounds(const std::string& id) const {
     const auto size = e->GetBox().GetSize(Rml::BoxArea::Border);
     return {offset.x,offset.y,size.x,size.y};
 }
-std::string UiShowcase::focusId() const { const auto* e = impl_->context->GetFocusElement(); return e ? e->GetId() : ""; }
+std::string UiShowcase::focusId() const {
+    const auto* e = impl_->context->GetFocusElement();
+    while (e && e->GetId().empty()) e = e->GetParentNode();
+    return e ? e->GetId() : "";
+}
 }
