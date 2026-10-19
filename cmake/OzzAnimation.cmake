@@ -22,7 +22,6 @@ endif()
 # failure before any Nemisis code is compiled. Keep warnings-as-errors off for
 # the fetched dependency only; first-party targets still use their own flags.
 set(CMAKE_COMPILE_WARNING_AS_ERROR OFF)
-
 # 0.17.0, exact commit and verified source archive. No third-party importer,
 # offline tools, windowing or second animation/sampling runtime is selected.
 FetchContent_Declare(ozz
@@ -32,15 +31,17 @@ FetchContent_Declare(ozz
 )
 FetchContent_MakeAvailable(ozz)
 
-# Belt and braces: the fetched project sets the property again after the cache
-# variable above, so drop the resulting -Werror from its own targets.
-if(NOT MSVC)
-    foreach(ozz_target IN ITEMS ozz_animation ozz_base)
-        if(TARGET ${ozz_target})
-            target_compile_options(${ozz_target} PRIVATE -Wno-error -Wno-dangling-reference)
+# ozz sets CMAKE_COMPILE_WARNING_AS_ERROR ON while it is being configured, so
+# the variable above is not enough. Clear the property on its targets and
+# suppress the GCC-only false positive; Clang does not know that warning option.
+foreach(ozz_target IN ITEMS ozz_animation ozz_base)
+    if(TARGET ${ozz_target})
+        set_target_properties(${ozz_target} PROPERTIES COMPILE_WARNING_AS_ERROR OFF)
+        if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+            target_compile_options(${ozz_target} PRIVATE -Wno-dangling-reference)
         endif()
-    endforeach()
-endif()
+    endif()
+endforeach()
 
 function(nemisis_copy_ozz_notice target_name)
     add_custom_command(TARGET ${target_name} POST_BUILD
