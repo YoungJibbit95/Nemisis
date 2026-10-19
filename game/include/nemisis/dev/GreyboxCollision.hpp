@@ -3,6 +3,7 @@
 #include "nemisis/dev/GreyboxWorld.hpp"
 
 #include "novacore/math/Types.hpp"
+#include "novacore/physics/PhysicsSystem.hpp"
 
 #include <cstddef>
 #include <string>
@@ -95,6 +96,12 @@ struct GreyboxCollisionResult final {
 
 [[nodiscard]] GreyboxCollisionResult resolveGreyboxPlayerCollision(
     const GreyboxWorld& world,
+    GreyboxCollisionQuery query);
+// The rigid-body fixture and player motor consume this same authored source.
+[[nodiscard]] novacore::physics::PhysicsWorld buildGreyboxPhysicsWorld(const GreyboxWorld& world);
+[[nodiscard]] GreyboxCollisionResult resolveGreyboxPlayerCollision(
+    const GreyboxWorld& world,
+    const novacore::physics::PhysicsWorld& physicsWorld,
     GreyboxCollisionQuery query);
 [[nodiscard]] const char* greyboxContactRoleName(GreyboxContactRole role);
 

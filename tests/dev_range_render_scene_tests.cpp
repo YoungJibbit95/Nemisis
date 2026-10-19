@@ -1780,6 +1780,45 @@ void testProjectReadyUsesOneConstrainedPose() {
 }
 #endif
 
+void testLocalShadowPolicyPreservesSharedWorldResources() {
+    using namespace nemisis;
+    using namespace novacore;
+    render::Renderer renderer;
+    const auto resources = registerSceneMeshes(renderer);
+    const auto world = dev::createDevRangeGreyboxWorld();
+    dev::DevRangeRenderSceneDesc desc;
+    desc.greyboxWorld = &world;
+    desc.meshResources = &resources;
+    desc.sky.enabled = false;
+    desc.player.hasMovementState = true;
+    desc.player.hasCameraRig = true;
+    desc.player.activeWeaponId = "ar_01";
+    desc.player.firedThisFrame = true;
+    desc.showFirstPersonRigDiagnostics = true;
+    render::RenderFrameInfo frame;
+    const auto stats = dev::DevRangeRenderSceneBuilder{}.append(frame, desc);
+    std::size_t worldWeapons = 0, localMeshes = 0;
+    for (const auto& mesh : frame.worldMeshes) {
+        if (mesh.layer == render::RenderMeshLayer::ViewModel) {
+            ++localMeshes;
+            expect(!mesh.castsShadow && !mesh.receivesShadow, "legacy local viewmodels exclude shadows");
+        } else if (mesh.assetId == "wpn_project_rifle_m4a1") {
+            ++worldWeapons;
+            expect(mesh.castsShadow && mesh.receivesShadow,
+                "shared M4 resource still casts/receives in world showcase instances");
+        } else if (mesh.assetId == "env_project_skybox1") {
+            expect(!mesh.castsShadow && !mesh.receivesShadow, "sky shell never occludes the sun");
+        }
+    }
+    expect(worldWeapons > 0 && localMeshes > 0, "same scene includes world weapons and local viewmodels");
+    const auto localBoxes = std::ranges::count_if(frame.worldBoxes, [](const auto& box) {
+        return !box.castsShadow && !box.receivesShadow;
+    });
+    expect(static_cast<std::size_t>(localBoxes) ==
+        stats.firstPersonBodyPrimitiveCount + stats.firstPersonFeedbackPrimitiveCount,
+        "local diagnostic arms and muzzle flashes also exclude shadows without suppressing world boxes");
+}
+
 } // namespace
 
 int main(int argc, char** argv) {
@@ -1796,6 +1835,7 @@ int main(int argc, char** argv) {
     testActualProjectFPSPreviewSubmitsAnimatedSubsets();
 #endif
     testDevRangeRenderSceneBuildsExpectedSubmissions();
+    testLocalShadowPolicyPreservesSharedWorldResources();
     testDevRangeRenderSceneMovesWeaponTowardSightlineInAds();
     testDevRangeRenderSceneViewmodelFollowsCameraAngles();
     testDevRangeRenderSceneAlignsWeaponMeshToCookedMuzzleSocket();

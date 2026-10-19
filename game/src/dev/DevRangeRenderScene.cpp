@@ -1355,6 +1355,8 @@ bool DevRangeRenderSceneBuilder::appendMesh(
         material,
         {},
         layer,
+        layer == novacore::render::RenderMeshLayer::World,
+        layer == novacore::render::RenderMeshLayer::World,
     });
     ++stats.meshInstanceCount;
     if (usesMaterialFallbackProfile(material)) {
@@ -1419,6 +1421,8 @@ void DevRangeRenderSceneBuilder::appendSkyboxMesh(
         0.0F,
         {0.82F, 0.90F, 1.0F, 1.0F},
         stats)) {
+        frame.worldMeshes.back().castsShadow = false;
+        frame.worldMeshes.back().receivesShadow = false;
         ++stats.skyFallbackMeshCount;
     }
 }
@@ -1533,6 +1537,10 @@ void DevRangeRenderSceneBuilder::appendLocalPlayerBodyMesh(
         bodyRoot.scale, bodyRoot.yawDegrees, {1.0F, 1.0F, 1.0F, 1.0F}, stats,
         bodyRoot.pitchDegrees, bodyRoot.rollDegrees,
         novacore::render::RenderMeshLayer::World, true, bodyResource);
+    if (fpsBody && appended) {
+        frame.worldMeshes.back().castsShadow = false;
+        frame.worldMeshes.back().receivesShadow = false;
+    }
     stats.projectFPSBodyActive = fpsBody && appended;
     stats.localWorldModelActive = !fpsBody && appended;
 }
@@ -1541,6 +1549,8 @@ void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
     novacore::render::RenderFrameInfo& frame,
     const DevRangeRenderSceneDesc& desc,
     DevRangeRenderSceneStats& stats) const {
+    const auto firstLocalMesh = frame.worldMeshes.size();
+    const auto firstLocalBox = frame.worldBoxes.size();
     // A cached fixed-tick pose owns both the selected asset and its transforms.
     // Tools/tests can evaluate immediately when no game snapshot is supplied.
     const auto fallback = desc.firstPersonPresentation == nullptr
@@ -1608,6 +1618,16 @@ void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
     stats.projectFPSArmsActive = desc.projectFPSPreview && armsMeshAppended;
     if (!desc.projectFPSPreview && (!armsMeshAppended || desc.showFirstPersonRigDiagnostics)) {
         appendFirstPersonRigPrimitives(frame, presentedRig, stats);
+    }
+    // Camera-attached Project arms/weapon also use World depth. Their layer
+    // must never silently turn a partial FPS pose into a world shadow caster.
+    for (auto i = firstLocalMesh; i < frame.worldMeshes.size(); ++i) {
+        frame.worldMeshes[i].castsShadow = false;
+        frame.worldMeshes[i].receivesShadow = false;
+    }
+    for (auto i = firstLocalBox; i < frame.worldBoxes.size(); ++i) {
+        frame.worldBoxes[i].castsShadow = false;
+        frame.worldBoxes[i].receivesShadow = false;
     }
 }
 

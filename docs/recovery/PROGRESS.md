@@ -1,5 +1,142 @@
 # Recovery progress
 
+## 2026-10-19 Reviewed integration build ready for optional visual gate
+
+- Exact runtime `c04c78bf6d95d30e69a611619ad8b30b4430d0da` with engine
+  `cca45a41aded8b13171943553e27f85071c76ed3`: complete followup Release build
+  and all 48 CPU tests pass again in 94.07s, including the nonzero-roll fix.
+- Complete separate SDL3/Vulkan game with Jolt, native RmlUi/FreeType,
+  Project candidate and hand IK builds successfully (310 steps, plus final
+  GameApp refresh). All dependencies use public installed engine targets.
+  EXE: `C:/Users/Administrator/.codex/tmp/nemisis-phase5-vulkan/nemisis_game.exe`.
+  SHA256 `5be1c86eb12f55055e247ed312bfb90770e92a360e16bb2e870b3b4d52c8fc78`.
+  Pose SHA256 remains `f59c8151c3950778ae457f748b2bb4341ff62d6b623597b5c1c2ea716cd5cc5e`.
+- Reproducible candidates use `--project-rifle-ready`, optionally
+  `--project-fps-look-down`, `--physics-props`, `--directional-shadows`.
+  Legacy anatomical comparison uses `--dev-range --first-person-hand-ik`
+  with weapon keys 4/5/6. These are prepared commands, not executed GUI tests.
+- No Phase 5 graphical application/window automation has run. A fresh explicit
+  grant is still required for captures/control. Default legacy no-IK presentation,
+  finger/stock quality, complete Project arsenal/armed states/third person and
+  dynamic-character shadow acceptance remain open. R3 and sensor/material event
+  source work continue in their isolated specialist branches.
+
+## 2026-10-19 Combined CPU gate and camera-roll continuity followup
+
+- Exact game `ff539763302683212406a8b38bad751394cb3faf` with public engine
+  `cca45a41aded8b13171943553e27f85071c76ed3`, RmlUi/IK/Project/Jolt ON:
+  complete Release build and all 48 CPU tests pass in 102.17s. This includes
+  actual FR17/Glock geometry, Ready source skin, real GameApp physics boot,
+  original movement/network/weapon tests and native UI documents. Engine #19
+  has four green hosted jobs (standard/Jolt, MSVC/Clang). No graphical run.
+- Independent review then found the FPS body still used positive camera roll
+  while arms/eye/IK used negative roll. Commit `34930ca` reuses the same existing
+  Project root for all subsets; legacy world-body behavior remains unchanged.
+  The new 288-pose regression varies camera roll through both signs and checks
+  all matrix elements. Old code fails 574 checks; fixed code passes both scene
+  suites (2/2,9.14s), retaining 1mm contact and anatomical hand/frustum tests.
+- Last measured rolled sample: maximum contact .00099167m, minimum physical
+  camera-right margin +.0103469m,158/2275 actual R/L hand-frustum vertices.
+  Full followup build/tests and separate Vulkan game build are in progress.
+  Shutdown now logs actual shadow readiness/resolution/caster counts for future
+  authorized captures, without treating counters as visual/GPU acceptance.
+
+## 2026-10-19 Directional-shadow game preview
+
+- `--directional-shadows` enters the existing Dev Range with real R2 enabled;
+  default remains off. The existing render config exposes resolution 256/512/
+  1024/2048, distance 1..150m, finite depth/slope bias. GameApp passes those
+  public settings only for gameplay frames. No separate UI implementation.
+- Local Project World-depth body, arms and held rifle explicitly exclude
+  casting/receiving shadows, as do legacy viewmodels/diagnostics/muzzle flashes.
+  The sky shell is excluded. Shared weapon resources remain eligible in world
+  showcase instances; ownership is decided per submission, never globally by
+  resource handle. A complete external animated character shadow remains open.
+- Targeted tests pass 3/3 in 5.89s: real Project Ready 288-pose exclusions,
+  shared-resource/legacy/sky policy and config bounds/nonfinite fallback.
+  Both engine #18 and combined #19 have green hosted MSVC/Clang; #19 also has
+  both Jolt jobs green. Exact combined engine remains `cca45a41aded8b13171943553e27f85071c76ed3`.
+- Full combined game build/CPU CI follows. This is technical integration;
+  shadows/resize/synchronization, material appearance and GPU cost have not been
+  inspected in Vulkan. No Phase 5 GUI was launched and no visual result claimed.
+
+## 2026-10-19 Ready strict runtime gate passed
+
+- Final offline mount X=-.16,Y=1.61,Z=.17m: after the measured lateral/depth
+  correction, actual .R skin was still below the eye frustum. Raising the whole
+  authored weapon7cm and solving both real chains yields158R/2275L hand vertices
+  inside the original74-degree frustum. No FOV or test tolerance changed.
+- Recooked paired integration passes all288 Idle/Walk/Sprint/stop samples:
+  minimum firing camera-right margin+.00907103m, maximum palm residual.000991491m,
+  minimum weapon-forward dot.643083. Actual original weighted skin,1mm/.5-degree
+  contact, positive scales, immutable eye/chest and render-matrix checks pass.
+- Blender wrist residuals25.03um/.224um, original local T/S preservation below
+  7.79e-7m/1.05e-6;72 tracks. Pose SHA256
+  f59c8151c3950778ae457f748b2bb4341ff62d6b623597b5c1c2ea716cd5cc5e.
+  Physical-contact mutation checks pass. Updated full/hosted gates remain pending;
+  no Vulkan/finger-quality/complete-armed-animation or default migration claim.
+
+
+## 2026-10-19 Dev Range rigid-body integration
+
+- Main now consumes exact public engine `cca45a41aded8b13171943553e27f85071c76ed3`
+  (integration Draft engine #19). Both ordinary/UI pins agree. This combines
+  UI, proper camera, R2 and optional Jolt without private engine includes.
+- Opt-in `--physics-props` adds six actual crate mesh instances to the existing
+  range, driven by Jolt bodies. The resolved player capsule pushes props in one
+  direction; props never inject motor velocity or enter predicted player state.
+  Existing shots can apply a bounded prop-only impulse through a closest query
+  including static occluders. Damage/ammo/cadence/score are unchanged.
+- Player and rigid bodies share `buildGreyboxPhysicsWorld`; the original KCC
+  overload remains. Reset invalidates body handles and restarts consecutive
+  local ticks. The backend must exist before startup; there is no null-physics
+  success. Actual existing crate bounds fit physical OBBs including rotation.
+- Full Release game build with RmlUi/Project/IK and Jolt ON passes. New fixture
+  tests pass settling, angular render transforms, actual bounded KCC walking /
+  pushing, reset and static shot occlusion. Real headless GameApp physics smoke
+  and spawn test pass (2/2,14.06s). Review corrected a test-only twelve-metre
+  proxy teleport and guarded shots before the first static synchronization.
+- The runtime smoke exposed a pre-existing spawn defect: transform used the
+  requested position while MovementState started at zero. Commit `9fb67a5`
+  initializes both from the spawn descriptor, with a regression assertion.
+- New Jolt MSVC/Clang game CI supplements the default-off path. SDL-backed
+  physics smoke is marked gpu/gui; --no-vulkan alone does not prevent a window.
+  Full combined CPU/CI regression remains pending, and Ready hand-frustum
+  authoring is still under correction. No GUI, GPU run or visual acceptance.
+- Dynamic props do not yet block/support the KCC; they are local developer
+  fixtures, without replicated rigid-body state, trigger events or ragdolls.
+
+## 2026-10-19 Proper camera / physical grip integration candidate
+
+- Enginef4d7c99 (Draft #16, on UI integration #15) preserves glTF chirality
+  with a standard proper RH camera: physical view rows right/up/-forward and
+  perspective W=-viewZ. Logical world yaw/pitch/forward remain unchanged.
+  Actual asymmetric wrist/index/thumb fixtures reject the old551 camera with
+  112 failures. Shared sky/world ray round trips and Vulkan depth remain valid.
+- Main reviewed the six camera-math changes and independently rebuilt the full
+  exact engine/server/sandbox:7/7 CPU suites pass5.06s. Complete SDL3/Vulkan
+  static library builds and installs. Public headers and17 shader sources are
+  identical to551; those modules already passed Vulkan1.0 SPIR-V validation.
+  Both hosted MSVC/Clang checks pass, run39170676045.
+- Game candidate source combines UI #28/#29, physical FR17 #30 and camera #31.
+  Human-right input stays positive on the wire; applyLook converts it to world
+  yaw, strafe follows physical camera-right, artistic camera offsets remain
+  distinct from proper asset transforms, mesh roll counters camera roll. The
+  offline Ready mount removes W1's screen-side compensation (+.11 -> -.11m),
+  re-solving actual chr_project_male1 bones without changing skin topology.
+  Positional recoil now agrees with unchanged authoritative world-yaw recoil.
+- Both local candidate pins name exactf4d7c99; the full game+native-RmlUi+IK+
+  Project build is running against its public library. This candidate pin will
+  be published only after the local integration gate; main/defaults are not
+  changed. The earlier local stop to raise compilation parallelism1->2 was
+  scheduling, not a source/test failure. Graphical execution remains prohibited
+  until a renewed explicit GUI grant. No visual or GPU performance acceptance.
+- FP-1's first hosted Clang run passed44/45: the new geometry oracle assumed
+  a single hand bone had >.75 weight. Actual Project palms blend hand/finger
+  descendants (single hand max.572). The replacement uses the real source skin
+  hand subtree, retains >.75 and the same geometric thresholds; R2591/L2553
+  eligible vertices. Final FP-1/Cam CI is rerunning; no assertions disabled.
+
 ## 2026-10-19 Combined UI candidate dependency correction
 
 - The first #29 native-UI CI jobs failed compiling DevRangeRenderScene.cpp:
@@ -58,6 +195,66 @@
   build and45/45 CPU tests passed156.03s, Vulkan link passed. No merges performed.
 - Continue with W1 art/stock/finger acceptance, then geometry-specific FR17 W2;
   the remaining arsenal, class animation states and R2-R5 remain open as below.
+## 2026-10-19 Ready transition measurement and offline correction
+
+- Proper-camera runtime gate exposed three hip-side failures at Sprint-to-Idle
+  ticks216-218, worst -.0554923m. All 288 contact checks still passed, maximum
+  .000979131m; original unarmed ancestors turn beneath the Ready rotation mask.
+  Added signed eye/chest/mount diagnostics while retaining strict positive side,
+  1mm contact, anatomical skin and frustum assertions.
+- Revised the existing offline solve from X=-.11,Z=.21 to X=-.16,Z=.17m;
+  Y=1.54m and torso pose stay unchanged. Both physical chains remain reachable:
+  Blender R/L residuals11.45um/.364um; original T/S deltas below7.37e-7m/1.13e-6.
+  Pose SHA256 bc60ff4b2927764eaa702853a1dcea8c9331a7311c17fb38841df9f5e13b39eb.
+  Physical-contact mutation checks pass. Runtime recook/288-tick gate and hosted
+  CI are pending for this revised pose; no visual-quality result is claimed.
+## 2026-10-19 Phase 5 Glock geometry source checkpoint
+
+- Separate bounded branch stacks on FP/camera #30/#31. Existing Glock cook
+  retained up but reversed physical front; its muzzle marker pointed behind.
+  Per-asset Blender recipe [0,-90,0] and measured upper-handle/opposite-side
+  pistol support/front-ring anchors correct the offline boundary. Source and
+ 187mm length remain unchanged; every cooked node determinant stays positive.
+- R0, L(.0105303,.0051586,.0128965), muzzle(.0000144,.0536342,.1553505)m.
+  Two Blender5.1 exports match SHA256 d5332e6b62fda44b1349bb82c22ada67fa28121ea02c175b601121fe60b9a326.
+  Actual imported triangle tests check primary inside the handle, nearby pistol
+  support on its opposite surface, barrel-ring center and physical up/forward.
+- C++ full tests/CI are pending. No GPU review or Project pistol profile is
+  claimed. Single rigid primitive has no separate slide/magazine animation;
+  eject, fingers, ADS and class reload remain explicit followups.
+
+## 2026-10-19 Phase 5 camera/presentation source checkpoint
+
+- Pair with engine f4d7c99b0c522ae872ae05a6eb42818629b16607, Draft #16 on #15.
+  Renderer audit confirmed the old camera reflected the actual glTF anatomy.
+  This source preserves positive human-right input while using proper camera
+  right/up/forward artistic offsets and separate asset-local socket transforms.
+  No source mirror, L/R exchange, movement-policy or command-wire change.
+- Restored the offline Ready mount X=-.11m and re-solved actual .R firing/.L
+  support arms. Blender residuals24.7um/.31um; original local T/S preserved
+  within8.3e-7m/1.6e-6. Pose JSON SHA256 f6fe115bb008e447ac52fcd9fc40728a8a631062f928e9d54570e0365933ec2b.
+- Standalone GCC13.2 PlayerView, CameraRig and FirstPersonRig tests pass,
+  including81 yaw/pitch/roll attachment cases and human-right input/sway checks.
+  Full cross-repo build/tests and MSVC/Clang CI remain pending at this checkpoint.
+  Integration lead owns pin migration; no GUI launch or default-path change.
+
+## 2026-10-18 Phase 5 FP-1 implementation checkpoint
+
+- Isolated branch starts at game2264e27 (#27); engine pin3d673b7 unchanged.
+  M4 Ready already owns .R firing/.L support. Added cook-time rejection of
+  exchanged contacts, false palm identity and reflected frames, plus actual
+  weighted-skin/physical-grip regression coverage. Python2/2 checks pass.
+- Corrected FR17 physical up/forward in the existing offline normalizer and
+  recooked its own measured pistol/support/front-ring sockets. Two exports are
+  byte-identical, cooked SHA256 8099362f8974b65c81fb3883e0739042b8521d08d2e840cc9b247731a4036130.
+  Actual imported geometry tests cover stock/firing/support/muzzle order and
+  contact surfaces. Source remains unchanged; no runtime axis/mirror fix.
+- Existing legacy IK regression now tests actual M4/FR17 skin ownership through
+  switch, ADS, recoil and movement. Default still uses old unconstrained A1;
+  no completed Project arsenal/default migration is claimed. Source anatomical
+  audit confirms correct Rigify identity; image-space chirality/pose needs review.
+- C++ full build/tests and MSVC/Clang CI remain pending at this implementation
+  checkpoint. No GUI started. Visual acceptance remains open after Escape.
 
 ## 2026-10-18 Phase 4 R1 exact runtime integration
 

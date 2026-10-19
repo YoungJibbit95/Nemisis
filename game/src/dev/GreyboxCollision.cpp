@@ -137,10 +137,20 @@ namespace {
 
 } // namespace
 
+novacore::physics::PhysicsWorld buildGreyboxPhysicsWorld(const GreyboxWorld& world) {
+    return buildPhysicsWorld(world);
+}
+
 GreyboxCollisionResult resolveGreyboxPlayerCollision(
     const GreyboxWorld& world,
     GreyboxCollisionQuery query) {
-    const auto physicsWorld = buildPhysicsWorld(world);
+    return resolveGreyboxPlayerCollision(world, buildGreyboxPhysicsWorld(world), query);
+}
+
+GreyboxCollisionResult resolveGreyboxPlayerCollision(
+    const GreyboxWorld& world,
+    const novacore::physics::PhysicsWorld& physicsWorld,
+    GreyboxCollisionQuery query) {
     novacore::physics::CharacterResolveResult resolved{};
     novacore::physics::CharacterSweepResult swept{};
     if (query.useSweep) {

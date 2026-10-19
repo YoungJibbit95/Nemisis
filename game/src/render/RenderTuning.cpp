@@ -135,6 +135,20 @@ DevRenderTuning devRenderTuningFromConfig(
         0.05F,
         1.0F);
 
+    auto& shadows = fallback.directionalShadows;
+    shadows.enabled = boolOr(document, "directional_shadows.enabled", shadows.enabled);
+    const double resolution = document.numberOr("directional_shadows.resolution", shadows.resolution);
+    if (resolution == 256 || resolution == 512 || resolution == 1024 || resolution == 2048) {
+        shadows.resolution = static_cast<std::uint32_t>(resolution);
+    }
+    const auto bounded = [&](const char* key, float value, float minimum, float maximum) {
+        const float number = numberOr(document, key, value);
+        return std::isfinite(number) ? std::clamp(number, minimum, maximum) : value;
+    };
+    shadows.distance = bounded("directional_shadows.distance_m", shadows.distance, 1, 150);
+    shadows.depthBias = bounded("directional_shadows.depth_bias", shadows.depthBias, 0, .05F);
+    shadows.normalBias = bounded("directional_shadows.normal_bias", shadows.normalBias, 0, .05F);
+
     fallback.verticalFovDegrees = std::clamp(
         numberOr(document, "camera.vertical_fov_degrees", fallback.verticalFovDegrees),
         55.0F,

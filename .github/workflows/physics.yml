@@ -1,0 +1,66 @@
+name: Nemisis Dev Range physics
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nemisis-physics-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  props:
+    name: Jolt / ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Ubuntu Clang
+            os: ubuntu-24.04
+            preset: ci-headless-linux
+          - name: Windows MSVC
+            os: windows-2022
+            preset: ci-headless-windows
+    defaults:
+      run:
+        working-directory: Nemisis
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: Nemisis
+          persist-credentials: false
+      - name: Read immutable engine pin
+        id: engine
+        shell: pwsh
+        run: |
+          $revision = (Get-Content -Raw cmake/novacore-revision.txt).Trim()
+          if ($revision -cnotmatch '^[0-9a-f]{40}$') { throw 'Expected full engine SHA' }
+          Add-Content $env:GITHUB_OUTPUT "revision=$revision"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: YoungJibbit95/Novacore-Engine
+          ref: ${{ steps.engine.outputs.revision }}
+          path: Novacore-Engine
+          persist-credentials: false
+      - name: Configure real CPU solver and existing game
+        run: cmake --preset ${{ matrix.preset }} -DNOVACORE_ENABLE_JOLT=ON
+      - name: Build game and all ordinary CPU tests
+        run: cmake --build --preset ${{ matrix.preset }} --parallel 2
+      - name: Test dynamic fixtures, real game boot and preserved movement
+        run: ctest --preset ${{ matrix.preset }} --output-junit physics-results.xml
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: nemisis-physics-${{ matrix.preset }}-failure
+          path: |
+            Nemisis/physics-results.xml
+            Nemisis/build/**/Testing/Temporary/**
+            Nemisis/build/**/CMakeFiles/CMakeConfigureLog.yaml
+          retention-days: 7
+          if-no-files-found: warn

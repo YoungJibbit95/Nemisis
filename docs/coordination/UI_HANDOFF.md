@@ -1,5 +1,29 @@
 # UI handoff: Phase 5
 
+## Integration candidate, 2026-10-19
+
+The current game runtime candidate is `c04c78bf6d95d30e69a611619ad8b30b4430d0da`
+on `recovery/phase5-dev-range-physics`; both engine pins use
+`cca45a41aded8b13171943553e27f85071c76ed3` (engine Draft #19). This combines
+the existing native UI with the proper RH camera, optional rigid bodies and
+directional shadows. Engine standard/Jolt MSVC and Clang jobs are green; the
+complete game build and48/48 CPU tests pass94.07s, and the full separate Vulkan
+game builds. Hosted game integration CI follows. Earlier checkpoints below remain
+historical. No Phase 5 GUI acceptance has occurred.
+
+The actual new quality API is `RenderFrameInfo::directionalShadows`, configured
+through `DevRenderTuning` and `configs/render/dev_range_render.json`. It provides
+enabled, resolution, distance and bias values. It is currently a developer
+config/CLI preview, not a persisted interactive GameSettings menu. Agree validated
+UI actions with main before adding controls. Local FPS submissions have explicit
+per-instance shadow exclusions; shared world resources remain eligible.
+
+`--physics-props` is a local Dev Range fixture, not replicated match state or a
+new source of authoritative damage/ammo. The existing gameplay state APIs below
+retain ownership. R3 texture/sampler descriptors are subsequent work and remain
+separate from UI atlas descriptors, slot fences and final overlay order. No
+offscreen character/weapon preview or backdrop blur is promised by this change.
+
 Keep the RmlUi 6.1 / FreeType 2.13.3 foundation from Nemisis #28. The separate
 UI chat owns its visual design, components and screen migration. Main owns
 integration with gameplay, physics and renderer work.

@@ -3,6 +3,7 @@
 #include "nemisis/assets/DevAssetBindings.hpp"
 #include "nemisis/assets/GameAssetCatalog.hpp"
 #include "nemisis/dev/DevRangeSession.hpp"
+#include "nemisis/dev/DevRangeRigidBodies.hpp"
 #include "nemisis/dev/DevRangeRenderScene.hpp"
 #include "nemisis/dev/DevSandbox.hpp"
 #include "nemisis/dev/DevTargetRange.hpp"
@@ -39,6 +40,7 @@
 
 #include <array>
 #include <filesystem>
+#include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -59,6 +61,8 @@ struct GameAppOptions final {
     bool projectFPSPreview = false;
     bool projectRifleReady = false;
     bool projectFPSLookDown = false;
+    bool physicsProps = false;
+    bool directionalShadows = false;
 };
 
 class GameApp final : public novacore::core::IApplicationDelegate {
@@ -110,6 +114,7 @@ private:
     dev::DevRangeSessionTuning devRangeTuning_;
     dev::DevSandbox devSandbox_;
     dev::GreyboxWorld greyboxWorld_ = dev::createDevRangeGreyboxWorld();
+    std::unique_ptr<dev::DevRangeRigidBodies> physicsProps_;
     dev::DevRangeRenderSceneBuilder devRangeRenderer_;
     dev::DevRangeRenderSceneStats latestDevRangeRenderStats_;
     ui::GameMenu menu_;

@@ -46,6 +46,13 @@
     "contact_shadow_opacity": 0.46,
     "contact_shadow_softness": 0.64
   },
+  "directional_shadows": {
+    "enabled": false,
+    "resolution": 1024,
+    "distance_m": 35.0,
+    "depth_bias": 0.0007,
+    "normal_bias": 0.002
+  },
   "camera": {
     "vertical_fov_degrees": 74.0,
     "near_plane": 0.03,

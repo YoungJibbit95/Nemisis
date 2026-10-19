@@ -64,6 +64,7 @@ add_executable(nemisis_game
     game/src/assets/GameAssetCatalog.cpp
     game/src/dev/DebugTarget.cpp
     game/src/dev/DevRangeRenderScene.cpp
+    game/src/dev/DevRangeRigidBodies.cpp
     game/src/dev/DevRangeSession.cpp
     game/src/dev/DevSandbox.cpp
     game/src/dev/DevTargetRange.cpp
@@ -581,6 +582,32 @@ target_include_directories(nemisis_greybox_collision_tests
 
 target_link_libraries(nemisis_greybox_collision_tests PRIVATE Novacore::Engine)
 add_test(NAME nemisis_greybox_collision_tests COMMAND nemisis_greybox_collision_tests)
+
+add_executable(nemisis_dev_range_rigid_bodies_tests
+    game/src/dev/DevRangeRigidBodies.cpp
+    game/src/dev/GreyboxCollision.cpp
+    game/src/dev/GreyboxWorld.cpp
+    game/src/player/PlayerFirstPersonRig.cpp
+    tests/dev_range_rigid_bodies_tests.cpp)
+target_include_directories(nemisis_dev_range_rigid_bodies_tests PRIVATE game/include)
+target_link_libraries(nemisis_dev_range_rigid_bodies_tests PRIVATE Novacore::Engine)
+target_compile_definitions(nemisis_dev_range_rigid_bodies_tests PRIVATE
+    NEMISIS_SOURCE_ROOT="${CMAKE_CURRENT_SOURCE_DIR}")
+nemisis_copy_mingw_runtime(nemisis_dev_range_rigid_bodies_tests)
+add_test(NAME nemisis_dev_range_rigid_bodies_tests COMMAND nemisis_dev_range_rigid_bodies_tests)
+if(NOVACORE_ENABLE_JOLT)
+    add_test(NAME nemisis_physics_props_smoke COMMAND ${CMAKE_COMMAND}
+        "-DGAME_EXECUTABLE=$<TARGET_FILE:nemisis_game>"
+        "-DSMOKE_ARGUMENT=--smoke-test;--physics-props" -DREQUIRE_VULKAN=OFF
+        -DREQUIRE_PHYSICS_PROPS=ON -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/RunGameSmoke.cmake")
+    set_tests_properties(nemisis_physics_props_smoke PROPERTIES
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" TIMEOUT 120)
+    get_target_property(nemisis_physics_engine_defines Novacore::Engine INTERFACE_COMPILE_DEFINITIONS)
+    if("NOVACORE_HAS_SDL3=1" IN_LIST nemisis_physics_engine_defines)
+        # --no-vulkan still creates a visible SDL window in a graphical build.
+        set_tests_properties(nemisis_physics_props_smoke PROPERTIES LABELS "gpu;gui")
+    endif()
+endif()
 
 add_executable(nemisis_weapon_shot_tests
     game/src/weapons/WeaponShot.cpp
