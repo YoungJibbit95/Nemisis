@@ -1,4 +1,5 @@
 #include "nemisis/player/PlayerCameraRig.hpp"
+#include "nemisis/player/PlayerView.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -100,20 +101,25 @@ constexpr float kPi = 3.14159265358979323846F;
     return target;
 }
 
+[[nodiscard]] float lateralVelocity(const CameraRigInput& input) {
+    const auto right = viewVectors(input.authoredView).horizontalRight;
+    return input.playerVelocity.x * right.x + input.playerVelocity.z * right.z;
+}
+
 [[nodiscard]] float targetRoll(const CameraRigInput& input, const CameraRigTuning& tuning) {
     float target = 0.0F;
     if (isSliding(input.movementMode)) {
         target += tuning.slideRollDegrees;
     }
     if (isDashing(input.movementMode)) {
-        const float direction = input.playerVelocity.x >= 0.0F ? 1.0F : -1.0F;
+        const float direction = lateralVelocity(input) >= 0.0F ? 1.0F : -1.0F;
         target += tuning.dashRollDegrees * direction;
     }
     if (isWallRunning(input.movementMode)) {
-        const float direction = input.playerVelocity.x >= 0.0F ? 1.0F : -1.0F;
+        const float direction = lateralVelocity(input) >= 0.0F ? 1.0F : -1.0F;
         target += tuning.wallRunRollDegrees * direction;
     }
-    const float strafeSway = std::clamp(input.playerVelocity.x * 0.10F, -1.0F, 1.0F);
+    const float strafeSway = std::clamp(lateralVelocity(input) * 0.10F, -1.0F, 1.0F);
     target += strafeSway * tuning.velocitySwayDegrees;
     return target;
 }
@@ -149,7 +155,7 @@ constexpr float kPi = 3.14159265358979323846F;
     float landingKick) {
     const float adsDamp = 1.0F - (std::clamp(input.weapon.adsAlpha, 0.0F, 1.0F) * 0.68F);
     const float lookX = std::clamp(
-        -lookYawVelocity * tuning.lookSwayHorizontalScale,
+        lookYawVelocity * tuning.lookSwayHorizontalScale,
         -tuning.maxLookSwayMeters,
         tuning.maxLookSwayMeters);
     const float lookY = std::clamp(
@@ -157,7 +163,7 @@ constexpr float kPi = 3.14159265358979323846F;
         -tuning.maxLookSwayMeters,
         tuning.maxLookSwayMeters);
     return novacore::math::Vec3{
-        (std::clamp(-input.playerVelocity.x * tuning.weaponSwayScale, -0.09F, 0.09F) + lookX) * adsDamp,
+        (std::clamp(-lateralVelocity(input) * tuning.weaponSwayScale, -0.09F, 0.09F) + lookX) * adsDamp,
         ((isSliding(input.movementMode) ? -0.05F : 0.0F) -
             (speed01 * 0.025F) + lookY - landingKick) * adsDamp,
         std::clamp(-cameraRigHorizontalSpeed(input.playerVelocity) * 0.004F, -0.05F, 0.0F) * adsDamp,
@@ -178,7 +184,7 @@ constexpr float kPi = 3.14159265358979323846F;
     view.yawDegrees = wrapDegrees(
         view.yawDegrees +
         (input.weapon.recoilYawOffsetDegrees * tuning.recoilYawVisualScale) +
-        std::clamp(-input.playerVelocity.x * 0.018F, -0.22F, 0.22F));
+        std::clamp(lateralVelocity(input) * 0.018F, -0.22F, 0.22F));
     return view;
 }
 

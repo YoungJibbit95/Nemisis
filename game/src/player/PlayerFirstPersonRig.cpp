@@ -103,8 +103,13 @@ struct ViewBasis final {
 }
 
 [[nodiscard]] ViewBasis basisFromView(PlayerViewComponent view, float rollDegrees) {
-    // RenderMesh3D pitch rotates in the opposite direction to camera pitch.
-    return basisFromMeshRotation(view.yawDegrees, -view.pitchDegrees, rollDegrees);
+    // Camera coordinates are right/up/forward. For the proper RH camera,
+    // forward is -view-Z and camera-right is the opposite of asset-local +X.
+    // The asset rotation stays proper: never use this basis to transform mesh
+    // vertices or cooked weapon sockets.
+    auto basis = basisFromMeshRotation(view.yawDegrees, -view.pitchDegrees, -rollDegrees);
+    basis.right = basis.right * -1.0F;
+    return basis;
 }
 
 [[nodiscard]] novacore::math::Vec3 toWorld(
@@ -132,7 +137,7 @@ struct ViewBasis final {
 }
 
 [[nodiscard]] float bodyRollForView(float cameraRollDegrees, const CharacterAnimationFrame& animation) {
-    return animation.firstPersonBodyRollDegrees + (cameraRollDegrees * 0.10F);
+    return animation.firstPersonBodyRollDegrees - (cameraRollDegrees * 0.10F);
 }
 
 [[nodiscard]] FirstPersonRigAttachment makeAttachment(
@@ -504,7 +509,7 @@ FirstPersonRigFrame evaluateFirstPersonRig(const FirstPersonRigInput& input) {
     PlayerViewComponent bodyView = input.view;
     bodyView.pitchDegrees = std::clamp(input.view.pitchDegrees * 0.10F, -7.5F, 4.5F);
     const auto cameraBasis = basisFromView(input.view, input.cameraRollDegrees);
-    const auto bodyBasis = basisFromView(bodyView, bodyRollForView(input.cameraRollDegrees, animation) * 0.35F);
+    const auto bodyBasis = basisFromView(bodyView, -bodyRollForView(input.cameraRollDegrees, animation) * 0.35F);
 
     const auto weaponOffset =
         lerpVec3(input.weaponMount.hipOffset, input.weaponMount.adsOffset, ads) +
@@ -518,7 +523,9 @@ FirstPersonRigFrame evaluateFirstPersonRig(const FirstPersonRigInput& input) {
 
     const bool sidearm = isSidearm(input.weaponClass);
     const float recoilLift = input.weapon.recoilPitchOffsetDegrees * 0.010F;
-    const float recoilSide = input.weapon.recoilYawOffsetDegrees * 0.014F;
+    // Recoil yaw is a world rotation; +yaw turns toward camera-left. Convert
+    // only its artistic lateral translation to camera-right coordinates.
+    const float recoilSide = -input.weapon.recoilYawOffsetDegrees * 0.014F;
     const float mantleLift = clamp01(input.mantleProgress01) * 0.13F;
     const auto weaponSway = input.weaponSwayOffset * (sidearm ? 0.52F : 0.82F) * (1.0F - (ads * 0.70F));
     const auto armsSway = input.weaponSwayOffset * 0.36F * (1.0F - (ads * 0.60F));
@@ -554,7 +561,7 @@ FirstPersonRigFrame evaluateFirstPersonRig(const FirstPersonRigInput& input) {
         (input.weapon.recoilPitchOffsetDegrees * input.weaponMount.recoilPitchScale) +
         (frame.reloadArc * input.weaponMount.reloadPitchDegrees);
     const float weaponRoll =
-        input.cameraRollDegrees +
+        -input.cameraRollDegrees +
         input.weaponMount.rollCorrectionDegrees +
         animation.firstPersonWeaponRollAddDegrees -
         (frame.reloadArc * input.weaponMount.reloadRollDegrees);
@@ -568,7 +575,7 @@ FirstPersonRigFrame evaluateFirstPersonRig(const FirstPersonRigInput& input) {
         animation.firstPersonArmsPitchAddDegrees +
         (frame.reloadArc * 8.0F);
     const float armsRoll =
-        input.cameraRollDegrees +
+        -input.cameraRollDegrees +
         input.armsMount.rollCorrectionDegrees +
         animation.firstPersonArmsRollAddDegrees -
         (frame.reloadArc * 12.0F);
@@ -598,7 +605,10 @@ FirstPersonRigFrame evaluateFirstPersonRig(const FirstPersonRigInput& input) {
 
     buildBodyJoints(frame, input, bodyBasis, bodyPosition, bodyPitch, bodyRoll);
     const auto weaponBasis = basisFromMeshRotation(weaponYaw, weaponPitch, weaponRoll);
-    const auto armsBasis = basisFromMeshRotation(armsYaw, armsPitch, armsRoll);
+    auto armsSemanticBasis = basisFromMeshRotation(armsYaw, armsPitch, armsRoll);
+    // These proxy offsets express right/left arm anatomy in camera space.
+    // The weapon socket positions below remain actual asset-local coordinates.
+    armsSemanticBasis.right = armsSemanticBasis.right * -1.0F;
     const auto socketWorldPosition = [&](novacore::math::Vec3 localPosition) {
         return weaponPosition + toWorld(weaponBasis, mulVec3(localPosition, frame.weapon.scale));
     };
@@ -610,7 +620,7 @@ FirstPersonRigFrame evaluateFirstPersonRig(const FirstPersonRigInput& input) {
     buildArmJoints(
         frame,
         input,
-        armsBasis,
+        armsSemanticBasis,
         armsPosition,
         rightGripPosition,
         leftGripPosition,

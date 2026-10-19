@@ -1,5 +1,37 @@
 # Canonical asset coordinate contract
 
+## Phase 5: proper camera pairing, 2026-10-19
+
+The former +Z-depth view matrix reflected the image relative to the right-handed
+glTF character. Physical source eyes/toes and thumb/palm geometry confirm that
+Rigify's .R/.L identities are correct; exchanging bones or reflecting meshes
+would conceal the camera error. Pair this game's camera-presentation change with
+NovaCore `f4d7c99b0c522ae872ae05a6eb42818629b16607` (Draft engine #16, on #15).
+The pin is changed only by the integration lead after the cross-repo gate.
+
+Gameplay forward/yaw and cooked content coordinates remain unchanged. The proper
+view uses rows R,U,-F and perspective w=-viewZ. At zero view, world -X is physical
+camera-right. Positive wire look/strafe X still means human-right: applyLook
+subtracts horizontal input from world yaw; commandRelativeToView uses F cross
+world-up for right. Movement policy, fixed ticks and command serialization stay
+on their existing paths. Camera-relative +X artistic offsets use R; actual
+asset-local +X sockets use the proper mesh instance rotation and are not reflected.
+Mesh roll is the negative camera roll plus authored model additives.
+
+The previous W1 X=+.11m Ready mount compensated for the reflected camera. The
+existing offline Blender tool restores the physical right side and re-solves
+the real deform arms. The first X=-.11,Z=.21m pose crossed the eye by .0554923m
+at Sprint-to-Idle tick216 because the original unarmed ancestors keep turning.
+The final offline mount is X=-.16,Y=1.61,Z=.17m. This combines five centimetres
+rightward and four rearward to retain actual left-arm reach, then seven upward
+to bring the real firing hand into the unchanged74-degree frustum. All288
+runtime samples pass: minimum right margin .00907103m, maximum actual palm
+residual .000991491m, and158/2275 visible right/left hand vertices at hip.
+Local translations/scales, source skin and actual .R firing/.L support identity
+stay intact. Rendered anatomy, finger wrap, ADS and performance still need renewed
+Vulkan inspection. Historical +X-screen-right/+Z-depth rows below describe the
+pre-fix baseline; they are superseded for this exact coordinated pair.
+
 ## Phase 2C: physical M4 geometry correction, 2026-10-18
 
 Earlier marker/length contracts passed an upside-down M4. The source GLB's

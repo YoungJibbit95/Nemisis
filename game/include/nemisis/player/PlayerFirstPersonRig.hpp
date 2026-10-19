@@ -56,6 +56,7 @@ inline constexpr std::size_t kFirstPersonRigSocketCount =
     static_cast<std::size_t>(FirstPersonRigSocket::Count);
 
 struct FirstPersonRigMountDesc final {
+    // Camera-relative artistic offsets: +X right, +Y up, +Z ahead.
     novacore::math::Vec3 hipOffset{};
     novacore::math::Vec3 adsOffset{};
     novacore::math::Vec3 scale{1.0F, 1.0F, 1.0F};
@@ -69,6 +70,8 @@ struct FirstPersonRigMountDesc final {
 };
 
 struct FirstPersonRigSocketLayout final {
+    // Actual canonical asset coordinates; +X is not camera-right. Transform
+    // these with the proper mesh instance rotation, never the camera basis.
     novacore::math::Vec3 muzzle{0.0F, 0.028F, 0.78F};
     novacore::math::Vec3 ejectionPort{0.105F, 0.052F, 0.34F};
     novacore::math::Vec3 rightGrip{0.060F, -0.030F, 0.145F};

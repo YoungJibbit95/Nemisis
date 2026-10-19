@@ -1,4 +1,5 @@
 #include "nemisis/player/PlayerCameraRig.hpp"
+#include "nemisis/player/PlayerView.hpp"
 
 #include <cstdlib>
 #include <iostream>
@@ -92,7 +93,7 @@ void testFastLookProducesBoundedWeaponInertia() {
     input.fixedDeltaSeconds = 1.0F / 60.0F;
     (void)nemisis::player::updateCameraRig(state, input);
 
-    input.authoredView.yawDegrees = 28.0F;
+    input.authoredView.yawDegrees = -28.0F;
     const auto hip = nemisis::player::updateCameraRig(state, input);
     expect(hip.weaponSwayOffset.x < -0.01F, "fast right look lags the weapon left");
     expect(hip.weaponSwayOffset.x >= -0.061F, "look inertia remains inside the viewmodel clipping budget");
@@ -101,7 +102,7 @@ void testFastLookProducesBoundedWeaponInertia() {
     input.authoredView = {};
     input.weapon.adsAlpha = 1.0F;
     (void)nemisis::player::updateCameraRig(adsState, input);
-    input.authoredView.yawDegrees = 28.0F;
+    input.authoredView.yawDegrees = -28.0F;
     const auto ads = nemisis::player::updateCameraRig(adsState, input);
     expect(-ads.weaponSwayOffset.x < -hip.weaponSwayOffset.x, "ADS damps look inertia for sight stability");
 }
@@ -126,6 +127,26 @@ void testLandingKickStartsAndRecovers() {
     expect(state.landingKick < initialKick * 0.1F, "landing presentation impulse decays quickly");
 }
 
+void testStrafePresentationUsesCameraRightAtEveryHeading() {
+    using namespace nemisis::player;
+    for (float yaw : {-120.F, 0.F, 90.F}) {
+        CameraRigState rightState, leftState;
+        CameraRigInput input;
+        input.authoredView.yawDegrees = yaw;
+        const auto right = viewVectors(input.authoredView).horizontalRight;
+        input.playerVelocity = right * 5;
+        const auto rightFrame = updateCameraRig(rightState, input);
+        input.playerVelocity = right * -5;
+        const auto leftFrame = updateCameraRig(leftState, input);
+        expect(rightFrame.weaponSwayOffset.x < 0 && leftFrame.weaponSwayOffset.x > 0,
+               "lateral weapon inertia opposes human strafe direction at every world yaw");
+        expect(rightFrame.rollDegrees > 0 && leftFrame.rollDegrees < 0,
+               "camera roll uses view-relative lateral motion rather than fixed world X");
+        expectNear(rightFrame.weaponSwayOffset.x, -leftFrame.weaponSwayOffset.x, .00001F,
+                   "left/right camera sway remains symmetric without changing movement state");
+    }
+}
+
 } // namespace
 
 int main() {
@@ -135,6 +156,7 @@ int main() {
     testAdsNarrowsVisualFov();
     testFastLookProducesBoundedWeaponInertia();
     testLandingKickStartsAndRecovers();
+    testStrafePresentationUsesCameraRightAtEveryHeading();
 
     if (failures > 0) {
         std::cerr << failures << " player camera rig test(s) failed\n";

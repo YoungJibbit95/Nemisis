@@ -36,7 +36,9 @@ constexpr float kPitchClampDegrees = 89.0F;
 } // namespace
 
 void applyLook(PlayerViewComponent& view, novacore::math::Vec2 lookDegrees) {
-    view.yawDegrees = wrapDegrees(view.yawDegrees + lookDegrees.x);
+    // Wire input +X means a human turn to the right. World yaw stays the
+    // established rotation toward +X; a proper camera looking +Z has right -X.
+    view.yawDegrees = wrapDegrees(view.yawDegrees - lookDegrees.x);
     view.pitchDegrees = std::clamp(view.pitchDegrees + lookDegrees.y, -kPitchClampDegrees, kPitchClampDegrees);
 }
 
@@ -57,9 +59,9 @@ PlayerViewVectors viewVectors(const PlayerViewComponent& view) {
         std::cos(yaw),
     });
     vectors.horizontalRight = normalized(novacore::math::Vec3{
-        std::cos(yaw),
+        -std::cos(yaw),
         0.0F,
-        -std::sin(yaw),
+        std::sin(yaw),
     });
     return vectors;
 }

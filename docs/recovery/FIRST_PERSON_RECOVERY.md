@@ -862,3 +862,63 @@ MSVC/Clang CI are pending integration at this commit. No GUI was launched.
 F01-F03 remain art direction: actual right trigger hand, left front support,
 natural wrists/fingers, clear center and readable ADS. Vulkan visual acceptance,
 camera chirality/composition and performance remain open after the Escape stop.
+
+### Phase 5 camera/presentation pairing, 2026-10-19
+
+The renderer audit confirmed that the former camera reflected actual source
+chirality. Engine Draft #16 `f4d7c99b0c522ae872ae05a6eb42818629b16607`
+changes the view/projection to proper RH rotations while retaining gameplay
+forward. This game counterpart preserves human-right look/strafe, uses proper
+camera-relative artistic offsets, negates camera roll for mesh rotation and
+keeps authored socket coordinates in the actual asset basis. View-relative
+camera sway/roll follows the same input semantics at every heading.
+
+The initial Blender authoring pass restored Ready X=-.11m and solved the actual
+deform chains again. Blender wrist errors: R=.0000246802m, L=.0000003054m;
+maximum original local-translation delta .0000008204m, scale delta .0000015232.
+Source pose SHA256 `f6fe115bb008e447ac52fcd9fc40728a8a631062f928e9d54570e0365933ec2b`.
+This removes the W1 screen-side compensation without changing source geometry,
+weights, bone identity, weapon sockets or runtime asset axes. Finger polish and
+class-specific armed clips remain open.
+
+Standalone GCC13.2 tests pass for PlayerView, CameraRig and FirstPersonRig against
+the public R1 headers/library. The attachment regression covers81 yaw/pitch/roll
+combinations, verifies proper determinant and distinct camera/asset X, and keeps
+right/left semantic arm proxies consistent. Old +cameraRoll mesh expectations
+are replaced by -cameraRoll expectations at the same tolerance. Full integration,
+hosted MSVC/Clang and Vulkan visual review remain pending at this source checkpoint.
+No GUI launched and the default launch path was not changed.
+
+The first proper-camera runtime gate found three real side failures on the
+Sprint-to-Idle transition, ticks216-218. Minimum camera-right firing margin was
+-.0554923m; the authored-X derivative there was -.717503. The eye/model position
+was (-.00240873,1.58466,.372916), chest weapon mount (.0562783,1.35255,.46006)m.
+Original unarmed lower ancestors continue blending beneath the Ready rotations;
+they turn the chest relative to the gameplay camera. All 288 contact checks
+passed, maximum .000979131m. The strict positive-side assertion is retained.
+
+The intermediate offline solve used X=-.16,Y=1.54,Z=.17m: five centimetres farther
+right and four rearward, reducing the lateral correction needed from the actual
+left support arm. Blender wrist residuals are .0000114425m R and .0000003638m L;
+original local translation/scale deltas remain below .0000007367m/.0000011247.
+The 72-track pose SHA256 is
+`bc60ff4b2927764eaa702853a1dcea8c9331a7311c17fb38841df9f5e13b39eb`.
+Physical-contact mutation checks passed. Runtime side/contact checks then passed
+but firing-hand frustum visibility failed:446 vertices passed the horizontal
+planes, none the vertical planes. Actual eye-relative hand bounds were
+Y[-.257654,-.0849818], Z[.0432939,.137778]m. This candidate was not accepted.
+
+The final solve raises the entire authored weapon to Y=1.61m while retaining
+X=-.16,Z=.17 and solves both actual chains again. Blender wrist residuals are
+.0000250239m R and .0000002235m L; original local T/S deltas remain below
+.0000007789m/.0000010410. Pose SHA256:
+`f59c8151c3950778ae457f748b2bb4341ff62d6b623597b5c1c2ea716cd5cc5e`.
+Physical-contact mutation checks pass. The recooked integration runtime gate
+passes all288 samples: minimum firing camera-right margin .00907103m, maximum
+palm residual .000991491m, minimum forward dot .643083, and158/2275 actual
+right/left hand vertices in the unchanged hip frustum. Positive side,1mm contact,
+.5-degree orientation, original source-weighted skin and >10 hand vertices
+remain strict. Full updated hosted CI remains pending at this source checkpoint.
+This establishes a bounded mathematical Ready reference over original unarmed
+locomotion, not polished fingers, true directional armed clips or Vulkan pixels.
+No runtime offset, reflection, contact relaxation or GUI action is used.

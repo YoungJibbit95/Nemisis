@@ -1108,7 +1108,7 @@ player::FirstPersonRigAttachment projectFPSPlayerAttachment(const DevRangePlayer
     attachment.scale = {1, 1, 1};
     attachment.yawDegrees = state.view.yawDegrees;
     attachment.pitchDegrees = state.hasAnimationFrame ? state.animation.thirdPersonBodyPitchDegrees : 0.0F;
-    attachment.rollDegrees = state.cameraRollDegrees * 0.18F +
+    attachment.rollDegrees = -state.cameraRollDegrees * 0.18F +
         (state.hasAnimationFrame ? state.animation.thirdPersonBodyRollDegrees : 0.0F);
     attachment.alpha = 1.0F;
     return attachment;
@@ -1515,15 +1515,12 @@ void DevRangeRenderSceneBuilder::appendLocalPlayerBodyMesh(
     }
 
     const auto view = renderView(desc);
-    const auto animationOffset = desc.player.hasAnimationFrame
-        ? desc.player.animation.thirdPersonBodyOffset
-        : novacore::math::Vec3{};
-    const float animationPitch = desc.player.hasAnimationFrame
-        ? desc.player.animation.thirdPersonBodyPitchDegrees
-        : 0.0F;
-    const float animationRoll = desc.player.hasAnimationFrame
-        ? desc.player.animation.thirdPersonBodyRollDegrees
-        : 0.0F;
+    auto bodyRoot = projectFPSPlayerAttachment(desc.player);
+    if (!fpsBody) {
+        bodyRoot.yawDegrees = view.yawDegrees;
+        bodyRoot.rollDegrees = desc.player.cameraRollDegrees * 0.18F +
+            (desc.player.hasAnimationFrame ? desc.player.animation.thirdPersonBodyRollDegrees : 0.0F);
+    }
     const auto bodyResource = findMesh(desc, fpsBody ? kProjectFPSBodyResourceId : kLocalPlayerBodyResourceId);
     if (!bodyResource.isValid()) {
         ++stats.skippedMeshInstanceCount;
@@ -1532,9 +1529,9 @@ void DevRangeRenderSceneBuilder::appendLocalPlayerBodyMesh(
     // This cooked character has a metre-scale, feet-at-zero pivot. Keep its
     // local animated resource separate from static targets/showcases.
     const bool appended = appendMesh(
-        frame, desc, fpsBody ? kProjectFPSBodyAssetId : kLocalPlayerBodyAssetId, desc.player.position + animationOffset,
-        {1.0F, 1.0F, 1.0F}, fpsBody ? desc.player.view.yawDegrees : view.yawDegrees, {1.0F, 1.0F, 1.0F, 1.0F}, stats,
-        animationPitch, (desc.player.cameraRollDegrees * 0.18F) + animationRoll,
+        frame, desc, fpsBody ? kProjectFPSBodyAssetId : kLocalPlayerBodyAssetId, bodyRoot.position,
+        bodyRoot.scale, bodyRoot.yawDegrees, {1.0F, 1.0F, 1.0F, 1.0F}, stats,
+        bodyRoot.pitchDegrees, bodyRoot.rollDegrees,
         novacore::render::RenderMeshLayer::World, true, bodyResource);
     stats.projectFPSBodyActive = fpsBody && appended;
     stats.localWorldModelActive = !fpsBody && appended;
