@@ -1,0 +1,59 @@
+{
+  "date": "2026-10-19",
+  "game_runtime": "7d6b9a57a3091bfb014d455b2aec4811d482e8d4",
+  "game_docs_head": "65f1262",
+  "game_pr": "https://github.com/YoungJibbit95/Nemisis/pull/37",
+  "engine_runtime": "383505fbf283c14ded424dc7a1d6c1be47ee09e9",
+  "engine_pr": "https://github.com/YoungJibbit95/Novacore-Engine/pull/26",
+  "executable": "C:/Users/Administrator/.codex/tmp/nemisis-phase5-armed-material-vulkan/nemisis_game.exe",
+  "executable_sha256": "e711b209190b3018b8f64aeff1e9e45ad682da2a9216b934e94f69b75103f874",
+  "engine_archive_sha256": "69c7374a66bb2dcf37c611033c26adfdc210b57caa6d35d95ed5a8d6fdf5bde2",
+  "shader_directory": "C:/Users/Administrator/.codex/tmp/phase5-engine-material-query-combined/vulkan/generated/novacore/shaders",
+  "working_directory": "F:/Coding/Project/recovery/phase3/integration/Nemisis",
+  "configuration": "Release GCC13.2 SDL3/Vulkan/Jolt/RmlUi/FreeType/IK/Project",
+  "vulkan_game_build": {
+    "target": "nemisis_game",
+    "steps": 310,
+    "passed": true
+  },
+  "headless_game_build": {
+    "excluded_label": "gpu",
+    "tests_failed": 0,
+    "passed": true,
+    "steps": 212,
+    "seconds": 131.64,
+    "tests_passed": 48
+  },
+  "headless_combined_cli": {
+    "props": 6,
+    "samples_per_subset": 111,
+    "exit_code": 0,
+    "physics_ticks": 111,
+    "invalid_ik": 0,
+    "unreachable_ik": 0,
+    "actual_gpu": false,
+    "logical_pose_owners": 1
+  },
+  "pose_metadata_sha256": "4e49052d6052f593c1cdeb7bffe39588075e74a69c10f7c0552aeda1f3485462",
+  "cooked_assets": [
+    {
+      "file": "arms_ready.glb",
+      "sha256": "3b0598713fed45fa73d53cbe1dca5b7c6c38b487fed1074ef0d37e3b9d15e26f"
+    },
+    {
+      "file": "body_ready.glb",
+      "sha256": "f8ee637677b996c4c0df991bed10352d5905e6a08ab1ad36f3e2fc902afedd92"
+    },
+    {
+      "file": "rifle_ready.glb",
+      "sha256": "e8e84fd55adf16a9d420b5fc5f43d623c1a1bcbda492ac967f96d335dd254a3b"
+    }
+  ],
+  "engine_spirv_valid": 27,
+  "engine_prior_modules_unchanged": 25,
+  "r5_included": false,
+  "gui_launched": false,
+  "gui_status": "awaiting_fresh_user_grant_after_pause",
+  "visual_acceptance": false,
+  "gpu_timings": false
+}

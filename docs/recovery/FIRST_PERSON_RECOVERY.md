@@ -950,3 +950,15 @@ or motion frames. Eject remains an explicitly unaccepted legacy proposal. Actual
 Project pistol palm/finger frames, ADS sightline, release/reload and switching
 need a separate authored profile. This cook does not enable them. C++ full tests
 and hosted CI remain pending at this checkpoint; Vulkan review remains open.
+
+### Phase 5: authored M4 Idle and actual fade endpoints
+
+The new bounded candidate and exact local source/cook/gate evidence are recorded
+in [PHASE5_M4_ARMED_IDLE.md](PHASE5_M4_ARMED_IDLE.md). It adds a distinct held M4
+Idle and explicit developer Walk/Run compositions so the existing runtime owns
+both displayed fade endpoints. Source-hinge/skin and CPU readability checks
+supplement the original strict contact/roll gates. Both independent 350-sample
+sequences pass against public engine 14d33a77; the main agent owns the combined
+full-game/hosted gates and the reserved metadata dependency. Actual Vulkan and
+artist acceptance, full armed locomotion/combat states and default activation
+remain open. The frozen c04 Vulkan images remain a visual failure baseline.

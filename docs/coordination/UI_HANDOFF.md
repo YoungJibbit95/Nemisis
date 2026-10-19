@@ -3,14 +3,16 @@
 ## Integration candidate, 2026-10-19
 
 The current headless game runtime candidate is
-`60cd2596bfb2bbfd072d9f9a33edd44d7385f49f` on
-`recovery/phase5-material-preview`; both engine pins use
-`14d33a77a9eedef6a48227226d1ef80d593015b9` (engine Draft #23). It retains the
-native sensor/material/impact fixture and adds opt-in actual material textures.
-The complete211-step Release game builds; all48 non-GPU suites pass in51.77s.
-The combined preview boots headlessly with one pose owner and correct zero GPU
-texture-readiness counters. New hosted game CI follows; #33/#34 already have all
-six standard/native-UI/Jolt compiler jobs green and engine #21 has all four green.
+`7d6b9a57a3091bfb014d455b2aec4811d482e8d4` on
+`recovery/phase5-armed-material-preview`; both engine pins use
+`383505fbf283c14ded424dc7a1d6c1be47ee09e9` (engine Draft #26). It combines
+the sensor/material/impact fixture, opt-in material textures, actual-view GGX
+direct lighting and native shape queries with the existing UI/shadow stack.
+It adds #36's distinct M4 Armed Idle and explicit developer Walk/Run compositions.
+The complete212-step Release game builds; all48 non-GPU suites pass in131.64s.
+Combined Ready/material/shadow/props smoke exits0 with one pose owner and correct
+zero GPU readiness counters on null. #35 has all six hosted jobs green; #36 has
+both standalone compilers green. New combined consumer hosted CI follows.
 The earlier sensor unfiltered test invocation remains recorded as48/54, exit1:
 its six explicit GPU suites fail under null and are not graphics acceptance.
 
