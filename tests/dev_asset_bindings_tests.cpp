@@ -458,6 +458,72 @@ void testFR17PhysicalGripOwnership() {
     }
 }
 
+void testGlockPhysicalPistolGripAndMuzzle() {
+    using namespace novacore;
+    assets::GltfMeshData mesh;
+    expect(assets::loadGltfMeshData(std::filesystem::path(NEMISIS_SOURCE_ROOT) /
+               "assets/processed/normalized/project_assets/wpn_project_sidearm_glock19.glb", mesh).ok(),
+           "actual Glock cooked geometry imports");
+    expect(mesh.primitives.size() == 1 && !mesh.animationData,
+           "Glock remains one rigid primitive; separate slide/magazine motion is not fabricated");
+    if (mesh.primitives.size() != 1) { return; }
+    const auto& geometry = mesh.primitives.front();
+    const auto marker = [&](std::string_view name) -> const assets::GltfNodeMarker* {
+        const auto found = std::ranges::find(mesh.nodeMarkers, name, &assets::GltfNodeMarker::name);
+        return found == mesh.nodeMarkers.end() ? nullptr : &*found;
+    };
+    const auto *firing = marker("socket_grip_r"), *support = marker("socket_grip_l"), *muzzle = marker("socket_muzzle");
+    expect(firing && support && muzzle, "actual pistol supplies firing, nearby support and physical muzzle markers");
+    if (!firing || !support || !muzzle) { return; }
+    const auto r = firing->worldPosition, l = support->worldPosition;
+    const auto sideSurfaces = [&](math::Vec3 point) {
+        std::array<float, 2> sides{100, -100};
+        for (std::size_t i = 0; i + 2 < geometry.indices.size(); i += 3) {
+            const auto a = geometry.positions[geometry.indices[i]],
+                       v = geometry.positions[geometry.indices[i + 1]] - a,
+                       w = geometry.positions[geometry.indices[i + 2]] - a;
+            const float determinant = v.y * w.z - w.y * v.z;
+            if (std::abs(determinant) < 1.e-10F) { continue; }
+            const float u = ((point.y - a.y) * w.z - (point.z - a.z) * w.y) / determinant;
+            const float q = (v.y * (point.z - a.z) - v.z * (point.y - a.y)) / determinant;
+            if (u >= 0 && q >= 0 && u + q <= 1) {
+                const float x = a.x + u * v.x + q * w.x;
+                sides[0] = std::min(sides[0], x); sides[1] = std::max(sides[1], x);
+            }
+        }
+        return sides;
+    };
+    const auto firingSides = sideSurfaces(r), supportSides = sideSurfaces(l);
+    expect(firingSides[0] < r.x && firingSides[1] > r.x && firingSides[1] - firingSides[0] < .025F,
+           "pistol primary anchor lies inside real upper-handle side surfaces, not empty space");
+    expect(l.x > r.x && std::abs(l.x - supportSides[1]) < .0005F && (l - r).lengthSquared() < .03F * .03F,
+           "pistol support touches the opposite grip side within30mm of primary, rather than a rifle fore-end");
+    math::Vec3 low{100, 100, 100}, high{-100, -100, -100};
+    for (auto p : geometry.positions) {
+        low = {std::min(low.x, p.x), std::min(low.y, p.y), std::min(low.z, p.z)};
+        high = {std::max(high.x, p.x), std::max(high.y, p.y), std::max(high.z, p.z)};
+    }
+    expect(std::abs((high.z - low.z) - .187F) < .0001F,
+           "existing187mm pistol length is preserved with positive uniform normalization");
+    math::Vec3 capLow{100, 100, high.z}, capHigh{-100, -100, high.z};
+    for (auto p : geometry.positions) {
+        if (high.z - p.z < .0001F) {
+            capLow.x = std::min(capLow.x, p.x); capLow.y = std::min(capLow.y, p.y);
+            capHigh.x = std::max(capHigh.x, p.x); capHigh.y = std::max(capHigh.y, p.y);
+        }
+    }
+    const auto bore = (capLow + capHigh) * .5F;
+    expect((bore - muzzle->worldPosition).lengthSquared() < .0005F * .0005F,
+           "pistol muzzle is centered on actual front barrel ring within0.5mm, never rear slide/backstrap");
+    expect(bore.z > r.z + .14F && bore.z > l.z + .13F && bore.y > r.y + .04F &&
+               low.y < r.y - .05F && high.y > bore.y + .005F,
+           "physical barrel is ahead/above firing grip, magazine hangs down and sights stand above bore");
+    for (const auto* socket : {firing, support, muzzle}) {
+        expect(socket->worldForward.z > .999F && socket->worldUp.y > .999F,
+               "Glock physical markers retain proper canonical forward/up frames");
+    }
+}
+
 void testFirstPersonArmsExcludeAuthoringHelpers() {
     const std::filesystem::path sourceRoot{NEMISIS_SOURCE_ROOT};
     nemisis::assets::GameAssetCatalog catalog;
@@ -500,6 +566,7 @@ int main() {
     testMissingMetadataIsReported();
     testRepresentativeCookedWeaponContract();
     testFR17PhysicalGripOwnership();
+    testGlockPhysicalPistolGripAndMuzzle();
     testFirstPersonArmsExcludeAuthoringHelpers();
 
     if (failures > 0) {

@@ -173,8 +173,8 @@ void GameApp::onStartup() {
 
     novacore::platform::WindowDesc windowDesc{};
     windowDesc.title = menu_.title();
-    windowDesc.width = 1280;
-    windowDesc.height = 720;
+    windowDesc.width = options_.uiShowcase ? options_.uiPreviewWidth : 1280;
+    windowDesc.height = options_.uiShowcase ? options_.uiPreviewHeight : 720;
     windowDesc.preferVulkan = options_.preferVulkanRenderer;
 
     window_.create(windowDesc);
@@ -184,6 +184,25 @@ void GameApp::onStartup() {
     rendererInfo.requireVulkan = options_.requireVulkanRenderer;
     renderer_.create(window_, rendererInfo);
     registerDevMeshResources();
+    if (options_.physicsProps) {
+        physicsProps_ = std::make_unique<dev::DevRangeRigidBodies>();
+        physicsProps_->reset(greyboxWorld_);
+        const auto* crate = devAssetBindings_.meshCatalog().findByAssetId("map_a2_cover_crate_01");
+        const auto handle = devMeshResources_.find("map_a2_cover_crate_01");
+        if (!crate || !crate->meshData || handle == devMeshResources_.end()) {
+            throw std::runtime_error("Physics fixture requires the registered Dev Range crate asset");
+        }
+        physicsProps_->setVisual(handle->second, *crate->meshData);
+    }
+#if NEMISIS_HAS_RMLUI
+    if (options_.uiShowcase) {
+        if (window_.isHeadless() || renderer_.backendName() != "vulkan-world" || !renderer_.backendFrameStats().uiGeometryReady)
+            throw std::runtime_error("UI showcase requires an active NovaCore Vulkan renderer");
+        menu_.showMainMenu();
+        uiShowcase_ = std::make_unique<ui::UiShowcase>();
+        uiShowcase_->initialize();
+    }
+#endif
 
     cameraEntity_ = world_.createEntity();
     world_.addComponent(cameraEntity_, novacore::ecs::NameComponent{"main_camera"});
@@ -236,13 +255,42 @@ void GameApp::onShutdown() {
             " invalid=" + std::to_string(stats.invalidHandFrameCount) +
             " unreachable=" + std::to_string(stats.unreachableHandFrameCount));
     }
+#if NEMISIS_HAS_RMLUI
+    if (uiShowcase_) novacore::core::logInfo("ui", "Native UI Vulkan draws: " +
+        std::to_string(renderer_.backendFrameStats().lastUiGeometryDrawCount));
+    uiShowcase_.reset();
+#endif
+    if (options_.directionalShadows || renderTuning_.directionalShadows.enabled) {
+        const auto stats = renderer_.backendFrameStats();
+        novacore::core::logInfo("game", "Directional shadow preview: ready=" +
+            std::to_string(stats.directionalShadowsReady) + " resolution=" +
+            std::to_string(stats.directionalShadowResolution) + " caster_draws=" +
+            std::to_string(stats.lastDirectionalShadowCasterDrawCount) + " skinned_caster_draws=" +
+            std::to_string(stats.lastDirectionalShadowDynamicCasterDrawCount));
+    }
+    if (physicsProps_) {
+        novacore::core::logInfo("game", "Dev Range rigid-body fixture: ticks=" +
+            std::to_string(physicsProps_->tickCount()) + " dynamic_props=6");
+        physicsProps_.reset();
+    }
+    if (options_.materialTextures || renderTuning_.materialTexturesEnabled) {
+        const auto stats = renderer_.backendFrameStats();
+        novacore::core::logInfo("game", "Material texture preview: ready=" +
+            std::to_string(stats.materialTexturesReady) + " textured_draws=" +
+            std::to_string(stats.lastMaterialTextureDrawCount) + " fallback_draws=" +
+            std::to_string(stats.lastMaterialFallbackDrawCount) + " resident_images=" +
+            std::to_string(stats.residentMaterialImageCount) + " resident_bytes=" +
+            std::to_string(stats.residentMaterialImageBytes) + " budget_bytes=" +
+            std::to_string(stats.materialImageBudgetBytes) + " budget_rejects=" +
+            std::to_string(stats.materialImageBudgetRejectCount));
+    }
     releaseDevMeshResources();
     renderer_.shutdown();
     window_.shutdown();
 }
 
 void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
-    if (!menu_.gameplayActive()) {
+    if (!menu_.gameplayActive() || uiConfirmReleasePending_) {
         return;
     }
 
@@ -298,9 +346,9 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
             movementState->mode == movement::MovementMode::Grounded ||
             movementState->mode == movement::MovementMode::Sliding ||
             movementState->mode == movement::MovementMode::Dashing;
-        collisionSample = dev::resolveGreyboxPlayerCollision(
-            greyboxWorld_,
-            collisionQuery);
+        collisionSample = physicsProps_
+            ? dev::resolveGreyboxPlayerCollision(greyboxWorld_, physicsProps_->collisionWorld(), collisionQuery)
+            : dev::resolveGreyboxPlayerCollision(greyboxWorld_, collisionQuery);
         const bool mantleActivationWindow =
             movementState->mode == movement::MovementMode::Airborne &&
             movementState->velocity.y <= movement_.tuning().jumpVelocity * 0.50F;
@@ -324,7 +372,9 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
             collisionQuery.useSweep = false;
             collisionQuery.enableGroundSnap = false;
             collisionQuery.enableStepUp = false;
-            collisionSample = dev::resolveGreyboxPlayerCollision(greyboxWorld_, collisionQuery);
+            collisionSample = physicsProps_
+                ? dev::resolveGreyboxPlayerCollision(greyboxWorld_, physicsProps_->collisionWorld(), collisionQuery)
+                : dev::resolveGreyboxPlayerCollision(greyboxWorld_, collisionQuery);
             collisionSample.position = movementState->position;
         }
         const bool activeMantleInterpolation =
@@ -403,6 +453,7 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
         }
     }
 
+    if (physicsProps_ && movementState) { physicsProps_->tick(movementState->position); }
     processGameplayWeaponInteractions(command);
 
     auto* weaponState = world_.getComponent<weapons::WeaponRuntimeState>(localPlayerEntity_);
@@ -459,6 +510,9 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
     dev::DebugTargetHitResult targetHit{};
     dev::DevTargetRangeHitResult targetRangeHit{};
     if (hasShotTrace) {
+        if (physicsProps_) {
+            (void)physicsProps_->impact(shotTrace.origin, shotTrace.direction * shotTrace.rangeMeters);
+        }
         targetRangeHit = dev::applyShotToDevTargetRange(targetRange_, shotTrace);
         targetHit = targetRangeHit.targetHit;
     }
@@ -582,6 +636,7 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
                     1.0F)
                 : 0.0F;
 
+        const auto animationView = player::viewVectors(view != nullptr ? *view : player::PlayerViewComponent{});
         latestCharacterAnimationFrame_ = player::updateCharacterAnimation(
             characterAnimation_,
             player::CharacterAnimationInput{
@@ -598,6 +653,8 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
                 command.sprintHeld,
                 command.tacticalSprintHeld,
                 command.crouchHeld,
+                animationView.horizontalForward,
+                animationView.horizontalRight,
             });
         hasCharacterAnimationFrame_ = true;
 
@@ -758,9 +815,25 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
 void GameApp::onFrame(const novacore::core::FrameContext& context) {
     window_.pollEvents(input_);
     actions_.update(window_.inputSnapshot());
+    if (uiConfirmReleasePending_ && !actions_.stateOrDefault(input::actions::MenuConfirm).down &&
+        !actions_.stateOrDefault(input::actions::Fire).down) uiConfirmReleasePending_ = false;
+#if NEMISIS_HAS_RMLUI
+    if (uiShowcase_) {
+        const auto action = uiShowcase_->update(context.deltaSeconds, window_.inputSnapshot(), actions_, window_.width(), window_.height());
+        if (action == ui::ShowcaseAction::Quit) uiQuitRequested_ = true;
+        if (action == ui::ShowcaseAction::Menu || action == ui::ShowcaseAction::DevRange) {
+            uiShowcase_.reset();
+            if (action == ui::ShowcaseAction::DevRange) {
+                menu_.showDevRange(); resetDevRangeState();
+                uiConfirmReleasePending_ = true; // A/Enter/click must not leak into the first gameplay command.
+            }
+            else menu_.showMainMenu();
+        }
+    } else
+#endif
     menu_.update(actions_, settings_, activeLoadout_, attachmentRegistry_, buildMenuPointerState(window_, actions_));
     menu_.updateFrame(context.deltaSeconds);
-    if (menu_.gameplayActive()) {
+    if (menu_.gameplayActive() && !uiConfirmReleasePending_) {
         gameplayInputBuffer_.captureFrameEdges(actions_);
     } else {
         gameplayInputBuffer_.clear();
@@ -779,7 +852,11 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
     }
     advanceMenuFlowSmoke(context);
     syncRelativeMouseMode();
+#if NEMISIS_HAS_RMLUI
+    window_.setTitle(uiShowcase_ ? "NEMISIS | UI Showcase" : menu_.title());
+#else
     window_.setTitle(menu_.title());
+#endif
 
     for (const auto& event : configRegistry_.pollReloads()) {
         if (event.loaded) {
@@ -798,6 +875,9 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
     novacore::render::RenderFrameInfo frameInfo{};
     frameInfo.clearColor = menu_.gameplayActive() ? devSandbox_.clearColor() : menu_.clearColor();
     if (menu_.gameplayActive()) {
+        frameInfo.directionalShadows = renderTuning_.directionalShadows;
+        frameInfo.directionalShadows.enabled |= options_.directionalShadows;
+        frameInfo.materialTexturesEnabled = options_.materialTextures || renderTuning_.materialTexturesEnabled;
         latestDevRangeRenderStats_ = devRangeRenderer_.append(
             frameInfo,
             dev::DevRangeRenderSceneDesc{
@@ -821,9 +901,13 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
             });
         projectFPSBodySubmitted_ |= latestDevRangeRenderStats_.projectFPSBodyActive;
         projectFPSArmsSubmitted_ |= latestDevRangeRenderStats_.projectFPSArmsActive;
+        if (physicsProps_) { physicsProps_->append(frameInfo); }
     } else {
         latestDevRangeRenderStats_ = {};
     }
+#if NEMISIS_HAS_RMLUI
+    if (!uiShowcase_)
+#endif
     menu_.appendRenderCommands(
         frameInfo,
         devSandbox_.latestSample(),
@@ -840,12 +924,17 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
         attachmentRegistry_,
         activeAttachmentBuild_,
         accountStats_);
+#if NEMISIS_HAS_RMLUI
+    if (uiShowcase_) {
+        uiShowcase_->render(frameInfo.ui);
+    }
+#endif
     renderer_.beginFrame(frameInfo);
     renderer_.endFrame();
 }
 
 bool GameApp::shouldQuit() const {
-    return window_.shouldClose();
+    return uiQuitRequested_ || window_.shouldClose();
 }
 
 bool GameApp::isHeadless() const {
@@ -1141,6 +1230,7 @@ void GameApp::ensureLocalPlayer() {
 }
 
 void GameApp::resetDevRangeState() {
+    if (physicsProps_) { physicsProps_->reset(greyboxWorld_); }
     ensureLocalPlayer();
     rebuildActiveAttachmentSummary();
     dev::recordRangeReset(devRangeSession_, devRangeTuning_);

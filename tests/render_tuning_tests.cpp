@@ -183,9 +183,33 @@ void testDevRangeProfileSunIsVisibleAtLevelPitch() {
            "missing profile uses the same sun elevation");
 }
 
+void testDirectionalShadowQualityBounds() {
+    novacore::core::ConfigDocument document;
+    expect(!nemisis::render::devRenderTuningFromConfig(document).directionalShadows.enabled,
+        "unvalidated shadow preview stays off by default");
+    document.set("directional_shadows.enabled", "true");
+    document.set("directional_shadows.resolution", "2048");
+    document.set("directional_shadows.distance_m", "60");
+    document.set("directional_shadows.depth_bias", "0.001");
+    document.set("directional_shadows.normal_bias", "0.003");
+    const auto valid = nemisis::render::devRenderTuningFromConfig(document).directionalShadows;
+    expect(valid.enabled && valid.resolution == 2048 && valid.distance == 60 &&
+        valid.depthBias == .001F && valid.normalBias == .003F,
+        "shadow quality config reaches the real public renderer settings");
+    document.set("directional_shadows.resolution", "-1e30");
+    document.set("directional_shadows.distance_m", "300");
+    document.set("directional_shadows.depth_bias", "nan");
+    document.set("directional_shadows.normal_bias", "-1");
+    const auto bounded = nemisis::render::devRenderTuningFromConfig(document).directionalShadows;
+    expect(bounded.resolution == 1024 && bounded.distance == 150 &&
+        bounded.depthBias == .0007F && bounded.normalBias == 0,
+        "invalid resolution/nonfinite bias falls back and finite values stay in engine limits");
+}
+
 } // namespace
 
 int main() {
+    testDirectionalShadowQualityBounds();
     testRenderTuningLoadsLightingAndCamera();
     testRenderTuningClampsUnsafeValues();
     testRenderTuningPreservesFallbacksWhenMissing();

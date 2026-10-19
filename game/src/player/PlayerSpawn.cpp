@@ -26,7 +26,9 @@ novacore::ecs::EntityId spawnLocalPlayer(
     world.addComponent(entity, PlayerHealthComponent{});
     world.addComponent(entity, PlayerViewComponent{});
     world.addComponent(entity, PlayerNetworkComponent{});
-    world.addComponent(entity, movement::PlayerMovementState{});
+    movement::PlayerMovementState movementState{};
+    movementState.position = desc.position;
+    world.addComponent(entity, movementState);
 
     weapons::WeaponRuntimeState weaponState{};
     weaponState.weaponId = activeWeaponId;
