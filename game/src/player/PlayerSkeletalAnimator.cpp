@@ -179,6 +179,9 @@ bool PlayerSkeletalAnimator::initialize(const novacore::assets::GltfMeshData& me
     }
 
     readyClip_ = findClipByHints({"developer rifle ready idle"});
+    armedIdleClip_ = readyClip_ != nullptr ? findClipByHints({"project m4 armed idle"}) : nullptr;
+    readyWalkClip_ = readyClip_ != nullptr ? findClipByHints({"developer rifle ready walk composition"}) : nullptr;
+    readyRunClip_ = readyClip_ != nullptr ? findClipByHints({"developer rifle ready run composition"}) : nullptr;
     activeClip_ = selectClip(CharacterAnimationClip::Idle);
     if (activeClip_ == nullptr && !animationAsset_.clips.empty()) {
         activeClip_ = &animationAsset_.clips.front();
@@ -254,6 +257,9 @@ void PlayerSkeletalAnimator::reset() {
     constrainedPoseReady_ = false;
     activeClip_ = nullptr;
     readyClip_ = nullptr;
+    armedIdleClip_ = nullptr;
+    readyWalkClip_ = nullptr;
+    readyRunClip_ = nullptr;
     upperBodyMask_ = {};
     upperBodyMaskReady_ = false;
     stats_ = {};
@@ -323,7 +329,8 @@ bool PlayerSkeletalAnimator::samplePose(const CharacterAnimationFrame& frame, fl
 
     ++stats_.sampledFrameCount;
     constrainedPoseReady_ = false;
-    if (readyClip_ != nullptr && activeClip_ != readyClip_) {
+    if (readyClip_ != nullptr && activeClip_ != readyClip_ && activeClip_ != armedIdleClip_ &&
+        activeClip_ != readyWalkClip_ && activeClip_ != readyRunClip_) {
         constrainedLocal_ = runtime_.localPose();
         // Offline-authored rotation mask, including the actual arm helper
         // ancestors. Keep every base translation and animated scale intact.
@@ -436,10 +443,13 @@ const std::vector<std::string>& PlayerSkeletalAnimator::errors() const { return 
 const novacore::animation::AnimationClip* PlayerSkeletalAnimator::selectClip(CharacterAnimationClip clip) const {
     switch (clip) {
     case CharacterAnimationClip::Idle:
+        if (armedIdleClip_ != nullptr) { return armedIdleClip_; }
+        return findClipByHints({"idle", "hard stand", "stand", "aim"});
     case CharacterAnimationClip::Land:
     case CharacterAnimationClip::Crouch:
         return findClipByHints({"idle", "hard stand", "stand", "aim"});
     case CharacterAnimationClip::Walk:
+        if (readyWalkClip_ != nullptr) { return readyWalkClip_; }
         return findClipByHints({"walk"});
     case CharacterAnimationClip::Sprint:
     case CharacterAnimationClip::Slide:
@@ -448,6 +458,7 @@ const novacore::animation::AnimationClip* PlayerSkeletalAnimator::selectClip(Cha
     case CharacterAnimationClip::Mantle:
     case CharacterAnimationClip::Jump:
     case CharacterAnimationClip::Fall:
+        if (readyRunClip_ != nullptr) { return readyRunClip_; }
         if (const auto* run = findClipByHints({"run", "sprint"}); run != nullptr) {
             return run;
         }

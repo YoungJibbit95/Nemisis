@@ -2,6 +2,7 @@
 #include "nemisis/dev/DevRangeSession.hpp"
 #include "nemisis/dev/GreyboxWorld.hpp"
 #include "nemisis/player/PlayerFirstPersonRig.hpp"
+#include "nemisis/player/PlayerView.hpp"
 #if defined(NEMISIS_PROJECT_FPS_CANDIDATE_ROOT)
 #include "nemisis/player/PlayerSkeletalAnimator.hpp"
 #endif
@@ -1457,15 +1458,131 @@ void testActualProjectFPSPreviewSubmitsAnimatedSubsets() {
 #endif
 
 #if defined(NEMISIS_PROJECT_FPS_CANDIDATE_ROOT) && defined(NEMISIS_ENABLE_HAND_IK)
-void testProjectReadyUsesOneConstrainedPose() {
+// A small independent CPU depth raster guards the failure the old >10-vertex
+// frustum test missed: a near-eye receiver could hide the real firing hand.
+// It measures geometry/readability only, not Vulkan lighting/material quality.
+void testArmedIdleReadability(const novacore::assets::GltfMeshData& arms,
+                             const novacore::assets::GltfMeshData& skin,
+                             const novacore::assets::GltfMeshData& body,
+                             const novacore::assets::GltfMeshData& weapon,
+                             const std::vector<std::array<bool, 2>>& ownership,
+                             const novacore::animation::Mat4& model,
+                             const novacore::animation::Mat4& weaponWorld,
+                             novacore::math::Vec3 eye, novacore::math::Vec3 firingGrip) {
+    using namespace novacore;
+    constexpr int width = 160, height = 90;
+    constexpr float tangent = .753554F; // tan(74 degrees / 2), unchanged camera
+    struct Pixel { float inverseDepth = 0; int kind = 0; };
+    struct Screen { float x, y, inverseDepth; };
+    std::array<Pixel, width * height> full{}, hands{}, weaponOnly{};
+    std::array<float, 4> receiverBounds{1000, 1000, -1000, -1000};
+    const auto screen = [&](math::Vec3 p) {
+        p = p - eye;
+        return Screen{width * .5F - height * .5F * p.x / (p.z * tangent),
+                      height * .5F - height * .5F * p.y / (p.z * tangent), 1.F / p.z};
+    };
+    const auto edge = [](Screen a, Screen b, float x, float y) {
+        return (b.x - a.x) * (y - a.y) - (b.y - a.y) * (x - a.x);
+    };
+    const auto base = std::ranges::find(weapon.nodeMarkers, std::string_view("Base"), &assets::GltfNodeMarker::name);
+    expect(base != weapon.nodeMarkers.end(), "actual M4 Base receiver mesh is independently identified");
+    const auto draw = [&](const assets::GltfMeshData& mesh, const animation::Mat4& matrix, int type) {
+        for (std::size_t part = 0; part < mesh.primitives.size(); ++part) {
+            const auto& primitive = mesh.primitives[part];
+            std::vector<int> kinds(primitive.positions.size(), type);
+            std::vector<math::Vec3> positions;
+            for (std::size_t i = 0; i < primitive.positions.size(); ++i) {
+                const auto world = animation::transformPoint(matrix, primitive.positions[i]);
+                positions.push_back(world);
+                if (type == 4) {
+                    for (std::size_t side = 0; side < 2; ++side) {
+                        float weight = 0;
+                        for (std::size_t slot = 0; slot < 4; ++slot) {
+                            if (ownership[arms.primitives[part].joints[i][slot]][side]) {
+                                weight += arms.primitives[part].weights[i][slot];
+                            }
+                        }
+                        if (weight > .75F) { kinds[i] = static_cast<int>(side) + 1; }
+                    }
+                }
+                if (type == 3 && base != weapon.nodeMarkers.end() &&
+                    primitive.meshIndex == static_cast<std::size_t>(base->meshIndex) && world.z - eye.z > .03F) {
+                    const auto p = screen(world);
+                    receiverBounds = {std::min(receiverBounds[0], p.x), std::min(receiverBounds[1], p.y),
+                                      std::max(receiverBounds[2], p.x), std::max(receiverBounds[3], p.y)};
+                }
+            }
+            for (std::size_t i = 0; i + 2 < primitive.indices.size(); i += 3) {
+                const std::array ids{primitive.indices[i], primitive.indices[i + 1], primitive.indices[i + 2]};
+                if (std::ranges::any_of(ids, [&](auto v) { return positions[v].z - eye.z <= .03F; })) { continue; }
+                const std::array p{screen(positions[ids[0]]), screen(positions[ids[1]]), screen(positions[ids[2]])};
+                const float area = edge(p[0], p[1], p[2].x, p[2].y);
+                if (std::abs(area) < 1e-8F) { continue; }
+                const int kind = kinds[ids[0]] == kinds[ids[1]] && kinds[ids[1]] == kinds[ids[2]] ? kinds[ids[0]] : type;
+                const int minX = std::max(0, static_cast<int>(std::floor(std::min({p[0].x, p[1].x, p[2].x}))));
+                const int minY = std::max(0, static_cast<int>(std::floor(std::min({p[0].y, p[1].y, p[2].y}))));
+                const int maxX = std::min(width - 1, static_cast<int>(std::ceil(std::max({p[0].x, p[1].x, p[2].x}))));
+                const int maxY = std::min(height - 1, static_cast<int>(std::ceil(std::max({p[0].y, p[1].y, p[2].y}))));
+                for (int y = minY; y <= maxY; ++y) for (int x = minX; x <= maxX; ++x) {
+                    const float a = edge(p[1], p[2], x + .5F, y + .5F) / area;
+                    const float b = edge(p[2], p[0], x + .5F, y + .5F) / area;
+                    const float c = 1 - a - b;
+                    if (a < 0 || b < 0 || c < 0) { continue; }
+                    const float inverseDepth = a * p[0].inverseDepth + b * p[1].inverseDepth + c * p[2].inverseDepth;
+                    const auto write = [&](auto& buffer) {
+                        auto& pixel = buffer[static_cast<std::size_t>(y * width + x)];
+                        if (inverseDepth > pixel.inverseDepth) { pixel = {inverseDepth, kind}; }
+                    };
+                    write(full);
+                    if (type == 4) { write(hands); }
+                    if (type == 3) { write(weaponOnly); }
+                }
+            }
+        }
+    };
+    draw(skin, model, 4);
+    draw(body, model, 5);
+    draw(weapon, weaponWorld, 3);
+    std::size_t primary = 0, primaryWithoutWeapon = 0, weaponPixels = 0, centralWeaponPixels = 0, gripHand = 0;
+    const auto grip = screen(firingGrip);
+    for (int y = 0; y < height; ++y) for (int x = 0; x < width; ++x) {
+        const auto index = static_cast<std::size_t>(y * width + x);
+        primary += full[index].kind == 1;
+        primaryWithoutWeapon += hands[index].kind == 1;
+        weaponPixels += weaponOnly[index].kind == 3;
+        centralWeaponPixels += weaponOnly[index].kind == 3 && x >= 64 && x < 96 && y >= 27 && y < 54;
+        gripHand += full[index].kind == 1 && std::abs(x + .5F - grip.x) < 10 && std::abs(y + .5F - grip.y) < 12;
+    }
+    const float receiverWidth = (receiverBounds[2] - receiverBounds[0]) / width;
+    const float receiverHeight = (receiverBounds[3] - receiverBounds[1]) / height;
+    const float visibleFraction = primaryWithoutWeapon ? static_cast<float>(primary) / primaryWithoutWeapon : 0;
+    std::cout << "Armed Idle CPU readability base_width_height=" << receiverWidth << ',' << receiverHeight
+              << " receiver_top=" << receiverBounds[1] / height
+              << " weapon_viewport_fraction=" << static_cast<float>(weaponPixels) / (width * height)
+              << " firing_hand_pixels=" << primary << '/' << primaryWithoutWeapon
+              << " grip_region_hand_pixels=" << gripHand << " central_weapon_pixels=" << centralWeaponPixels << '\n';
+    expect(receiverWidth < .5F && receiverHeight < .85F && receiverBounds[1] > height * .45F,
+           "actual receiver dimensions remain below centre and cannot fill the view at the anatomical 74-degree eye");
+    expect(weaponPixels < width * height / 4 && centralWeaponPixels < 32,
+           "actual projected weapon preserves the central aiming region");
+    expect(primary > 80 && visibleFraction > .45F && gripHand > 20,
+           "actual source-weighted firing hand remains readable around its physical pistol grip after weapon occlusion");
+}
+
+void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false) {
     using namespace novacore;
     namespace dev = nemisis::dev;
     namespace player = nemisis::player;
     const std::filesystem::path root{NEMISIS_PROJECT_FPS_CANDIDATE_ROOT};
     assets::GltfMeshData arms, body, weapon;
-    if (!assets::loadGltfMeshData(root / "arms_ready.glb", arms).ok() ||
-        !assets::loadGltfMeshData(root / "body_ready.glb", body).ok() ||
-        !assets::loadGltfMeshData(root / "rifle_ready.glb", weapon).ok()) {
+    bool imported = true;
+    for (auto [name, mesh] : {std::pair{"arms_ready.glb", &arms}, std::pair{"body_ready.glb", &body},
+                             std::pair{"rifle_ready.glb", &weapon}}) {
+        const auto load = assets::loadGltfMeshData(root / name, *mesh);
+        for (const auto& error : load.errors) { std::cerr << name << ": " << error << '\n'; }
+        imported &= load.ok();
+    }
+    if (!imported) {
         expect(false, "actual Ready variants import");
         return;
     }
@@ -1477,7 +1594,7 @@ void testProjectReadyUsesOneConstrainedPose() {
         expect(false, "one animator accepts real Project subsets");
         return;
     }
-    expect(animator.stats().currentClip == "Developer Rifle Ready Idle", "actual new Ready clip is selected");
+    expect(animator.stats().currentClip == "Project M4 Armed Idle", "actual authored M4 Armed Idle clip is selected");
     expect(animator.skinnedMesh() && animator.skinnedCompanion(),
            "both original palettes are skinned from the common pose");
     expect(arms.animationData->skins[0].joints.size() == 81 && body.animationData->skins[0].joints.size() == 57,
@@ -1544,17 +1661,40 @@ void testProjectReadyUsesOneConstrainedPose() {
     float smallestRightMargin = 1000;
     std::size_t ticks = 0;
     std::array<std::size_t, 2> visibleHandVertices{};
-    for (auto clip : {player::CharacterAnimationClip::Idle, player::CharacterAnimationClip::Walk,
-                      player::CharacterAnimationClip::Sprint, player::CharacterAnimationClip::Idle}) {
+    player::CharacterAnimationState animationState;
+    // Retain the original 288-tick gate, then change requests during the
+    // existing fades and settle back into Idle. No extra animation clock.
+    using Clip = player::CharacterAnimationClip;
+    const std::array requests{std::pair{Clip::Idle, 72}, std::pair{Clip::Walk, 72},
+        std::pair{Clip::Sprint, 72}, std::pair{Clip::Idle, 72}, std::pair{Clip::Walk, 2},
+        std::pair{Clip::Sprint, 2}, std::pair{Clip::Walk, 2}, std::pair{Clip::Idle, 2},
+        std::pair{Clip::Sprint, 2}, std::pair{Clip::Idle, 24}, std::pair{Clip::Walk, 2},
+        std::pair{Clip::Sprint, 2}, std::pair{Clip::Idle, 24}};
+    for (auto [clip, frames] : requests) {
         desc.player.animation.locomotionClip = clip;
         desc.player.animation.stride01 = .65F;
-        for (int phase = 0; phase < 72; ++phase) {
+        for (int phase = 0; phase < frames; ++phase) {
             desc.player.cameraRollDegrees = std::sin(static_cast<float>(ticks) * .13F) * 12.F;
             desc.player.animation.thirdPersonBodyPitchDegrees = clip == player::CharacterAnimationClip::Sprint ? 8 : 0;
             desc.player.animation.thirdPersonBodyRollDegrees = std::sin(static_cast<float>(ticks) * .1F) * 2;
             desc.player.position = {3, 0, -5};
             desc.player.view.yawDegrees = static_cast<float>(ticks) * 2;
             desc.player.cameraView = desc.player.view;
+            if (productionComposition) {
+                player::CharacterAnimationInput input;
+                const auto facing = player::viewVectors(desc.player.view);
+                input.facingForward = facing.horizontalForward;
+                input.facingRight = facing.horizontalRight;
+                input.speed01 = clip == Clip::Idle ? 0 : clip == Clip::Sprint ? .9F : .5F;
+                const float speed = input.speed01 * 8.F;
+                input.velocity = {std::sin(static_cast<float>(ticks) * .07F) * speed, 0,
+                                  std::cos(static_cast<float>(ticks) * .07F) * speed};
+                input.cameraRollDegrees = desc.player.cameraRollDegrees;
+                input.sprintHeld = clip == Clip::Sprint;
+                desc.player.animation = player::updateCharacterAnimation(animationState, input);
+                expect(desc.player.animation.locomotionClip == clip,
+                       "actual gameplay animation composition follows Idle/Walk/Sprint requests with view-relative facing");
+            }
             expect(animator.samplePose(desc.player.animation, 1.F / 60), "one fixed-tick sample");
             expect(!animator.samplePose(desc.player.animation, 1.F / 60), "an unconsumed sample cannot advance twice");
             expect(!animator.skinnedMesh() && !animator.skinnedCompanion(),
@@ -1673,6 +1813,9 @@ void testProjectReadyUsesOneConstrainedPose() {
             expect(animator.socketTransform("socket_rifle_ready", afterMount) && chestMount.values == afterMount.values,
                    "hand IK never feeds back into the sampled chest weapon mount");
             if (ticks == 0) {
+                testArmedIdleReadability(arms, *animator.skinnedMesh(), *animator.skinnedCompanion(), weapon,
+                                        handOwnership, model, presentation.weaponWorld, desc.player.cameraPosition,
+                                        animation::matrixTranslation(targets.rightGripWorld));
                 std::array<std::size_t, 2> handDepth{}, handHorizontal{}, handVertical{};
                 std::array<math::Vec3, 2> handMin{{{1000, 1000, 1000}, {1000, 1000, 1000}}};
                 std::array<math::Vec3, 2> handMax{{{-1000, -1000, -1000}, {-1000, -1000, -1000}}};
@@ -1763,8 +1906,13 @@ void testProjectReadyUsesOneConstrainedPose() {
                    "render-only frames never advance/sample/skin the logical pose");
             expect(!animator.skinPose(&targets), "a sampled pose is consumed only once");
         }
+        if (clip == Clip::Idle && frames >= 24) {
+            expect(animator.stats().currentClip == "Project M4 Armed Idle" && animator.stats().upperBodyClip.empty(),
+                   "settled Idle returns to its authored clip without a stale Developer mask after interrupted requests");
+        }
     }
-    std::cout << "Project Ready common-pose ticks=" << ticks << " max_world_contact_m=" << largestResidual
+    std::cout << "Project Ready " << (productionComposition ? "production-input" : "direct-frame-stress")
+              << " common-pose ticks=" << ticks << " max_world_contact_m=" << largestResidual
               << " min_weapon_camera_forward_dot=" << smallestForwardDot
               << " min_firing_camera_right_m=" << smallestRightMargin
               << " hip_hand_frustum_vertices=" << visibleHandVertices[0] << ',' << visibleHandVertices[1]
@@ -1825,6 +1973,7 @@ int main(int argc, char** argv) {
 #if defined(NEMISIS_PROJECT_FPS_CANDIDATE_ROOT) && defined(NEMISIS_ENABLE_HAND_IK)
     if (argc == 2 && std::string_view(argv[1]) == "--ready-only") {
         testProjectReadyUsesOneConstrainedPose();
+        testProjectReadyUsesOneConstrainedPose(true);
         return failures == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
     }
 #else

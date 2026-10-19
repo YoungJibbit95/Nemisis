@@ -1,4 +1,4 @@
-"""Append a Blender-authored developer Ready variant without recooking old data.
+"""Append authored M4 Idle and explicit developer locomotion compositions.
 
 Original geometry, weights, skin palettes, inverse binds and clip accessors stay
 byte-identical. Only new rotation keys and explicitly named contact markers are
@@ -16,6 +16,7 @@ from asset_readiness_check import gltf_node_local_matrix, mat4_multiply, mat4_tr
 
 ROOT = Path(__file__).resolve().parents[2]
 POSE = ROOT / "assets/metadata/project_rifle_ready_pose.json"
+ARMED_IDLE_POSE = ROOT / "assets/metadata/project_m4_armed_idle_pose.json"
 WEAPON = "wpn_project_rifle_m4a1_ready_preview"
 
 
@@ -100,7 +101,24 @@ def validate_physical_contacts(pose, weapon_doc):
             "Left support must remain forward of right firing contact along physical weapon +Z")
 
 
-def append_ready(doc, binary, pose):
+def rotation_xyzw(rows):
+    """Quaternion for an authored proper orthonormal matrix, without rescaling."""
+    a, b, c = rows[0][0], rows[1][1], rows[2][2]
+    if a + b + c > 0:
+        s = math.sqrt(1 + a + b + c) * 2
+        q = [(rows[2][1] - rows[1][2]) / s, (rows[0][2] - rows[2][0]) / s,
+             (rows[1][0] - rows[0][1]) / s, s / 4]
+    else:
+        i = max(range(3), key=lambda k: rows[k][k])
+        j, k = (i + 1) % 3, (i + 2) % 3
+        s = math.sqrt(1 + rows[i][i] - rows[j][j] - rows[k][k]) * 2
+        q = [0., 0., 0., (rows[k][j] - rows[j][k]) / s]
+        q[i], q[j], q[k] = s / 4, (rows[j][i] + rows[i][j]) / s, (rows[k][i] + rows[i][k]) / s
+    length = math.sqrt(sum(x * x for x in q))
+    return [x / length for x in q]
+
+
+def append_clip(doc, binary, pose, name, animated_mount=False, duration=1.):
     names = {n.get("name"): i for i, n in enumerate(doc["nodes"])}
 
     def accessor(kind, rows):
@@ -118,8 +136,8 @@ def append_ready(doc, binary, pose):
         doc["accessors"].append(item)
         return index
 
-    clip = {"name": "Developer Rifle Ready Idle", "channels": [], "samplers": []}
-    time = accessor("SCALAR", [(0,), (1,)])
+    clip = {"name": name, "channels": [], "samplers": []}
+    time = accessor("SCALAR", [(0,), (duration,)])
     for name, authored in sorted(pose["joint_pose"].items()):
         require(name in names, f"Authored joint absent: {name}")
         q = authored["rotation_xyzw"]
@@ -133,14 +151,48 @@ def append_ready(doc, binary, pose):
         )
         clip["samplers"].append({"input": time, "output": output, "interpolation": "LINEAR"})
     doc.setdefault("animations", []).append(clip)
+    if animated_mount:
+        # The same socket is a directly animated glTF node. Its bind/default
+        # transform remains the Developer Ready mount for fallback clips.
+        mount = pose["weapon_mount_local_matrix"]
+        for path, kind, value in (("translation", "VEC3", [r[3] for r in mount[:3]]),
+                                  ("rotation", "VEC4", rotation_xyzw(mount))):
+            output = accessor(kind, [value, value])
+            clip["channels"].append({"sampler": len(clip["samplers"]),
+                                     "target": {"node": names["socket_rifle_ready"], "path": path}})
+            clip["samplers"].append({"input": time, "output": output, "interpolation": "LINEAR"})
+
+
+def append_ready(doc, binary, pose, armed_idle):
+    names = {n.get("name"): i for i, n in enumerate(doc["nodes"])}
+    append_clip(doc, binary, pose, "Developer Rifle Ready Idle")
     for side in ("R", "L"):
         marker(doc, "socket_palm_" + side.lower(), pose["palms"][side]["matrix"], names["DEF-hand." + side])
     require(pose["weapon_mount_parent"] in names, "Authored chest mount parent is missing")
     marker(doc, "socket_rifle_ready", pose["weapon_mount_local_matrix"], names[pose["weapon_mount_parent"]])
+    mount = doc["nodes"][-1]
+    del mount["matrix"]
+    mount.update(translation=[r[3] for r in pose["weapon_mount_local_matrix"][:3]],
+                 rotation=rotation_xyzw(pose["weapon_mount_local_matrix"]))
+    append_clip(doc, binary, armed_idle, "Project M4 Armed Idle", animated_mount=True)
+    for source_hint, name in (("walk", "Developer Rifle Ready Walk Composition"),
+                              ("run", "Developer Rifle Ready Run Composition")):
+        source = next(a for a in doc["animations"] if source_hint in a["name"].lower())
+        duration = max(doc["accessors"][s["input"]]["max"][0] for s in source["samplers"])
+        append_clip(doc, binary, pose, name, animated_mount=True, duration=duration)
+        composed = doc["animations"][-1]
+        masked = {names[n] for n in pose["joint_pose"]}
+        for channel in source["channels"]:
+            if channel["target"]["path"] == "rotation" and channel["target"]["node"] in masked:
+                continue
+            composed["channels"].append({"sampler": len(composed["samplers"]),
+                                         "target": dict(channel["target"])})
+            composed["samplers"].append(dict(source["samplers"][channel["sampler"]]))
 
 
 def cook(candidate):
     pose = json.loads(POSE.read_text(encoding="utf-8"))
+    armed_idle = json.loads(ARMED_IDLE_POSE.read_text(encoding="utf-8"))
     require(
         all(pose["weapon_model_transform"][r][c] == float(r == c) for r in range(3) for c in range(3)),
         "Ready mount currently requires authored identity rotation",
@@ -149,7 +201,9 @@ def cook(candidate):
     weapon = ROOT / "assets/processed/normalized/project_assets/wpn_project_rifle_m4a1.glb"
     for path, key in ((character, "source_character_sha256"), (weapon, "weapon_sha256")):
         require(hashlib.sha256(path.read_bytes()).hexdigest() == pose[key], "Authored source hash changed")
+        require(armed_idle[key] == pose[key], "Armed Idle must retain the same original geometry/rig source")
     validate_physical_contacts(pose, read(weapon)[0])
+    validate_physical_contacts(armed_idle, read(weapon)[0])
     outputs = {}
     manifest = json.loads((candidate / "preview_assets.json").read_text())
     report = json.loads((candidate / "report.json").read_text())
@@ -160,20 +214,23 @@ def cook(candidate):
             "Stale/modified runtime candidate",
         )
         doc, binary = read(candidate / (name + "_runtime.glb"))
-        append_ready(doc, binary, pose)
+        append_ready(doc, binary, pose, armed_idle)
         outputs[name + "_ready.glb"] = encode(doc, binary)
         asset_id = f"chr_project_male1_fp_{name}_preview"
         asset = next(a for a in manifest["assets"] if a["id"] == asset_id)
         asset["cooked"] = f"project-fps-candidate/{name}_ready.glb"
         metadata = json.loads((candidate / (name + "_runtime.metadata.json")).read_text())
         metadata.update(
-            export=asset["cooked"], status="developer Ready; finger contact and GPU acceptance pending"
+            export=asset["cooked"], status="authored M4 Armed Idle; locomotion and GPU acceptance pending"
         )
         metadata["sockets"] += ["socket_palm_r", "socket_palm_l", "socket_rifle_ready"]
         outputs[name + "_ready.metadata.json"] = (json.dumps(metadata, indent=2) + "\n").encode()
     doc, binary = read(weapon)
     for side in ("R", "L"):
-        marker(doc, "socket_palm_contact_" + side.lower(), pose["weapon_contact_frames"][side]["matrix"])
+        # Correct the physical R contact orientation/heel in the existing marker.
+        # Developer fallback clips also use this frame and are not visually
+        # accepted; no duplicate runtime grip owner or per-clip marker API.
+        marker(doc, "socket_palm_contact_" + side.lower(), armed_idle["weapon_contact_frames"][side]["matrix"])
     outputs["rifle_ready.glb"] = encode(doc, binary)
     cooked = "project-fps-candidate/rifle_ready.glb"
     manifest["assets"].append(
@@ -215,5 +272,5 @@ if __name__ == "__main__":
         else:
             path.write_bytes(data)
     print(
-        "Developer Rifle Ready variant: old geometry/palettes/clip accessors preserved; visual acceptance pending"
+        "M4 Armed Idle and developer Ready compositions: original geometry/palettes/clips preserved; visual acceptance pending"
     )
