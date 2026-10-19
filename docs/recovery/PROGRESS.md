@@ -1,67 +1,63 @@
 # Recovery progress
 
-## 2026-10-19 Ready strict runtime gate passed
+## 2026-10-19 Combined UI candidate dependency correction
 
-- Final offline mount X=-.16,Y=1.61,Z=.17m: after the measured lateral/depth
-  correction, actual .R skin was still below the eye frustum. Raising the whole
-  authored weapon7cm and solving both real chains yields158R/2275L hand vertices
-  inside the original74-degree frustum. No FOV or test tolerance changed.
-- Recooked paired integration passes all288 Idle/Walk/Sprint/stop samples:
-  minimum firing camera-right margin+.00907103m, maximum palm residual.000991491m,
-  minimum weapon-forward dot.643083. Actual original weighted skin,1mm/.5-degree
-  contact, positive scales, immutable eye/chest and render-matrix checks pass.
-- Blender wrist residuals25.03um/.224um, original local T/S preservation below
-  7.79e-7m/1.05e-6;72 tracks. Pose SHA256
-  f59c8151c3950778ae457f748b2bb4341ff62d6b623597b5c1c2ea716cd5cc5e.
-  Physical-contact mutation checks pass. Updated full/hosted gates remain pending;
-  no Vulkan/finger-quality/complete-armed-animation or default migration claim.
+- The first #29 native-UI CI jobs failed compiling DevRangeRenderScene.cpp:
+  the isolated old UI pinfb33cb5 lacks RenderCamera3D::rollDegrees from R0.
+  This is a real cross-branch API incompatibility, not a test to suppress.
+- The optional UI candidate pin now uses combined engine5518818. Its full
+  engine/server/sandbox CPU build and7/7 tests pass3.09s; full SDL3/Vulkan
+  library build, all17 shaders/SPIR-V validation and hosted MSVC/Clang pass
+  (engine #15, run39169931979). Combined game/native-UI CI/local acceptance
+  follows. The ordinary engine pin3d673b7 is unchanged; no main merge occurred.
 
-## 2026-10-19 Ready transition measurement and offline correction
+## 2026-10-18 Phase 5 orchestration checkpoint
 
-- Proper-camera runtime gate exposed three hip-side failures at Sprint-to-Idle
-  ticks216-218, worst -.0554923m. All 288 contact checks still passed, maximum
-  .000979131m; original unarmed ancestors turn beneath the Ready rotation mask.
-  Added signed eye/chest/mount diagnostics while retaining strict positive side,
-  1mm contact, anatomical skin and frustum assertions.
-- Revised the existing offline solve from X=-.11,Z=.21 to X=-.16,Z=.17m;
-  Y=1.54m and torso pose stay unchanged. Both physical chains remain reachable:
-  Blender R/L residuals11.45um/.364um; original T/S deltas below7.37e-7m/1.13e-6.
-  Pose SHA256 bc60ff4b2927764eaa702853a1dcea8c9331a7311c17fb38841df9f5e13b39eb.
-  Physical-contact mutation checks pass. Runtime recook/288-tick gate and hosted
-  CI are pending for this revised pose; no visual-quality result is claimed.
+- Actual main: game f15bc0e (#23 merged), engine 38e718b (#12/#13 merged).
+  Game #25/#26/#27 remain Draft and have green hosted MSVC/Clang checks.
+  Separate UI #28 and engine #14 remain Draft; #14 conflicts with engine main.
+- Main locally combined engine main and UI #14 as5518818, preserving both
+  CameraMath and VulkanUiRenderer plus their records; combined game source is
+  143efac (#27 + main + #28). Engine/game CPU and Vulkan combination validation
+  follows before any pin migration or claim of runtime compatibility.
+- Three isolated specialist streams started as requested. Physical anatomical
+  grip ownership is P0; existing screen-right and contact residual tests alone
+  are insufficient. Physics audits/adopts a bounded solver without replacing
+  KCC. Rendering continues R2 after existing R0/R1 and preserves UI resources.
+- Main coordination and UI contracts: docs/coordination/PHASE5_INTEGRATION.md
+  and UI_HANDOFF.md. UI remains owned by the separate UI chat; its branch and
+  original dirty user worktrees are untouched. No automatic merges.
+- Physical Escape still prohibits new GUI actions/graphical launches. Phase 4
+  baseline-only evidence and the accidental post-stop launch remain recorded
+  below; visual and GPU performance acceptance remain open.
 
-## 2026-10-19 Phase 5 camera/presentation source checkpoint
+## 2026-10-18 Phase 4 GUI Escape stop / limited evidence
 
-- Pair with engine f4d7c99b0c522ae872ae05a6eb42818629b16607, Draft #16 on #15.
-  Renderer audit confirmed the old camera reflected the actual glTF anatomy.
-  This source preserves positive human-right input while using proper camera
-  right/up/forward artistic offsets and separate asset-local socket transforms.
-  No source mirror, L/R exchange, movement-policy or command-wire change.
-- Restored the offline Ready mount X=-.11m and re-solved actual .R firing/.L
-  support arms. Blender residuals24.7um/.31um; original local T/S preserved
-  within8.3e-7m/1.6e-6. Pose JSON SHA256 f6fe115bb008e447ac52fcd9fc40728a8a631062f928e9d54570e0365933ec2b.
-- Standalone GCC13.2 PlayerView, CameraRig and FirstPersonRig tests pass,
-  including81 yaw/pitch/roll attachment cases and human-right input/sway checks.
-  Full cross-repo build/tests and MSVC/Clang CI remain pending at this checkpoint.
-  Integration lead owns pin migration; no GUI launch or default-path change.
-
-## 2026-10-18 Phase 5 FP-1 implementation checkpoint
-
-- Isolated branch starts at game2264e27 (#27); engine pin3d673b7 unchanged.
-  M4 Ready already owns .R firing/.L support. Added cook-time rejection of
-  exchanged contacts, false palm identity and reflected frames, plus actual
-  weighted-skin/physical-grip regression coverage. Python2/2 checks pass.
-- Corrected FR17 physical up/forward in the existing offline normalizer and
-  recooked its own measured pistol/support/front-ring sockets. Two exports are
-  byte-identical, cooked SHA256 8099362f8974b65c81fb3883e0739042b8521d08d2e840cc9b247731a4036130.
-  Actual imported geometry tests cover stock/firing/support/muzzle order and
-  contact surfaces. Source remains unchanged; no runtime axis/mirror fix.
-- Existing legacy IK regression now tests actual M4/FR17 skin ownership through
-  switch, ADS, recoil and movement. Default still uses old unconstrained A1;
-  no completed Project arsenal/default migration is claimed. Source anatomical
-  audit confirms correct Rigify identity; image-space chirality/pose needs review.
-- C++ full build/tests and MSVC/Clang CI remain pending at this implementation
-  checkpoint. No GUI started. Visual acceptance remains open after Escape.
+- User explicitly renewed GUI permission for baseline/R0/R1 Hip/Look-down and
+  sun/horizon comparison. Actual baseline native Vulkan capture was saved to
+  F:/Coding/Project/recovery/phase4/visual/baseline_hip.jpg after P reset. Source
+  manifest verifies identical W1 arms/body/rifle cooked hashes across baseline
+  and R0/R1, same low-sun config and1280x720 client viewport. HUD time/tick was
+  not frozen: this is qualitative evidence, not a pixel/performance benchmark.
+- Baseline a687c88 ran on NVIDIA RTX3070Ti. Shutdown reports4685 samples/skins/
+  vertex updates per subset, one logical pose owner, invalid0/unreachable0.
+  M4 is visible on the right with the new W1 cook, but the open support fingers,
+  wrist/arm silhouette and contact appearance remain below F01 quality. W1 is
+  NOT visually accepted. These counters do not prove artist-quality contact.
+- Physical Escape then stopped Computer Use. No further Computer Use API call
+  followed. A root-agent orchestration mistake had chained the R0 Start-Process
+  after the GUI close call without inspecting its stop result; R0 therefore
+  still opened (PID100908). It was left unoperated; do not claim an R0 capture.
+  No R0/R1 after images, Look-down, controlled sun/normal comparison or GPU
+  timings were completed. Renew explicit GUI permission before any continuation.
+- Exact hashes, paths, observations and stop are saved in visual/review-manifest.json.
+  All13 reference images/local board remain in phase4/visual-references.
+- Published Draft stack: game #25 -> #26 -> #27 (source2264e27, this followup
+  documentation only), engine #12 -> #13. W1, game R0 and both engine PRs have
+  green hosted MSVC/Clang CI. Game R1 hosted CI remains pending; its full local
+  build and45/45 CPU tests passed156.03s, Vulkan link passed. No merges performed.
+- Continue with W1 art/stock/finger acceptance, then geometry-specific FR17 W2;
+  the remaining arsenal, class animation states and R2-R5 remain open as below.
 
 ## 2026-10-18 Phase 4 R1 exact runtime integration
 
@@ -817,3 +813,21 @@ claim follows from this evidence. Renew explicit GUI permission before resuming.
 Technically Integrated: developer Ready/shared pose/contact only. Animation
 Complete: NO. Visually Accepted: NO. CI status at the published runtime head is
 tracked on PR #23; this final evidence update is documentation only.
+
+## 2026-10-18 UI foundation / native component showcase
+
+User-requested UI work is isolated in `ui/00-technology-spike`. RmlUi 6.1 and
+FreeType 2.13.3 replace bitmap typography for the new opt-in `--ui-showcase`.
+Space Grotesk regular/bold and all license notices ship with the UI assets.
+Existing GameMenu, settings, persistence, loadout and HUD remain intact.
+The optional UI engine pin is fb33cb5502e6a4ea59ddc6183329529f25c0c279 (separate
+engine draft PR #14); the ordinary engine pin is unchanged. No merge.
+
+Full local GCC Release headless game build/34 CPU tests and Vulkan game build
+pass; native document tests cover 720p/1080p/1440p geometry and controls/modal/
+controller actions with stable idle resources. Authorized live 720p inspection
+confirmed real typography, gradients/glow, button/modal/dropdown interaction and
+Dev Range transition/back. Physical Escape stopped Computer Use; no subsequent
+GUI actions were made. Larger-resolution visual/resize/GPU timing acceptance
+remains open. See docs/ui/UI_ROADMAP.md and UI_DESIGN_SYSTEM.md for the bounded
+milestone, reproducible launch and remaining phases.

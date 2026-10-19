@@ -841,3 +841,5 @@ if(NEMISIS_ENABLE_HAND_IK)
     set_tests_properties(nemisis_hand_ik_headless_smoke PROPERTIES
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" TIMEOUT 120)
 endif()
+
+include(cmake/RmlUi.cmake)
