@@ -21,8 +21,8 @@ draft https://github.com/YoungJibbit95/Nemisis/pull/28. The branch also integrat
 main f15bc0e after the parallel Ready PR landed; its content is preserved.
 
 
-- Normal game NovaCore pin remains a687c8816fbcc8a7f4d313cf092c6dc17a59f8f7.
-- Optional UI build: fb33cb5502e6a4ea59ddc6183329529f25c0c279, recorded separately
+- Normal game NovaCore pin is 3d673b7345d295588367b466a8877e84dee112a9 (R1).
+- Optional UI build: f0f7c54852169e6210fa23ba1221edce448f5ece, recorded separately
   in cmake/novacore-ui-revision.txt. Engine draft:
   https://github.com/YoungJibbit95/Novacore-Engine/pull/14.
 - RmlUi, FreeType and font source commits and licenses are recorded in
@@ -36,7 +36,7 @@ main f15bc0e after the parallel Ready PR landed; its content is preserved.
 - Complete local SDL3/Vulkan game build including real RmlUi and FreeType.
 - Native document test passes: layout bounds/actual font advances/atlas at all
   three resolutions; actual click, disabled control, checkbox, slider keyboard
-  adjustment, tabs, dropdown selection, modal Tab trap, controller A/B routing;
+  adjustment, tabs, dropdown selection, modal Tab trap, controller A/B and dropdown focus routing;
   120 warm idle frames retain stable atlas bytes and command count; no RmlUi
   style/font/render warnings.
 - Separate engine complete Vulkan build and shaders: 5/5 CTest suites.
@@ -67,3 +67,8 @@ resolutions, resize and a complete device/contrast review remain open.
 **Production Ready:** no. Backdrop blur, optional advanced render interfaces,
 GPU timing, image loading, full controller hardware tests and production screen
 migration are pending. Blur is visibly labelled as a transparent fallback.
+
+The UI pin combines the adapter with the merged R0 camera projection and R1
+instance normals. The older adapter pin lacks camera roll and cannot build
+the integrated Dev Range. Engine Vulkan build, seven CPU suites and all
+17 shader modules pass for this combined revision; game CI validates both pins.
