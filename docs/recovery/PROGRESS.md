@@ -1,5 +1,64 @@
 # Recovery progress
 
+## 2026-10-19 Combined UI candidate dependency correction
+
+- The first #29 native-UI CI jobs failed compiling DevRangeRenderScene.cpp:
+  the isolated old UI pinfb33cb5 lacks RenderCamera3D::rollDegrees from R0.
+  This is a real cross-branch API incompatibility, not a test to suppress.
+- The optional UI candidate pin now uses combined engine5518818. Its full
+  engine/server/sandbox CPU build and7/7 tests pass3.09s; full SDL3/Vulkan
+  library build, all17 shaders/SPIR-V validation and hosted MSVC/Clang pass
+  (engine #15, run39169931979). Combined game/native-UI CI/local acceptance
+  follows. The ordinary engine pin3d673b7 is unchanged; no main merge occurred.
+
+## 2026-10-18 Phase 5 orchestration checkpoint
+
+- Actual main: game f15bc0e (#23 merged), engine 38e718b (#12/#13 merged).
+  Game #25/#26/#27 remain Draft and have green hosted MSVC/Clang checks.
+  Separate UI #28 and engine #14 remain Draft; #14 conflicts with engine main.
+- Main locally combined engine main and UI #14 as5518818, preserving both
+  CameraMath and VulkanUiRenderer plus their records; combined game source is
+  143efac (#27 + main + #28). Engine/game CPU and Vulkan combination validation
+  follows before any pin migration or claim of runtime compatibility.
+- Three isolated specialist streams started as requested. Physical anatomical
+  grip ownership is P0; existing screen-right and contact residual tests alone
+  are insufficient. Physics audits/adopts a bounded solver without replacing
+  KCC. Rendering continues R2 after existing R0/R1 and preserves UI resources.
+- Main coordination and UI contracts: docs/coordination/PHASE5_INTEGRATION.md
+  and UI_HANDOFF.md. UI remains owned by the separate UI chat; its branch and
+  original dirty user worktrees are untouched. No automatic merges.
+- Physical Escape still prohibits new GUI actions/graphical launches. Phase 4
+  baseline-only evidence and the accidental post-stop launch remain recorded
+  below; visual and GPU performance acceptance remain open.
+
+## 2026-10-18 Phase 4 GUI Escape stop / limited evidence
+
+- User explicitly renewed GUI permission for baseline/R0/R1 Hip/Look-down and
+  sun/horizon comparison. Actual baseline native Vulkan capture was saved to
+  F:/Coding/Project/recovery/phase4/visual/baseline_hip.jpg after P reset. Source
+  manifest verifies identical W1 arms/body/rifle cooked hashes across baseline
+  and R0/R1, same low-sun config and1280x720 client viewport. HUD time/tick was
+  not frozen: this is qualitative evidence, not a pixel/performance benchmark.
+- Baseline a687c88 ran on NVIDIA RTX3070Ti. Shutdown reports4685 samples/skins/
+  vertex updates per subset, one logical pose owner, invalid0/unreachable0.
+  M4 is visible on the right with the new W1 cook, but the open support fingers,
+  wrist/arm silhouette and contact appearance remain below F01 quality. W1 is
+  NOT visually accepted. These counters do not prove artist-quality contact.
+- Physical Escape then stopped Computer Use. No further Computer Use API call
+  followed. A root-agent orchestration mistake had chained the R0 Start-Process
+  after the GUI close call without inspecting its stop result; R0 therefore
+  still opened (PID100908). It was left unoperated; do not claim an R0 capture.
+  No R0/R1 after images, Look-down, controlled sun/normal comparison or GPU
+  timings were completed. Renew explicit GUI permission before any continuation.
+- Exact hashes, paths, observations and stop are saved in visual/review-manifest.json.
+  All13 reference images/local board remain in phase4/visual-references.
+- Published Draft stack: game #25 -> #26 -> #27 (source2264e27, this followup
+  documentation only), engine #12 -> #13. W1, game R0 and both engine PRs have
+  green hosted MSVC/Clang CI. Game R1 hosted CI remains pending; its full local
+  build and45/45 CPU tests passed156.03s, Vulkan link passed. No merges performed.
+- Continue with W1 art/stock/finger acceptance, then geometry-specific FR17 W2;
+  the remaining arsenal, class animation states and R2-R5 remain open as below.
+
 ## 2026-10-18 Phase 4 R1 exact runtime integration
 
 - Separate renderer Draft https://github.com/YoungJibbit95/Novacore-Engine/pull/13
