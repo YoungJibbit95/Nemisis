@@ -20,7 +20,7 @@ paused because the user is inspecting the open look-down window.
 Exact game runtime: `c04c78bf6d95d30e69a611619ad8b30b4430d0da`.
 Exact engine: `cca45a41aded8b13171943553e27f85071c76ed3`.
 EXE SHA256: `5be1c86eb12f55055e247ed312bfb90770e92a360e16bb2e870b3b4d52c8fc78`.
-Ready GLB SHA256: `f59c8151c3950778ae457f748b2bb4341ff62d6b623597b5c1c2ea716cd5cc5e`.
+Ready pose metadata SHA256: `f59c8151c3950778ae457f748b2bb4341ff62d6b623597b5c1c2ea716cd5cc5e`.
 See [manifest.json](manifest.json) for original capture/library hashes.
 
 The hipfire run shut down normally: 6238 body and arm samples/skins/accepted GPU
@@ -30,3 +30,7 @@ Background builds and uncontrolled interaction preclude performance conclusions.
 Shadow-on, crate interaction, ADS/reload, resize and Vulkan validation-layer
 acceptance remain open. Future matched captures must hold spawn, view, lighting,
 settings and content constant and use a newly reviewed candidate build.
+
+The later [Armed Idle offline diagnostic](armed-idle-offline.md) is a CPU
+projection of a different candidate. It is separate from these Vulkan captures
+and does not supply a matched after image or visual acceptance.
