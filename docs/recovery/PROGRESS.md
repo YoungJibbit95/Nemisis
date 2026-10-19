@@ -22,8 +22,9 @@
   merge also passes10/10 CPU; its runtime/API/shader source is byte-identical.
 - [Offline CPU diagnostic](visual/phase5/armed-idle-offline.md) is explicitly
   separate from the original failed Vulkan captures. Component #36 has both
-  hosted compilers green. A fresh isolated Vulkan game EXE is building; exact
-  consumer hosted CI and all device/visual/timing gates follow publication.
+  hosted compilers green. The separate complete310-step Vulkan game target also
+  passes; [frozen candidate/hash/matrix](visual/phase5/armed-idle-vulkan-review.md).
+  Exact consumer hosted CI and all device/visual/timing gates remain open.
   GUI remains paused; no new launch, control or successful sight test is claimed.
 
 ## 2026-10-19 Full material-texture consumer gate passed
