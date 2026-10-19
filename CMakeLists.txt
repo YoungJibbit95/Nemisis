@@ -172,6 +172,7 @@ if(NEMISIS_BUILD_PROJECT_FPS_CANDIDATE)
         DEPENDS nemisis_project_fps_candidate "${project_fps_candidate_dir}/arms_runtime.glb"
                 "${project_fps_candidate_dir}/body_runtime.glb" "${project_fps_candidate_dir}/preview_assets.json"
                 assets/metadata/project_rifle_ready_pose.json tools/assets/cook_project_rifle_ready.py
+                assets/metadata/project_m4_armed_idle_pose.json
                 assets/processed/normalized/project_assets/wpn_project_rifle_m4a1.glb
         VERBATIM)
     add_custom_target(nemisis_project_rifle_ready DEPENDS "${project_fps_candidate_dir}/ready_assets.json")
