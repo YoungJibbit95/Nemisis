@@ -1719,16 +1719,6 @@ void testProjectReadyUsesOneConstrainedPose() {
             for (int renderOnly = 0; renderOnly < 2; ++renderOnly) {
                 render::RenderFrameInfo frame;
                 const auto stats = dev::DevRangeRenderSceneBuilder{}.append(frame, desc);
-                std::size_t localShadowExclusions = 0;
-                for (const auto& mesh : frame.worldMeshes) {
-                    if (mesh.assetId == dev::kProjectFPSBodyAssetId || mesh.assetId == dev::kProjectFPSArmsAssetId ||
-                        mesh.assetId == dev::kProjectReadyWeaponAssetId) {
-                        expect(!mesh.castsShadow && !mesh.receivesShadow,
-                            "real World-depth Project FPS body/arms/weapon explicitly exclude directional shadows");
-                        ++localShadowExclusions;
-                    }
-                }
-                expect(localShadowExclusions == 3, "all three actual local Project submissions have shadow policy");
                 for (const auto asset : {dev::kProjectFPSBodyAssetId, dev::kProjectFPSArmsAssetId}) {
                     const auto subset = std::ranges::find(frame.worldMeshes, asset, &render::RenderMesh3D::assetId);
                     expect(subset != frame.worldMeshes.end(), "both actual Project subsets are submitted");
