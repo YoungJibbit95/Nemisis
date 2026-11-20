@@ -2,6 +2,7 @@
 #include "nemisis/dev/GreyboxCollision.hpp"
 #include "nemisis/weapons/WeaponShot.hpp"
 
+#include <array>
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
@@ -87,6 +88,25 @@ void testRoutesAndFire() {
     expect(!blocked.targetLane && blocked.distanceMeters < 5.0F, "visible cover blocks shots");
     expect(world.primitives.size() == 59, "35 scene boxes and 24 tree collision boxes are present");
 }
+void testAllThreeTargetsCanBeClearedFromThePlayableRoutes() {
+    using namespace nemisis::dev;
+    const auto world = createOuterFacilityWorld();
+    auto targets = makeOuterFacilityTargets();
+    nemisis::weapons::ShotTraceResult shot{};
+    shot.direction = {0.0F, 0.0F, 1.0F};
+    shot.rangeMeters = 100.0F;
+    shot.damage = 150.0F;
+    const std::array<novacore::math::Vec3, 3> positions{{{0, 1.1F, -26}, {-14, 1.1F, 13}, {17, 1.1F, 7}}};
+    for (std::size_t lane = 0; lane < positions.size(); ++lane) {
+        shot.origin = positions[lane];
+        const auto contact = traceDevRangeShot(targets, shot, world.primitives);
+        expect(contact.targetLane == lane, "each relay target is exposed to fire from its playable approach");
+        expect(applyShotToDevTargetRange(targets, shot, contact).targetHit.eliminated, "each exposed target can be cleared");
+    }
+    (void)tickDevTargetRangeRespawns(targets, 10.0F);
+    expect(aliveTargetCount(targets) == 0, "the cleared objective survives subsequent gameplay ticks");
+}
+
 void testMannequinHitZonesAndCoverOrder() {
     using namespace nemisis::dev;
     auto targets = makeOuterFacilityTargets();
@@ -128,6 +148,7 @@ void testMannequinHitZonesAndCoverOrder() {
 } // namespace
 int main() {
     testRoutesAndFire();
+    testAllThreeTargetsCanBeClearedFromThePlayableRoutes();
     testMannequinHitZonesAndCoverOrder();
     if (failures) return EXIT_FAILURE;
     std::cout << "Outer Facility tests passed\n";
