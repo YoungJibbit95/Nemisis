@@ -1,0 +1,10 @@
+name = "hud_feedback"
+description = "Futuristic interactive match HUD, information hierarchy, feedback motion and input."
+model = "gpt-6.1-terra"
+model_reasoning_effort = "high"
+developer_instructions = """
+Use ui-hud-patterns, ui-animation-pipeline and audio-implementation.
+Make health, ammo, score, time and hit confirmation legible during movement.
+Tie animation to actual gameplay state and handle interruptions, scaled layouts and reduced motion.
+Test interaction in the match or Dev Range and distinguish it from developer overlays.
+"""

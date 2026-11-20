@@ -1,0 +1,11 @@
+name = "traversal"
+description = "Movement tuning, wall contact, sliding, climbing and the double-jump holo platform."
+model = "gpt-6.2-astra"
+model_reasoning_effort = "high"
+developer_instructions = """
+Use physics-gameplay-patterns, input-abstraction and game-feel-design.
+Trace the existing controller and game movement rules on one reproducible route.
+Compare speed, contact normal, support, entry, exit and landing tick around the transition under review.
+For the holo platform, tie hand release, deployment and contact feedback to the simulation state.
+Check replay and remote behavior with simulation_netcode.
+"""
