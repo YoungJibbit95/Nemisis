@@ -1335,6 +1335,20 @@ DevRangeRenderSceneStats DevRangeRenderSceneBuilder::append(
     if (stats.firstPersonViewmodelActive) {
         appendFirstPersonMeshes(frame, desc, stats);
     }
+    const auto& step = desc.player.movementTech;
+    if (step.energyPlatformSeconds > 0.0F || step.doubleJumpPlatformThrown) {
+        const float halfWidth = step.energyPlatformInFlight ? 0.11F : 0.50F;
+        appendBox(frame, step.energyPlatformCenter, {halfWidth, 0.018F, halfWidth},
+            {0.18F, 0.82F, 1.0F, 1.0F}, stats);
+        frame.worldBoxes.back().castsShadow = false;
+        appendBox(frame, step.energyPlatformCenter + novacore::math::Vec3{0.0F, 0.028F, 0.0F},
+            {halfWidth * 0.64F, 0.012F, halfWidth * 0.64F}, {0.88F, 0.98F, 1.0F, 1.0F}, stats);
+        frame.worldBoxes.back().castsShadow = false;
+        if (step.energyPlatformInFlight) {
+            frame.worldLines.push_back({step.energyPlatformPreviousCenter, step.energyPlatformCenter,
+                {0.39F, 0.91F, 1.0F, 0.75F}});
+        }
+    }
     if (desc.showWorldDebugLines) {
         appendMovementTechVisuals(frame, desc, stats);
         appendWorldDebugLines(frame, desc, stats);
@@ -1694,25 +1708,6 @@ void DevRangeRenderSceneBuilder::appendMovementTechVisuals(
             : std::array<float, 4>{0.08F, 0.86F, 1.0F, 1.0F};
         appendBox(frame, bootBase + (right * 0.18F), {0.09F, 0.035F, 0.14F}, glowColor, stats);
         appendBox(frame, bootBase - (right * 0.18F), {0.09F, 0.035F, 0.14F}, glowColor, stats);
-
-    }
-
-    if (tech.doubleJumpPlatformThrown || tech.energyPlatformSeconds > 0.0F) {
-        const auto platformCenter = tech.energyPlatformCenter.lengthSquared() > 0.0001F
-            ? tech.energyPlatformCenter
-            : desc.player.position + novacore::math::Vec3{0.0F, -0.18F, 0.0F};
-        appendBox(
-            frame,
-            platformCenter,
-            {0.52F, 0.018F, 0.32F},
-            {0.18F, 0.82F, 1.0F, 1.0F},
-            stats);
-        appendBox(
-            frame,
-            platformCenter + novacore::math::Vec3{0.0F, 0.028F, 0.0F},
-            {0.32F, 0.012F, 0.18F},
-            {0.88F, 0.98F, 1.0F, 1.0F},
-            stats);
 
     }
 

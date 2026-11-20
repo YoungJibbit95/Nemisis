@@ -93,9 +93,13 @@ void testJumpDoubleJumpReplay() {
     state = movement.simulate(state, command, dt);
     expect(!state.hasDoubleJump, "double jump is consumed");
     expect(!state.groundJumpAvailable, "double jump does not refresh ground jump");
-    expect(state.velocity.y > 6.5F, "double jump strongly refreshes upward velocity");
     expect(state.tech.doubleJumpPlatformThrown, "double jump throws energy platform cue");
     expect(state.tech.energyPlatformSeconds > 0.0F, "double jump platform cue starts timer");
+    for (int i = 0; i < 3; ++i) {
+        state = movement.simulate(state, {}, dt);
+    }
+    expectNear(state.velocity.y, movement.tuning().doubleJumpImpulse, 0.001F,
+               "the platform refreshes upward velocity on boot contact");
 }
 
 void testSecondSpacePressUsesAirJumpNotCoyoteGroundJump() {
@@ -121,8 +125,11 @@ void testSecondSpacePressUsesAirJumpNotCoyoteGroundJump() {
 
     expect(!state.hasDoubleJump, "second space press consumes air jump");
     expect(!state.groundJumpAvailable, "second space press does not reopen ground jump while airborne");
-    expect(state.velocity.y > upwardVelocityBeforeSecondPress + 0.5F, "second space press strongly refreshes upward velocity");
     expect(state.tech.doubleJumpPlatformThrown, "second space press triggers energy platform cue");
+    for (int i = 0; i < 3; ++i) {
+        state = movement.simulate(state, {}, dt);
+    }
+    expect(state.velocity.y > upwardVelocityBeforeSecondPress + 0.5F, "the second space press boosts on boot contact");
 }
 
 void testBufferedDoubleJumpSurvivesCoyoteWindow() {
@@ -151,7 +158,10 @@ void testBufferedDoubleJumpSurvivesCoyoteWindow() {
 
     expect(!state.hasDoubleJump, "buffered double jump fires once coyote window expires");
     expect(state.doubleJumpBufferRemaining <= 0.0001F, "buffered double jump is consumed after firing");
-    expect(state.velocity.y > 6.0F, "buffered double jump applies tuned upward impulse");
+    for (int i = 0; i < 3; ++i) {
+        state = movement.simulate(state, {}, dt);
+    }
+    expect(state.velocity.y > 6.0F, "buffered double jump applies upward impulse on platform contact");
     expect(state.tech.energyPlatformSeconds > 0.0F, "buffered double jump still emits energy platform cue");
 }
 
@@ -172,6 +182,63 @@ void testCoyoteJumpReplay() {
     expectNear(jumped.velocity.y, movement.tuning().jumpVelocity + (movement.tuning().gravity / 60.0F), 0.01F, "coyote jump applies launch velocity before gravity");
     expect(jumped.jumpBufferRemaining <= 0.0001F, "coyote jump consumes jump buffer");
     expect(jumped.coyoteTimeRemaining <= 0.0001F, "coyote jump consumes coyote timer");
+}
+
+void testThrownHoloStepReplay() {
+    using namespace nemisis::movement;
+    MovementSystem movement;
+    constexpr float dt = 1.0F / 60.0F;
+    PlayerMovementState start{};
+    start.mode = MovementMode::Airborne;
+    start.position = {5.0F, 3.0F, -2.0F};
+    start.velocity = {7.0F, -3.0F, 0.0F};
+    start.airborneTimeSeconds = 0.3F;
+    start.groundJumpAvailable = false;
+    nemisis::player::PlayerInputCommand press{};
+    press.doubleJumpPressed = true;
+    const auto released = movement.simulate(start, press, dt, {1.0F, 0.0F, 0.0F});
+    expect(released.holoStep.active && released.tech.energyPlatformInFlight && !released.hasDoubleJump,
+           "air-jump input releases one projectile immediately");
+    expect(released.holoStep.position.x > released.position.x + 0.6F &&
+               released.holoStep.position.y > released.position.y + 1.0F,
+           "release follows the player's facing and starts above boot height");
+    expect(released.velocity.y < 0.0F, "a falling player receives no impulse on release");
+    auto state = released;
+    auto replay = released;
+    for (int tick = 2; tick <= 4; ++tick) {
+        const auto previous = state;
+        state = movement.simulate(state, press, dt);
+        replay = movement.simulate(replay, {}, dt);
+        expect(!state.tech.doubleJumpPlatformThrown, "repeated input cannot throw a second projectile");
+        expect(state.tech.energyPlatformCenter.y < previous.tech.energyPlatformCenter.y,
+               "the rendered projectile descends each fixed tick");
+        expectNear(state.holoStep.velocity.y - previous.holoStep.velocity.y, movement.tuning().gravity * dt,
+                   0.0001F, "projectile flight integrates gravity");
+        expect(state.holoStep.active == (tick < 4), "boot-plane crossing occurs on the fourth tick");
+    }
+    expectNear(state.velocity.y, movement.tuning().doubleJumpImpulse, 0.0001F, "contact supplies the tuned upward impulse");
+    expect(!state.tech.energyPlatformInFlight && !state.hasDoubleJump, "deployed step cannot recharge the air jump");
+    expect((state.position - replay.position).lengthSquared() == 0.0F &&
+               (state.tech.energyPlatformCenter - replay.tech.energyPlatformCenter).lengthSquared() == 0.0F &&
+               state.velocity.y == replay.velocity.y, "replaying a saved flight reproduces position, contact and boost");
+    const auto center = state.tech.energyPlatformCenter;
+    state = movement.simulate(state, {}, dt);
+    expect((state.tech.energyPlatformCenter - center).lengthSquared() == 0.0F &&
+               state.position.y > center.y, "deployed step stays at the contact point as the player rises");
+
+    auto missed = released;
+    missed.velocity.x = -9.0F; // The owner changes direction after release.
+    for (int tick = 2; tick <= 4; ++tick) {
+        missed = movement.simulate(missed, {}, dt);
+    }
+    expect(!missed.holoStep.active && missed.velocity.y < 0.0F, "missing the footprint cannot grant a boost");
+    start.position.y = 0.12F;
+    state = movement.simulate(start, press, dt);
+    for (int tick = 2; tick <= 5; ++tick) {
+        state = movement.simulate(state, {}, dt);
+    }
+    expect(state.mode == MovementMode::Grounded && !state.holoStep.active && state.velocity.y == 0.0F,
+           "landing before the projectile arrives cancels the pending boost");
 }
 
 void testJumpBufferReplay() {
@@ -689,6 +756,7 @@ int main() {
     testJumpDoubleJumpReplay();
     testSecondSpacePressUsesAirJumpNotCoyoteGroundJump();
     testBufferedDoubleJumpSurvivesCoyoteWindow();
+    testThrownHoloStepReplay();
     testCoyoteJumpReplay();
     testJumpBufferReplay();
     testLandingConsumesBufferedJumpImmediately();
