@@ -254,7 +254,12 @@ void GameApp::onShutdown() {
         if (const auto* player = world_.getComponent<movement::PlayerMovementState>(localPlayerEntity_)) {
             novacore::core::logInfo("game", "Facility profile route: forward_meters=" +
                 std::to_string(player->position.z - greyboxWorld_.playerSpawn.z) + " shots=" +
-                std::to_string(devRangeSession_.score.shotsFired) + " hits=" + std::to_string(devRangeSession_.score.shotsHit));
+                std::to_string(devRangeSession_.score.shotsFired) + " hits=" + std::to_string(devRangeSession_.score.shotsHit) +
+                " weapon=" + activeLoadout_.weaponId);
+            const auto& alternate = alternateArmsAnimator_.stats();
+            novacore::core::logInfo("game", "Alternate weapon hand IK: applied=" + std::to_string(alternate.constrainedFrameCount) +
+                " invalid=" + std::to_string(alternate.invalidHandFrameCount) +
+                " unreachable=" + std::to_string(alternate.unreachableHandFrameCount));
         }
     }
     if (options_.projectFPSPreview) {
