@@ -1156,4 +1156,6 @@ Follow-up: one original procedural foliage cluster (one opaque GLB primitive,
 wallrun panels. No physics collision or shadow is added; a simple box is used
 if the GPU resource handle is unavailable. Arena mesh selection now excludes
 its authored `col_` collision helpers, including the green wall at z=-8, while
-greybox physics remains unchanged. Targeted CPU and Vulkan validation pending.
+greybox physics remains unchanged. The targeted render-scene, render-tuning and
+dev-asset-bindings CTests pass (3/3) with GCC 13.2 and the pinned engine.
+Vulkan visual and GPU timing validation remain pending.
