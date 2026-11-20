@@ -17,11 +17,8 @@ void mergeEdge(bool& pending, bool current) {
 }
 
 void consumeEdge(bool& pending, bool& destination) {
-    if (!pending) {
-        return;
-    }
-
-    destination = true;
+    // Several fixed ticks can read the same action-map frame. Only the first owns its edges.
+    destination = pending;
     pending = false;
 }
 

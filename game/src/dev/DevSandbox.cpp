@@ -55,6 +55,7 @@ void appendContactRoles(std::ostringstream& stream, const GreyboxCollisionResult
     std::size_t wall = 0;
     std::size_t bounds = 0;
     std::size_t sweep = 0;
+    std::size_t ceiling = 0;
     for (const auto& contact : collision.contacts) {
         switch (contact.role) {
         case GreyboxContactRole::Ground:
@@ -69,13 +70,16 @@ void appendContactRoles(std::ostringstream& stream, const GreyboxCollisionResult
         case GreyboxContactRole::Bounds:
             ++bounds;
             break;
+        case GreyboxContactRole::Ceiling:
+            ++ceiling;
+            break;
         case GreyboxContactRole::Sweep:
             ++sweep;
             break;
         }
     }
 
-    stream << "G" << ground << "/S" << step << "/W" << wall << "/B" << bounds << "/X" << sweep;
+    stream << "G" << ground << "/S" << step << "/W" << wall << "/B" << bounds << "/X" << sweep << "/C" << ceiling;
 }
 
 } // namespace

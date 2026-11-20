@@ -51,6 +51,26 @@ void testDirectDevRangeSelection() {
     expect(menu.gameplayActive(), "dev range activates gameplay");
 }
 
+void testLoadingWaitsForAssetsAndCanCancel() {
+    auto actions = nemisis::input::createDefaultActionMap();
+    nemisis::ui::GameMenu menu;
+    menu.showLoadingScreen(nemisis::ui::GameScreen::OuterFacility);
+    menu.updateFrame(10.0, false);
+    expect(menu.loadingPlayableMap() && menu.loadingProgress() < 1.0F,
+           "loading never enters gameplay while assets are pending");
+    press(actions, nemisis::input::key_codes::Escape);
+    menu.update(actions);
+    expect(menu.screen() == nemisis::ui::GameScreen::MainMenu, "escape cancels while assets are pending");
+    release(actions);
+    menu.update(actions);
+    menu.showLoadingScreen(nemisis::ui::GameScreen::DevRange);
+    menu.updateFrame(10.0, false);
+    expect(menu.loadingPlayableMap() && menu.loadingTarget() == nemisis::ui::GameScreen::DevRange,
+           "another map can be selected while loading is gated");
+    menu.updateFrame(1.0, true);
+    expect(menu.screen() == nemisis::ui::GameScreen::DevRange, "ready assets permit the selected map to enter");
+}
+
 void testMenuConfirmAndBack() {
     auto actions = nemisis::input::createDefaultActionMap();
     nemisis::ui::GameMenu menu;
@@ -190,6 +210,12 @@ void testPointerNavigationActivatesMenuRows() {
     });
     expect(settings.mouse.sensitivityX > originalSensitivity, "pointer click adjusts settings row");
 
+    menu.update(actions, settings, loadout, attachments, nemisis::ui::MenuPointerState{
+        440.0F, 514.0F, true, true, true, false,
+    });
+    expect(!settings.gameplay.showHitMarkers && settings.gameplay.showDamageNumbers,
+        "hit markers can be toggled independently from damage numbers");
+
     menu.showMainMenu(nemisis::ui::MenuTab::Play);
     menu.update(actions, settings, loadout, attachments, nemisis::ui::MenuPointerState{
         470.0F,
@@ -199,7 +225,26 @@ void testPointerNavigationActivatesMenuRows() {
         true,
         false,
     });
-    expect(menu.screen() == nemisis::ui::GameScreen::Loading, "pointer click starts firing range loading");
+    expect(menu.loadingPlayableMap(), "the first Play row starts loading the facility");
+    menu.updateFrame(1.0);
+    expect(menu.screen() == nemisis::ui::GameScreen::OuterFacility && menu.gameplayActive(),
+        "facility enters real gameplay");
+    press(actions, nemisis::input::key_codes::Escape);
+    menu.update(actions);
+    expect(menu.screen() == nemisis::ui::GameScreen::MainMenu, "facility releases gameplay back to the main menu");
+    release(actions);
+    menu.update(actions, settings, loadout, attachments, {470.0F, 285.0F, true, true, true, false});
+    menu.updateFrame(1.0);
+    expect(menu.screen() == nemisis::ui::GameScreen::DevRange, "the second Play row enters the original range");
+
+    menu.showMainMenu(nemisis::ui::MenuTab::Play);
+    const nemisis::ui::MenuPointerState hovering{470.0F, 232.0F, true, false, false, false};
+    menu.update(actions, settings, loadout, attachments, hovering);
+    press(actions, nemisis::input::key_codes::Down);
+    menu.update(actions, settings, loadout, attachments, hovering);
+    expect(menu.selectedIndex() == 1U, "a stationary pointer preserves keyboard focus");
+    menu.update(actions, settings, loadout, attachments, {470.0F, 400.0F, true, true, true, false});
+    expect(menu.quitRequested(), "Exit to desktop requests an orderly shutdown");
 }
 
 void testDevRangeHudUsesPlayableResponsiveLayout() {
@@ -283,6 +328,54 @@ void testDevRangeHudUsesPlayableResponsiveLayout() {
         "loadout panel anchors to the bottom-right after 1920x1080 scaling");
 }
 
+void testCombatFeedbackBetweenSimulationTicks() {
+    nemisis::ui::GameMenu menu;
+    menu.showDevRange();
+    nemisis::dev::DevSandboxSample sample{};
+    nemisis::settings::GameSettings settings{};
+    nemisis::weapons::AttachmentRegistry attachments;
+    nemisis::weapons::AttachmentBuildSummary build{};
+    build.effectiveMagazineSize = 30;
+    const auto render = [&](float physicalSightWeight = 0.0F) {
+        novacore::render::RenderFrameInfo frame{};
+        menu.appendRenderCommands(frame, sample, {}, "Vulkan", "", 0, {}, {}, {}, {},
+            settings, {}, attachments, build, {}, physicalSightWeight);
+        return frame;
+    };
+    const auto showsText = [](const auto& frame, std::string_view text) {
+        return std::any_of(frame.debugTexts.begin(), frame.debugTexts.end(),
+            [text](const auto& command) { return command.text == text; });
+    };
+
+    sample.weapon.ammoInMagazine = 2;
+    const auto idle = render();
+    expect(render(1.0F).debugLines.size() < idle.debugLines.size(), "held iron sights replace the hip crosshair");
+    expect(showsText(idle, "LOW AMMO"), "low magazine is readable without aiming down sights");
+    nemisis::weapons::FireResult fired{};
+    fired.fired = true;
+    nemisis::dev::DebugTargetHitResult hit{};
+    hit.hit = true;
+    hit.damageApplied = 17.5F;
+    nemisis::dev::recordShotResult(sample.rangeSession, fired, hit);
+    nemisis::dev::tickSessionFeedback(sample.rangeSession, 2.0F / 60.0F);
+    sample.weapon.reloading = true;
+    const auto confirmed = render();
+    expect(confirmed.debugLines.size() > idle.debugLines.size() && showsText(confirmed, "-17.5"),
+        "marker and damage survive subsequent fixed ticks without a new shot");
+    expect(showsText(confirmed, "RELOADING") && !showsText(confirmed, "LOW AMMO"), "reload takes priority");
+    settings.gameplay.showHitMarkers = false;
+    const auto numbersOnly = render();
+    expect(numbersOnly.debugLines.size() == idle.debugLines.size() && showsText(numbersOnly, "-17.5"),
+        "disabling markers keeps the normal crosshair and optional damage number");
+    settings.gameplay.showHitMarkers = true;
+    settings.gameplay.showDamageNumbers = false;
+    const auto markerOnly = render();
+    expect(markerOnly.debugLines.size() == confirmed.debugLines.size() && !showsText(markerOnly, "-17.5"),
+        "damage numbers can be hidden independently");
+    nemisis::dev::tickSessionFeedback(sample.rangeSession, 1.0F);
+    expect(render().debugLines.size() == idle.debugLines.size(), "expired markers leave the crosshair clear");
+}
+
 void testNetworkDebugOverlayIncludesPredictionTelemetry() {
     auto actions = nemisis::input::createDefaultActionMap();
     nemisis::ui::GameMenu menu;
@@ -362,12 +455,14 @@ void testNetworkDebugOverlayIncludesPredictionTelemetry() {
 
 int main() {
     testDirectDevRangeSelection();
+    testLoadingWaitsForAssetsAndCanCancel();
     testMenuConfirmAndBack();
     testDebugToggle();
     testDebugPageCycle();
     testMenuTabsSettingsAndLoadoutMutateRuntimeData();
     testPointerNavigationActivatesMenuRows();
     testDevRangeHudUsesPlayableResponsiveLayout();
+    testCombatFeedbackBetweenSimulationTicks();
     testNetworkDebugOverlayIncludesPredictionTelemetry();
 
     if (failures > 0) {

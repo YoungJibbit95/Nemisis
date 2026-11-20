@@ -163,7 +163,7 @@ bool DevRangeRigidBodies::impact(math::Vec3 origin, math::Vec3 displacement) {
     return bodies_.applyImpulse(hit->handle, displacement * (2.F / std::sqrt(length2)), hit->position);
 }
 
-void DevRangeRigidBodies::append(render::RenderFrameInfo& frame) const {
+void DevRangeRigidBodies::append(render::RenderFrameInfo& frame, bool showDebug) const {
     if (!visual_.isValid()) { throw std::runtime_error("Dev Range physics crate visual not registered"); }
     for (const auto& body : bodies_.bodies()) {
         if (body.motion != physics::RigidBodyMotion::Dynamic) { continue; }
@@ -181,6 +181,7 @@ void DevRangeRigidBodies::append(render::RenderFrameInfo& frame) const {
         box.rollDegrees = angles.z;
         frame.worldMeshes.push_back(box);
     }
+    if (!showDebug) { return; }
     // Developer wireframe uses the same sensor dimensions as the native body.
     const auto color = playerInsideSensor_ ? std::array<float,4>{.2F,1.F,.5F,1.F}
                                           : std::array<float,4>{.2F,.7F,1.F,1.F};

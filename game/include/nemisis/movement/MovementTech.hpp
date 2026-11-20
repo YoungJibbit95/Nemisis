@@ -21,6 +21,7 @@ struct MovementTechState final {
     bool wallRunArmTriggerPressed = false;
     bool gravityInvertersActive = false;
     bool doubleJumpPlatformThrown = false;
+    bool energyPlatformInFlight = false;
     bool wallJumpDetachTriggered = false;
     bool mantleReachTriggered = false;
     bool mantleClimbTriggered = false;
@@ -33,6 +34,7 @@ struct MovementTechState final {
     float mantleClimbSeconds = 0.0F;
 
     novacore::math::Vec3 energyPlatformCenter{};
+    novacore::math::Vec3 energyPlatformPreviousCenter{};
     novacore::math::Vec3 energyPlatformNormal{0.0F, 1.0F, 0.0F};
     novacore::math::Vec3 wallRunNormal{};
     novacore::math::Vec3 mantleTargetPosition{};
@@ -82,10 +84,11 @@ inline void stopGravityBoots(MovementTechState& tech) {
     tech.gravityInvertersActive = false;
 }
 
-inline void triggerDoubleJumpPlatform(MovementTechState& tech, novacore::math::Vec3 playerPosition) {
+inline void triggerDoubleJumpPlatform(MovementTechState& tech, novacore::math::Vec3 releasePosition) {
     tech.doubleJumpPlatformThrown = true;
+    tech.energyPlatformInFlight = true;
     tech.energyPlatformSeconds = kEnergyPlatformCueSeconds;
-    tech.energyPlatformCenter = playerPosition + novacore::math::Vec3{0.0F, -0.18F, 0.0F};
+    tech.energyPlatformCenter = releasePosition;
     tech.energyPlatformNormal = {0.0F, 1.0F, 0.0F};
 }
 

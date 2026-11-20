@@ -1,8 +1,15 @@
 #include "nemisis/movement/MovementSystem.hpp"
+#include "nemisis/input/GameplayInputBuffer.hpp"
+#include "nemisis/input/InputBindings.hpp"
+#include "nemisis/input/InputCommandBuilder.hpp"
+#include "nemisis/player/PlayerView.hpp"
 #include "nemisis/movement/MovementConfig.hpp"
 
 #include "novacore/core/ConfigDocument.hpp"
+#include "novacore/core/FixedStep.hpp"
+#include "novacore/physics/CharacterController.hpp"
 
+#include <cmath>
 #include <cstdint>
 #include <cstdlib>
 #include <iostream>
@@ -91,9 +98,13 @@ void testJumpDoubleJumpReplay() {
     state = movement.simulate(state, command, dt);
     expect(!state.hasDoubleJump, "double jump is consumed");
     expect(!state.groundJumpAvailable, "double jump does not refresh ground jump");
-    expect(state.velocity.y > 6.5F, "double jump strongly refreshes upward velocity");
     expect(state.tech.doubleJumpPlatformThrown, "double jump throws energy platform cue");
     expect(state.tech.energyPlatformSeconds > 0.0F, "double jump platform cue starts timer");
+    for (int i = 0; i < 3; ++i) {
+        state = movement.simulate(state, {}, dt);
+    }
+    expectNear(state.velocity.y, movement.tuning().doubleJumpImpulse, 0.001F,
+               "the platform refreshes upward velocity on boot contact");
 }
 
 void testSecondSpacePressUsesAirJumpNotCoyoteGroundJump() {
@@ -119,8 +130,11 @@ void testSecondSpacePressUsesAirJumpNotCoyoteGroundJump() {
 
     expect(!state.hasDoubleJump, "second space press consumes air jump");
     expect(!state.groundJumpAvailable, "second space press does not reopen ground jump while airborne");
-    expect(state.velocity.y > upwardVelocityBeforeSecondPress + 0.5F, "second space press strongly refreshes upward velocity");
     expect(state.tech.doubleJumpPlatformThrown, "second space press triggers energy platform cue");
+    for (int i = 0; i < 3; ++i) {
+        state = movement.simulate(state, {}, dt);
+    }
+    expect(state.velocity.y > upwardVelocityBeforeSecondPress + 0.5F, "the second space press boosts on boot contact");
 }
 
 void testBufferedDoubleJumpSurvivesCoyoteWindow() {
@@ -149,7 +163,10 @@ void testBufferedDoubleJumpSurvivesCoyoteWindow() {
 
     expect(!state.hasDoubleJump, "buffered double jump fires once coyote window expires");
     expect(state.doubleJumpBufferRemaining <= 0.0001F, "buffered double jump is consumed after firing");
-    expect(state.velocity.y > 6.0F, "buffered double jump applies tuned upward impulse");
+    for (int i = 0; i < 3; ++i) {
+        state = movement.simulate(state, {}, dt);
+    }
+    expect(state.velocity.y > 6.0F, "buffered double jump applies upward impulse on platform contact");
     expect(state.tech.energyPlatformSeconds > 0.0F, "buffered double jump still emits energy platform cue");
 }
 
@@ -170,6 +187,63 @@ void testCoyoteJumpReplay() {
     expectNear(jumped.velocity.y, movement.tuning().jumpVelocity + (movement.tuning().gravity / 60.0F), 0.01F, "coyote jump applies launch velocity before gravity");
     expect(jumped.jumpBufferRemaining <= 0.0001F, "coyote jump consumes jump buffer");
     expect(jumped.coyoteTimeRemaining <= 0.0001F, "coyote jump consumes coyote timer");
+}
+
+void testThrownHoloStepReplay() {
+    using namespace nemisis::movement;
+    MovementSystem movement;
+    constexpr float dt = 1.0F / 60.0F;
+    PlayerMovementState start{};
+    start.mode = MovementMode::Airborne;
+    start.position = {5.0F, 3.0F, -2.0F};
+    start.velocity = {7.0F, -3.0F, 0.0F};
+    start.airborneTimeSeconds = 0.3F;
+    start.groundJumpAvailable = false;
+    nemisis::player::PlayerInputCommand press{};
+    press.doubleJumpPressed = true;
+    const auto released = movement.simulate(start, press, dt, {1.0F, 0.0F, 0.0F});
+    expect(released.holoStep.active && released.tech.energyPlatformInFlight && !released.hasDoubleJump,
+           "air-jump input releases one projectile immediately");
+    expect(released.holoStep.position.x > released.position.x + 0.6F &&
+               released.holoStep.position.y > released.position.y + 1.0F,
+           "release follows the player's facing and starts above boot height");
+    expect(released.velocity.y < 0.0F, "a falling player receives no impulse on release");
+    auto state = released;
+    auto replay = released;
+    for (int tick = 2; tick <= 4; ++tick) {
+        const auto previous = state;
+        state = movement.simulate(state, press, dt);
+        replay = movement.simulate(replay, {}, dt);
+        expect(!state.tech.doubleJumpPlatformThrown, "repeated input cannot throw a second projectile");
+        expect(state.tech.energyPlatformCenter.y < previous.tech.energyPlatformCenter.y,
+               "the rendered projectile descends each fixed tick");
+        expectNear(state.holoStep.velocity.y - previous.holoStep.velocity.y, movement.tuning().gravity * dt,
+                   0.0001F, "projectile flight integrates gravity");
+        expect(state.holoStep.active == (tick < 4), "boot-plane crossing occurs on the fourth tick");
+    }
+    expectNear(state.velocity.y, movement.tuning().doubleJumpImpulse, 0.0001F, "contact supplies the tuned upward impulse");
+    expect(!state.tech.energyPlatformInFlight && !state.hasDoubleJump, "deployed step cannot recharge the air jump");
+    expect((state.position - replay.position).lengthSquared() == 0.0F &&
+               (state.tech.energyPlatformCenter - replay.tech.energyPlatformCenter).lengthSquared() == 0.0F &&
+               state.velocity.y == replay.velocity.y, "replaying a saved flight reproduces position, contact and boost");
+    const auto center = state.tech.energyPlatformCenter;
+    state = movement.simulate(state, {}, dt);
+    expect((state.tech.energyPlatformCenter - center).lengthSquared() == 0.0F &&
+               state.position.y > center.y, "deployed step stays at the contact point as the player rises");
+
+    auto missed = released;
+    missed.velocity.x = -9.0F; // The owner changes direction after release.
+    for (int tick = 2; tick <= 4; ++tick) {
+        missed = movement.simulate(missed, {}, dt);
+    }
+    expect(!missed.holoStep.active && missed.velocity.y < 0.0F, "missing the footprint cannot grant a boost");
+    start.position.y = 0.12F;
+    state = movement.simulate(start, press, dt);
+    for (int tick = 2; tick <= 5; ++tick) {
+        state = movement.simulate(state, {}, dt);
+    }
+    expect(state.mode == MovementMode::Grounded && !state.holoStep.active && state.velocity.y == 0.0F,
+           "landing before the projectile arrives cancels the pending boost");
 }
 
 void testJumpBufferReplay() {
@@ -287,6 +361,113 @@ void testSlideBufferMakesSprintSlideReliable() {
     expect(state.slideHeldConsumed, "held slide is latched after starting slide");
 }
 
+void testSlideSteeringAndBraking() {
+    using namespace nemisis::movement;
+    MovementSystem movement;
+    constexpr float dt = 1.0F / 60.0F;
+    PlayerMovementState slide{};
+    slide.mode = MovementMode::Sliding;
+    slide.velocity = {0, 0, 9};
+    slide.slideTimeRemaining = 0.7F;
+    const auto replay = [&](float side, float forward) {
+        auto state = slide;
+        nemisis::player::PlayerInputCommand command{};
+        command.move = {side, forward};
+        for (int tick = 0; tick < 8; ++tick) {
+            state = movement.simulate(state, command, dt);
+        }
+        return state;
+    };
+    const auto coast = replay(0, 0);
+    const auto fullStick = replay(1, 0);
+    const auto quarterStick = replay(0.25F, 0);
+    const auto brake = replay(0, -1);
+    expectNear(coast.lastHorizontalSpeed, 9.0F - 8.0F * movement.tuning().slideFriction * dt, 0.001F,
+               "unsteered slide loses the tuned friction per second");
+    expect(fullStick.velocity.x > 0.7F && quarterStick.velocity.x > 0.15F &&
+               quarterStick.velocity.x < fullStick.velocity.x * 0.35F, "analog pressure meters the carve");
+    expect(fullStick.lastHorizontalSpeed > coast.lastHorizontalSpeed - 0.15F &&
+               fullStick.lastHorizontalSpeed <= coast.lastHorizontalSpeed + 0.001F,
+           "a lateral carve preserves most of the forward momentum without adding speed");
+    expect(brake.velocity.z > 0.0F && brake.lastHorizontalSpeed < coast.lastHorizontalSpeed - 0.8F,
+           "opposite input brakes the slide without reversing it");
+    auto landing = slide;
+    landing.mode = MovementMode::Airborne;
+    landing.position.y = 0.01F;
+    landing.velocity.y = -3.0F;
+    nemisis::player::PlayerInputCommand press{};
+    press.move = {0.7071F, 0.7071F};
+    press.slidePressed = true;
+    const auto caught = movement.simulate(landing, press, dt);
+    expect(caught.landedThisTick && caught.mode == MovementMode::Sliding &&
+               std::abs(caught.velocity.x) < 0.5F, "buffered landing keeps the incoming direction");
+}
+
+void testSprintSlideJumpAcrossFrameRates() {
+    using namespace nemisis;
+    constexpr float dt = 1.0F / 60.0F;
+    std::vector<movement::PlayerMovementState> reference;
+    for (int hz : {30, 60, 144}) {
+        movement::MovementSystem movement;
+        movement::PlayerMovementState state{};
+        auto actions = input::createDefaultActionMap();
+        novacore::platform::InputSnapshot snapshot;
+        input::GameplayInputBuffer edges;
+        novacore::core::FixedStepAccumulator clock({60.0, 0.25});
+        std::vector<movement::PlayerMovementState> path;
+        int launches = 0;
+        while (path.size() < 100) {
+            const auto nextTick = clock.consumedSteps();
+            snapshot.beginFrame();
+            const auto key = [&](std::uint16_t code, bool down) {
+                snapshot.setButton({novacore::platform::InputControlKind::KeyboardKey, code}, down,
+                    novacore::platform::InputDeviceKind::KeyboardMouse);
+            };
+            key(input::key_codes::W, true);
+            key(input::key_codes::LeftShift, true);
+            key(input::key_codes::D, nextTick >= 30 && nextTick < 40);
+            key(input::key_codes::C, nextTick >= 30 && nextTick < 42);
+            key(input::key_codes::Space, nextTick >= 40 && nextTick < 42);
+            actions.update(snapshot);
+            edges.captureFrameEdges(actions);
+            clock.advance(1.0 / hz);
+            while (clock.shouldStep() && path.size() < 100) {
+                const auto tick = clock.consumedSteps();
+                auto command = input::buildPlayerInputCommand(actions, tick);
+                edges.consumeInto(command);
+                launches += command.jumpPressed;
+                state = movement.simulate(state, player::commandRelativeToView(command, {}), dt);
+                path.push_back(state);
+                clock.consumeStep();
+            }
+        }
+        expect(launches == 1, "one physical jump edge reaches exactly one fixed tick");
+        expect(path[30].mode == movement::MovementMode::Sliding && std::abs(path[30].velocity.x) < 0.001F,
+               "slide starts immediately along the sprint when the player also presses strafe");
+        expect(path[40].mode == movement::MovementMode::Airborne && path[40].velocity.y > 0.0F &&
+                   path[40].lastHorizontalSpeed > path[39].lastHorizontalSpeed,
+               "the slide jump responds on the command tick and carries the carved momentum");
+        expect(path[41].hasDoubleJump && !path[41].holoStep.active,
+               "holding the launch button into a catch-up tick preserves the air jump");
+        expect(path.back().mode == movement::MovementMode::Grounded, "the chain returns to the ground");
+        if (reference.empty()) {
+            reference = path;
+        } else {
+            for (std::size_t tick = 0; tick < path.size(); ++tick) {
+                const auto& a = reference[tick];
+                const auto& b = path[tick];
+                if (a.mode != b.mode || a.landedThisTick != b.landedThisTick ||
+                    (a.position - b.position).lengthSquared() != 0.0F ||
+                    (a.velocity - b.velocity).lengthSquared() != 0.0F) {
+                    std::cerr << "First divergent slide replay tick " << tick << " at " << hz << " Hz\n";
+                    expect(false, "30/60/144 Hz agree on each sprint, slide, jump and landing tick");
+                    break;
+                }
+            }
+        }
+    }
+}
+
 void testWallRunContactAndWallJumpReplay() {
     nemisis::movement::MovementSystem movement;
     nemisis::movement::PlayerMovementState state{};
@@ -358,6 +539,96 @@ void testWallRunContactGraceReplay() {
     command.jumpPressed = true;
     state = movement.simulate(state, command, dt);
     expect(state.wallRunDetachCooldownRemaining > 0.05F, "wall jump starts detach cooldown to prevent instant reattach jitter");
+}
+
+void testWallRunOnMirroredPanels() {
+    using namespace nemisis::movement;
+    using namespace novacore::physics;
+    MovementSystem movement;
+    constexpr float dt = 1.0F / 60.0F;
+    for (float wallSide : {-1.0F, 1.0F}) {
+        PhysicsWorld world;
+        world.addStaticCollider({"panel", SurfaceKind::WallRun, {wallSide, 2.0F, 0.0F}, {0.18F, 2.0F, 4.0F}});
+        auto tick = [&](PlayerMovementState state, const nemisis::player::PlayerInputCommand& command) {
+            CharacterSweepQuery query{};
+            query.startPosition = state.position;
+            state = movement.simulate(state, command, dt);
+            query.desiredDisplacement = state.position - query.startPosition;
+            query.wallProbeDistance = movement.tuning().wallRunProbeDistance;
+            query.enableStepUp = false;
+            query.enableGroundSnap = false;
+            const auto resolved = world.sweepCharacter(query).resolve;
+            state.position = resolved.position;
+            return movement.applyWallRunContact(state, command,
+                {resolved.nearWallRunSurface, resolved.wallNormal, resolved.wallTangent}, dt);
+        };
+
+        PlayerMovementState start{};
+        start.mode = MovementMode::Airborne;
+        start.position = {wallSide * 0.4F, 2.0F, 0.0F};
+        start.velocity = {wallSide * 7.0F, -2.0F, 0.0F};
+        nemisis::player::PlayerInputCommand command{};
+        auto frontal = tick(start, command);
+        expect(frontal.mode == MovementMode::Airborne, "head-on panel impact cannot start a wallrun");
+        expectNear(frontal.velocity.z, 0.0F, 0.0001F, "head-on impact adds no arbitrary sideways speed");
+
+        auto distant = start;
+        distant.position.x = 0.0F; // The capsule surface is 0.40 m away from the panel.
+        distant.velocity = {0.0F, -2.0F, 6.0F};
+        expect(tick(distant, command).mode == MovementMode::Airborne, "running through open air beside a panel cannot attach");
+
+        for (float travel : {-1.0F, 1.0F}) {
+            start.velocity = {0.0F, -2.0F, travel * 5.0F};
+            command = {};
+            auto run = tick(start, command);
+            expect(run.mode == MovementMode::WallRunning, "parallel momentum catches either panel");
+            // Hold toward the panel and slightly back, as a player can while looking across it.
+            command.move = {wallSide, -travel * 0.05F};
+            const auto next = tick(run, command);
+            expectNear((next.velocity.z - run.velocity.z) * travel, movement.tuning().wallRunAcceleration * dt,
+                       0.0001F, "sustained contact accelerates once along the incoming direction per tick");
+            expectNear(next.velocity.y - run.velocity.y, movement.tuning().wallRunVerticalAcceleration * dt,
+                       0.0001F, "sustained contact applies vertical acceleration once per tick");
+            command.jumpPressed = true;
+            const auto jump = tick(next, command);
+            expect(jump.mode == MovementMode::Airborne && !jump.hasWallRunContact,
+                   "wall jump detaches even while the panel is still in probe range");
+            expect(jump.velocity.x * wallSide < -4.0F && jump.velocity.z * travel > 4.0F,
+                   "wall jump travels away from either panel and preserves the run direction");
+        }
+
+        int referenceLanding = -1;
+        novacore::math::Vec3 referenceEnd{};
+        for (const int frameHz : {30, 60, 144}) {
+            novacore::core::FixedStepAccumulator clock({60.0, 0.25});
+            auto state = start;
+            int landingTick = -1;
+            while (clock.consumedSteps() < 90) {
+                clock.advance(1.0 / frameHz);
+                while (clock.shouldStep() && clock.consumedSteps() < 90) {
+                    command = {};
+                    command.tick = clock.consumedSteps();
+                    command.jumpPressed = command.tick == 12;
+                    state = tick(state, command);
+                    if (command.jumpPressed) {
+                        expect(state.tech.wallJumpDetachTriggered, "jump command detaches on tick 12 at every render rate");
+                    }
+                    if (state.landedThisTick) {
+                        landingTick = static_cast<int>(command.tick);
+                    }
+                    clock.consumeStep();
+                }
+            }
+            expect(landingTick > 12, "wall jump lands during the replay");
+            if (frameHz == 30) {
+                referenceLanding = landingTick;
+                referenceEnd = state.position;
+            } else {
+                expect(landingTick == referenceLanding && (state.position - referenceEnd).lengthSquared() == 0.0F,
+                       "30/60/144 Hz produce the same landing tick and position");
+            }
+        }
+    }
 }
 
 void testMantleCandidateReplay() {
@@ -597,14 +868,18 @@ int main() {
     testJumpDoubleJumpReplay();
     testSecondSpacePressUsesAirJumpNotCoyoteGroundJump();
     testBufferedDoubleJumpSurvivesCoyoteWindow();
+    testThrownHoloStepReplay();
     testCoyoteJumpReplay();
     testJumpBufferReplay();
     testLandingConsumesBufferedJumpImmediately();
     testDashCooldownReplay();
     testSlideDurationAndSlideJumpReplay();
     testSlideBufferMakesSprintSlideReliable();
+    testSlideSteeringAndBraking();
+    testSprintSlideJumpAcrossFrameRates();
     testWallRunContactAndWallJumpReplay();
     testWallRunContactGraceReplay();
+    testWallRunOnMirroredPanels();
     testMantleCandidateReplay();
     testCrouchTransitionReplay();
     testAirControlPreservesMomentumReplay();

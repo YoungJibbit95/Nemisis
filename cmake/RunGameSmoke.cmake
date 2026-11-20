@@ -5,12 +5,17 @@ if(NOT REQUIRE_VULKAN)
     list(PREPEND smoke_arguments --no-vulkan)
 endif()
 
+if(REQUIRE_DEPLOYMENT)
+    set(smoke_timeout 220)
+else()
+    set(smoke_timeout 110)
+endif()
 execute_process(
     COMMAND "${GAME_EXECUTABLE}" ${smoke_arguments}
     RESULT_VARIABLE smoke_result
     OUTPUT_VARIABLE smoke_output
     ERROR_VARIABLE smoke_error
-    TIMEOUT 110
+    TIMEOUT ${smoke_timeout}
 )
 string(CONCAT smoke_output "${smoke_output}" "${smoke_error}")
 message("${smoke_output}")
@@ -25,8 +30,24 @@ endif()
 if(smoke_output MATCHES "Initial config load failed|Dev asset binding failed|Dev mesh resource missing|Dev mesh resource registration failed")
     message(FATAL_ERROR "Game smoke reported missing or invalid runtime data")
 endif()
+if(REQUIRE_DEPLOYMENT AND NOT smoke_output MATCHES
+    "Deployment smoke complete: loading_frames=[1-9][0-9]* worker_frames=([2-9]|[1-9][0-9]+) cancelled=1 range_only_deferred=1 switched=1 returned=1 map=outer_facility")
+    message(FATAL_ERROR "Deployment smoke requires rendered worker frames, cancellation and both map transitions")
+endif()
 if(REQUIRE_VULKAN AND NOT smoke_output MATCHES "Vulkan backend active:")
     message(FATAL_ERROR "Graphics smoke requires an active Vulkan backend; headless/null fallback is not graphics validation")
+endif()
+
+list(FIND smoke_arguments "--menu-flow-smoke-test" menu_flow_index)
+if(NOT menu_flow_index EQUAL -1)
+    foreach(expected IN ITEMS "start_screen=menu lock_dev_range=false" "main_menu/settings"
+            "Map resources ready: outer_facility" "Map resources ready: firing_range"
+            "Entered playable map: outer_facility_01" "Entered playable map: dev_range_greybox_01" "main_menu/return")
+        string(FIND "${smoke_output}" "${expected}" marker)
+        if(marker EQUAL -1)
+            message(FATAL_ERROR "Menu flow did not reach ${expected}")
+        endif()
+    endforeach()
 endif()
 
 if(REQUIRE_PHYSICS_PROPS AND NOT smoke_output MATCHES "Dev Range rigid-body fixture: ticks=[1-9][0-9]* dynamic_props=6")
@@ -43,6 +64,9 @@ if(REQUIRE_HAND_IK)
 endif()
 
 if(REQUIRE_PROJECT_FPS)
+    if(smoke_output MATCHES "Skeletal asset ready: id=chr_project_male1 ")
+        message(FATAL_ERROR "Project preview initialized an unused second full-body animator")
+    endif()
     if(NOT smoke_output MATCHES "Project FPS preview loaded: body=chr_project_male1_fp_body_preview arms=chr_project_male1_fp_arms_preview vertices=50068")
         message(FATAL_ERROR "Preview did not load the actual Project subsets")
     endif()
@@ -52,6 +76,13 @@ if(REQUIRE_PROJECT_FPS)
     if(NOT CMAKE_MATCH_1 STREQUAL CMAKE_MATCH_2 OR NOT CMAKE_MATCH_2 STREQUAL CMAKE_MATCH_3 OR
        NOT CMAKE_MATCH_3 STREQUAL CMAKE_MATCH_4 OR NOT CMAKE_MATCH_4 STREQUAL CMAKE_MATCH_5 OR
        NOT CMAKE_MATCH_5 STREQUAL CMAKE_MATCH_6)
-        message(FATAL_ERROR "Preview must sample/skin/update each visible subset once per fixed tick")
+        message(FATAL_ERROR "Each visible pose must be sampled, skinned and uploaded once per subset")
+    endif()
+    set(sampled_poses "${CMAKE_MATCH_1}")
+    if(NOT smoke_output MATCHES "logical_pose_owners=1 rendered_frames=([1-9][0-9]*)")
+        message(FATAL_ERROR "Preview did not report its rendered frame count")
+    endif()
+    if(sampled_poses GREATER CMAKE_MATCH_1)
+        message(FATAL_ERROR "Catch-up ticks generated more skinned poses than rendered frames")
     endif()
 endif()

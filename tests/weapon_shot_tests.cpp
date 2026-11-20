@@ -104,6 +104,26 @@ void testRuntimeRecoilOverridesFallback() {
     expectNear(trace.recoilYawDegrees, -0.6F, 0.0001F, "runtime yaw recoil is preserved");
 }
 
+void testSpreadAndRecoilRotateWithTheView() {
+    const auto weapon = testWeapon();
+    nemisis::weapons::ShotTraceRequest request{};
+    request.seed = 71;
+    request.recoilPitchDegrees = 3.0F;
+    request.recoilYawDegrees = 5.0F;
+    request.forward = {0.0F, 0.6F, 0.8F};
+    const auto first = nemisis::weapons::buildShotTrace(weapon, request).direction;
+    request.forward = {0.8F, 0.6F, 0.0F};
+    const auto turned = nemisis::weapons::buildShotTrace(weapon, request).direction;
+    expectNear(turned.x, first.z, 0.00001F, "turning ninety degrees rotates the horizontal shot cone");
+    expectNear(turned.y, first.y, 0.00001F, "turning preserves pitch spread");
+    expectNear(turned.z, -first.x, 0.00001F, "sideways recoil follows the sight at every heading");
+    for (float pitch : {-1.0F, 1.0F}) {
+        request.forward = {0.0F, pitch, 0.0F};
+        const auto vertical = nemisis::weapons::buildShotTrace(weapon, request).direction;
+        expectNear(vertical.lengthSquared(), 1.0F, 0.00001F, "vertical sightlines keep a finite shot cone");
+    }
+}
+
 void testDirectionIsNormalized() {
     const auto weapon = testWeapon();
     nemisis::weapons::ShotTraceRequest request{};
@@ -124,6 +144,7 @@ int main() {
     testAdsHasLessSpreadThanHipFire();
     testMovementAndAirborneIncreaseSpread();
     testRuntimeRecoilOverridesFallback();
+    testSpreadAndRecoilRotateWithTheView();
     testDirectionIsNormalized();
 
     if (failures > 0) {

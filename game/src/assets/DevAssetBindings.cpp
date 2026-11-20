@@ -13,6 +13,9 @@ namespace nemisis::assets {
 namespace {
 
 constexpr RequiredDevAssetIds kRequiredDevAssets{
+    "map_facility_grove_01",
+    "map_facility_trim_01",
+    "prop_range_foliage_01",
     "prop_target_dummy_01",
     "wpn_ar_01",
     "wpn_smg_01",
@@ -49,6 +52,18 @@ constexpr RequiredDevAssetIds kRequiredDevAssets{
     "wpn_project_sidearm_glock19",
     "wpn_project_sidearm_p320",
     "env_project_skybox1",
+};
+
+// Facility world, target and sky fallback, physics crate, all four selectable
+// viewmodels plus their fallback assets, and the A1 first-person arms. Cooked
+// Project FPS / Rifle Ready preview assets are mounted separately.
+constexpr std::array<std::string_view, 17> kOuterFacilityAssets{
+    "map_facility_grove_01", "map_facility_trim_01", "prop_range_foliage_01",
+    "chr_project_male1", "chr_dev_soldier_a", "prop_target_dummy_01", "map_target_stand_01",
+    "map_a2_cover_crate_01", "chr_a1_fp_arms_01",
+    "wpn_project_rifle_m4a1", "wpn_project_smg_fr17", "wpn_project_rifle_ncar",
+    "wpn_project_sidearm_glock19", "wpn_a2_modular_rifle_01", "wpn_a2_blackout_carbine_01",
+    "wpn_a2_striker_sidearm_01", "env_project_skybox1",
 };
 
 [[nodiscard]] std::filesystem::path resolveRuntimeAssetPath(
@@ -94,6 +109,36 @@ void appendErrors(
 
 const RequiredDevAssetIds& requiredDevSandboxRenderableAssetIds() {
     return kRequiredDevAssets;
+}
+
+std::span<const std::string_view> outerFacilityRenderableAssetIds() {
+    return kOuterFacilityAssets;
+}
+
+void DevAssetBindingSummary::include(const DevAssetBindingSummary& batch) {
+    if (this == &batch) {
+        const auto copy = batch;
+        include(copy);
+        return;
+    }
+    requiredAssetCount += batch.requiredAssetCount;
+    renderableAssetCount += batch.renderableAssetCount;
+    metadataAssetCount += batch.metadataAssetCount;
+    importedAssetCount += batch.importedAssetCount;
+    totalMeshCount += batch.totalMeshCount;
+    totalNodeCount += batch.totalNodeCount;
+    totalMaterialCount += batch.totalMaterialCount;
+    skinnedAssetCount += batch.skinnedAssetCount;
+    animatedAssetCount += batch.animatedAssetCount;
+    totalSkinCount += batch.totalSkinCount;
+    totalAnimationCount += batch.totalAnimationCount;
+    extractedAssetCount += batch.extractedAssetCount;
+    totalPrimitiveCount += batch.totalPrimitiveCount;
+    totalVertexCount += batch.totalVertexCount;
+    totalIndexCount += batch.totalIndexCount;
+    totalBinaryBytes += batch.totalBinaryBytes;
+    missingAssetCount += batch.missingAssetCount;
+    errors.insert(errors.end(), batch.errors.begin(), batch.errors.end());
 }
 
 void DevAssetBindings::clear() {
@@ -156,6 +201,17 @@ DevAssetBindingSummary DevAssetBindings::bindAssets(
             continue;
         }
 
+        if (assetId == "env_test_arena_kit_01") {
+            // Collision proxies are authored in this GLB for tooling. The
+            // playable greybox supplies its own collision; never render these.
+            std::erase_if(meshData.primitives, [&meshData](const auto& primitive) {
+                const auto node = std::ranges::find_if(meshData.nodes, [&](const auto& value) {
+                    return primitive.nodeIndex >= 0 && value.nodeIndex == static_cast<std::size_t>(primitive.nodeIndex);
+                });
+                return node != meshData.nodes.end() && node->name.starts_with("col_");
+            });
+        }
+
         if (assetId == "chr_a1_fp_arms_01") {
             // These two authored nodes are a placement guide and an alternate
             // blockout LOD, not part of the visible skinned arms. Keep their
@@ -202,6 +258,17 @@ DevAssetBindingSummary DevAssetBindings::bindAssets(
 
     summary.renderableAssetCount = meshes_.meshCount() - initialMeshCount;
     return summary;
+}
+
+DevAssetBindingSummary DevAssetBindings::bindMissingAssets(
+    const GameAssetCatalog& catalog,
+    std::span<const std::string_view> assetIds,
+    const std::filesystem::path& runtimeRoot) {
+    std::vector<std::string_view> missing;
+    for (const auto id : assetIds) {
+        if (!meshes_.contains(id) && std::ranges::find(missing, id) == missing.end()) missing.push_back(id);
+    }
+    return bindAssets(catalog, missing, runtimeRoot, true);
 }
 
 const novacore::render::MeshCatalog& DevAssetBindings::meshCatalog() const {

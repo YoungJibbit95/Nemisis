@@ -1,4 +1,5 @@
 #include "nemisis/GameApp.hpp"
+#include "nemisis/dev/OuterFacility.hpp"
 
 #include "nemisis/dev/DebugTarget.hpp"
 #include "nemisis/dev/GreyboxCollision.hpp"
@@ -20,6 +21,7 @@
 #include <cmath>
 #include <cstdint>
 #include <limits>
+#include <iostream>
 #include <string>
 #include <string_view>
 #include <stdexcept>
@@ -29,6 +31,22 @@ namespace nemisis::game {
 namespace {
 
 constexpr std::string_view kDefaultWeaponId = "ar_01";
+
+// Deterministic input for the Outer Facility profile. It uses the same command,
+// movement, weapon, and collision paths as a player starting at the south gate.
+[[nodiscard]] player::PlayerInputCommand facilityProfileCommand(std::uint64_t tick) {
+    player::PlayerInputCommand command{};
+    command.tick = tick;
+    command.move.y = tick < 210 ? 1.0F : 0.0F;
+    command.sprintHeld = tick < 90;
+    command.slidePressed = tick == 90;
+    command.slideHeld = tick >= 90 && tick < 116;
+    command.jumpPressed = tick == 116;
+    command.adsHeld = tick >= 175;
+    command.fireHeld = tick >= 200 && tick % 60 < 19;
+    command.reloadPressed = tick == 400;
+    return command;
+}
 
 struct DevRangeWeaponPickup final {
     std::string_view weaponId;
@@ -139,13 +157,30 @@ struct DevRangeWeaponPickup final {
 } // namespace
 
 GameApp::GameApp(GameAppOptions options)
-    : options_(options) {}
+    : options_(options), menu_(!options.fullGame) {}
+
+GameApp::~GameApp() {
+    stopAssetImport();
+}
+
+void GameApp::stopAssetImport() {
+    if (assetImportThread_.joinable()) {
+        assetImportThread_.request_stop();
+        assetImportThread_.join();
+    }
+}
 
 void GameApp::onStartup() {
     actions_ = input::createDefaultActionMap();
     attachmentRegistry_.registerPrototypeAttachments();
     activeLoadout_ = weapons::defaultPrototypeLoadout(std::string(kDefaultWeaponId));
-    if (options_.autoEnterDevRange) {
+    if (options_.runDeploymentSmoke) {
+        menu_.showLoadingScreen(ui::GameScreen::DevRange);
+    } else if (options_.startInFacility) {
+        menu_.showOuterFacility();
+        greyboxWorld_ = dev::createOuterFacilityWorld();
+        targetRange_ = dev::makeOuterFacilityTargets();
+    } else if (options_.autoEnterDevRange) {
         menu_.showDevRange();
     }
 
@@ -167,10 +202,8 @@ void GameApp::onStartup() {
         if (options_.firstPersonHandIK && !options_.projectRifleReady) {
             throw std::runtime_error("Project hand IK requires authored palm frames and a supported five-segment scale mapping");
         }
-        activeLoadout_ = weapons::defaultPrototypeLoadout(std::string(kDefaultWeaponId));
+        if (!options_.fullGame) { activeLoadout_ = weapons::defaultPrototypeLoadout(std::string(kDefaultWeaponId)); }
     }
-    loadAssetCatalog();
-
     novacore::platform::WindowDesc windowDesc{};
     windowDesc.title = menu_.title();
     windowDesc.width = options_.uiShowcase ? options_.uiPreviewWidth : 1280;
@@ -183,16 +216,10 @@ void GameApp::onStartup() {
     rendererInfo.preferVulkan = options_.preferVulkanRenderer;
     rendererInfo.requireVulkan = options_.requireVulkanRenderer;
     renderer_.create(window_, rendererInfo);
-    registerDevMeshResources();
-    if (options_.physicsProps) {
-        physicsProps_ = std::make_unique<dev::DevRangeRigidBodies>();
-        physicsProps_->reset(greyboxWorld_);
-        const auto* crate = devAssetBindings_.meshCatalog().findByAssetId("map_a2_cover_crate_01");
-        const auto handle = devMeshResources_.find("map_a2_cover_crate_01");
-        if (!crate || !crate->meshData || handle == devMeshResources_.end()) {
-            throw std::runtime_error("Physics fixture requires the registered Dev Range crate asset");
-        }
-        physicsProps_->setVisual(handle->second, *crate->meshData);
+    if (!options_.fullGame || menu_.gameplayActive()) {
+        loadPlayableResources(menu_.screen());
+        if (physicsProps_) { physicsProps_->reset(greyboxWorld_); }
+        else { staticCollision_ = dev::buildGreyboxPhysicsWorld(greyboxWorld_); }
     }
 #if NEMISIS_HAS_RMLUI
     if (options_.uiShowcase) {
@@ -227,7 +254,7 @@ void GameApp::onStartup() {
         "Launch profile: renderer=" +
             std::string(options_.preferVulkanRenderer ? "vulkan" : "sdl-debug") +
             " require_vulkan=" + std::string(options_.requireVulkanRenderer ? "true" : "false") +
-            " start_screen=" + std::string(options_.autoEnterDevRange ? "dev_range" : "menu") +
+            " start_screen=" + std::string(options_.startInFacility ? "outer_facility" : options_.autoEnterDevRange ? "dev_range" : "menu") +
             " lock_dev_range=" + std::string(options_.lockDevRange ? "true" : "false"));
 
     if (window_.isHeadless()) {
@@ -236,6 +263,19 @@ void GameApp::onStartup() {
 }
 
 void GameApp::onShutdown() {
+    stopAssetImport();
+    if (options_.profileRange && options_.startInFacility) {
+        if (const auto* player = world_.getComponent<movement::PlayerMovementState>(localPlayerEntity_)) {
+            novacore::core::logInfo("game", "Facility profile route: forward_meters=" +
+                std::to_string(player->position.z - greyboxWorld_.playerSpawn.z) + " shots=" +
+                std::to_string(devRangeSession_.score.shotsFired) + " hits=" + std::to_string(devRangeSession_.score.shotsHit) +
+                " weapon=" + activeLoadout_.weaponId);
+            const auto& alternate = alternateArmsAnimator_.stats();
+            novacore::core::logInfo("game", "Alternate weapon hand IK: applied=" + std::to_string(alternate.constrainedFrameCount) +
+                " invalid=" + std::to_string(alternate.invalidHandFrameCount) +
+                " unreachable=" + std::to_string(alternate.unreachableHandFrameCount));
+        }
+    }
     if (options_.projectFPSPreview) {
         const auto& body = skeletalArmsAnimator_.stats();
         const auto& arms = skeletalArmsAnimator_.stats();
@@ -244,7 +284,7 @@ void GameApp::onShutdown() {
             " arms_samples=" + std::to_string(arms.sampledFrameCount) + " arms_skins=" + std::to_string(arms.skinnedFrameCount) +
             " arms_updates=" + std::to_string(armVertexUpdateCount_) + " world_updates=" + std::to_string(worldBodyVertexUpdateCount_) +
             " submitted_body=" + std::to_string(projectFPSBodySubmitted_) + " submitted_arms=" + std::to_string(projectFPSArmsSubmitted_) +
-            " logical_pose_owners=1");
+            " logical_pose_owners=1 rendered_frames=" + std::to_string(projectFPSRenderFrames_));
     }
     if (options_.firstPersonHandIK) {
         const auto& stats = skeletalArmsAnimator_.stats();
@@ -300,6 +340,9 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
 
     auto command = input::buildPlayerInputCommand(actions_, context.tickIndex, settings_);
     gameplayInputBuffer_.consumeInto(command);
+    if (options_.profileRange && options_.startInFacility) {
+        command = facilityProfileCommand(context.tickIndex);
+    }
     (void)localCommandQueue_.push(command);
 
     player::PlayerId playerId = 1;
@@ -323,16 +366,17 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
     dev::GreyboxCollisionResult collisionSample{};
     if (movementState != nullptr) {
         const auto previousMovementPosition = movementState->position;
-        *movementState = movement_.simulate(*movementState, movementCommand, static_cast<float>(context.fixedDeltaSeconds));
-        const auto mantleForward = view != nullptr
+        const auto viewForward = view != nullptr
             ? player::viewVectors(*view).forward
             : novacore::math::Vec3{0.0F, 0.0F, 1.0F};
+        *movementState = movement_.simulate(*movementState, movementCommand,
+            static_cast<float>(context.fixedDeltaSeconds), viewForward);
         dev::GreyboxCollisionQuery collisionQuery{};
         collisionQuery.position = movementState->position;
         collisionQuery.previousPosition = previousMovementPosition;
         collisionQuery.radius = 0.42F;
         collisionQuery.height = 1.80F;
-        collisionQuery.mantleForward = mantleForward;
+        collisionQuery.mantleForward = viewForward;
         collisionQuery.mantleMaxDistance = movement_.tuning().mantleMaxRange;
         collisionQuery.mantleMinHeight = collisionQuery.maxStepHeight + 0.02F;
         collisionQuery.mantleMaxHeight = movement_.tuning().mantleMaxHeight;
@@ -346,9 +390,8 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
             movementState->mode == movement::MovementMode::Grounded ||
             movementState->mode == movement::MovementMode::Sliding ||
             movementState->mode == movement::MovementMode::Dashing;
-        collisionSample = physicsProps_
-            ? dev::resolveGreyboxPlayerCollision(greyboxWorld_, physicsProps_->collisionWorld(), collisionQuery)
-            : dev::resolveGreyboxPlayerCollision(greyboxWorld_, collisionQuery);
+        const auto& collisionWorld = physicsProps_ ? physicsProps_->collisionWorld() : staticCollision_;
+        collisionSample = dev::resolveGreyboxPlayerCollision(greyboxWorld_, collisionWorld, collisionQuery);
         const bool mantleActivationWindow =
             movementState->mode == movement::MovementMode::Airborne &&
             movementState->velocity.y <= movement_.tuning().jumpVelocity * 0.50F;
@@ -356,7 +399,7 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
                 movementCommand.mantleHeld ||
                 movementCommand.jumpPressed ||
                 movementCommand.jumpHeld) &&
-            collisionSample.mantleCandidate &&
+            !collisionSample.ceilingHit && collisionSample.mantleCandidate &&
             mantleActivationWindow) {
             *movementState = movement_.applyMantleCandidate(
                 *movementState,
@@ -372,45 +415,31 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
             collisionQuery.useSweep = false;
             collisionQuery.enableGroundSnap = false;
             collisionQuery.enableStepUp = false;
-            collisionSample = physicsProps_
-                ? dev::resolveGreyboxPlayerCollision(greyboxWorld_, physicsProps_->collisionWorld(), collisionQuery)
-                : dev::resolveGreyboxPlayerCollision(greyboxWorld_, collisionQuery);
+            collisionSample = dev::resolveGreyboxPlayerCollision(greyboxWorld_, collisionWorld, collisionQuery);
             collisionSample.position = movementState->position;
         }
         const bool activeMantleInterpolation =
             movementState->mode == movement::MovementMode::Mantling &&
             movementState->mantleTimeRemaining > 0.0F;
-        const bool wallRunStateReady =
-            movementState->mode == movement::MovementMode::Airborne ||
-            movementState->mode == movement::MovementMode::WallRunning ||
-            movementState->mode == movement::MovementMode::Dashing;
-        const bool wallRunCandidate = collisionSample.nearWallRunSurface &&
-            wallRunStateReady &&
-            movementState->position.y >= movement_.tuning().wallRunMinHeight;
-        if (collisionSample.blocked && !wallRunCandidate && !activeMantleInterpolation) {
-            if (std::abs(collisionSample.correction.x) > 0.0001F) {
-                movementState->velocity.x = 0.0F;
-            }
-            if (std::abs(collisionSample.correction.z) > 0.0001F) {
-                movementState->velocity.z = 0.0F;
-            }
-            if (collisionSample.sweepHit) {
-                if (std::abs(collisionSample.sweepNormal.x) > 0.50F) {
-                    movementState->velocity.x = 0.0F;
-                }
-                if (std::abs(collisionSample.sweepNormal.z) > 0.50F) {
-                    movementState->velocity.z = 0.0F;
-                }
-            }
+        const bool stableGroundContact = acceptsStableGroundContact(*movementState, movementCommand, collisionSample);
+        if (!activeMantleInterpolation) {
+            movementState->position = collisionSample.position;
+            *movementState = movement_.applyWallRunContact(
+                *movementState, movementCommand,
+                {collisionSample.nearWallRunSurface && !stableGroundContact,
+                    collisionSample.wallNormal, collisionSample.wallTangent},
+                static_cast<float>(context.fixedDeltaSeconds));
+        } else {
+            collisionSample.position = movementState->position;
         }
-        const bool stableGroundContact = acceptsStableGroundContact(
-            *movementState,
-            movementCommand,
-            collisionSample);
+        const bool wallRunning = movementState->mode == movement::MovementMode::WallRunning;
+        if (!activeMantleInterpolation) {
+            movementState->velocity = dev::clipGreyboxVelocity(movementState->velocity, collisionSample, wallRunning);
+        }
         if (stableGroundContact && movementState->velocity.y < 0.0F && !activeMantleInterpolation) {
             movementState->velocity.y = 0.0F;
         }
-        if (stableGroundContact && !wallRunCandidate && !activeMantleInterpolation) {
+        if (stableGroundContact && !wallRunning && !activeMantleInterpolation) {
             movementState->groundJumpAvailable = true;
             movementState->hasDoubleJump = true;
             movementState->coyoteTimeRemaining = movement_.tuning().coyoteTimeSeconds;
@@ -422,26 +451,12 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
                 movementState->wallRunTimeRemaining = 0.0F;
                 movementState->hasWallRunContact = false;
             }
-        } else if (!wallRunCandidate &&
+        } else if (!wallRunning &&
             (movementState->mode == movement::MovementMode::Grounded ||
                 movementState->mode == movement::MovementMode::Sliding ||
                 movementState->mode == movement::MovementMode::Dashing)) {
             movementState->mode = movement::MovementMode::Airborne;
             movementState->groundedTimeSeconds = 0.0F;
-        }
-        if (!activeMantleInterpolation) {
-            movementState->position = collisionSample.position;
-            *movementState = movement_.applyWallRunContact(
-                *movementState,
-                movementCommand,
-                movement::WallRunContact{
-                    wallRunCandidate,
-                    collisionSample.wallNormal,
-                    collisionSample.wallTangent,
-                },
-                static_cast<float>(context.fixedDeltaSeconds));
-        } else {
-            collisionSample.position = movementState->position;
         }
         if (auto* transform = world_.getComponent<novacore::ecs::TransformComponent>(localPlayerEntity_);
             transform != nullptr) {
@@ -486,7 +501,7 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
             fireResult = weapons::simulateWeaponTick(weapon, *weaponState, fireRequest);
             if (fireResult.fired && movementState != nullptr) {
                 weapons::ShotTraceRequest shotRequest{};
-                shotRequest.origin = movementState->position + novacore::math::Vec3{0.0F, 1.65F, 0.0F};
+                shotRequest.origin = player::gameplayEyePosition(movementState->position, movementState->mode, command.crouchHeld);
                 if (view != nullptr) {
                     shotRequest.forward = player::viewVectors(*view).forward;
                 } else {
@@ -510,10 +525,17 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
     dev::DebugTargetHitResult targetHit{};
     dev::DevTargetRangeHitResult targetRangeHit{};
     if (hasShotTrace) {
+        dev::ensureDevTargetRange(targetRange_);
+        auto contact = dev::traceDevRangeShot(targetRange_, shotTrace, greyboxWorld_.primitives);
         if (physicsProps_) {
-            (void)physicsProps_->impact(shotTrace.origin, shotTrace.direction * shotTrace.rangeMeters);
+            (void)physicsProps_->impact(shotTrace.origin, shotTrace.direction * contact.distanceMeters);
+            if (const auto& hit = physicsProps_->lastImpact(); hit) {
+                contact.distanceMeters *= hit->fraction;
+                contact.targetLane.reset();
+            }
         }
-        targetRangeHit = dev::applyShotToDevTargetRange(targetRange_, shotTrace);
+        targetRangeHit = dev::applyShotToDevTargetRange(targetRange_, shotTrace, contact);
+        shotTrace.rangeMeters = contact.distanceMeters;
         targetHit = targetRangeHit.targetHit;
     }
     dev::DevRangeShotScoreContext shotScoreContext{};
@@ -539,7 +561,7 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
     if (targetRangeHit.hit && !targetRangeHit.laneName.empty() && !devRangeSession_.eventText.empty()) {
         devRangeSession_.eventText += "  " + targetRangeHit.laneName;
     }
-    if (targetHit.eliminated) {
+    if (targetHit.eliminated && menu_.screen() == ui::GameScreen::DevRange) {
         dev::beginTargetRespawn(devRangeSession_, devRangeTuning_);
         dev::beginTargetLaneRespawn(targetRange_, targetRangeHit.laneIndex, devRangeTuning_.targetRespawnDelaySeconds);
     }
@@ -658,87 +680,7 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
             });
         hasCharacterAnimationFrame_ = true;
 
-        const float animationDelta = static_cast<float>(context.fixedDeltaSeconds);
-        auto armsAnimationFrame = latestCharacterAnimationFrame_;
-        if (options_.projectFPSPreview) {
-            armsAnimationFrame.upperBodyAlpha = 0.0F;
-            const auto fpsBody = devMeshResources_.find(std::string(dev::kProjectFPSBodyResourceId));
-            if (fpsBody == devMeshResources_.end()) {
-                throw std::runtime_error("Project FPS body resource is unavailable");
-            }
-            if (!skeletalArmsAnimator_.samplePose(armsAnimationFrame, animationDelta)) {
-                const auto& errors = skeletalArmsAnimator_.errors();
-                throw std::runtime_error("Project FPS body pose failed: " +
-                    (errors.empty() ? std::string("no animator diagnostic") : errors.back()));
-            }
-            novacore::animation::Mat4 eye;
-            if (!skeletalArmsAnimator_.socketTransform("socket_fps_eye", eye)) {
-                throw std::runtime_error("Project FPS animated eye attachment is unavailable");
-            }
-            const auto bodyWorld = player::firstPersonAttachmentMatrix(dev::projectFPSPlayerAttachment(currentPlayerRenderState()));
-            cameraRig_.position = novacore::animation::transformPoint(bodyWorld, novacore::animation::matrixTranslation(eye));
-            if (auto* cameraTransform = world_.getComponent<novacore::ecs::TransformComponent>(cameraEntity_); cameraTransform != nullptr) {
-                cameraTransform->position = cameraRig_.position;
-            }
-        }
-
-        // Camera and procedural animation are fixed-tick presentation inputs.
-        // Evaluate final cooked weapon/grips once, before arm skinning/upload.
-        dev::DevRangeRenderSceneDesc presentationDesc{};
-        presentationDesc.player = currentPlayerRenderState();
-        presentationDesc.meshResources = &devMeshResources_;
-        presentationDesc.meshCatalog = &devAssetBindings_.meshCatalog();
-        presentationDesc.useHandConstraints = options_.firstPersonHandIK;
-        presentationDesc.projectFPSPreview = options_.projectFPSPreview;
-        presentationDesc.projectRifleReady = options_.projectRifleReady;
-        firstPersonPresentation_ = dev::evaluateFirstPersonPresentation(presentationDesc);
-
-        const auto bodyMesh = devMeshResources_.find(std::string(dev::kLocalPlayerBodyResourceId));
-        // Until an authored FPS body mask exists, this full body is visible only
-        // outside the camera rig. Avoid skinning/uploading 78k hidden vertices.
-        if (!cameraRig_.initialized && bodyMesh != devMeshResources_.end() &&
-            skeletalBodyAnimator_.update(latestCharacterAnimationFrame_, animationDelta)) {
-            if (const auto* skinnedMesh = skeletalBodyAnimator_.skinnedMesh(); skinnedMesh != nullptr) {
-                if (renderer_.updateMeshResourceVertices(bodyMesh->second, *skinnedMesh)) { ++worldBodyVertexUpdateCount_; }
-            }
-        }
-
-        if (!options_.projectFPSPreview) {
-            armsAnimationFrame.locomotionClip = armsAnimationFrame.upperBodyClip == player::CharacterAnimationClip::Idle
-                ? player::CharacterAnimationClip::Idle : player::CharacterAnimationClip::Ads;
-        }
-        std::optional<player::PlayerHandTargets> handTargets;
-        if (options_.firstPersonHandIK && firstPersonPresentation_->rightGripWorld &&
-            firstPersonPresentation_->leftGripWorld) {
-            handTargets = player::PlayerHandTargets{
-                player::firstPersonAttachmentMatrix(firstPersonPresentation_->rig.arms),
-                *firstPersonPresentation_->rightGripWorld, *firstPersonPresentation_->leftGripWorld};
-        }
-        const auto armsMesh = devMeshResources_.find(std::string(options_.projectFPSPreview
-            ? dev::kProjectFPSArmsResourceId : "chr_a1_fp_arms_01"));
-        if (armsMesh != devMeshResources_.end() &&
-            (options_.projectFPSPreview
-                ? skeletalArmsAnimator_.skinPose(handTargets ? &*handTargets : nullptr)
-                : skeletalArmsAnimator_.update(armsAnimationFrame, animationDelta, handTargets ? &*handTargets : nullptr))) {
-            if (const auto* skinnedMesh = skeletalArmsAnimator_.skinnedMesh(); skinnedMesh != nullptr) {
-                if (renderer_.updateMeshResourceVertices(armsMesh->second, *skinnedMesh)) {
-                    ++armVertexUpdateCount_;
-                } else if (options_.projectFPSPreview) {
-                    throw std::runtime_error("Project FPS arms vertex update failed");
-                }
-            }
-        } else if (options_.projectFPSPreview) {
-            throw std::runtime_error("Project FPS arms pose/resource is unavailable");
-        }
-        if (options_.projectFPSPreview) {
-            const auto fpsBody = devMeshResources_.find(std::string(dev::kProjectFPSBodyResourceId));
-            const auto* mesh = skeletalArmsAnimator_.skinnedCompanion();
-            if (fpsBody == devMeshResources_.end() || !mesh ||
-                !renderer_.updateMeshResourceVertices(fpsBody->second, *mesh)) {
-                throw std::runtime_error("Project FPS body dynamic GPU vertex update failed");
-            }
-            ++fpsBodyVertexUpdateCount_;
-        }
+        pendingAnimationSeconds_ += static_cast<float>(context.fixedDeltaSeconds);
     }
 
     net::PredictionSnapshot predictionSnapshot{};
@@ -781,6 +723,19 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
     }
     const auto predictionStats = predictionHistory_.stats();
 
+    if (hasShotTrace) {
+        const float traceDistance = targetHit.hit && targetHit.distanceMeters > 0.0F
+            ? targetHit.distanceMeters
+            : std::min(std::max(0.0F, shotTrace.rangeMeters), 38.0F);
+        firstPersonShotFeedback_ = dev::FirstPersonShotFeedback{
+            weaponSample.weaponId, shotTrace.shotIndex,
+            shotTrace.origin + (shotTrace.direction * traceDistance), targetHit.hit, targetHit.eliminated};
+    } else if (fireResult.fired || (firstPersonShotFeedback_ &&
+                   (firstPersonShotFeedback_->weaponId != weaponSample.weaponId ||
+                    firstPersonShotFeedback_->shotIndex != weaponSample.shotIndex))) {
+        firstPersonShotFeedback_.reset();
+    }
+
     devSandbox_.recordTick(dev::DevSandboxSample{
         command.tick,
         command,
@@ -812,7 +767,96 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
     });
 }
 
+bool GameApp::usesProjectRig() const {
+    return options_.projectFPSPreview && (!options_.fullGame || activeLoadout_.weaponId == kDefaultWeaponId);
+}
+
+bool GameApp::usesFirstPersonHandConstraints() const {
+    return options_.firstPersonHandIK && (!options_.fullGame || usesProjectRig() ||
+        (activeLoadout_.weaponId == "smg_01" && devMeshResources_.contains("wpn_project_smg_fr17")));
+}
+
+void GameApp::updateVisiblePlayerPose(float animationDelta) {
+    const bool projectRig = usesProjectRig();
+    auto& animator = options_.projectFPSPreview && !projectRig ? alternateArmsAnimator_ : skeletalArmsAnimator_;
+    auto armsAnimationFrame = latestCharacterAnimationFrame_;
+    if (projectRig) {
+        armsAnimationFrame.upperBodyAlpha = 0.0F;
+        const auto* view = world_.getComponent<player::PlayerViewComponent>(localPlayerEntity_);
+        const player::ProjectRifleAim aim{
+            options_.projectRifleReady ? cameraRig_.adsAlpha : 0.0F,
+            cameraRig_.view.pitchDegrees + armsAnimationFrame.thirdPersonBodyPitchDegrees,
+            view != nullptr ? cameraRig_.view.yawDegrees - view->yawDegrees : 0.0F,
+        };
+        if (!skeletalArmsAnimator_.samplePose(armsAnimationFrame, animationDelta, aim)) {
+            const auto& errors = skeletalArmsAnimator_.errors();
+            throw std::runtime_error("Project FPS body pose failed: " +
+                (errors.empty() ? std::string("no animator diagnostic") : errors.back()));
+        }
+    }
+
+    // Resolve sockets from the new pose before the hand solve and vertex upload.
+    dev::DevRangeRenderSceneDesc presentationDesc{};
+    presentationDesc.player = currentPlayerRenderState();
+    presentationDesc.meshResources = &devMeshResources_;
+    presentationDesc.meshCatalog = &devAssetBindings_.meshCatalog();
+    presentationDesc.useHandConstraints = usesFirstPersonHandConstraints();
+    presentationDesc.projectFPSPreview = projectRig;
+    presentationDesc.projectRifleReady = options_.projectRifleReady && projectRig;
+    firstPersonPresentation_ = dev::evaluateFirstPersonPresentation(presentationDesc);
+
+    const auto bodyMesh = devMeshResources_.find(std::string(dev::kLocalPlayerBodyResourceId));
+    // Until an authored FPS body mask exists, this full body is visible only
+    // outside the camera rig. Avoid skinning/uploading 78k hidden vertices.
+    if (!cameraRig_.initialized && bodyMesh != devMeshResources_.end() &&
+        skeletalBodyAnimator_.update(latestCharacterAnimationFrame_, animationDelta)) {
+        if (const auto* skinnedMesh = skeletalBodyAnimator_.skinnedMesh(); skinnedMesh != nullptr) {
+            if (renderer_.updateMeshResourceVertices(bodyMesh->second, *skinnedMesh)) { ++worldBodyVertexUpdateCount_; }
+        }
+    }
+
+    if (!projectRig) {
+        armsAnimationFrame.locomotionClip = armsAnimationFrame.upperBodyClip == player::CharacterAnimationClip::Idle
+            ? player::CharacterAnimationClip::Idle : player::CharacterAnimationClip::Ads;
+    }
+    std::optional<player::PlayerHandTargets> handTargets;
+    if (presentationDesc.useHandConstraints && firstPersonPresentation_->rightGripWorld &&
+        firstPersonPresentation_->leftGripWorld) {
+        handTargets = player::PlayerHandTargets{
+            player::firstPersonAttachmentMatrix(firstPersonPresentation_->rig.arms),
+            *firstPersonPresentation_->rightGripWorld, *firstPersonPresentation_->leftGripWorld};
+    }
+    const auto armsMesh = devMeshResources_.find(std::string(projectRig
+        ? dev::kProjectFPSArmsResourceId : "chr_a1_fp_arms_01"));
+    if (armsMesh != devMeshResources_.end() &&
+        (projectRig
+            ? skeletalArmsAnimator_.skinPose(handTargets ? &*handTargets : nullptr)
+            : animator.update(armsAnimationFrame, animationDelta, handTargets ? &*handTargets : nullptr))) {
+        if (const auto* skinnedMesh = animator.skinnedMesh(); skinnedMesh != nullptr) {
+            if (renderer_.updateMeshResourceVertices(armsMesh->second, *skinnedMesh)) {
+                if (!options_.projectFPSPreview || projectRig) { ++armVertexUpdateCount_; }
+            } else if (projectRig) {
+                throw std::runtime_error("Project FPS arms vertex update failed");
+            }
+        }
+    } else if (projectRig) {
+        throw std::runtime_error("Project FPS arms pose/resource is unavailable");
+    }
+    if (projectRig) {
+        const auto fpsBody = devMeshResources_.find(std::string(dev::kProjectFPSBodyResourceId));
+        const auto* mesh = skeletalArmsAnimator_.skinnedCompanion();
+        if (fpsBody == devMeshResources_.end() || !mesh ||
+            !renderer_.updateMeshResourceVertices(fpsBody->second, *mesh)) {
+            throw std::runtime_error("Project FPS body dynamic GPU vertex update failed");
+        }
+        ++fpsBodyVertexUpdateCount_;
+    }
+}
+
 void GameApp::onFrame(const novacore::core::FrameContext& context) {
+    using Clock = std::chrono::steady_clock;
+    const auto frameStart = options_.profileRange ? Clock::now() : Clock::time_point{};
+    const auto previousScreen = menu_.screen();
     window_.pollEvents(input_);
     actions_.update(window_.inputSnapshot());
     if (uiConfirmReleasePending_ && !actions_.stateOrDefault(input::actions::MenuConfirm).down &&
@@ -824,7 +868,7 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
         if (action == ui::ShowcaseAction::Menu || action == ui::ShowcaseAction::DevRange) {
             uiShowcase_.reset();
             if (action == ui::ShowcaseAction::DevRange) {
-                menu_.showDevRange(); resetDevRangeState();
+                menu_.showDevRange();
                 uiConfirmReleasePending_ = true; // A/Enter/click must not leak into the first gameplay command.
             }
             else menu_.showMainMenu();
@@ -832,7 +876,22 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
     } else
 #endif
     menu_.update(actions_, settings_, activeLoadout_, attachmentRegistry_, buildMenuPointerState(window_, actions_));
-    menu_.updateFrame(context.deltaSeconds);
+    bool playableResourcesReady = true;
+    if (options_.fullGame && !options_.runMenuFlowSmoke) {
+        playableResourcesReady = updatePlayableResourceLoading();
+    } else if (options_.fullGame && previousScreen == ui::GameScreen::Loading && menu_.loadingPlayableMap()) {
+        // The fixed-stage diagnostic remains synchronous; ordinary deployments
+        // use the worker and never call the renderer from it.
+        loadPlayableResources(menu_.loadingTarget());
+    }
+    menu_.updateFrame(context.deltaSeconds, playableResourcesReady);
+    if (options_.lockDevRange && menu_.screen() != ui::GameScreen::DevRange) { menu_.showDevRange(); }
+    advanceMenuFlowSmoke(context);
+    if (menu_.gameplayActive() && menu_.screen() != previousScreen) {
+        enterPlayableMap();
+        uiConfirmReleasePending_ = actions_.stateOrDefault(input::actions::MenuConfirm).down ||
+            actions_.stateOrDefault(input::actions::Fire).down;
+    }
     if (menu_.gameplayActive() && !uiConfirmReleasePending_) {
         gameplayInputBuffer_.captureFrameEdges(actions_);
     } else {
@@ -843,14 +902,10 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
     if (menu_.gameplayActive() && actionPressed(actions_, input::actions::ResetRange)) {
         resetDevRangeState();
     }
-    if (menu_.gameplayActive() && actionPressed(actions_, input::actions::CycleDrillVariant)) {
+    if (menu_.screen() == ui::GameScreen::DevRange && actionPressed(actions_, input::actions::CycleDrillVariant)) {
         dev::cycleDevRangeDrillVariant(devRangeSession_, devRangeTuning_);
         dev::configureDevTargetRangeForDrillVariant(targetRange_, devRangeSession_.drill.variant);
     }
-    if (options_.lockDevRange && !menu_.gameplayActive()) {
-        menu_.showDevRange();
-    }
-    advanceMenuFlowSmoke(context);
     syncRelativeMouseMode();
 #if NEMISIS_HAS_RMLUI
     window_.setTitle(uiShowcase_ ? "NEMISIS | UI Showcase" : menu_.title());
@@ -870,6 +925,13 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
     if (menu_.gameplayActive()) {
         devSandbox_.onFrame(context.deltaSeconds);
     }
+
+    // Catch-up ticks can advance gameplay several times before the next present.
+    // Deform and upload only the pose that can reach the display.
+    if (pendingAnimationSeconds_ > 0.0F && menu_.gameplayActive()) {
+        updateVisiblePlayerPose(pendingAnimationSeconds_);
+    }
+    pendingAnimationSeconds_ = 0.0F;
 
     const auto meshStats = renderer_.meshResourceStats();
     novacore::render::RenderFrameInfo frameInfo{};
@@ -895,13 +957,14 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
                 &devAssetBindings_.meshCatalog(),
                 false,
                 firstPersonPresentation_ ? &*firstPersonPresentation_ : nullptr,
-                options_.firstPersonHandIK,
-                options_.projectFPSPreview,
-                options_.projectRifleReady,
+                usesFirstPersonHandConstraints(),
+                usesProjectRig(),
+                options_.projectRifleReady && usesProjectRig(),
             });
         projectFPSBodySubmitted_ |= latestDevRangeRenderStats_.projectFPSBodyActive;
         projectFPSArmsSubmitted_ |= latestDevRangeRenderStats_.projectFPSArmsActive;
-        if (physicsProps_) { physicsProps_->append(frameInfo); }
+        if (options_.projectFPSPreview) { ++projectFPSRenderFrames_; }
+        if (physicsProps_) { physicsProps_->append(frameInfo, !options_.fullGame || menu_.debugOverlayEnabled()); }
     } else {
         latestDevRangeRenderStats_ = {};
     }
@@ -923,69 +986,205 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
         activeLoadout_,
         attachmentRegistry_,
         activeAttachmentBuild_,
-        accountStats_);
+        accountStats_,
+        usesProjectRig() && options_.projectRifleReady ? player::projectRifleAimWeight(cameraRig_.adsAlpha) : 0.0F);
 #if NEMISIS_HAS_RMLUI
     if (uiShowcase_) {
         uiShowcase_->render(frameInfo.ui);
     }
 #endif
+    const auto submitStart = options_.profileRange ? Clock::now() : Clock::time_point{};
     renderer_.beginFrame(frameInfo);
     renderer_.endFrame();
+    if (options_.runDeploymentSmoke) {
+        if (menu_.loadingPlayableMap()) {
+            ++deploymentLoadingFrames_;
+            if (assetImportThread_.joinable() && !importFinished_.load(std::memory_order_acquire)) {
+                ++deploymentWorkerFrames_;
+            }
+            if (deploymentSmokeStage_ == 0 && deploymentWorkerFrames_ >= 2) {
+                deploymentSmokeAllowImport_.store(true, std::memory_order_release);
+                if (deploymentRangeOnlyImported_.load(std::memory_order_acquire)) {
+                    menu_.showMainMenu(); // Same transition as cancelling the loading screen.
+                    deploymentSmokeStage_ = 1;
+                }
+            }
+        } else if (deploymentSmokeStage_ == 1 && menu_.screen() == ui::GameScreen::MainMenu) {
+            if (++deploymentMenuFrames_ >= 2) {
+                menu_.showLoadingScreen(ui::GameScreen::OuterFacility);
+                deploymentSmokeStage_ = 2;
+            }
+        } else if (menu_.gameplayActive() && hasCharacterAnimationFrame_ && ++deploymentPlayableFrames_ >= 3U) {
+            deploymentPlayableFrames_ = 0;
+            if (deploymentSmokeStage_ == 2) {
+                const auto facility = assets::outerFacilityRenderableAssetIds();
+                for (const auto id : assets::requiredDevSandboxRenderableAssetIds()) {
+                    if (std::ranges::find(facility, id) == facility.end() &&
+                        devMeshResources_.contains(std::string(id))) {
+                        throw std::runtime_error("Cancelled range-only asset registered for Facility: " + std::string(id));
+                    }
+                }
+                menu_.showLoadingScreen(ui::GameScreen::DevRange);
+                deploymentSmokeStage_ = 3;
+            } else if (deploymentSmokeStage_ == 3) {
+                menu_.showLoadingScreen(ui::GameScreen::OuterFacility);
+                deploymentSmokeStage_ = 4;
+            } else if (deploymentSmokeStage_ == 4) {
+                novacore::core::logInfo("game", "Deployment smoke complete: loading_frames=" +
+                    std::to_string(deploymentLoadingFrames_) + " worker_frames=" +
+                    std::to_string(deploymentWorkerFrames_) + " cancelled=1 range_only_deferred=1 switched=1 returned=1 map=" + greyboxWorld_.id);
+                uiQuitRequested_ = true;
+            }
+        }
+    }
+    if (options_.profileRange) {
+        const auto end = Clock::now();
+        if (context.frameIndex >= kRangeProfileWarmupFrames) {
+            using Milliseconds = std::chrono::duration<double, std::milli>;
+            std::cout << "range_frame," << context.frameIndex << ',' << context.tickIndex - lastProfileTick_
+                      << ',' << Milliseconds(end - lastProfileFrameEnd_).count()
+                      << ',' << Milliseconds(frameStart - lastProfileFrameEnd_).count()
+                      << ',' << Milliseconds(submitStart - frameStart).count()
+                      << ',' << Milliseconds(end - submitStart).count() << '\n';
+        }
+        lastProfileFrameEnd_ = end;
+        lastProfileTick_ = context.tickIndex;
+    }
 }
 
 bool GameApp::shouldQuit() const {
-    return uiQuitRequested_ || window_.shouldClose();
+    return menu_.quitRequested() || uiQuitRequested_ || window_.shouldClose();
 }
 
 bool GameApp::isHeadless() const {
     return window_.isHeadless();
 }
 
-void GameApp::loadAssetCatalog() {
-    const auto result = assetCatalog_.loadFromJson("configs/assets/nemisis_assets.json");
-    if (!result.ok()) {
-        for (const auto& error : result.errors) {
-            novacore::core::logWarning("game", "Asset catalog load failed: " + error);
-        }
-        return;
-    }
+bool GameApp::updatePlayableResourceLoading() {
+    const bool loading = menu_.loadingPlayableMap();
+    const auto target = loading ? menu_.loadingTarget() : ui::GameScreen::MainMenu;
 
-    const auto devZone = assetCatalog_.devSandboxStreamingZone();
-    assetStreamer_.requestZone(devZone, 0);
-    devAssetSummary_ = devAssetBindings_.bindRequiredAssets(assetCatalog_, ".");
-    if (options_.projectFPSPreview) {
-#if defined(NEMISIS_PROJECT_FPS_PREVIEW)
-        const auto manifest = std::filesystem::path("project-fps-candidate") /
-            (options_.projectRifleReady ? "ready_assets.json" : "preview_assets.json");
-        const auto staged = manifest;
-        const auto previewRoot = std::filesystem::exists(staged) ? std::filesystem::path(".") :
-            std::filesystem::path(NEMISIS_PROJECT_FPS_BUILD_ROOT);
-        const auto mounted = assetCatalog_.mountFromJson(previewRoot / manifest);
-        if (!mounted.ok()) { throw std::runtime_error("Project FPS manifest unavailable: " + mounted.errors.front()); }
-        const std::array ids{dev::kProjectFPSBodyAssetId, dev::kProjectFPSArmsAssetId};
-        const auto bound = devAssetBindings_.bindAssets(assetCatalog_, ids, previewRoot, /*append=*/true);
-        if (!bound.ready()) {
-            throw std::runtime_error("Project FPS assets invalid: " + (bound.errors.empty() ? std::string("incomplete binding") : bound.errors.front()));
+    if (assetImportThread_.joinable() && importFinished_.load(std::memory_order_acquire)) {
+        assetImportThread_.join();
+        assetCatalogInitialized_ |= importResult_.catalogReady;
+        devAssetSummary_.include(importResult_.summary);
+        for (const auto id : importResult_.imported) {
+            pendingMeshRegistrations_.push_back(id);
+            if (const auto* record = assetCatalog_.find(id)) {
+                assetStreamer_.request(record->id, record->priority, 0);
+            }
         }
-        if (options_.projectRifleReady) {
-            const std::array weaponIds{dev::kProjectReadyWeaponAssetId};
-            const auto weapon = devAssetBindings_.bindAssets(assetCatalog_, weaponIds, previewRoot, true);
-            if (!weapon.ready()) { throw std::runtime_error("Project Ready M4 variant failed validation"); }
+        const auto error = importResult_.error;
+        importResult_ = {};
+        if (error) {
+            if (loading && target == importTarget_) std::rethrow_exception(error);
+            try { std::rethrow_exception(error); }
+            catch (const std::exception& e) { novacore::core::logWarning("game", std::string("Cancelled asset import: ") + e.what()); }
         }
-        novacore::core::logInfo("game", "Project FPS preview loaded: body=" + std::string(ids[0]) +
-            " arms=" + std::string(ids[1]) + " vertices=" + std::to_string(bound.totalVertexCount) +
-            (options_.projectRifleReady ? "; developer Rifle Ready, physical surface frames; visual acceptance pending" :
-                "; unarmed locomotion preview; hand constraints disabled"));
-#else
-        throw std::runtime_error("Project FPS preview capability was not built");
-#endif
     }
-    novacore::core::logInfo(
-        "game",
-        "Asset catalog loaded: " + std::to_string(assetCatalog_.assetCount()) + " assets");
-    novacore::core::logInfo(
-        "game",
-        "Dev sandbox asset preload requests queued: " + std::to_string(assetStreamer_.pendingCount()));
+    if (assetImportThread_.joinable()) {
+        if (!loading || target != importTarget_) assetImportThread_.request_stop();
+        return false;
+    }
+    if (!loading) return true;
+
+    const bool facilityOnly = target == ui::GameScreen::OuterFacility;
+    const std::span<const std::string_view> requested = facilityOnly ? assets::outerFacilityRenderableAssetIds()
+        : std::span<const std::string_view>{assets::requiredDevSandboxRenderableAssetIds()};
+    // Keep CPU work from an abandoned map cached, but upload only assets needed
+    // by the current destination; unrelated pending meshes stay deferred.
+    const auto next = std::ranges::find_if(pendingMeshRegistrations_, [requested](std::string_view id) {
+        return std::ranges::find(requested, id) != requested.end();
+    });
+    if (next != pendingMeshRegistrations_.end()) {
+        const auto id = *next;
+        registerDevMeshResources(std::span<const std::string_view>{&id, 1}, false);
+        if (!devMeshResources_.contains(std::string(id))) {
+            throw std::runtime_error("Playable map mesh registration failed: " + std::string(id));
+        }
+        pendingMeshRegistrations_.erase(next);
+        return false;
+    }
+    if (rangeResourcesLoaded_ || (facilityOnly && playableResourcesLoaded_)) return true;
+    std::vector<std::string_view> missing;
+    for (const auto id : requested) {
+        if (!devAssetBindings_.meshCatalog().findByAssetId(id)) missing.push_back(id);
+    }
+    if (!assetCatalogInitialized_ || !missing.empty()) {
+        importResult_ = {};
+        importFinished_.store(false, std::memory_order_relaxed);
+        importTarget_ = target;
+        const bool needCatalog = !assetCatalogInitialized_;
+        assetImportThread_ = std::jthread([this, missing = std::move(missing), needCatalog](std::stop_token stop) {
+            ImportResult result;
+            try {
+                // Only the smoke holds its first worker long enough to prove
+                // that loading frames render before CPU work completes.
+                while (options_.runDeploymentSmoke &&
+                       !deploymentSmokeAllowImport_.load(std::memory_order_acquire) && !stop.stop_requested()) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                }
+                if (needCatalog && !stop.stop_requested()) {
+                    // Full-game catalog and optional Project preview are CPU-only
+                    // here; neither the renderer nor the streamer is touched.
+                    loadAssetCatalog();
+                    result.catalogReady = true;
+                }
+                for (const auto id : missing) {
+                    if (stop.stop_requested()) break;
+                    const auto batch = devAssetBindings_.bindAssets(assetCatalog_,
+                        std::span<const std::string_view>{&id, 1}, ".", true);
+                    if (!batch.ready()) {
+                        throw std::runtime_error("Playable map asset import failed: " +
+                            (batch.errors.empty() ? std::string(id) : batch.errors.front()));
+                    }
+                    result.summary.include(batch);
+                    result.imported.push_back(id);
+                    const auto facility = assets::outerFacilityRenderableAssetIds();
+                    if (options_.runDeploymentSmoke && std::ranges::find(facility, id) == facility.end()) {
+                        deploymentRangeOnlyImported_.store(true, std::memory_order_release);
+                    }
+                }
+            } catch (...) {
+                result.error = std::current_exception();
+            }
+            importResult_ = std::move(result);
+            importFinished_.store(true, std::memory_order_release);
+        });
+        return false;
+    }
+    if (!previewResourcesRegistered_) {
+        registerDevMeshResources({}, true);
+        return false;
+    }
+    finishPlayableResources(target);
+    novacore::core::logInfo("game", std::string("Map resources ready: ") +
+        (facilityOnly ? "outer_facility" : "firing_range") +
+        " total_meshes=" + std::to_string(devAssetSummary_.renderableAssetCount));
+    return true;
+}
+
+void GameApp::loadPlayableResources(ui::GameScreen screen) {
+    const bool facilityOnly = options_.fullGame && screen == ui::GameScreen::OuterFacility;
+    if (rangeResourcesLoaded_ || (facilityOnly && playableResourcesLoaded_)) { return; }
+    const auto start = std::chrono::steady_clock::now();
+    if (!assetCatalogInitialized_) { loadAssetCatalog(); assetCatalogInitialized_ = true; }
+    const std::span<const std::string_view> requested = facilityOnly ? assets::outerFacilityRenderableAssetIds()
+        : std::span<const std::string_view>{assets::requiredDevSandboxRenderableAssetIds()};
+    std::vector<std::string_view> missing;
+    for (const auto id : requested) {
+        if (!devAssetBindings_.meshCatalog().findByAssetId(id)) {
+            missing.push_back(id);
+            if (options_.fullGame) {
+                if (const auto* record = assetCatalog_.find(id)) { assetStreamer_.request(record->id, record->priority, 0); }
+            }
+        }
+    }
+    const auto batch = devAssetBindings_.bindAssets(assetCatalog_, missing, ".", true);
+    devAssetSummary_.include(batch);
+    if (options_.fullGame && !batch.ready()) {
+        throw std::runtime_error("Playable map asset import failed: " + (batch.errors.empty() ? std::string("incomplete batch") : batch.errors.front()));
+    }
     novacore::core::logInfo(
         "game",
         "Dev mesh assets ready: " + std::to_string(devAssetSummary_.renderableAssetCount) + "/" +
@@ -1005,6 +1204,75 @@ void GameApp::loadAssetCatalog() {
     for (const auto& error : devAssetSummary_.errors) {
         novacore::core::logWarning("game", "Dev asset binding failed: " + error);
     }
+    novacore::core::logInfo("game", "Dev sandbox asset preload requests queued: " + std::to_string(assetStreamer_.pendingCount()));
+    registerDevMeshResources(missing);
+    novacore::core::logInfo("game", std::string("Map resources ready: ") + (facilityOnly ? "outer_facility" : "firing_range") +
+        " new_meshes=" + std::to_string(batch.renderableAssetCount) + " total_meshes=" + std::to_string(devAssetSummary_.renderableAssetCount) +
+        " load_ms=" + std::to_string(std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count()));
+    finishPlayableResources(screen);
+}
+
+void GameApp::finishPlayableResources(ui::GameScreen screen) {
+    const bool facilityOnly = options_.fullGame && screen == ui::GameScreen::OuterFacility;
+    if (options_.physicsProps && !physicsProps_) {
+        physicsProps_ = std::make_unique<dev::DevRangeRigidBodies>();
+        const auto* crate = devAssetBindings_.meshCatalog().findByAssetId("map_a2_cover_crate_01");
+        const auto handle = devMeshResources_.find("map_a2_cover_crate_01");
+        if (!crate || !crate->meshData || handle == devMeshResources_.end()) {
+            throw std::runtime_error("Physics fixture requires the registered Dev Range crate asset");
+        }
+        physicsProps_->setVisual(handle->second, *crate->meshData);
+    }
+    playableResourcesLoaded_ = true;
+    rangeResourcesLoaded_ = !facilityOnly;
+}
+
+void GameApp::loadAssetCatalog() {
+    const auto result = assetCatalog_.loadFromJson("configs/assets/nemisis_assets.json");
+    if (!result.ok()) {
+        for (const auto& error : result.errors) {
+            novacore::core::logWarning("game", "Asset catalog load failed: " + error);
+        }
+        return;
+    }
+
+    if (!options_.fullGame) { assetStreamer_.requestZone(assetCatalog_.devSandboxStreamingZone(), 0); }
+    if (options_.projectFPSPreview) {
+#if defined(NEMISIS_PROJECT_FPS_PREVIEW)
+        const auto manifest = std::filesystem::path("project-fps-candidate") /
+            (options_.projectRifleReady ? "ready_assets.json" : "preview_assets.json");
+        const auto staged = manifest;
+        const auto previewRoot = std::filesystem::exists(staged) ? std::filesystem::path(".") :
+            std::filesystem::path(NEMISIS_PROJECT_FPS_BUILD_ROOT);
+        const auto mounted = assetCatalog_.mountFromJson(previewRoot / manifest);
+        if (!mounted.ok()) { throw std::runtime_error("Project FPS manifest unavailable: " + mounted.errors.front()); }
+        const std::array ids{dev::kProjectFPSBodyAssetId, dev::kProjectFPSArmsAssetId};
+        const auto bound = devAssetBindings_.bindMissingAssets(assetCatalog_, ids, previewRoot);
+        if (!bound.ready()) {
+            throw std::runtime_error("Project FPS assets invalid: " + (bound.errors.empty() ? std::string("incomplete binding") : bound.errors.front()));
+        }
+        if (options_.projectRifleReady) {
+            const std::array weaponIds{dev::kProjectReadyWeaponAssetId};
+            const auto weapon = devAssetBindings_.bindMissingAssets(assetCatalog_, weaponIds, previewRoot);
+            if (!weapon.ready()) { throw std::runtime_error("Project Ready M4 variant failed validation"); }
+        }
+        const auto* previewBody = devAssetBindings_.meshCatalog().findByAssetId(ids[0]);
+        const auto* previewArms = devAssetBindings_.meshCatalog().findByAssetId(ids[1]);
+        if (!previewBody || !previewArms || !previewBody->meshData || !previewArms->meshData) {
+            throw std::runtime_error("Project FPS preview meshes are incomplete");
+        }
+        const auto previewVertices = previewBody->meshData->vertexCount() + previewArms->meshData->vertexCount();
+        novacore::core::logInfo("game", "Project FPS preview loaded: body=" + std::string(ids[0]) +
+            " arms=" + std::string(ids[1]) + " vertices=" + std::to_string(previewVertices) +
+            (options_.projectRifleReady ? "; developer Rifle Ready, physical surface frames; visual acceptance pending" :
+                "; unarmed locomotion preview; hand constraints disabled"));
+#else
+        throw std::runtime_error("Project FPS preview capability was not built");
+#endif
+    }
+    novacore::core::logInfo(
+        "game",
+        "Asset catalog loaded: " + std::to_string(assetCatalog_.assetCount()) + " assets");
 }
 
 void GameApp::applyConfig(std::string_view name) {
@@ -1077,7 +1345,7 @@ void GameApp::loadUserSettings() {
 }
 
 void GameApp::persistUserSettingsIfChanged() {
-    if (options_.projectFPSPreview) { return; }
+    if (options_.projectFPSPreview && !options_.fullGame) { return; }
     const settings::UserSettingsSnapshot snapshot{settings_, activeLoadout_};
     const auto serialized = settings::serializeUserSettingsSnapshot(snapshot);
     if (serialized == lastPersistedUserSettings_) {
@@ -1136,7 +1404,7 @@ void GameApp::syncRuntimeLoadout() {
 
 void GameApp::processGameplayWeaponInteractions(const player::PlayerInputCommand& command) {
     // This explicit preview focuses on the selected character with the M4.
-    if (options_.projectFPSPreview) { return; }
+    if (options_.projectFPSPreview && !options_.fullGame) { return; }
     std::string_view requestedWeaponId;
     std::string_view requestedLabel;
 
@@ -1156,6 +1424,7 @@ void GameApp::processGameplayWeaponInteractions(const player::PlayerInputCommand
             playerPosition = movementState->position;
         }
 
+        if (menu_.screen() != ui::GameScreen::DevRange) { return; }
         if (const auto* pickup = nearestWeaponPickup(playerPosition); pickup != nullptr) {
             requestedWeaponId = pickup->weaponId;
             requestedLabel = pickup->label;
@@ -1220,13 +1489,26 @@ void GameApp::ensureLocalPlayer() {
     predictionHistory_.clear();
     localSnapshotInterpolator_.clear();
     pendingAuthoritativeSnapshot_.reset();
+    pendingAnimationSeconds_ = 0.0F;
     player::resetCharacterAnimation(characterAnimation_);
     latestCharacterAnimationFrame_ = {};
     firstPersonPresentation_.reset();
+    firstPersonShotFeedback_.reset();
     hasCharacterAnimationFrame_ = false;
     player::resetCameraRig(cameraRig_);
     gameplayInputBuffer_.clear();
     novacore::core::logInfo("game", "Local player entity spawned");
+}
+
+void GameApp::enterPlayableMap() {
+    loadPlayableResources(menu_.screen());
+    greyboxWorld_ = menu_.screen() == ui::GameScreen::OuterFacility
+        ? dev::createOuterFacilityWorld() : dev::createDevRangeGreyboxWorld();
+    if (!physicsProps_) { staticCollision_ = dev::buildGreyboxPhysicsWorld(greyboxWorld_); }
+    dev::resetDevRangeSession(devRangeSession_);
+    devSandbox_ = {};
+    resetDevRangeState();
+    novacore::core::logInfo("game", "Entered playable map: " + greyboxWorld_.id);
 }
 
 void GameApp::resetDevRangeState() {
@@ -1234,7 +1516,11 @@ void GameApp::resetDevRangeState() {
     ensureLocalPlayer();
     rebuildActiveAttachmentSummary();
     dev::recordRangeReset(devRangeSession_, devRangeTuning_);
-    dev::configureDevTargetRangeForDrillVariant(targetRange_, devRangeSession_.drill.variant);
+    if (menu_.screen() == ui::GameScreen::OuterFacility) {
+        targetRange_ = dev::makeOuterFacilityTargets();
+    } else {
+        dev::configureDevTargetRangeForDrillVariant(targetRange_, devRangeSession_.drill.variant);
+    }
 
     if (auto* movementState = world_.getComponent<movement::PlayerMovementState>(localPlayerEntity_);
         movementState != nullptr) {
@@ -1268,16 +1554,20 @@ void GameApp::resetDevRangeState() {
     predictionHistory_.clear();
     localSnapshotInterpolator_.clear();
     pendingAuthoritativeSnapshot_.reset();
+    pendingAnimationSeconds_ = 0.0F;
     player::resetCharacterAnimation(characterAnimation_);
     latestCharacterAnimationFrame_ = {};
     firstPersonPresentation_.reset();
+    firstPersonShotFeedback_.reset();
     hasCharacterAnimationFrame_ = false;
     player::resetCameraRig(cameraRig_);
     gameplayInputBuffer_.clear();
 }
 
 void GameApp::tickRangeSession(float fixedDeltaSeconds) {
-    dev::tickDevRangeDrill(devRangeSession_, fixedDeltaSeconds, devRangeTuning_);
+    if (menu_.screen() == ui::GameScreen::DevRange) {
+        dev::tickDevRangeDrill(devRangeSession_, fixedDeltaSeconds, devRangeTuning_);
+    }
     dev::tickSessionFeedback(devRangeSession_, fixedDeltaSeconds);
 }
 
@@ -1306,8 +1596,12 @@ void GameApp::advanceMenuFlowSmoke(const novacore::core::FrameContext& context) 
         stage = 7;
     } else if (frame < 40U) {
         stage = 8;
-    } else {
+    } else if (frame < 44U) {
         stage = 9;
+    } else if (frame < 54U) {
+        stage = 10;
+    } else {
+        stage = 11;
     }
 
     if (stage == menuFlowSmokeStage_) {
@@ -1334,13 +1628,12 @@ void GameApp::advanceMenuFlowSmoke(const novacore::core::FrameContext& context) 
         label = "main_menu/account";
         break;
     case 4:
-        menu_.showLoadingScreen(ui::GameScreen::DevRange, 0.58F);
-        label = "loading/dev_range";
+        menu_.showLoadingScreen(ui::GameScreen::OuterFacility, 0.58F);
+        label = "loading/outer_facility";
         break;
     case 5:
-        menu_.showDevRange();
-        resetDevRangeState();
-        label = "dev_range";
+        menu_.showOuterFacility();
+        label = "outer_facility";
         break;
     case 6:
         menu_.showLoadingScreen(ui::GameScreen::TeamDeathmatch, 0.64F);
@@ -1357,6 +1650,14 @@ void GameApp::advanceMenuFlowSmoke(const novacore::core::FrameContext& context) 
     case 9:
         menu_.showControl();
         label = "control";
+        break;
+    case 10:
+        menu_.showDevRange();
+        label = "dev_range";
+        break;
+    case 11:
+        menu_.showMainMenu();
+        label = "main_menu/return";
         break;
     default:
         break;
@@ -1377,13 +1678,12 @@ void GameApp::syncRelativeMouseMode() {
     }
 }
 
-void GameApp::registerDevMeshResources() {
-    devMeshResources_.clear();
+void GameApp::registerDevMeshResources(std::span<const std::string_view> assetIds, bool includePreview) {
 
     std::size_t missing = 0;
     std::size_t rejected = 0;
-    for (const auto assetId : assets::requiredDevSandboxRenderableAssetIds()) {
-        if (options_.projectFPSPreview && assetId == "chr_a1_fp_arms_01") { continue; }
+    for (const auto assetId : assetIds) {
+        if (options_.projectFPSPreview && !options_.fullGame && assetId == "chr_a1_fp_arms_01") { continue; }
         const auto* source = devAssetBindings_.meshCatalog().findByAssetId(assetId);
         if (source == nullptr || !source->meshData.has_value()) {
             ++missing;
@@ -1403,9 +1703,12 @@ void GameApp::registerDevMeshResources() {
                 ++rejected;
                 novacore::core::logWarning("game", "Dev mesh resource registration failed: " + std::string(assetId));
             }
+            // The Project camera uses its cooked body subset for every frame.
+            // The full character is still drawn as a static range asset.
+            if (options_.projectFPSPreview) { continue; }
             animator = &skeletalBodyAnimator_;
         } else if (assetId == "chr_a1_fp_arms_01") {
-            animator = &skeletalArmsAnimator_;
+            animator = options_.projectFPSPreview ? &alternateArmsAnimator_ : &skeletalArmsAnimator_;
         }
         if (animator != nullptr && animator->initialize(*source->meshData)) {
             if (const auto* skinnedMesh = animator->skinnedMesh(); skinnedMesh != nullptr) {
@@ -1445,7 +1748,7 @@ void GameApp::registerDevMeshResources() {
         devMeshResources_[std::string(resourceId)] = handle;
     }
 
-    if (options_.projectFPSPreview) {
+    if (includePreview && options_.projectFPSPreview && !previewResourcesRegistered_) {
         const auto* arms = devAssetBindings_.meshCatalog().findByAssetId(dev::kProjectFPSArmsAssetId);
         const auto* body = devAssetBindings_.meshCatalog().findByAssetId(dev::kProjectFPSBodyAssetId);
         if (!arms || !body || !arms->meshData || !body->meshData ||
@@ -1470,6 +1773,7 @@ void GameApp::registerDevMeshResources() {
         }
     }
 
+    if (includePreview) { previewResourcesRegistered_ = true; }
     const auto stats = renderer_.meshResourceStats();
     novacore::core::logInfo(
         "game",
@@ -1527,7 +1831,7 @@ dev::DevRangePlayerRenderState GameApp::currentPlayerRenderState() const {
         state.adsAlpha = cameraRig_.adsAlpha;
         state.hasCameraRig = true;
     }
-    if (options_.projectFPSPreview && !state.hasCameraRig) {
+    if (usesProjectRig() && !state.hasCameraRig) {
         state.hasCameraRig = true;
         state.cameraPosition = state.position + novacore::math::Vec3{0.0F, 1.65F, 0.0F};
         state.cameraView = state.view;
@@ -1540,11 +1844,13 @@ dev::DevRangePlayerRenderState GameApp::currentPlayerRenderState() const {
         state.animation = latestCharacterAnimationFrame_;
         state.hasAnimationFrame = true;
     }
-    if (options_.projectFPSPreview) {
+    if (usesProjectRig()) {
         novacore::animation::Mat4 eye;
         if (skeletalArmsAnimator_.socketTransform("socket_fps_eye", eye)) {
             const auto bodyWorld = player::firstPersonAttachmentMatrix(dev::projectFPSPlayerAttachment(state));
             state.cameraPosition = novacore::animation::transformPoint(bodyWorld, novacore::animation::matrixTranslation(eye));
+        } else if (hasCharacterAnimationFrame_) {
+            throw std::runtime_error("Project FPS animated eye attachment is unavailable");
         }
         if (options_.projectRifleReady) {
             novacore::animation::Mat4 mount;
@@ -1562,19 +1868,7 @@ dev::DevRangePlayerRenderState GameApp::currentPlayerRenderState() const {
         }
     }
 
-    const auto& sample = devSandbox_.latestSample();
-    state.firedThisFrame = sample.fire.fired;
-    state.hitThisFrame = sample.targetHit.hit;
-    state.eliminatedThisFrame = sample.targetHit.eliminated;
-    state.hitDistanceMeters = sample.targetHit.distanceMeters;
-    if (sample.hasShot) {
-        const float traceDistance = sample.targetHit.hit && sample.targetHit.distanceMeters > 0.0F
-            ? sample.targetHit.distanceMeters
-            : std::min(std::max(0.0F, sample.shot.rangeMeters), 38.0F);
-        state.latestShotOrigin = sample.shot.origin;
-        state.latestShotEnd = sample.shot.origin + (sample.shot.direction * traceDistance);
-        state.hasLatestShotTrace = true;
-    }
+    state.shotFeedback = firstPersonShotFeedback_;
 
     return state;
 }

@@ -81,9 +81,13 @@ struct CameraRigState final {
     float lookPitchVelocity = 0.0F;
     float landingKick = 0.0F;
     movement::MovementMode previousMovementMode = movement::MovementMode::Grounded;
+    PlayerViewComponent previousAuthoredView{};
 };
 
 void resetCameraRig(CameraRigState& state);
+
+[[nodiscard]] novacore::math::Vec3 gameplayEyePosition(novacore::math::Vec3 feet,
+    movement::MovementMode mode, bool crouchHeld, const CameraRigTuning& tuning = {});
 
 [[nodiscard]] float cameraRigHorizontalSpeed(novacore::math::Vec3 velocity);
 

@@ -137,7 +137,12 @@ struct DevRangeSessionState final {
     float eventTextSeconds = 0.0F;
     float playerRegenDelaySeconds = 0.0F;
     std::string eventText;
+    // Keep the last confirmed hit visible across fixed ticks between renders.
+    DebugTargetHitResult lastConfirmedHit{};
+    float hitFeedbackSeconds = 0.0F;
 };
+
+inline constexpr float kHitFeedbackDurationSeconds = 0.24F;
 
 struct DevRangeSessionTuning final {
     float targetRespawnDelaySeconds = 1.5F;

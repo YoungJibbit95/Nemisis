@@ -15,6 +15,8 @@ struct DebugTargetState final {
     float health = 150.0F;
     std::uint32_t hitsTaken = 0;
     bool eliminated = false;
+    // Opt in only for the floor-rooted Facility mannequin; range targets keep spheres.
+    bool humanoidHitZones = false;
 };
 
 struct DebugTargetHitResult final {
