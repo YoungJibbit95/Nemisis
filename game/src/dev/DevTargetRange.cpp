@@ -72,6 +72,30 @@ namespace {
     return std::min(range.activeLaneIndex, range.lanes.size() - 1U);
 }
 
+[[nodiscard]] std::optional<float> hitBoxDistance(
+    const GreyboxPrimitive& box, const weapons::ShotTraceResult& shot) {
+    // The visible range boxes use these same world-space centers and extents.
+    float entry = 0.0F;
+    float exit = shot.rangeMeters;
+    const auto clipAxis = [&](float origin, float direction, float center, float halfSize) {
+        const float local = origin - center;
+        if (direction == 0.0F) {
+            return std::abs(local) <= halfSize;
+        }
+        const float a = (-halfSize - local) / direction;
+        const float b = (halfSize - local) / direction;
+        entry = std::max(entry, std::min(a, b));
+        exit = std::min(exit, std::max(a, b));
+        return entry <= exit;
+    };
+    if (clipAxis(shot.origin.x, shot.direction.x, box.center.x, box.halfExtents.x) &&
+        clipAxis(shot.origin.y, shot.direction.y, box.center.y, box.halfExtents.y) &&
+        clipAxis(shot.origin.z, shot.direction.z, box.center.z, box.halfExtents.z)) {
+        return entry;
+    }
+    return std::nullopt;
+}
+
 } // namespace
 
 DevTargetRangeState makeDefaultDevTargetRange() {
@@ -218,15 +242,19 @@ const DebugTargetState* activeTarget(const DevTargetRangeState& range) {
     return lane == nullptr ? nullptr : &lane->target;
 }
 
-DevTargetRangeHitResult applyShotToDevTargetRange(
-    DevTargetRangeState& range,
-    const weapons::ShotTraceResult& shot) {
-    ensureDevTargetRange(range);
-
-    DevTargetRangeHitResult result{};
+DevRangeShotContact traceDevRangeShot(const DevTargetRangeState& range,
+    const weapons::ShotTraceResult& shot, std::span<const GreyboxPrimitive> geometry) {
+    DevRangeShotContact contact{shot.rangeMeters, std::nullopt};
     float bestDistance = std::numeric_limits<float>::max();
-    std::size_t bestIndex = range.lanes.size();
-
+    for (const auto& box : geometry) {
+        if (!box.blocksMovement) {
+            continue;
+        }
+        if (const auto distance = hitBoxDistance(box, shot); distance && *distance < bestDistance) {
+            bestDistance = *distance;
+            contact.distanceMeters = *distance;
+        }
+    }
     for (std::size_t index = 0; index < range.lanes.size(); ++index) {
         const auto& lane = range.lanes[index];
         const auto trace = traceShotToDebugTarget(lane.target, shot);
@@ -234,21 +262,34 @@ DevTargetRangeHitResult applyShotToDevTargetRange(
             continue;
         }
         bestDistance = trace.distanceMeters;
-        bestIndex = index;
+        contact = {bestDistance, index};
     }
+    return contact;
+}
 
-    if (bestIndex >= range.lanes.size()) {
+DevTargetRangeHitResult applyShotToDevTargetRange(DevTargetRangeState& range,
+    const weapons::ShotTraceResult& shot, const DevRangeShotContact& contact) {
+    DevTargetRangeHitResult result{};
+    if (!contact.targetLane || *contact.targetLane >= range.lanes.size()) {
         return result;
     }
-
+    const auto bestIndex = *contact.targetLane;
     auto& lane = range.lanes[bestIndex];
+    result.targetHit = applyShotToDebugTarget(lane.target, shot);
+    if (!result.targetHit.hit) {
+        return result;
+    }
     range.activeLaneIndex = bestIndex;
     result.hit = true;
     result.laneIndex = bestIndex;
     result.laneId = lane.id;
     result.laneName = lane.displayName;
-    result.targetHit = applyShotToDebugTarget(lane.target, shot);
     return result;
+}
+
+DevTargetRangeHitResult applyShotToDevTargetRange(DevTargetRangeState& range, const weapons::ShotTraceResult& shot) {
+    ensureDevTargetRange(range);
+    return applyShotToDevTargetRange(range, shot, traceDevRangeShot(range, shot, {}));
 }
 
 void beginTargetLaneRespawn(

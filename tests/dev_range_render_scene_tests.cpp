@@ -766,6 +766,16 @@ void testDevRangeRenderScenePlacesShowcaseAssetsInSpawnView() {
 
     expect(stats.meshInstanceCount == 35, "spawn view scene emits expected meshes without the old first-person fullbody T-pose mesh");
     expect(stats.skippedMeshInstanceCount == 0, "spawn view scene has no skipped A2 meshes");
+    const auto* backboard = nemisis::dev::findPrimitive(world, "asset_stage_backboard_collision");
+    expect(backboard != nullptr, "showcase backboard has a world collider");
+    if (backboard) {
+        const auto boards = std::ranges::count_if(frame.worldBoxes, [&](const auto& box) {
+            return box.center.x == backboard->center.x && box.center.z == backboard->center.z &&
+                box.halfExtents.x == backboard->halfExtents.x;
+        });
+        expect(boards == 1 && backboard->center.y + backboard->halfExtents.y < 1.0F,
+               "a single low backboard leaves the standing firing line visible");
+    }
     expect(stats.skyPassEnabled, "spawn view uses renderer sky pass");
     expect(frame.sky.enabled, "spawn view frame carries sky pass data");
     expect(stats.firstPersonBodyPrimitiveCount == 0, "spawn view keeps the actual arms without duplicate proxy geometry");
