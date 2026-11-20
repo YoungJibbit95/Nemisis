@@ -1144,7 +1144,7 @@ void testOuterFacilitySubmitsBoundedPresentation() {
     expect(std::ranges::none_of(frame.worldMeshes, [](const auto& mesh) {
         return mesh.assetId == "env_test_arena_kit_01";
     }), "facility excludes the Dev Range showcase arena");
-    expect(frame.worldBoxes.size() <= 40, "facility box budget remains bounded");
+    expect(frame.worldBoxes.size() <= 48, "facility box budget remains bounded");
     lookup.erase("map_facility_grove_01");
     novacore::render::RenderFrameInfo groveFallback{};
     (void)nemisis::dev::DevRangeRenderSceneBuilder{}.append(groveFallback, desc);

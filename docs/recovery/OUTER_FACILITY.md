@@ -5,6 +5,8 @@ independent playable training map. The player starts at (0, 0, -26), facing +Z.
 The 70 x 70 m bounded site has an open central courtyard, a west operations
 building and an east shelter. Each building has doors through both end walls;
 low courtyard cover and interior consoles provide alternate routes and cover.
+A cyan stripe marks the west exterior wallrun face. Eight 0.4 m steps on the
+courtyard side ascend to a clear west-roof landing at 3.2 m.
 The three targets are located in the court, west exit and east entry.
 
 The world primitives are the source of movement and shot collision, and the
@@ -24,7 +26,7 @@ Python sources and use one meter per unit, Y up. No runtime `.blend` is loaded.
 
 ## Content budget and validation
 
-- 26 visible world boxes, plus 24 non-rendered matching tree colliders; three
+- 35 visible world boxes, plus 24 non-rendered matching tree colliders; three
   target boxes and target meshes are separate. One batched trim mesh has one
   material primitive and 58 triangles. Four grove instances each submit two
   material primitives (216 triangles per instance); four undergrowth instances
@@ -34,7 +36,8 @@ Python sources and use one meter per unit, Y up. No runtime `.blend` is loaded.
   This small fixed map has no authored LOD or occlusion culling. The scene and
   foliage budget is a design cap, not a measured GPU-time guarantee.
 - CPU checks exercise the real KCC adapter through both building doorways,
-  the spawn and interior routes, all tree trunks, visible cover, target line of
+  the spawn and interior routes, a continuous swept stair-to-roof ascent, the
+  marked wallrun contact, all tree trunks, visible cover, target line of
   sight, packaged material/texture data, scene selection and resource fallbacks.
   Vulkan appearance, textured draw counts, timing and a complete playthrough
   require separate in-game validation on the target hardware.

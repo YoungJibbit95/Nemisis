@@ -1285,5 +1285,10 @@ low-poly trees with collision, four undergrowth clusters, and one reusable
 textured wall/path mesh. API, content budget and open graphical validation are
 recorded in `OUTER_FACILITY.md`. Based on game 5c0ff6f and NovaCore
 fbbbfb3a18e945c28c2dc0bc7c5a8d8f8d541f56. Focused world, scene and real asset
-binding CPU tests pass; a dependency-light game build is in progress. Graphical
+binding CPU tests and dependency-light game build pass. Graphical
 appearance, target-device timing and playthrough remain open.
+
+A follow-up adds a visibly marked west wallrun surface and eight 0.4 m steps
+leading from the courtyard onto the west roof. The focused KCC test traverses
+the steps continuously and reaches the roof, and checks wallrun contact; all
+three world/scene/asset suites pass. Actual in-game movement feel remains open.
