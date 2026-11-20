@@ -982,25 +982,46 @@ void testDevRangeRenderSceneDrawsSocketDrivenShotFeedback() {
     player.cameraView.pitchDegrees = -4.0F;
     player.activeWeaponId = "ar_01";
     player.activeWeaponClass = nemisis::weapons::WeaponClass::AssaultRifle;
+    player.weapon.weaponId = "ar_01";
     player.weapon.shotIndex = 2;
-    player.weapon.timeSinceLastShotSeconds = 0.02F;
     player.animation.fireAlpha = 1.0F;
     player.hasAnimationFrame = true;
-    player.firedThisFrame = true;
-    player.hitThisFrame = true;
-    player.hasLatestShotTrace = true;
-    player.latestShotOrigin = player.cameraPosition;
-    player.latestShotEnd = targetRange.lanes[1].target.position;
-    player.hitDistanceMeters = 18.0F;
+    const auto impact = targetRange.lanes[1].target.position;
+    player.shotFeedback = nemisis::dev::FirstPersonShotFeedback{"ar_01", 2U, impact, true, false};
 
-    novacore::render::RenderFrameInfo frame{};
-    const auto stats = nemisis::dev::DevRangeRenderSceneBuilder{}.append(
-        frame,
-        nemisis::dev::DevRangeRenderSceneDesc{&world, &targetRange, nullptr, &lookup, player});
+    nemisis::dev::DevRangeRenderSceneDesc desc{&world, &targetRange, nullptr, &lookup, player};
+    desc.showWorldDebugLines = false;
+    for (const float age : {0.0F, 2.0F / 60.0F}) {
+        desc.player.weapon.timeSinceLastShotSeconds = age;
+        novacore::render::RenderFrameInfo frame{};
+        const auto stats = nemisis::dev::DevRangeRenderSceneBuilder{}.append(frame, desc);
 
-    expect(stats.firstPersonFeedbackPrimitiveCount >= 4U, "first-person shot feedback emits muzzle, casing, and hit primitives");
-    expect(stats.hitFeedbackLineCount == 1U, "first-person shot feedback emits a socket-driven trace line");
-    expect(frame.worldLines.size() == stats.worldLineCount, "shot feedback line contributes to world line stats");
+        expect(stats.firstPersonFeedbackPrimitiveCount == 4U, "shot window includes muzzle, casing and hit");
+        expect(stats.hitFeedbackLineCount == 1U, "a frame after multiple ticks still shows the shot trace");
+        expect(std::ranges::any_of(frame.worldLines, [impact](const auto& line) {
+            return (line.end - impact).lengthSquared() < 1e-9F;
+        }), "the retained trace still ends at the simulation hit");
+    }
+
+    desc.player.weapon.timeSinceLastShotSeconds = 0.075F;
+    novacore::render::RenderFrameInfo expiredFrame{};
+    const auto expired = nemisis::dev::DevRangeRenderSceneBuilder{}.append(expiredFrame, desc);
+    expect(expired.firstPersonFeedbackPrimitiveCount == 0U && expired.hitFeedbackLineCount == 0U,
+           "expired feedback never follows the longer animation kick");
+
+    desc.player.weapon.weaponId = "sidearm_01";
+    desc.player.weapon.timeSinceLastShotSeconds = 0.0F;
+    desc.player.weapon.shotIndex = 0U;
+    novacore::render::RenderFrameInfo switchedFrame{};
+    const auto switched = nemisis::dev::DevRangeRenderSceneBuilder{}.append(switchedFrame, desc);
+    expect(switched.firstPersonFeedbackPrimitiveCount == 0U && switched.hitFeedbackLineCount == 0U,
+           "a fresh weapon does not inherit the previous muzzle flash, tracer or hit");
+
+    desc.player.weapon.shotIndex = 2U;
+    novacore::render::RenderFrameInfo newShotFrame{};
+    const auto newShot = nemisis::dev::DevRangeRenderSceneBuilder{}.append(newShotFrame, desc);
+    expect(newShot.firstPersonFeedbackPrimitiveCount == 3U && newShot.hitFeedbackLineCount == 0U,
+           "a new weapon can flash without reusing an old weapon's result with the same shot index");
 }
 
 void testDevRangeRenderSceneDrawsLanePressure() {
@@ -1656,6 +1677,7 @@ void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false) 
     desc.player.hasAnimationFrame = true;
     desc.player.hasMovementState = true;
     desc.player.activeWeaponId = "ar_01";
+    desc.player.weapon.weaponId = "ar_01";
     float largestResidual = 0;
     float smallestForwardDot = 1;
     float smallestRightMargin = 1000;
@@ -1670,10 +1692,29 @@ void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false) 
         std::pair{Clip::Sprint, 2}, std::pair{Clip::Walk, 2}, std::pair{Clip::Idle, 2},
         std::pair{Clip::Sprint, 2}, std::pair{Clip::Idle, 24}, std::pair{Clip::Walk, 2},
         std::pair{Clip::Sprint, 2}, std::pair{Clip::Idle, 24}};
+    const std::array<std::size_t, 4> shotTicks{16, 79, 84, 144};
+    const std::array<std::size_t, 3> reloadStartTicks{36, 106, 207};
+    const math::Vec3 shotEnd{8, 1, 24};
+    const auto dot = [](math::Vec3 a, math::Vec3 b) { return a.x * b.x + a.y * b.y + a.z * b.z; };
     for (auto [clip, frames] : requests) {
         desc.player.animation.locomotionClip = clip;
         desc.player.animation.stride01 = .65F;
         for (int phase = 0; phase < frames; ++phase) {
+            auto& weaponState = desc.player.weapon;
+            weaponState.timeSinceLastShotSeconds += 1.F / 60;
+            const bool fired = std::ranges::find(shotTicks, ticks) != shotTicks.end();
+            if (fired) {
+                ++weaponState.shotIndex;
+                weaponState.timeSinceLastShotSeconds = 0;
+                desc.player.shotFeedback = dev::FirstPersonShotFeedback{"ar_01", weaponState.shotIndex, shotEnd, true, false};
+            }
+            const auto reloadStart = std::ranges::find_if(reloadStartTicks, [ticks](const std::size_t start) {
+                return ticks >= start && ticks - start < 24;
+            });
+            weaponState.reloading = reloadStart != reloadStartTicks.end();
+            weaponState.reloadProgress = weaponState.reloading
+                ? static_cast<float>(ticks - *reloadStart) / 24.F : 1.F;
+
             desc.player.cameraRollDegrees = std::sin(static_cast<float>(ticks) * .13F) * 12.F;
             desc.player.animation.thirdPersonBodyPitchDegrees = clip == player::CharacterAnimationClip::Sprint ? 8 : 0;
             desc.player.animation.thirdPersonBodyRollDegrees = std::sin(static_cast<float>(ticks) * .1F) * 2;
@@ -1691,6 +1732,7 @@ void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false) 
                                   std::cos(static_cast<float>(ticks) * .07F) * speed};
                 input.cameraRollDegrees = desc.player.cameraRollDegrees;
                 input.sprintHeld = clip == Clip::Sprint;
+                input.weapon = weaponState;
                 desc.player.animation = player::updateCharacterAnimation(animationState, input);
                 expect(desc.player.animation.locomotionClip == clip,
                        "actual gameplay animation composition follows Idle/Walk/Sprint requests with view-relative facing");
@@ -1708,9 +1750,28 @@ void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false) 
             const auto model = player::firstPersonAttachmentMatrix(dev::projectFPSPlayerAttachment(desc.player));
             desc.player.cameraPosition = animation::transformPoint(model, animation::matrixTranslation(eye));
             auto presentation = dev::evaluateFirstPersonPresentation(desc);
-            if (!presentation.rightGripWorld || !presentation.leftGripWorld) {
+            if (!presentation.muzzleWorld || !presentation.rightGripWorld || !presentation.leftGripWorld) {
                 expect(false, "real M4 contact goals");
                 return;
+            }
+            if (fired || ticks == 23 || (weaponState.reloading && (ticks - *reloadStart) % 12 == 0) || ticks == 60) {
+                auto neutral = desc;
+                neutral.player.weapon = {};
+                const auto base = dev::evaluateFirstPersonPresentation(neutral);
+                const auto displacement = animation::matrixTranslation(presentation.weaponWorld) -
+                                          animation::matrixTranslation(base.weaponWorld);
+                const auto baseUp = animation::transformDirection(base.weaponWorld, {0, 1, 0});
+                if (fired) {
+                    const auto baseForward = animation::transformDirection(base.weaponWorld, {0, 0, 1});
+                    const auto shotForward = animation::transformDirection(presentation.weaponWorld, {0, 0, 1});
+                    expect(dot(displacement, baseForward) < -.023F && dot(shotForward, baseUp) > .05F,
+                           "M4 backs into the shoulder and pitches up immediately on a shot");
+                } else if (weaponState.reloading && weaponState.reloadProgress == .5F) {
+                    expect(dot(displacement, baseUp) < -.039F, "the actual reload timer drives a visible two-handed dip");
+                } else {
+                    expect(displacement.lengthSquared() < 1e-12F && presentation.weaponWorld.values == base.weaponWorld.values,
+                           "kick recovery, reload start and reload completion meet the idle mount");
+                }
             }
             const player::PlayerHandTargets targets{model, *presentation.rightGripWorld, *presentation.leftGripWorld};
             const auto physicalFiring = std::ranges::find(weapon.nodeMarkers, std::string_view("socket_grip_r"),
@@ -1738,7 +1799,6 @@ void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false) 
             // Derive it independently from the public camera angles.
             const auto cameraRight = horizontalRight * std::cos(roll) + unrolledUp * std::sin(roll);
             const auto firingOffset = animation::matrixTranslation(targets.rightGripWorld) - desc.player.cameraPosition;
-            const auto dot = [](math::Vec3 a, math::Vec3 b) { return a.x * b.x + a.y * b.y + a.z * b.z; };
             const float rightMargin = dot(firingOffset, cameraRight);
             smallestRightMargin = std::min(smallestRightMargin, rightMargin);
             if (rightMargin <= 0) {
@@ -1876,6 +1936,22 @@ void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false) 
                     }
                 }
                 expect(stats.projectFPSBodyActive && stats.projectFPSArmsActive, "both actual subsets submitted");
+                const bool recent = weaponState.shotIndex > 0 && weaponState.timeSinceLastShotSeconds < .075F;
+                expect(stats.hitFeedbackLineCount == static_cast<std::size_t>(recent),
+                       "the recent real-M4 shot owns exactly one trace");
+                if (recent) {
+                    const auto muzzle = animation::matrixTranslation(*presentation.muzzleWorld);
+                    const auto flashTip = animation::transformPoint(*presentation.muzzleWorld, {0, 0, .075F});
+                    for (const auto point : {muzzle, flashTip}) {
+                        expect(std::ranges::any_of(frame.worldBoxes, [point](const auto& box) {
+                            return !box.castsShadow && (box.center - point).lengthSquared() < 1e-10F;
+                        }), "both flash points follow the moving cooked muzzle frame");
+                    }
+                    expect(std::ranges::any_of(frame.worldLines, [muzzle, shotEnd](const auto& line) {
+                        return (line.start - muzzle).lengthSquared() < 1e-10F &&
+                               (line.end - shotEnd).lengthSquared() < 1e-10F;
+                    }), "cooked muzzle starts the retained trace, and the simulation owns the endpoint");
+                }
                 const auto rifle = std::ranges::find(frame.worldMeshes, dev::kProjectReadyWeaponAssetId,
                                                      &render::RenderMesh3D::assetId);
                 expect(rifle != frame.worldMeshes.end() && rifle->layer == render::RenderMeshLayer::World,
@@ -1941,7 +2017,7 @@ void testLocalShadowPolicyPreservesSharedWorldResources() {
     desc.player.hasMovementState = true;
     desc.player.hasCameraRig = true;
     desc.player.activeWeaponId = "ar_01";
-    desc.player.firedThisFrame = true;
+    desc.player.weapon.shotIndex = 1U;
     desc.showFirstPersonRigDiagnostics = true;
     render::RenderFrameInfo frame;
     const auto stats = dev::DevRangeRenderSceneBuilder{}.append(frame, desc);

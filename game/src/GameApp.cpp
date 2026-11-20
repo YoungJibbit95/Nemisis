@@ -781,6 +781,19 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
     }
     const auto predictionStats = predictionHistory_.stats();
 
+    if (hasShotTrace) {
+        const float traceDistance = targetHit.hit && targetHit.distanceMeters > 0.0F
+            ? targetHit.distanceMeters
+            : std::min(std::max(0.0F, shotTrace.rangeMeters), 38.0F);
+        firstPersonShotFeedback_ = dev::FirstPersonShotFeedback{
+            weaponSample.weaponId, shotTrace.shotIndex,
+            shotTrace.origin + (shotTrace.direction * traceDistance), targetHit.hit, targetHit.eliminated};
+    } else if (fireResult.fired || (firstPersonShotFeedback_ &&
+                   (firstPersonShotFeedback_->weaponId != weaponSample.weaponId ||
+                    firstPersonShotFeedback_->shotIndex != weaponSample.shotIndex))) {
+        firstPersonShotFeedback_.reset();
+    }
+
     devSandbox_.recordTick(dev::DevSandboxSample{
         command.tick,
         command,
@@ -1223,6 +1236,7 @@ void GameApp::ensureLocalPlayer() {
     player::resetCharacterAnimation(characterAnimation_);
     latestCharacterAnimationFrame_ = {};
     firstPersonPresentation_.reset();
+    firstPersonShotFeedback_.reset();
     hasCharacterAnimationFrame_ = false;
     player::resetCameraRig(cameraRig_);
     gameplayInputBuffer_.clear();
@@ -1271,6 +1285,7 @@ void GameApp::resetDevRangeState() {
     player::resetCharacterAnimation(characterAnimation_);
     latestCharacterAnimationFrame_ = {};
     firstPersonPresentation_.reset();
+    firstPersonShotFeedback_.reset();
     hasCharacterAnimationFrame_ = false;
     player::resetCameraRig(cameraRig_);
     gameplayInputBuffer_.clear();
@@ -1562,19 +1577,7 @@ dev::DevRangePlayerRenderState GameApp::currentPlayerRenderState() const {
         }
     }
 
-    const auto& sample = devSandbox_.latestSample();
-    state.firedThisFrame = sample.fire.fired;
-    state.hitThisFrame = sample.targetHit.hit;
-    state.eliminatedThisFrame = sample.targetHit.eliminated;
-    state.hitDistanceMeters = sample.targetHit.distanceMeters;
-    if (sample.hasShot) {
-        const float traceDistance = sample.targetHit.hit && sample.targetHit.distanceMeters > 0.0F
-            ? sample.targetHit.distanceMeters
-            : std::min(std::max(0.0F, sample.shot.rangeMeters), 38.0F);
-        state.latestShotOrigin = sample.shot.origin;
-        state.latestShotEnd = sample.shot.origin + (sample.shot.direction * traceDistance);
-        state.hasLatestShotTrace = true;
-    }
+    state.shotFeedback = firstPersonShotFeedback_;
 
     return state;
 }
