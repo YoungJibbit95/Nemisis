@@ -52,6 +52,8 @@ namespace nemisis::game {
 inline constexpr std::uint64_t kRangeProfileWarmupFrames = 12;
 
 struct GameAppOptions final {
+    bool fullGame = false;
+    bool startInFacility = false;
     bool profileRange = false;
     bool preferVulkanRenderer = true;
     bool requireVulkanRenderer = true;
@@ -82,6 +84,9 @@ public:
     [[nodiscard]] bool isHeadless() const override;
 
 private:
+    [[nodiscard]] bool usesProjectRig() const;
+    void enterPlayableMap();
+    void loadPlayableResources();
     void updateVisiblePlayerPose(float animationDelta);
     void loadAssetCatalog();
     void applyConfig(std::string_view name);
@@ -122,8 +127,10 @@ private:
     dev::DevRangeSessionTuning devRangeTuning_;
     dev::DevSandbox devSandbox_;
     dev::GreyboxWorld greyboxWorld_ = dev::createDevRangeGreyboxWorld();
+    novacore::physics::PhysicsWorld staticCollision_;
     std::unique_ptr<dev::DevRangeRigidBodies> physicsProps_;
     dev::DevRangeRenderSceneBuilder devRangeRenderer_;
+    bool playableResourcesLoaded_ = false;
     dev::DevRangeRenderSceneStats latestDevRangeRenderStats_;
     ui::GameMenu menu_;
 #if NEMISIS_HAS_RMLUI
@@ -144,6 +151,7 @@ private:
     float pendingAnimationSeconds_ = 0.0F;
     player::PlayerSkeletalAnimator skeletalBodyAnimator_;
     player::PlayerSkeletalAnimator skeletalArmsAnimator_;
+    player::PlayerSkeletalAnimator alternateArmsAnimator_;
     std::optional<dev::FirstPersonPresentation> firstPersonPresentation_;
     std::optional<dev::FirstPersonShotFeedback> firstPersonShotFeedback_;
     std::uint64_t armVertexUpdateCount_ = 0;

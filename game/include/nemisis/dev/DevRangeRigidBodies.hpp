@@ -20,7 +20,7 @@ public:
     void setVisual(novacore::render::MeshResourceHandle handle, const novacore::assets::GltfMeshData& mesh);
     void tick(novacore::math::Vec3 resolvedPlayerFeet);
     [[nodiscard]] bool impact(novacore::math::Vec3 origin, novacore::math::Vec3 displacement);
-    void append(novacore::render::RenderFrameInfo& frame) const;
+    void append(novacore::render::RenderFrameInfo& frame, bool showDebug = true) const;
     [[nodiscard]] const novacore::physics::PhysicsWorld& collisionWorld() const { return statics_; }
     [[nodiscard]] const novacore::physics::RigidBodyWorld& bodies() const { return bodies_; }
     [[nodiscard]] std::uint64_t tickCount() const { return tick_; }

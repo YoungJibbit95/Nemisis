@@ -3,7 +3,7 @@
   "configurePresets": [
     {
       "name": "playtest-vulkan",
-      "displayName": "Dev Range playtest (Vulkan Release)",
+      "displayName": "Nemisis - Latest Dev (Vulkan Release)",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {

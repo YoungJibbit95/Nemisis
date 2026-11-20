@@ -15,11 +15,15 @@ int main(int argc, char** argv) {
     desc.maxFrames = 0;
 
     nemisis::game::GameAppOptions gameOptions{};
+    gameOptions.fullGame = argc == 1;
     std::uint32_t measuredFrames = 60;
     bool smokeTest = false;
     for (int i = 1; i < argc; ++i) {
         const std::string_view argument(argv[i]);
-        if (argument == "--ui-showcase") {
+        if (argument == "--game" || argument == "--outer-facility") {
+            gameOptions.fullGame = true;
+            if (argument == "--outer-facility") { gameOptions.startInFacility = true; }
+        } else if (argument == "--ui-showcase") {
 #if NEMISIS_HAS_RMLUI
             gameOptions.uiShowcase = true;
             gameOptions.autoEnterDevRange = false;
@@ -124,6 +128,15 @@ int main(int argc, char** argv) {
         }
     }
 
+    if (gameOptions.fullGame) {
+        gameOptions.materialTextures = true;
+        gameOptions.physicsProps = novacore::physics::RigidBodyWorld::backendAvailable();
+#if defined(NEMISIS_PROJECT_FPS_PREVIEW) && defined(NEMISIS_ENABLE_HAND_IK)
+        gameOptions.projectRifleReady = true;
+        gameOptions.projectFPSPreview = true;
+        gameOptions.firstPersonHandIK = true;
+#endif
+    }
     if (gameOptions.uiShowcase) {
         if (gameOptions.runMenuFlowSmoke || gameOptions.projectFPSPreview || gameOptions.firstPersonHandIK || gameOptions.physicsProps || gameOptions.directionalShadows || gameOptions.materialTextures) {
             std::cerr << "UI showcase cannot be combined with other preview profiles\n"; return 2;
@@ -148,7 +161,7 @@ int main(int argc, char** argv) {
         gameOptions.lockDevRange = true;
     }
     if (smokeTest) {
-        desc.maxFrames = gameOptions.physicsProps ? 120 : gameOptions.runMenuFlowSmoke ? 44 :
+        desc.maxFrames = gameOptions.runMenuFlowSmoke ? 58 : gameOptions.physicsProps ? 120 :
             (gameOptions.firstPersonHandIK || gameOptions.projectFPSPreview) ? 60 : 5;
     }
     if (gameOptions.profileRange) {
@@ -166,6 +179,10 @@ int main(int argc, char** argv) {
     if (gameOptions.projectFPSLookDown && !gameOptions.projectFPSPreview) {
         std::cerr << "--project-fps-look-down requires --project-fps-preview\n";
         return 2;
+    }
+    if (gameOptions.fullGame) {
+        gameOptions.autoEnterDevRange = gameOptions.profileRange && !gameOptions.startInFacility;
+        gameOptions.lockDevRange = false;
     }
     if (gameOptions.projectFPSPreview && gameOptions.firstPersonHandIK && !gameOptions.projectRifleReady) {
         std::cerr << "Project hand IK is blocked: five weighted deform segments, nonuniform animated scales "

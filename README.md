@@ -51,22 +51,23 @@ cmake --build --preset windows-msvc-debug
 
 `windows-msvc-debug` uses the Visual Studio generator and does not require Ninja or `VCPKG_ROOT`.
 
-### Play the Dev Range on Vulkan
+### Play Nemisis in CLion
 
 Use the NovaCore revision in `cmake/novacore-revision.txt` in the sibling
 `Novacore-Engine` checkout. The Ninja playtest preset builds an optimized game
 with the Project rifle, hand IK, native UI and Jolt. On Windows run the game
-from its staged directory so it finds the cooked meshes and runtime settings.
+with the **Nemisis - Latest Dev (Vulkan)** run configuration and the `playtest-vulkan` Release profile. It opens the main menu. Choose **Play → Outer Facility** to enter the relay yard and clear its three targets. **Firing Range** opens the training drills. Escape returns to the menu, where Settings and Loadout are available between runs.
+
+The same launch from a terminal is
 
 ```powershell
 cmake --preset playtest-vulkan
 cmake --build --preset playtest-vulkan
 cd build/playtest-vulkan
-./nemisis_game.exe --vulkan --dev-range --project-rifle-ready --material-textures --physics-props
+./nemisis_game.exe --game
 ```
 
-Append `--profile-range` to record 60 frames after 12 warm-up frames and exit.
-Use `--profile-range=600` for a longer sample while moving through the range.
+Use `--game --outer-facility --profile-range=600` to profile the relay yard, or `--vulkan --dev-range --project-rifle-ready --material-textures --physics-props --profile-range=600` for the original firing range. Both record after 12 warm-up frames and exit.
 Each `range_frame` CSV row contains the frame index, fixed ticks since the last
 frame, total frame time, time before the frame callback, scene preparation time
 and time spent in the renderer calls. Timings use wall-clock milliseconds and

@@ -22,6 +22,7 @@ enum class GameScreen {
     MainMenu,
     Loading,
     DevRange,
+    OuterFacility,
     TeamDeathmatch,
     Control,
 };
@@ -52,6 +53,7 @@ struct MenuPointerState final {
 
 class GameMenu final {
 public:
+    explicit GameMenu(bool showDebugOverlay = true) : debugOverlayEnabled_(showDebugOverlay) {}
     void update(const novacore::platform::InputActionMap& actions);
     void update(
         const novacore::platform::InputActionMap& actions,
@@ -68,6 +70,7 @@ public:
     void showMainMenu(MenuTab tab = MenuTab::Play);
     void showLoadingScreen(GameScreen target, float progress = 0.0F);
     void showDevRange();
+    void showOuterFacility();
     void showTeamDeathmatch();
     void showControl();
     void appendRenderCommands(
@@ -90,6 +93,8 @@ public:
     [[nodiscard]] GameScreen screen() const;
     [[nodiscard]] MenuTab tab() const;
     [[nodiscard]] bool gameplayActive() const;
+    [[nodiscard]] bool quitRequested() const { return quitRequested_; }
+    [[nodiscard]] bool loadingPlayableMap() const;
     [[nodiscard]] bool debugOverlayEnabled() const;
     [[nodiscard]] DebugPage debugPage() const;
     [[nodiscard]] float loadingProgress() const;
@@ -129,6 +134,8 @@ private:
     DebugPage debugPage_ = DebugPage::Gameplay;
     std::size_t selectedIndex_ = 0;
     float loadingProgress_ = 0.0F;
+    MenuPointerState previousPointer_{};
+    bool quitRequested_ = false;
     bool debugOverlayEnabled_ = true;
 };
 

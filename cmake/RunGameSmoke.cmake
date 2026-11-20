@@ -29,6 +29,17 @@ if(REQUIRE_VULKAN AND NOT smoke_output MATCHES "Vulkan backend active:")
     message(FATAL_ERROR "Graphics smoke requires an active Vulkan backend; headless/null fallback is not graphics validation")
 endif()
 
+list(FIND smoke_arguments "--menu-flow-smoke-test" menu_flow_index)
+if(NOT menu_flow_index EQUAL -1)
+    foreach(expected IN ITEMS "start_screen=menu lock_dev_range=false" "main_menu/settings"
+            "Entered playable map: outer_facility_01" "Entered playable map: dev_range_greybox_01" "main_menu/return")
+        string(FIND "${smoke_output}" "${expected}" marker)
+        if(marker EQUAL -1)
+            message(FATAL_ERROR "Menu flow did not reach ${expected}")
+        endif()
+    endforeach()
+endif()
+
 if(REQUIRE_PHYSICS_PROPS AND NOT smoke_output MATCHES "Dev Range rigid-body fixture: ticks=[1-9][0-9]* dynamic_props=6")
     message(FATAL_ERROR "Physics smoke requires actual game-owned fixed-tick rigid-body updates")
 endif()

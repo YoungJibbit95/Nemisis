@@ -205,7 +205,26 @@ void testPointerNavigationActivatesMenuRows() {
         true,
         false,
     });
-    expect(menu.screen() == nemisis::ui::GameScreen::Loading, "pointer click starts firing range loading");
+    expect(menu.loadingPlayableMap(), "the first Play row starts loading the facility");
+    menu.updateFrame(1.0);
+    expect(menu.screen() == nemisis::ui::GameScreen::OuterFacility && menu.gameplayActive(),
+        "facility enters real gameplay");
+    press(actions, nemisis::input::key_codes::Escape);
+    menu.update(actions);
+    expect(menu.screen() == nemisis::ui::GameScreen::MainMenu, "facility releases gameplay back to the main menu");
+    release(actions);
+    menu.update(actions, settings, loadout, attachments, {470.0F, 285.0F, true, true, true, false});
+    menu.updateFrame(1.0);
+    expect(menu.screen() == nemisis::ui::GameScreen::DevRange, "the second Play row enters the original range");
+
+    menu.showMainMenu(nemisis::ui::MenuTab::Play);
+    const nemisis::ui::MenuPointerState hovering{470.0F, 232.0F, true, false, false, false};
+    menu.update(actions, settings, loadout, attachments, hovering);
+    press(actions, nemisis::input::key_codes::Down);
+    menu.update(actions, settings, loadout, attachments, hovering);
+    expect(menu.selectedIndex() == 1U, "a stationary pointer preserves keyboard focus");
+    menu.update(actions, settings, loadout, attachments, {470.0F, 400.0F, true, true, true, false});
+    expect(menu.quitRequested(), "Exit to desktop requests an orderly shutdown");
 }
 
 void testDevRangeHudUsesPlayableResponsiveLayout() {

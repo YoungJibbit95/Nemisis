@@ -220,7 +220,7 @@ endfunction()
 nemisis_add_runtime_smoke(nemisis_game_smoke --smoke-test OFF)
 nemisis_add_runtime_smoke(nemisis_game_vulkan_smoke --vulkan-smoke-test ON)
 nemisis_add_runtime_smoke(nemisis_game_vulkan_dev_range_smoke --vulkan-dev-range-smoke-test ON)
-nemisis_add_runtime_smoke(nemisis_game_menu_flow_smoke --menu-flow-smoke-test ON)
+nemisis_add_runtime_smoke(nemisis_game_menu_flow_smoke "--game;--menu-flow-smoke-test" ON)
 
 # These exercise real cooked assets/configs without copying the authoring tree.
 set_tests_properties(
@@ -277,6 +277,8 @@ add_test(NAME nemisis_input_command_tests COMMAND nemisis_input_command_tests)
 
 add_executable(nemisis_game_menu_tests
     game/src/dev/DebugTarget.cpp
+    game/src/dev/OuterFacility.cpp
+    game/src/dev/GreyboxWorld.cpp
     game/src/dev/DevRangeSession.cpp
     game/src/dev/DevTargetRange.cpp
     game/src/input/InputBindings.cpp
