@@ -1234,10 +1234,10 @@ void GameApp::ensureLocalPlayer() {
     predictionHistory_.clear();
     localSnapshotInterpolator_.clear();
     pendingAuthoritativeSnapshot_.reset();
+    pendingAnimationSeconds_ = 0.0F;
     player::resetCharacterAnimation(characterAnimation_);
     latestCharacterAnimationFrame_ = {};
     firstPersonPresentation_.reset();
-    pendingAnimationSeconds_ = 0.0F;
     hasCharacterAnimationFrame_ = false;
     player::resetCameraRig(cameraRig_);
     gameplayInputBuffer_.clear();
@@ -1283,10 +1283,10 @@ void GameApp::resetDevRangeState() {
     predictionHistory_.clear();
     localSnapshotInterpolator_.clear();
     pendingAuthoritativeSnapshot_.reset();
+    pendingAnimationSeconds_ = 0.0F;
     player::resetCharacterAnimation(characterAnimation_);
     latestCharacterAnimationFrame_ = {};
     firstPersonPresentation_.reset();
-    pendingAnimationSeconds_ = 0.0F;
     hasCharacterAnimationFrame_ = false;
     player::resetCameraRig(cameraRig_);
     gameplayInputBuffer_.clear();
