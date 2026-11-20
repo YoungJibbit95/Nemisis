@@ -37,6 +37,9 @@ struct DevAssetBindingSummary final {
     std::size_t missingAssetCount = 0;
     std::vector<std::string> errors;
 
+    // Accumulate disjoint asset batches, retaining every diagnostic.
+    void include(const DevAssetBindingSummary& batch);
+
     [[nodiscard]] bool ready() const {
         return missingAssetCount == 0 &&
             errors.empty() &&
@@ -48,6 +51,7 @@ struct DevAssetBindingSummary final {
 };
 
 [[nodiscard]] const RequiredDevAssetIds& requiredDevSandboxRenderableAssetIds();
+[[nodiscard]] std::span<const std::string_view> outerFacilityRenderableAssetIds();
 
 class DevAssetBindings final {
 public:
