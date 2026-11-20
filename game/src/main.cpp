@@ -31,6 +31,8 @@ int main(int argc, char** argv) {
             else if (size == "1920x1080") { gameOptions.uiPreviewWidth = 1920; gameOptions.uiPreviewHeight = 1080; }
             else if (size == "2560x1440") { gameOptions.uiPreviewWidth = 2560; gameOptions.uiPreviewHeight = 1440; }
             else { std::cerr << "UI size must be 1280x720, 1920x1080 or 2560x1440\n"; return 2; }
+        } else if (argument == "--profile-range") {
+            gameOptions.profileRange = true;
         } else if (argument == "--physics-props") {
             gameOptions.physicsProps = true;
         } else if (argument == "--directional-shadows") {
@@ -136,6 +138,17 @@ int main(int argc, char** argv) {
     if (smokeTest) {
         desc.maxFrames = gameOptions.physicsProps ? 120 : gameOptions.runMenuFlowSmoke ? 44 :
             (gameOptions.firstPersonHandIK || gameOptions.projectFPSPreview) ? 60 : 5;
+    }
+    if (gameOptions.profileRange) {
+        if (gameOptions.uiShowcase || smokeTest) {
+            std::cerr << "--profile-range requires a dedicated Dev Range run\n";
+            return 2;
+        }
+        gameOptions.requireVulkanRenderer = true;
+        gameOptions.preferVulkanRenderer = true;
+        gameOptions.autoEnterDevRange = true;
+        gameOptions.lockDevRange = true;
+        desc.maxFrames = 72;
     }
 
     if (gameOptions.projectFPSLookDown && !gameOptions.projectFPSPreview) {

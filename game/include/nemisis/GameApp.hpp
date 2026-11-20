@@ -39,6 +39,7 @@
 #include "novacore/render/Renderer.hpp"
 
 #include <array>
+#include <chrono>
 #include <filesystem>
 #include <memory>
 #include <optional>
@@ -49,6 +50,7 @@
 namespace nemisis::game {
 
 struct GameAppOptions final {
+    bool profileRange = false;
     bool preferVulkanRenderer = true;
     bool requireVulkanRenderer = true;
     bool autoEnterDevRange = false;
@@ -78,6 +80,7 @@ public:
     [[nodiscard]] bool isHeadless() const override;
 
 private:
+    void updateVisiblePlayerPose(float animationDelta);
     void loadAssetCatalog();
     void applyConfig(std::string_view name);
     void applyLoadedConfigs();
@@ -97,6 +100,8 @@ private:
     [[nodiscard]] dev::DevRangePlayerRenderState currentPlayerRenderState() const;
 
     GameAppOptions options_;
+    std::chrono::steady_clock::time_point lastProfileFrameEnd_{};
+    std::uint64_t lastProfileTick_ = 0;
     novacore::platform::InputSystem input_;
     novacore::platform::InputActionMap actions_;
     input::GameplayInputBuffer gameplayInputBuffer_;
@@ -134,6 +139,7 @@ private:
     player::PlayerCommandQueue localCommandQueue_;
     player::CharacterAnimationState characterAnimation_;
     player::CharacterAnimationFrame latestCharacterAnimationFrame_;
+    float pendingAnimationSeconds_ = 0.0F;
     player::PlayerSkeletalAnimator skeletalBodyAnimator_;
     player::PlayerSkeletalAnimator skeletalArmsAnimator_;
     std::optional<dev::FirstPersonPresentation> firstPersonPresentation_;
@@ -142,6 +148,7 @@ private:
     std::uint64_t fpsBodyVertexUpdateCount_ = 0;
     std::uint64_t worldBodyVertexUpdateCount_ = 0;
     bool projectFPSBodySubmitted_ = false;
+    std::uint64_t projectFPSRenderFrames_ = 0;
     bool projectFPSArmsSubmitted_ = false;
     player::CameraRigState cameraRig_;
     player::AccountStats accountStats_ = player::prototypeAccountStats();
