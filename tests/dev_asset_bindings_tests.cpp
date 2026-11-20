@@ -39,6 +39,7 @@ void expect(bool condition, std::string_view message) {
 
 std::vector<AssetSpec> requiredSpecs() {
     return {
+        {"prop_range_foliage_01", "mesh", "prop", "tools/assets/cook_dev_range_foliage.py", "assets/generated/dev_range/prop_range_foliage_01.glb"},
         {"prop_target_dummy_01", "mesh", "prop", "assets/source/blender/props/prop_target_dummy_01.blend", "assets/export/gltf/props/prop_target_dummy_01.glb", "col_prop_target_dummy_01"},
         {"wpn_ar_01", "mesh", "weapon", "assets/source/blender/weapons/wpn_ar_01.blend", "assets/export/gltf/weapons/wpn_ar_01.glb"},
         {"wpn_smg_01", "mesh", "weapon", "assets/source/blender/weapons/wpn_smg_01.blend", "assets/export/gltf/weapons/wpn_smg_01.glb"},
@@ -524,6 +525,40 @@ void testGlockPhysicalPistolGripAndMuzzle() {
     }
 }
 
+void testWorldPresentationAssets() {
+    const std::filesystem::path root{NEMISIS_SOURCE_ROOT};
+    nemisis::assets::GameAssetCatalog catalog;
+    expect(catalog.loadFromJson(root / "configs/assets/nemisis_assets.json").ok(), "world asset catalog loads");
+    nemisis::assets::DevAssetBindings bindings;
+    const std::array<std::string_view, 2> ids{"env_test_arena_kit_01", "prop_range_foliage_01"};
+    expect(bindings.bindAssets(catalog, ids, root).ready(), "packaged arena and foliage bind through runtime path");
+    const auto* arena = bindings.meshCatalog().findByAssetId(ids[0]);
+    const auto* foliage = bindings.meshCatalog().findByAssetId(ids[1]);
+    if (!arena || !arena->meshData || !foliage || !foliage->meshData) {
+        expect(false, "world mesh data is available");
+        return;
+    }
+    novacore::assets::GltfMeshData original;
+    expect(novacore::assets::loadGltfMeshData(arena->meshData->path, original).ok(), "original arena GLB loads");
+    expect(arena->meshData->primitiveCount() < original.primitiveCount() && !arena->meshData->primitives.empty(),
+           "arena removes collision helpers while preserving visible geometry");
+    for (const auto& primitive : arena->meshData->primitives) {
+        const auto node = std::ranges::find_if(arena->meshData->nodes, [&](const auto& value) {
+            return primitive.nodeIndex >= 0 && value.nodeIndex == static_cast<std::size_t>(primitive.nodeIndex);
+        });
+        expect(node != arena->meshData->nodes.end() && !node->name.starts_with("col_"), "collision helper is not rendered");
+    }
+    const auto& mesh = *foliage->meshData;
+    expect(mesh.primitiveCount() == 1 && mesh.indexCount() == 504, "foliage uses one primitive and 168 triangles");
+    expect(mesh.materials.size() == 1, "foliage has a packaged matte material");
+    for (const auto& primitive : mesh.primitives) {
+        for (const auto& point : primitive.positions) {
+            expect(point.x >= -1.4F && point.x <= 1.4F && point.y >= 0.0F && point.y <= 1.1F &&
+                   point.z >= -0.7F && point.z <= 0.7F, "foliage bounds stay within its edge placement");
+        }
+    }
+}
+
 void testFirstPersonArmsExcludeAuthoringHelpers() {
     const std::filesystem::path sourceRoot{NEMISIS_SOURCE_ROOT};
     nemisis::assets::GameAssetCatalog catalog;
@@ -568,6 +603,7 @@ int main() {
     testFR17PhysicalGripOwnership();
     testGlockPhysicalPistolGripAndMuzzle();
     testFirstPersonArmsExcludeAuthoringHelpers();
+    testWorldPresentationAssets();
 
     if (failures > 0) {
         std::cerr << failures << " dev asset binding test(s) failed\n";

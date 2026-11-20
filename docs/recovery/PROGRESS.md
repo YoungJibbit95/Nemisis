@@ -1139,3 +1139,23 @@ Dev Range transition/back. Physical Escape stopped Computer Use; no subsequent
 GUI actions were made. Larger-resolution visual/resize/GPU timing acceptance
 remains open. See docs/ui/UI_ROADMAP.md and UI_DESIGN_SYSTEM.md for the bounded
 milestone, reproducible launch and remaining phases.
+
+## 2026-11-20 Dev Range world presentation
+
+The world-presentation pass uses the existing procedural sky and greybox boxes:
+a warm horizon against a cooler floor, lighter cover, teal traversal ramps and
+warm range markers. No geometry, collision, light, shadow-map or asset count is
+added. Game base c4eecc5; NovaCore pin 50eb84408f6c8e8401ff37967aee8561f419cf36.
+The focused greybox world CPU test passed with GCC on Windows. The coordinated
+full build, Vulkan visual comparison and GPU timing remain open; color and
+visibility are not yet visually accepted. Compare at spawn facing the targets,
+then inspect the side traversal area and the sky/horizon with the same settings.
+
+Follow-up: one original procedural foliage cluster (one opaque GLB primitive,
+168 triangles) is placed at (12, 0, -9), outside the central firing lanes and
+wallrun panels. No physics collision or shadow is added; a simple box is used
+if the GPU resource handle is unavailable. Arena mesh selection now excludes
+its authored `col_` collision helpers, including the green wall at z=-8, while
+greybox physics remains unchanged. The targeted render-scene, render-tuning and
+dev-asset-bindings CTests pass (3/3) with GCC 13.2 and the pinned engine.
+Vulkan visual and GPU timing validation remain pending.
