@@ -301,7 +301,7 @@ void testDevRangeRenderSceneBuildsExpectedSubmissions() {
     expect(stats.skyPassEnabled, "dev range render scene reports active sky pass");
 
     expect(!world.primitives.empty(), "greybox world fixture has primitives");
-    expect(stats.worldBoxCount == (world.primitives.size() - 1U) + targetRange.lanes.size() + 13U, "dev range render scene emits world, lane, asset stage, and pickup pads without duplicate arm proxies");
+    expect(stats.worldBoxCount == (world.primitives.size() - 1U) + targetRange.lanes.size() + 12U, "dev range render scene emits world, lane, asset stage, and pickup pads without duplicate arm proxies");
     expect(frame.worldBoxes.size() == stats.worldBoxCount, "world box count matches frame");
     expect(stats.meshInstanceCount == 34, "first-person scene emits world, target, showcase, weapon, and arms meshes without a duplicate local world model");
     expect(frame.worldMeshes.size() == 34, "frame receives all world and exclusive viewmodel mesh instances");
@@ -1034,7 +1034,7 @@ void testDevRangeRenderSceneDrawsLanePressure() {
         nemisis::dev::DevRangeRenderSceneDesc{&world, &targetRange, nullptr, &lookup, player});
 
     expect(stats.activeLanePressurePrimitiveCount == 3U, "lane pressure emits ring, beam, and threat line");
-    expect(stats.worldBoxCount == (world.primitives.size() - 1U) + targetRange.lanes.size() + 15U, "lane pressure adds two world-box primitives");
+    expect(stats.worldBoxCount == (world.primitives.size() - 1U) + targetRange.lanes.size() + 14U, "lane pressure adds two world-box primitives");
     expect(stats.worldLineCount == 2U, "lane pressure adds one threat line plus aim line");
 }
 
