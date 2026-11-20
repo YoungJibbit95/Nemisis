@@ -86,6 +86,7 @@ public:
 
 private:
     [[nodiscard]] bool usesProjectRig() const;
+    [[nodiscard]] bool usesFirstPersonHandConstraints() const;
     void enterPlayableMap();
     void loadPlayableResources(ui::GameScreen screen);
     void updateVisiblePlayerPose(float animationDelta);
