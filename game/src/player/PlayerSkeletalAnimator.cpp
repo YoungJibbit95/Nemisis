@@ -320,7 +320,7 @@ bool PlayerSkeletalAnimator::samplePose(const CharacterAnimationFrame& frame, fl
         stats_.upperBodyClip.clear();
         stats_.upperBodyWeight = 0.0F;
     }
-    if (!runtime_.update(std::clamp(deltaSeconds * playbackScale, 0.0F, 0.10F))) {
+    if (!runtime_.update(std::max(0.0F, deltaSeconds) * playbackScale)) {
         errors_.push_back("Animation runtime update failed: " + std::string(runtime_.lastError()));
         ++stats_.failedFrameCount;
         stats_.poseReady = false;
