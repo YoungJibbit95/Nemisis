@@ -58,7 +58,7 @@
     "max_duration": 1.35,
     "wall_jump_impulse": 6.2,
     "min_height": 0.35,
-    "probe_distance": 0.82,
+    "probe_distance": 0.12,
     "contact_grace": 0.12,
     "detach_cooldown": 0.16
   },

@@ -207,20 +207,14 @@ void beginSlide(
         mode == MovementMode::Dashing;
 }
 
-[[nodiscard]] novacore::math::Vec3 chooseWallRunTangent(
-    novacore::math::Vec3 tangent,
-    novacore::math::Vec3 velocity,
-    novacore::math::Vec3 inputDirection) {
-    tangent = normalizedOrZero(tangent);
-    if (tangent.lengthSquared() <= 0.0001F) {
-        return {};
-    }
-
-    const auto preferred = inputDirection.lengthSquared() > 0.0001F ? inputDirection : normalizedOrZero(horizontalVelocity(velocity));
-    if ((preferred.x * tangent.x) + (preferred.z * tangent.z) < 0.0F) {
-        tangent = tangent * -1.0F;
-    }
-    return tangent;
+void accelerateWallRun(PlayerMovementState& state, const MovementTuning& tuning, float dt) {
+    const auto tangent = state.wallRunTangent;
+    const float targetSpeed = std::clamp(dotHorizontal(state.velocity, tangent),
+        tuning.wallRunSpeed, tuning.wallRunMaxSpeed);
+    state.velocity = approachHorizontalVelocity(state.velocity, tangent * targetSpeed,
+        tuning.wallRunAcceleration, dt);
+    state.velocity.y = approachFloat(state.velocity.y, tuning.wallRunVerticalTarget,
+        tuning.wallRunVerticalAcceleration * dt);
 }
 
 } // namespace
@@ -410,23 +404,7 @@ PlayerMovementState MovementSystem::simulate(
             tuning_.dashSteeringAcceleration,
             fixedDeltaSeconds);
     } else if (state.mode == MovementMode::WallRunning) {
-        const auto tangent = chooseWallRunTangent(state.wallRunTangent, state.velocity, direction);
-        if (tangent.lengthSquared() > 0.0001F) {
-            const float tangentSpeed = std::abs(dotHorizontal(state.velocity, tangent));
-            const float targetWallSpeed = std::clamp(
-                std::max(tangentSpeed, tuning_.wallRunSpeed),
-                tuning_.wallRunSpeed,
-                tuning_.wallRunMaxSpeed);
-            state.velocity = approachHorizontalVelocity(
-                state.velocity,
-                tangent * targetWallSpeed,
-                tuning_.wallRunAcceleration,
-                fixedDeltaSeconds);
-        }
-        state.velocity.y = approachFloat(
-            state.velocity.y,
-            tuning_.wallRunVerticalTarget,
-            tuning_.wallRunVerticalAcceleration * fixedDeltaSeconds);
+        accelerateWallRun(state, tuning_, fixedDeltaSeconds);
     }
 
     if (state.slideBufferRemaining > 0.0F &&
@@ -476,7 +454,7 @@ PlayerMovementState MovementSystem::simulate(
         command.doubleJumpPressed ||
         (command.jumpPressed && canUseAirJump);
     if (command.jumpPressed && state.mode == MovementMode::WallRunning) {
-        const auto tangent = chooseWallRunTangent(state.wallRunTangent, state.velocity, direction);
+        const auto tangent = state.wallRunTangent;
         const auto normal = normalizedOrZero(state.wallRunNormal);
         state.velocity =
             (tangent * (tuning_.wallRunSpeed * 0.74F)) +
@@ -610,13 +588,16 @@ PlayerMovementState MovementSystem::applyWallRunContact(
         state.wallRunTangent.lengthSquared() > 0.0001F;
     const bool usableContact = contact.available || contactGraceActive;
     const auto requestedNormal = normalizedOrZero(contact.available ? contact.normal : state.wallRunNormal);
+    const auto tangent = normalizedOrZero(contact.available ? contact.tangent : state.wallRunTangent);
+    const float signedTangentSpeed = dotHorizontal(state.velocity, tangent);
     const float movementSpeed = horizontalSpeed(state.velocity);
     const float outwardSpeed = dotHorizontal(state.velocity, requestedNormal);
     const bool enteringWallRun = state.mode != MovementMode::WallRunning;
     const bool hasWallRunInput = input.magnitude > 0.12F || movementSpeed >= tuning_.wallRunEntryMinSpeed;
     const bool entryVelocityAllowed = !enteringWallRun ||
-        (movementSpeed >= tuning_.wallRunEntryMinSpeed && outwardSpeed <= tuning_.wallRunMaxOutwardSpeed);
+        (std::abs(signedTangentSpeed) >= tuning_.wallRunEntryMinSpeed && outwardSpeed <= tuning_.wallRunMaxOutwardSpeed);
     const bool wantsWallRun = usableContact &&
+        tangent.lengthSquared() > 0.0001F &&
         state.wallRunDetachCooldownRemaining <= 0.0F &&
         hasWallRunInput &&
         entryVelocityAllowed &&
@@ -637,22 +618,16 @@ PlayerMovementState MovementSystem::applyWallRunContact(
         return state;
     }
 
-    const auto contactNormal = contact.available ? contact.normal : state.wallRunNormal;
-    const auto contactTangent = contact.available ? contact.tangent : state.wallRunTangent;
-    const auto tangent = chooseWallRunTangent(contactTangent, state.velocity, input.direction);
-    if (tangent.lengthSquared() <= 0.0001F) {
-        return state;
-    }
-
     state.mode = MovementMode::WallRunning;
     state.hasWallRunContact = true;
-    state.wallRunNormal = normalizedOrZero(contactNormal);
-    state.wallRunTangent = tangent;
+    state.wallRunNormal = requestedNormal;
+    state.wallRunTangent = signedTangentSpeed < 0.0F ? tangent * -1.0F : tangent;
     if (contact.available) {
         state.wallRunContactGraceRemaining = tuning_.wallRunContactGraceSeconds;
     }
     if (enteringWallRun) {
         triggerWallRunGravityTech(state.tech, state.wallRunNormal);
+        accelerateWallRun(state, tuning_, fixedDeltaSeconds);
     } else {
         keepGravityBootsActive(state.tech, state.wallRunNormal);
     }
@@ -660,20 +635,6 @@ PlayerMovementState MovementSystem::applyWallRunContact(
         state.wallRunTimeRemaining = tuning_.wallRunMaxDurationSeconds;
     }
 
-    const float tangentSpeed = std::abs(dotHorizontal(state.velocity, tangent));
-    const float targetSpeed = std::clamp(
-        std::max(tangentSpeed, tuning_.wallRunSpeed),
-        tuning_.wallRunSpeed,
-        tuning_.wallRunMaxSpeed);
-    state.velocity = approachHorizontalVelocity(
-        state.velocity,
-        tangent * targetSpeed,
-        tuning_.wallRunAcceleration,
-        fixedDeltaSeconds);
-    state.velocity.y = approachFloat(
-        state.velocity.y,
-        tuning_.wallRunVerticalTarget,
-        tuning_.wallRunVerticalAcceleration * fixedDeltaSeconds);
     state.hasDoubleJump = true;
     state.groundJumpAvailable = false;
     state.lastHorizontalSpeed = horizontalSpeed(state.velocity);

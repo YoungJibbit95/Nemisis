@@ -380,14 +380,19 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
         const bool activeMantleInterpolation =
             movementState->mode == movement::MovementMode::Mantling &&
             movementState->mantleTimeRemaining > 0.0F;
-        const bool wallRunStateReady =
-            movementState->mode == movement::MovementMode::Airborne ||
-            movementState->mode == movement::MovementMode::WallRunning ||
-            movementState->mode == movement::MovementMode::Dashing;
-        const bool wallRunCandidate = collisionSample.nearWallRunSurface &&
-            wallRunStateReady &&
-            movementState->position.y >= movement_.tuning().wallRunMinHeight;
-        if (collisionSample.blocked && !wallRunCandidate && !activeMantleInterpolation) {
+        const bool stableGroundContact = acceptsStableGroundContact(*movementState, movementCommand, collisionSample);
+        if (!activeMantleInterpolation) {
+            movementState->position = collisionSample.position;
+            *movementState = movement_.applyWallRunContact(
+                *movementState, movementCommand,
+                {collisionSample.nearWallRunSurface && !stableGroundContact,
+                    collisionSample.wallNormal, collisionSample.wallTangent},
+                static_cast<float>(context.fixedDeltaSeconds));
+        } else {
+            collisionSample.position = movementState->position;
+        }
+        const bool wallRunning = movementState->mode == movement::MovementMode::WallRunning;
+        if (collisionSample.blocked && !(wallRunning && collisionSample.nearWallRunSurface) && !activeMantleInterpolation) {
             if (std::abs(collisionSample.correction.x) > 0.0001F) {
                 movementState->velocity.x = 0.0F;
             }
@@ -403,14 +408,10 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
                 }
             }
         }
-        const bool stableGroundContact = acceptsStableGroundContact(
-            *movementState,
-            movementCommand,
-            collisionSample);
         if (stableGroundContact && movementState->velocity.y < 0.0F && !activeMantleInterpolation) {
             movementState->velocity.y = 0.0F;
         }
-        if (stableGroundContact && !wallRunCandidate && !activeMantleInterpolation) {
+        if (stableGroundContact && !wallRunning && !activeMantleInterpolation) {
             movementState->groundJumpAvailable = true;
             movementState->hasDoubleJump = true;
             movementState->coyoteTimeRemaining = movement_.tuning().coyoteTimeSeconds;
@@ -422,26 +423,12 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
                 movementState->wallRunTimeRemaining = 0.0F;
                 movementState->hasWallRunContact = false;
             }
-        } else if (!wallRunCandidate &&
+        } else if (!wallRunning &&
             (movementState->mode == movement::MovementMode::Grounded ||
                 movementState->mode == movement::MovementMode::Sliding ||
                 movementState->mode == movement::MovementMode::Dashing)) {
             movementState->mode = movement::MovementMode::Airborne;
             movementState->groundedTimeSeconds = 0.0F;
-        }
-        if (!activeMantleInterpolation) {
-            movementState->position = collisionSample.position;
-            *movementState = movement_.applyWallRunContact(
-                *movementState,
-                movementCommand,
-                movement::WallRunContact{
-                    wallRunCandidate,
-                    collisionSample.wallNormal,
-                    collisionSample.wallTangent,
-                },
-                static_cast<float>(context.fixedDeltaSeconds));
-        } else {
-            collisionSample.position = movementState->position;
         }
         if (auto* transform = world_.getComponent<novacore::ecs::TransformComponent>(localPlayerEntity_);
             transform != nullptr) {
