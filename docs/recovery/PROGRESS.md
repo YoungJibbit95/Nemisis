@@ -275,6 +275,16 @@ tick even during catch-up, preserving the air jump. GNU Release passed the
 movement and input suites against NovaCore `fbbbfb3a18e945c28c2dc0bc7c5a8d8f8d541f56`.
 Manual input and camera feel remain to be checked in the integrated playtest.
 
+## 2026-11-20 Jump contact with roof undersides
+
+The game keeps the ceiling role reported by the capsule sweep. A jump loses
+upward speed on the impact tick and starts falling on the next tick. The
+greybox CPU suite covers vertical and diagonal jumps beneath a 2.20 m roof
+and a side-wall hit followed by a roof hit in the same sweep. Restoring the
+previous role mapping and velocity response fails seven assertions in these
+cases. GNU Release passed the collision and movement replay suites against
+NovaCore `fbbbfb3a18e945c28c2dc0bc7c5a8d8f8d541f56`.
+
 ## 2026-11-20 Wall-run contact and replay
 
 The Dev Range fixed tick catches a tagged panel within 0.12 m of the capsule

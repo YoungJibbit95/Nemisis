@@ -545,6 +545,7 @@ std::size_t bindFirstPersonArmsMeshToRigSockets(
         return {0.22F, 0.80F, 1.0F, 1.0F};
     case GreyboxContactRole::Bounds:
         return {1.0F, 0.24F, 0.20F, 1.0F};
+    case GreyboxContactRole::Ceiling:
     case GreyboxContactRole::Sweep:
         return {1.0F, 0.64F, 0.18F, 1.0F};
     }

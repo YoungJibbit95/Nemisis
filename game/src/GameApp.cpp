@@ -380,7 +380,7 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
                 movementCommand.mantleHeld ||
                 movementCommand.jumpPressed ||
                 movementCommand.jumpHeld) &&
-            collisionSample.mantleCandidate &&
+            !collisionSample.ceilingHit && collisionSample.mantleCandidate &&
             mantleActivationWindow) {
             *movementState = movement_.applyMantleCandidate(
                 *movementState,
@@ -414,21 +414,8 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
             collisionSample.position = movementState->position;
         }
         const bool wallRunning = movementState->mode == movement::MovementMode::WallRunning;
-        if (collisionSample.blocked && !(wallRunning && collisionSample.nearWallRunSurface) && !activeMantleInterpolation) {
-            if (std::abs(collisionSample.correction.x) > 0.0001F) {
-                movementState->velocity.x = 0.0F;
-            }
-            if (std::abs(collisionSample.correction.z) > 0.0001F) {
-                movementState->velocity.z = 0.0F;
-            }
-            if (collisionSample.sweepHit) {
-                if (std::abs(collisionSample.sweepNormal.x) > 0.50F) {
-                    movementState->velocity.x = 0.0F;
-                }
-                if (std::abs(collisionSample.sweepNormal.z) > 0.50F) {
-                    movementState->velocity.z = 0.0F;
-                }
-            }
+        if (!activeMantleInterpolation) {
+            movementState->velocity = dev::clipGreyboxVelocity(movementState->velocity, collisionSample, wallRunning);
         }
         if (stableGroundContact && movementState->velocity.y < 0.0F && !activeMantleInterpolation) {
             movementState->velocity.y = 0.0F;
