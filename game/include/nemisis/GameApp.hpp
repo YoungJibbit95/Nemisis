@@ -137,6 +137,7 @@ private:
     player::PlayerSkeletalAnimator skeletalBodyAnimator_;
     player::PlayerSkeletalAnimator skeletalArmsAnimator_;
     std::optional<dev::FirstPersonPresentation> firstPersonPresentation_;
+    std::optional<dev::FirstPersonShotFeedback> firstPersonShotFeedback_;
     std::uint64_t armVertexUpdateCount_ = 0;
     std::uint64_t fpsBodyVertexUpdateCount_ = 0;
     std::uint64_t worldBodyVertexUpdateCount_ = 0;

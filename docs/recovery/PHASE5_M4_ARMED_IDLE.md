@@ -83,8 +83,31 @@ channels, matching masked rotations and explicit mount TRS at both endpoints.
 
 Run is also the existing selector fallback for the Sprint request and several
 advanced states. These compositions are not authored armed Walk/Run/Sprint or
-directional animation. Crouch, ADS, fire, reload, slide, mantle, airborne states,
-world-model weapon animation and full combat animation acceptance remain open.
+directional animation. Crouch, ADS sight alignment, slide, mantle, airborne
+states, world-model weapon animation and authored combat clips remain open.
+
+## M4 fire and reload presentation
+
+The existing fixed-tick weapon state now drives a short rearward/upward kick
+and a two-handed reload dip on the rigid chest socket. The dip fades in and out
+over the reload timer and ends when the magazine refills. Both palm constraints,
+the visible rifle and cooked effect sockets use that final weapon pose. The
+reload gesture keeps both hands on their grips. A magazine insertion animation
+would need separately authored clips and hand targets.
+
+The flash follows the cooked barrel, and the ejection cue uses the cooked port
+when the asset supplies one. The Dev Range retains the latest trace and hit for
+its active weapon and shot index during the 75 ms effect window. Its endpoint
+comes from the simulated shot, including when multiple ticks precede a frame.
+
+To review in Vulkan, launch with `--project-rifle-ready` and reset with `P`.
+Aim at a lane target, fire once and review the first frame where ammo drops.
+Check that the flash starts at the moving barrel, the trace ends at the hit
+and the aiming point remains visible. Hold fire briefly while walking sideways,
+then release and watch the rifle settle. Press `R` with a partly used magazine.
+Check both hands stay on their grips as the rifle dips and rises, and try firing
+during the dip. The next shot should appear once the reload finishes. The
+preview uses the M4 throughout.
 
 ## Strict CPU gates
 
