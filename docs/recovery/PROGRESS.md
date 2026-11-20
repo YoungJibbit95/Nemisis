@@ -1139,3 +1139,14 @@ Dev Range transition/back. Physical Escape stopped Computer Use; no subsequent
 GUI actions were made. Larger-resolution visual/resize/GPU timing acceptance
 remains open. See docs/ui/UI_ROADMAP.md and UI_DESIGN_SYSTEM.md for the bounded
 milestone, reproducible launch and remaining phases.
+
+## 2026-11-20 Dev Range world presentation
+
+The world-presentation pass uses the existing procedural sky and greybox boxes:
+a warm horizon against a cooler floor, lighter cover, teal traversal ramps and
+warm range markers. No geometry, collision, light, shadow-map or asset count is
+added. Game base c4eecc5; NovaCore pin 50eb84408f6c8e8401ff37967aee8561f419cf36.
+The focused greybox world CPU test passed with GCC on Windows. The coordinated
+full build, Vulkan visual comparison and GPU timing remain open; color and
+visibility are not yet visually accepted. Compare at spawn facing the targets,
+then inspect the side traversal area and the sky/horizon with the same settings.

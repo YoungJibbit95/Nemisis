@@ -1,16 +1,16 @@
 {
-  "profile": "dev_range_readable_vulkan",
+  "profile": "dev_range_cool_dusk",
   "sky": {
     "enabled": true,
     "zenith_color": {
-      "x": 0.07,
-      "y": 0.18,
-      "z": 0.36
+      "x": 0.045,
+      "y": 0.1,
+      "z": 0.23
     },
     "horizon_color": {
-      "x": 0.45,
-      "y": 0.61,
-      "z": 0.76
+      "x": 0.72,
+      "y": 0.5,
+      "z": 0.38
     },
     "ground_color": {
       "x": 0.025,
@@ -18,17 +18,17 @@
       "z": 0.045
     },
     "horizon_height": 0.46,
-    "gradient_power": 1.45,
-    "exposure": 1.08,
-    "sun_angular_radius_degrees": 1.55,
-    "sun_intensity": 1.65,
-    "haze_strength": 0.3,
-    "cloud_strength": 0.22
+    "gradient_power": 1.2,
+    "exposure": 1.04,
+    "sun_angular_radius_degrees": 1.8,
+    "sun_intensity": 1.45,
+    "haze_strength": 0.38,
+    "cloud_strength": 0.3
   },
   "lighting": {
     "sun_direction": {
       "x": 0.397131,
-      "y": 0.342020,
+      "y": 0.34202,
       "z": 0.851651
     },
     "fill_direction": {
@@ -36,12 +36,12 @@
       "y": 0.36,
       "z": -0.68
     },
-    "ambient_intensity": 0.34,
-    "fill_intensity": 0.22,
-    "rim_intensity": 0.22,
+    "ambient_intensity": 0.38,
+    "fill_intensity": 0.25,
+    "rim_intensity": 0.2,
     "specular_intensity": 0.16,
-    "contrast": 1.12,
-    "saturation": 1.08,
+    "contrast": 1.08,
+    "saturation": 1.05,
     "contact_shadows_enabled": true,
     "contact_shadow_opacity": 0.46,
     "contact_shadow_softness": 0.64
