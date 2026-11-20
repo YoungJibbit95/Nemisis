@@ -39,6 +39,9 @@
 #include "novacore/render/Renderer.hpp"
 
 #include <array>
+#include <atomic>
+#include <exception>
+#include <thread>
 #include <chrono>
 #include <filesystem>
 #include <memory>
@@ -61,6 +64,7 @@ struct GameAppOptions final {
     bool autoEnterDevRange = false;
     bool lockDevRange = false;
     bool runMenuFlowSmoke = false;
+    bool runDeploymentSmoke = false;
     bool uiShowcase = false;
     int uiPreviewWidth = 1280;
     int uiPreviewHeight = 720;
@@ -76,6 +80,7 @@ struct GameAppOptions final {
 class GameApp final : public novacore::core::IApplicationDelegate {
 public:
     explicit GameApp(GameAppOptions options = {});
+    ~GameApp() override;
 
     void onStartup() override;
     void onShutdown() override;
@@ -88,6 +93,9 @@ private:
     [[nodiscard]] bool usesProjectRig() const;
     void enterPlayableMap();
     void loadPlayableResources(ui::GameScreen screen);
+    [[nodiscard]] bool updatePlayableResourceLoading();
+    void finishPlayableResources(ui::GameScreen screen);
+    void stopAssetImport();
     void updateVisiblePlayerPose(float animationDelta);
     void loadAssetCatalog();
     void applyConfig(std::string_view name);
@@ -103,7 +111,7 @@ private:
     void tickRangeSession(float fixedDeltaSeconds);
     void advanceMenuFlowSmoke(const novacore::core::FrameContext& context);
     void syncRelativeMouseMode();
-    void registerDevMeshResources(std::span<const std::string_view> assetIds);
+    void registerDevMeshResources(std::span<const std::string_view> assetIds, bool includePreview = true);
     void releaseDevMeshResources();
     [[nodiscard]] dev::DevRangePlayerRenderState currentPlayerRenderState() const;
 
@@ -174,6 +182,30 @@ private:
     std::size_t menuFlowSmokeStage_ = static_cast<std::size_t>(-1);
     bool relativeMouseDesired_ = false;
     bool hasCharacterAnimationFrame_ = false;
+
+    struct ImportResult final {
+        assets::DevAssetBindingSummary summary;
+        std::vector<std::string_view> imported;
+        std::exception_ptr error;
+        bool catalogReady = false;
+    };
+    ImportResult importResult_;
+    std::atomic_bool importFinished_{false};
+    // The barrier is enabled only by the deterministic deployment smoke.
+    std::atomic_bool deploymentSmokeAllowImport_{false};
+    std::atomic_bool deploymentRangeOnlyImported_{false};
+    std::vector<std::string_view> pendingMeshRegistrations_;
+    ui::GameScreen importTarget_ = ui::GameScreen::MainMenu;
+    bool assetCatalogInitialized_ = false;
+    bool previewResourcesRegistered_ = false;
+    std::uint64_t deploymentLoadingFrames_ = 0;
+    std::uint64_t deploymentWorkerFrames_ = 0;
+    std::uint32_t deploymentPlayableFrames_ = 0;
+    std::uint32_t deploymentMenuFrames_ = 0;
+    std::uint32_t deploymentSmokeStage_ = 0;
+    // Must be destroyed before every member the worker accesses, even if
+    // Application::run exits through an exception without onShutdown().
+    std::jthread assetImportThread_;
 };
 
 } // namespace nemisis::game

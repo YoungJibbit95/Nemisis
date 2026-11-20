@@ -67,6 +67,12 @@ public:
         const std::filesystem::path& runtimeRoot,
         bool append = false);
 
+    // Retryable import: already bound IDs are left untouched and not counted.
+    [[nodiscard]] DevAssetBindingSummary bindMissingAssets(
+        const GameAssetCatalog& catalog,
+        std::span<const std::string_view> assetIds,
+        const std::filesystem::path& runtimeRoot);
+
     [[nodiscard]] const novacore::render::MeshCatalog& meshCatalog() const;
     [[nodiscard]] std::size_t meshCount() const;
 

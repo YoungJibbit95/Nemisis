@@ -51,6 +51,26 @@ void testDirectDevRangeSelection() {
     expect(menu.gameplayActive(), "dev range activates gameplay");
 }
 
+void testLoadingWaitsForAssetsAndCanCancel() {
+    auto actions = nemisis::input::createDefaultActionMap();
+    nemisis::ui::GameMenu menu;
+    menu.showLoadingScreen(nemisis::ui::GameScreen::OuterFacility);
+    menu.updateFrame(10.0, false);
+    expect(menu.loadingPlayableMap() && menu.loadingProgress() < 1.0F,
+           "loading never enters gameplay while assets are pending");
+    press(actions, nemisis::input::key_codes::Escape);
+    menu.update(actions);
+    expect(menu.screen() == nemisis::ui::GameScreen::MainMenu, "escape cancels while assets are pending");
+    release(actions);
+    menu.update(actions);
+    menu.showLoadingScreen(nemisis::ui::GameScreen::DevRange);
+    menu.updateFrame(10.0, false);
+    expect(menu.loadingPlayableMap() && menu.loadingTarget() == nemisis::ui::GameScreen::DevRange,
+           "another map can be selected while loading is gated");
+    menu.updateFrame(1.0, true);
+    expect(menu.screen() == nemisis::ui::GameScreen::DevRange, "ready assets permit the selected map to enter");
+}
+
 void testMenuConfirmAndBack() {
     auto actions = nemisis::input::createDefaultActionMap();
     nemisis::ui::GameMenu menu;
@@ -435,6 +455,7 @@ void testNetworkDebugOverlayIncludesPredictionTelemetry() {
 
 int main() {
     testDirectDevRangeSelection();
+    testLoadingWaitsForAssetsAndCanCancel();
     testMenuConfirmAndBack();
     testDebugToggle();
     testDebugPageCycle();

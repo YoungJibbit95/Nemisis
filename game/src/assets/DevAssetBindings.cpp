@@ -260,6 +260,17 @@ DevAssetBindingSummary DevAssetBindings::bindAssets(
     return summary;
 }
 
+DevAssetBindingSummary DevAssetBindings::bindMissingAssets(
+    const GameAssetCatalog& catalog,
+    std::span<const std::string_view> assetIds,
+    const std::filesystem::path& runtimeRoot) {
+    std::vector<std::string_view> missing;
+    for (const auto id : assetIds) {
+        if (!meshes_.contains(id) && std::ranges::find(missing, id) == missing.end()) missing.push_back(id);
+    }
+    return bindAssets(catalog, missing, runtimeRoot, true);
+}
+
 const novacore::render::MeshCatalog& DevAssetBindings::meshCatalog() const {
     return meshes_;
 }

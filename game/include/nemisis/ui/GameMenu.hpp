@@ -66,7 +66,7 @@ public:
         weapons::WeaponLoadout& loadout,
         const weapons::AttachmentRegistry& attachments,
         MenuPointerState pointer);
-    void updateFrame(double deltaSeconds);
+    void updateFrame(double deltaSeconds, bool playableResourcesReady = true);
     void showMainMenu(MenuTab tab = MenuTab::Play);
     void showLoadingScreen(GameScreen target, float progress = 0.0F);
     void showDevRange();

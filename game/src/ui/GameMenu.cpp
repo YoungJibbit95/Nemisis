@@ -1249,12 +1249,13 @@ void GameMenu::update(
     updatePointer(pointer, settings, loadout, attachments);
 }
 
-void GameMenu::updateFrame(double deltaSeconds) {
+void GameMenu::updateFrame(double deltaSeconds, bool playableResourcesReady) {
     if (screen_ != GameScreen::Loading) {
         return;
     }
 
-    loadingProgress_ = std::min(1.0F, loadingProgress_ + static_cast<float>(std::max(0.0, deltaSeconds) * 1.75));
+    const float ceiling = loadingPlayableMap() && !playableResourcesReady ? 0.95F : 1.0F;
+    loadingProgress_ = std::min(ceiling, loadingProgress_ + static_cast<float>(std::max(0.0, deltaSeconds) * 1.75));
     if (loadingProgress_ >= 1.0F) {
         setScreen(loadingTarget_);
     }

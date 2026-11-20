@@ -159,11 +159,24 @@ struct DevRangeWeaponPickup final {
 GameApp::GameApp(GameAppOptions options)
     : options_(options), menu_(!options.fullGame) {}
 
+GameApp::~GameApp() {
+    stopAssetImport();
+}
+
+void GameApp::stopAssetImport() {
+    if (assetImportThread_.joinable()) {
+        assetImportThread_.request_stop();
+        assetImportThread_.join();
+    }
+}
+
 void GameApp::onStartup() {
     actions_ = input::createDefaultActionMap();
     attachmentRegistry_.registerPrototypeAttachments();
     activeLoadout_ = weapons::defaultPrototypeLoadout(std::string(kDefaultWeaponId));
-    if (options_.startInFacility) {
+    if (options_.runDeploymentSmoke) {
+        menu_.showLoadingScreen(ui::GameScreen::DevRange);
+    } else if (options_.startInFacility) {
         menu_.showOuterFacility();
         greyboxWorld_ = dev::createOuterFacilityWorld();
         targetRange_ = dev::makeOuterFacilityTargets();
@@ -250,6 +263,7 @@ void GameApp::onStartup() {
 }
 
 void GameApp::onShutdown() {
+    stopAssetImport();
     if (options_.profileRange && options_.startInFacility) {
         if (const auto* player = world_.getComponent<movement::PlayerMovementState>(localPlayerEntity_)) {
             novacore::core::logInfo("game", "Facility profile route: forward_meters=" +
@@ -852,10 +866,15 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
     } else
 #endif
     menu_.update(actions_, settings_, activeLoadout_, attachmentRegistry_, buildMenuPointerState(window_, actions_));
-    if (options_.fullGame && previousScreen == ui::GameScreen::Loading && menu_.loadingPlayableMap()) {
+    bool playableResourcesReady = true;
+    if (options_.fullGame && !options_.runMenuFlowSmoke) {
+        playableResourcesReady = updatePlayableResourceLoading();
+    } else if (options_.fullGame && previousScreen == ui::GameScreen::Loading && menu_.loadingPlayableMap()) {
+        // The fixed-stage diagnostic remains synchronous; ordinary deployments
+        // use the worker and never call the renderer from it.
         loadPlayableResources(menu_.loadingTarget());
     }
-    menu_.updateFrame(context.deltaSeconds);
+    menu_.updateFrame(context.deltaSeconds, playableResourcesReady);
     if (options_.lockDevRange && menu_.screen() != ui::GameScreen::DevRange) { menu_.showDevRange(); }
     advanceMenuFlowSmoke(context);
     if (menu_.gameplayActive() && menu_.screen() != previousScreen) {
@@ -967,6 +986,47 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
     const auto submitStart = options_.profileRange ? Clock::now() : Clock::time_point{};
     renderer_.beginFrame(frameInfo);
     renderer_.endFrame();
+    if (options_.runDeploymentSmoke) {
+        if (menu_.loadingPlayableMap()) {
+            ++deploymentLoadingFrames_;
+            if (assetImportThread_.joinable() && !importFinished_.load(std::memory_order_acquire)) {
+                ++deploymentWorkerFrames_;
+            }
+            if (deploymentSmokeStage_ == 0 && deploymentWorkerFrames_ >= 2) {
+                deploymentSmokeAllowImport_.store(true, std::memory_order_release);
+                if (deploymentRangeOnlyImported_.load(std::memory_order_acquire)) {
+                    menu_.showMainMenu(); // Same transition as cancelling the loading screen.
+                    deploymentSmokeStage_ = 1;
+                }
+            }
+        } else if (deploymentSmokeStage_ == 1 && menu_.screen() == ui::GameScreen::MainMenu) {
+            if (++deploymentMenuFrames_ >= 2) {
+                menu_.showLoadingScreen(ui::GameScreen::OuterFacility);
+                deploymentSmokeStage_ = 2;
+            }
+        } else if (menu_.gameplayActive() && ++deploymentPlayableFrames_ >= 3U) {
+            deploymentPlayableFrames_ = 0;
+            if (deploymentSmokeStage_ == 2) {
+                const auto facility = assets::outerFacilityRenderableAssetIds();
+                for (const auto id : assets::requiredDevSandboxRenderableAssetIds()) {
+                    if (std::ranges::find(facility, id) == facility.end() &&
+                        devMeshResources_.contains(std::string(id))) {
+                        throw std::runtime_error("Cancelled range-only asset registered for Facility: " + std::string(id));
+                    }
+                }
+                menu_.showLoadingScreen(ui::GameScreen::DevRange);
+                deploymentSmokeStage_ = 3;
+            } else if (deploymentSmokeStage_ == 3) {
+                menu_.showLoadingScreen(ui::GameScreen::OuterFacility);
+                deploymentSmokeStage_ = 4;
+            } else if (deploymentSmokeStage_ == 4) {
+                novacore::core::logInfo("game", "Deployment smoke complete: loading_frames=" +
+                    std::to_string(deploymentLoadingFrames_) + " worker_frames=" +
+                    std::to_string(deploymentWorkerFrames_) + " cancelled=1 range_only_deferred=1 switched=1 returned=1 map=" + greyboxWorld_.id);
+                uiQuitRequested_ = true;
+            }
+        }
+    }
     if (options_.profileRange) {
         const auto end = Clock::now();
         if (context.frameIndex >= kRangeProfileWarmupFrames) {
@@ -990,11 +1050,115 @@ bool GameApp::isHeadless() const {
     return window_.isHeadless();
 }
 
+bool GameApp::updatePlayableResourceLoading() {
+    const bool loading = menu_.loadingPlayableMap();
+    const auto target = loading ? menu_.loadingTarget() : ui::GameScreen::MainMenu;
+
+    if (assetImportThread_.joinable() && importFinished_.load(std::memory_order_acquire)) {
+        assetImportThread_.join();
+        assetCatalogInitialized_ |= importResult_.catalogReady;
+        devAssetSummary_.include(importResult_.summary);
+        for (const auto id : importResult_.imported) {
+            pendingMeshRegistrations_.push_back(id);
+            if (const auto* record = assetCatalog_.find(id)) {
+                assetStreamer_.request(record->id, record->priority, 0);
+            }
+        }
+        const auto error = importResult_.error;
+        importResult_ = {};
+        if (error) {
+            if (loading && target == importTarget_) std::rethrow_exception(error);
+            try { std::rethrow_exception(error); }
+            catch (const std::exception& e) { novacore::core::logWarning("game", std::string("Cancelled asset import: ") + e.what()); }
+        }
+    }
+    if (assetImportThread_.joinable()) {
+        if (!loading || target != importTarget_) assetImportThread_.request_stop();
+        return false;
+    }
+    if (!loading) return true;
+
+    const bool facilityOnly = target == ui::GameScreen::OuterFacility;
+    const std::span<const std::string_view> requested = facilityOnly ? assets::outerFacilityRenderableAssetIds()
+        : std::span<const std::string_view>{assets::requiredDevSandboxRenderableAssetIds()};
+    // Keep CPU work from an abandoned map cached, but upload only assets needed
+    // by the current destination; unrelated pending meshes stay deferred.
+    const auto next = std::ranges::find_if(pendingMeshRegistrations_, [requested](std::string_view id) {
+        return std::ranges::find(requested, id) != requested.end();
+    });
+    if (next != pendingMeshRegistrations_.end()) {
+        const auto id = *next;
+        registerDevMeshResources(std::span<const std::string_view>{&id, 1}, false);
+        if (!devMeshResources_.contains(std::string(id))) {
+            throw std::runtime_error("Playable map mesh registration failed: " + std::string(id));
+        }
+        pendingMeshRegistrations_.erase(next);
+        return false;
+    }
+    if (rangeResourcesLoaded_ || (facilityOnly && playableResourcesLoaded_)) return true;
+    std::vector<std::string_view> missing;
+    for (const auto id : requested) {
+        if (!devAssetBindings_.meshCatalog().findByAssetId(id)) missing.push_back(id);
+    }
+    if (!assetCatalogInitialized_ || !missing.empty()) {
+        importResult_ = {};
+        importFinished_.store(false, std::memory_order_relaxed);
+        importTarget_ = target;
+        const bool needCatalog = !assetCatalogInitialized_;
+        assetImportThread_ = std::jthread([this, missing = std::move(missing), needCatalog](std::stop_token stop) {
+            ImportResult result;
+            try {
+                // Only the smoke holds its first worker long enough to prove
+                // that loading frames render before CPU work completes.
+                while (options_.runDeploymentSmoke &&
+                       !deploymentSmokeAllowImport_.load(std::memory_order_acquire) && !stop.stop_requested()) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                }
+                if (needCatalog && !stop.stop_requested()) {
+                    // Full-game catalog and optional Project preview are CPU-only
+                    // here; neither the renderer nor the streamer is touched.
+                    loadAssetCatalog();
+                    result.catalogReady = true;
+                }
+                for (const auto id : missing) {
+                    if (stop.stop_requested()) break;
+                    const auto batch = devAssetBindings_.bindAssets(assetCatalog_,
+                        std::span<const std::string_view>{&id, 1}, ".", true);
+                    if (!batch.ready()) {
+                        throw std::runtime_error("Playable map asset import failed: " +
+                            (batch.errors.empty() ? std::string(id) : batch.errors.front()));
+                    }
+                    result.summary.include(batch);
+                    result.imported.push_back(id);
+                    const auto facility = assets::outerFacilityRenderableAssetIds();
+                    if (options_.runDeploymentSmoke && std::ranges::find(facility, id) == facility.end()) {
+                        deploymentRangeOnlyImported_.store(true, std::memory_order_release);
+                    }
+                }
+            } catch (...) {
+                result.error = std::current_exception();
+            }
+            importResult_ = std::move(result);
+            importFinished_.store(true, std::memory_order_release);
+        });
+        return false;
+    }
+    if (!previewResourcesRegistered_) {
+        registerDevMeshResources({}, true);
+        return false;
+    }
+    finishPlayableResources(target);
+    novacore::core::logInfo("game", std::string("Map resources ready: ") +
+        (facilityOnly ? "outer_facility" : "firing_range") +
+        " total_meshes=" + std::to_string(devAssetSummary_.renderableAssetCount));
+    return true;
+}
+
 void GameApp::loadPlayableResources(ui::GameScreen screen) {
     const bool facilityOnly = options_.fullGame && screen == ui::GameScreen::OuterFacility;
     if (rangeResourcesLoaded_ || (facilityOnly && playableResourcesLoaded_)) { return; }
     const auto start = std::chrono::steady_clock::now();
-    if (!playableResourcesLoaded_) { loadAssetCatalog(); }
+    if (!assetCatalogInitialized_) { loadAssetCatalog(); assetCatalogInitialized_ = true; }
     const std::span<const std::string_view> requested = facilityOnly ? assets::outerFacilityRenderableAssetIds()
         : std::span<const std::string_view>{assets::requiredDevSandboxRenderableAssetIds()};
     std::vector<std::string_view> missing;
@@ -1035,6 +1199,11 @@ void GameApp::loadPlayableResources(ui::GameScreen screen) {
     novacore::core::logInfo("game", std::string("Map resources ready: ") + (facilityOnly ? "outer_facility" : "firing_range") +
         " new_meshes=" + std::to_string(batch.renderableAssetCount) + " total_meshes=" + std::to_string(devAssetSummary_.renderableAssetCount) +
         " load_ms=" + std::to_string(std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count()));
+    finishPlayableResources(screen);
+}
+
+void GameApp::finishPlayableResources(ui::GameScreen screen) {
+    const bool facilityOnly = options_.fullGame && screen == ui::GameScreen::OuterFacility;
     if (options_.physicsProps && !physicsProps_) {
         physicsProps_ = std::make_unique<dev::DevRangeRigidBodies>();
         const auto* crate = devAssetBindings_.meshCatalog().findByAssetId("map_a2_cover_crate_01");
@@ -1068,17 +1237,23 @@ void GameApp::loadAssetCatalog() {
         const auto mounted = assetCatalog_.mountFromJson(previewRoot / manifest);
         if (!mounted.ok()) { throw std::runtime_error("Project FPS manifest unavailable: " + mounted.errors.front()); }
         const std::array ids{dev::kProjectFPSBodyAssetId, dev::kProjectFPSArmsAssetId};
-        const auto bound = devAssetBindings_.bindAssets(assetCatalog_, ids, previewRoot, /*append=*/true);
+        const auto bound = devAssetBindings_.bindMissingAssets(assetCatalog_, ids, previewRoot);
         if (!bound.ready()) {
             throw std::runtime_error("Project FPS assets invalid: " + (bound.errors.empty() ? std::string("incomplete binding") : bound.errors.front()));
         }
         if (options_.projectRifleReady) {
             const std::array weaponIds{dev::kProjectReadyWeaponAssetId};
-            const auto weapon = devAssetBindings_.bindAssets(assetCatalog_, weaponIds, previewRoot, true);
+            const auto weapon = devAssetBindings_.bindMissingAssets(assetCatalog_, weaponIds, previewRoot);
             if (!weapon.ready()) { throw std::runtime_error("Project Ready M4 variant failed validation"); }
         }
+        const auto* previewBody = devAssetBindings_.meshCatalog().findByAssetId(ids[0]);
+        const auto* previewArms = devAssetBindings_.meshCatalog().findByAssetId(ids[1]);
+        if (!previewBody || !previewArms || !previewBody->meshData || !previewArms->meshData) {
+            throw std::runtime_error("Project FPS preview meshes are incomplete");
+        }
+        const auto previewVertices = previewBody->meshData->vertexCount() + previewArms->meshData->vertexCount();
         novacore::core::logInfo("game", "Project FPS preview loaded: body=" + std::string(ids[0]) +
-            " arms=" + std::string(ids[1]) + " vertices=" + std::to_string(bound.totalVertexCount) +
+            " arms=" + std::string(ids[1]) + " vertices=" + std::to_string(previewVertices) +
             (options_.projectRifleReady ? "; developer Rifle Ready, physical surface frames; visual acceptance pending" :
                 "; unarmed locomotion preview; hand constraints disabled"));
 #else
@@ -1493,7 +1668,7 @@ void GameApp::syncRelativeMouseMode() {
     }
 }
 
-void GameApp::registerDevMeshResources(std::span<const std::string_view> assetIds) {
+void GameApp::registerDevMeshResources(std::span<const std::string_view> assetIds, bool includePreview) {
 
     std::size_t missing = 0;
     std::size_t rejected = 0;
@@ -1563,7 +1738,7 @@ void GameApp::registerDevMeshResources(std::span<const std::string_view> assetId
         devMeshResources_[std::string(resourceId)] = handle;
     }
 
-    if (options_.projectFPSPreview && !playableResourcesLoaded_) {
+    if (includePreview && options_.projectFPSPreview && !previewResourcesRegistered_) {
         const auto* arms = devAssetBindings_.meshCatalog().findByAssetId(dev::kProjectFPSArmsAssetId);
         const auto* body = devAssetBindings_.meshCatalog().findByAssetId(dev::kProjectFPSBodyAssetId);
         if (!arms || !body || !arms->meshData || !body->meshData ||
@@ -1588,6 +1763,7 @@ void GameApp::registerDevMeshResources(std::span<const std::string_view> assetId
         }
     }
 
+    if (includePreview) { previewResourcesRegistered_ = true; }
     const auto stats = renderer_.meshResourceStats();
     novacore::core::logInfo(
         "game",
