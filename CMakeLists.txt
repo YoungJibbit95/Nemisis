@@ -109,6 +109,13 @@ target_include_directories(nemisis_game
 )
 
 target_link_libraries(nemisis_game PRIVATE Novacore::Engine)
+
+# CLion filters profiles by the selected build target. The executable remains
+# nemisis_game, while this target identifies the optimized playable preset.
+option(NEMISIS_LATEST_DEV_PROFILE "Expose the Latest Dev playtest target to the IDE" OFF)
+if(NEMISIS_LATEST_DEV_PROFILE)
+    add_custom_target(nemisis_latest_dev DEPENDS nemisis_game)
+endif()
 set_target_properties(nemisis_game PROPERTIES
     VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
 )

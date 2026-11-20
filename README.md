@@ -56,7 +56,7 @@ cmake --build --preset windows-msvc-debug
 Use the NovaCore revision in `cmake/novacore-revision.txt` in the sibling
 `Novacore-Engine` checkout. The Ninja playtest preset builds an optimized game
 with the Project rifle, hand IK, native UI and Jolt. On Windows run the game
-with the **Nemisis - Latest Dev (Vulkan)** run configuration and the `playtest-vulkan` Release profile. It opens the main menu. Choose **Play → Outer Facility** to enter the relay yard and clear its three targets. **Firing Range** opens the training drills. Escape returns to the menu, where Settings and Loadout are available between runs.
+with the **Nemisis - Latest Dev (Vulkan)** run configuration. Enable the `playtest-vulkan` Release profile in **Settings → Build, Execution, Deployment → CMake** and apply the change. The configuration builds the preset-specific `nemisis_latest_dev` target and runs `nemisis_game`. It opens the main menu. Choose **Play → Outer Facility** to enter the relay yard and clear its three targets. **Firing Range** opens the training drills. Escape returns to the menu, where Settings and Loadout are available between runs.
 
 The same launch from a terminal is
 

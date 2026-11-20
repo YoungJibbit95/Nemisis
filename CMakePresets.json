@@ -8,6 +8,7 @@
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
+        "NEMISIS_LATEST_DEV_PROFILE": "ON",
         "NOVACORE_ENABLE_SDL3": "ON",
         "NOVACORE_ENABLE_VULKAN": "ON",
         "NOVACORE_ENABLE_JOLT": "ON",
