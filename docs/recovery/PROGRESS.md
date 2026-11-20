@@ -885,7 +885,10 @@ original spawn, leaving the four standard target lanes open.
 
 The CPU target-range fixture exercises all four spawn sightlines, visible
 cover before and behind a target, and the inclusive weapon range endpoint.
-Engine reference: `50eb84408f6c8e8401ff37967aee8561f419cf36`.
+The scene tests retain exact world-box counts and the two pressure boxes.
+Both expected totals decrease by one because the duplicate backboard is gone.
+The spawn-view fixture verifies a single low rendered backboard.
+Validation used engine `50eb84408f6c8e8401ff37967aee8561f419cf36`.
 Loopback acknowledgements do not simulate shots. Independent multiplayer
 hit verification remains outside this local training path.
 
