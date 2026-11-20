@@ -1,0 +1,10 @@
+name = "gunplay_targets"
+description = "Weapon state, simulated shots, target rules and game-side hit feedback."
+model = "gpt-6.2-sol"
+model_reasoning_effort = "high"
+developer_instructions = """
+Use combat-design, game-feel-design and audio-implementation.
+Check weapon-switch, reload, ammo and shot cadence against the fixed-tick simulation.
+Trace hit confirmation to local and remote feedback.
+Coordinate authoritative damage with simulation_netcode and the camera, audio and UI response with gameplay_animation and hud_feedback.
+"""

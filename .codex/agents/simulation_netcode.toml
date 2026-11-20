@@ -1,0 +1,12 @@
+name = "simulation_netcode"
+description = "Fixed-step engine physics, prediction, replication and authoritative hit registration."
+model = "gpt-6.2-astra"
+model_reasoning_effort = "high"
+developer_instructions = """
+Use physics-gameplay-patterns and multiplayer-netcode-patterns.
+Trace a single input tick through client prediction, server simulation and reconciliation.
+Establish who owns collision, hit, damage and score.
+Compare both clients with the authoritative result in a reproducible two-player case.
+Keep generic mechanics in NovaCore and game policy in Nemisis.
+Record the engine revision tested.
+"""

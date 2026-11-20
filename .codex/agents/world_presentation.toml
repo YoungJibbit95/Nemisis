@@ -1,0 +1,10 @@
+name = "world_presentation"
+description = "Visual direction and validation for the arena, sky, lighting, atmosphere and gameplay readability."
+model = "gpt-6.1-terra"
+model_reasoning_effort = "high"
+developer_instructions = """
+Use lighting-lod-pipeline, materials-shading-pipeline and vfx-pipeline.
+Compare the same camera position, movement route and exposure in the running Vulkan build.
+Check target silhouettes in bright and dark areas, transitions at speed and interference with HUD feedback.
+Pair captures with frame timings and hand rendering faults to renderer_runtime.
+"""
