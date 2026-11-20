@@ -1431,6 +1431,20 @@ void DevRangeRenderSceneBuilder::appendStaticShowcaseMeshes(
     novacore::render::RenderFrameInfo& frame,
     const DevRangeRenderSceneDesc& desc,
     DevRangeRenderSceneStats& stats) const {
+    // One opaque cluster at the right edge, clear of the central firing lanes and
+    // side traversal panels. The asset is a single primitive, with no per-leaf draws.
+    if (appendMesh(frame, desc, "prop_range_foliage_01", {12.0F, 0.0F, -9.0F},
+            {1.0F, 1.0F, 1.0F}, 0.0F, {0.25F, 0.52F, 0.28F, 1.0F}, stats,
+            0.0F, 0.0F, novacore::render::RenderMeshLayer::World, false)) {
+        frame.worldMeshes.back().castsShadow = false;
+        frame.worldMeshes.back().receivesShadow = false;
+    } else {
+        // Preserve a visible landmark if GPU mesh registration fails.
+        appendBox(frame, {12.0F, 0.34F, -9.0F}, {1.25F, 0.34F, 0.35F},
+            {0.25F, 0.52F, 0.28F, 1.0F}, stats);
+        frame.worldBoxes.back().castsShadow = false;
+        frame.worldBoxes.back().receivesShadow = false;
+    }
     appendAssetStageGuides(frame, stats);
     appendWeaponPickupPads(frame, stats);
     for (const auto& placement : staticShowcaseMeshes()) {

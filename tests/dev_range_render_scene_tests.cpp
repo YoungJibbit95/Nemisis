@@ -59,7 +59,8 @@ novacore::assets::GltfMeshData makeMesh() {
 }
 
 nemisis::dev::MeshResourceLookup registerSceneMeshes(novacore::render::Renderer& renderer) {
-    static constexpr std::array<std::string_view, 36> kSceneMeshes{
+    static constexpr std::array<std::string_view, 37> kSceneMeshes{
+        "prop_range_foliage_01",
         nemisis::dev::kLocalPlayerBodyResourceId,
         "env_test_arena_kit_01",
         "env_project_skybox1",
@@ -303,8 +304,8 @@ void testDevRangeRenderSceneBuildsExpectedSubmissions() {
     expect(!world.primitives.empty(), "greybox world fixture has primitives");
     expect(stats.worldBoxCount == (world.primitives.size() - 1U) + targetRange.lanes.size() + 13U, "dev range render scene emits world, lane, asset stage, and pickup pads without duplicate arm proxies");
     expect(frame.worldBoxes.size() == stats.worldBoxCount, "world box count matches frame");
-    expect(stats.meshInstanceCount == 34, "first-person scene emits world, target, showcase, weapon, and arms meshes without a duplicate local world model");
-    expect(frame.worldMeshes.size() == 34, "frame receives all world and exclusive viewmodel mesh instances");
+    expect(stats.meshInstanceCount == 35, "first-person scene emits world, target, showcase, weapon, and arms meshes without a duplicate local world model");
+    expect(frame.worldMeshes.size() == 35, "frame receives all world and exclusive viewmodel mesh instances");
     expect(stats.skyFallbackMeshCount == 0, "dev range render scene skips legacy skybox mesh while sky pass is active");
     expect(stats.skippedMeshInstanceCount == 0, "dev range render scene skips no mesh when lookup is complete");
     expect(stats.materialFallbackProfileCount == stats.meshInstanceCount, "dev range render scene assigns material fallback profiles to submitted GLB meshes");
@@ -763,7 +764,7 @@ void testDevRangeRenderScenePlacesShowcaseAssetsInSpawnView() {
             player,
         });
 
-    expect(stats.meshInstanceCount == 34, "spawn view scene emits expected meshes without the old first-person fullbody T-pose mesh");
+    expect(stats.meshInstanceCount == 35, "spawn view scene emits expected meshes without the old first-person fullbody T-pose mesh");
     expect(stats.skippedMeshInstanceCount == 0, "spawn view scene has no skipped A2 meshes");
     expect(stats.skyPassEnabled, "spawn view uses renderer sky pass");
     expect(frame.sky.enabled, "spawn view frame carries sky pass data");
@@ -1051,6 +1052,32 @@ void testDevRangeRenderSceneAcceptsSpeedClearTargetLayout() {
     expect(nemisis::dev::activeTargetLane(targetRange) != nullptr, "speed-clear target layout exposes an active lane");
 }
 
+void testFoliagePlacementAndFallback() {
+    novacore::render::Renderer renderer;
+    auto lookup = registerSceneMeshes(renderer);
+    const auto world = nemisis::dev::createDevRangeGreyboxWorld();
+    nemisis::dev::DevRangeRenderSceneDesc desc{};
+    desc.greyboxWorld = &world;
+    desc.meshResources = &lookup;
+    novacore::render::RenderFrameInfo frame{};
+    (void)nemisis::dev::DevRangeRenderSceneBuilder{}.append(frame, desc);
+    const auto foliage = std::ranges::find_if(frame.worldMeshes, [](const auto& mesh) {
+        return mesh.assetId == "prop_range_foliage_01";
+    });
+    expect(foliage != frame.worldMeshes.end(), "foliage cluster is submitted");
+    if (foliage != frame.worldMeshes.end()) {
+        expect(foliage->position.x == 12.0F && foliage->position.z == -9.0F &&
+            !foliage->castsShadow && !foliage->receivesShadow, "cluster stays on the side without shadow cost");
+    }
+    lookup.erase("prop_range_foliage_01");
+    novacore::render::RenderFrameInfo fallback{};
+    (void)nemisis::dev::DevRangeRenderSceneBuilder{}.append(fallback, desc);
+    const auto fallbackBox = std::ranges::find_if(fallback.worldBoxes, [](const auto& box) {
+        return box.center.x == 12.0F && box.center.z == -9.0F && !box.castsShadow && !box.receivesShadow;
+    });
+    expect(fallbackBox != fallback.worldBoxes.end(), "missing foliage handle retains a bounded visible landmark");
+}
+
 void testDevRangeRenderSceneCountsMissingMeshHandles() {
     novacore::render::Renderer renderer;
     auto lookup = registerSceneMeshes(renderer);
@@ -1079,8 +1106,8 @@ void testDevRangeRenderSceneCountsMissingMeshHandles() {
             player,
         });
 
-    expect(stats.meshInstanceCount == 30, "dev range render scene still emits available static, A2, Project, and target lane meshes");
-    expect(frame.worldMeshes.size() == 30, "frame mesh count drops missing weapon, arms, and first-person T-pose body handles");
+    expect(stats.meshInstanceCount == 31, "dev range render scene still emits available static, A2, Project, and target lane meshes");
+    expect(frame.worldMeshes.size() == 31, "frame mesh count drops missing weapon, arms, and first-person T-pose body handles");
     expect(stats.skippedMeshInstanceCount == 6, "dev range render scene counts missing showcase, primary, fallback, and first-person arm handles");
     expect(stats.materialFallbackProfileCount == stats.meshInstanceCount, "missing handles do not count material fallback profiles for skipped meshes");
     expect(stats.firstPersonMeshCount == 0, "first-person mesh stats reports no valid arms or weapon when those handles are missing");
@@ -1999,6 +2026,7 @@ int main(int argc, char** argv) {
     testDevRangeRenderSceneDrawsSocketDrivenShotFeedback();
     testDevRangeRenderSceneDrawsLanePressure();
     testDevRangeRenderSceneAcceptsSpeedClearTargetLayout();
+    testFoliagePlacementAndFallback();
     testDevRangeRenderSceneCountsMissingMeshHandles();
     testDevRangeRenderSceneKeepsSkyboxMeshFallbackWhenSkyPassDisabled();
     testDevRangeRenderSceneHandlesMissingInputs();

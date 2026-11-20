@@ -13,6 +13,7 @@ namespace nemisis::assets {
 namespace {
 
 constexpr RequiredDevAssetIds kRequiredDevAssets{
+    "prop_range_foliage_01",
     "prop_target_dummy_01",
     "wpn_ar_01",
     "wpn_smg_01",
@@ -154,6 +155,17 @@ DevAssetBindingSummary DevAssetBindings::bindAssets(
         if (!meshDataResult.ok()) {
             appendErrors(summary, assetId, meshDataResult.errors);
             continue;
+        }
+
+        if (assetId == "env_test_arena_kit_01") {
+            // Collision proxies are authored in this GLB for tooling. The
+            // playable greybox supplies its own collision; never render these.
+            std::erase_if(meshData.primitives, [&meshData](const auto& primitive) {
+                const auto node = std::ranges::find_if(meshData.nodes, [&](const auto& value) {
+                    return primitive.nodeIndex >= 0 && value.nodeIndex == static_cast<std::size_t>(primitive.nodeIndex);
+                });
+                return node != meshData.nodes.end() && node->name.starts_with("col_");
+            });
         }
 
         if (assetId == "chr_a1_fp_arms_01") {
