@@ -39,6 +39,8 @@ void expect(bool condition, std::string_view message) {
 
 std::vector<AssetSpec> requiredSpecs() {
     return {
+        {"map_facility_grove_01", "mesh", "environment", "tools/assets/cook_outer_facility_grove.py", "assets/generated/outer_facility/map_facility_grove_01.glb"},
+        {"map_facility_trim_01", "mesh", "environment", "tools/assets/cook_outer_facility_trim.py", "assets/generated/outer_facility/map_facility_trim_01.glb"},
         {"prop_range_foliage_01", "mesh", "prop", "tools/assets/cook_dev_range_foliage.py", "assets/generated/dev_range/prop_range_foliage_01.glb"},
         {"prop_target_dummy_01", "mesh", "prop", "assets/source/blender/props/prop_target_dummy_01.blend", "assets/export/gltf/props/prop_target_dummy_01.glb", "col_prop_target_dummy_01"},
         {"wpn_ar_01", "mesh", "weapon", "assets/source/blender/weapons/wpn_ar_01.blend", "assets/export/gltf/weapons/wpn_ar_01.glb"},
@@ -530,7 +532,7 @@ void testWorldPresentationAssets() {
     nemisis::assets::GameAssetCatalog catalog;
     expect(catalog.loadFromJson(root / "configs/assets/nemisis_assets.json").ok(), "world asset catalog loads");
     nemisis::assets::DevAssetBindings bindings;
-    const std::array<std::string_view, 2> ids{"env_test_arena_kit_01", "prop_range_foliage_01"};
+    const std::array<std::string_view, 4> ids{"env_test_arena_kit_01", "prop_range_foliage_01", "map_facility_trim_01", "map_facility_grove_01"};
     expect(bindings.bindAssets(catalog, ids, root).ready(), "packaged arena and foliage bind through runtime path");
     const auto* arena = bindings.meshCatalog().findByAssetId(ids[0]);
     const auto* foliage = bindings.meshCatalog().findByAssetId(ids[1]);
@@ -548,6 +550,16 @@ void testWorldPresentationAssets() {
         });
         expect(node != arena->meshData->nodes.end() && !node->name.starts_with("col_"), "collision helper is not rendered");
     }
+    const auto* trim = bindings.meshCatalog().findByAssetId(ids[2]);
+    expect(trim && trim->meshData && trim->meshData->primitiveCount() == 1 &&
+           trim->meshData->indexCount() == 174 && trim->meshData->materials.size() == 1 &&
+           trim->meshData->materials[0].baseColorTextureIndex == 0 && trim->meshData->images.size() == 1 &&
+           trim->meshData->images[0].encodedBytes && !trim->meshData->images[0].encodedBytes->empty(),
+           "packaged facility trim retains one primitive, UV texture, and embedded image");
+    const auto* grove = bindings.meshCatalog().findByAssetId(ids[3]);
+    expect(grove && grove->meshData && grove->meshData->primitiveCount() == 2 &&
+           grove->meshData->indexCount() == 648 && grove->meshData->materials.size() == 2,
+           "packaged grove batches six trees into two material primitives");
     const auto& mesh = *foliage->meshData;
     expect(mesh.primitiveCount() == 1 && mesh.indexCount() == 504, "foliage uses one primitive and 168 triangles");
     expect(mesh.materials.size() == 1, "foliage has a packaged matte material");

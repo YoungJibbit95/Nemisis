@@ -17,6 +17,27 @@
       "tags": ["material", "environment", "dev_sandbox"]
     },
     {
+      "id": "map_facility_grove_01",
+      "kind": "mesh",
+      "source": "tools/assets/cook_outer_facility_grove.py",
+      "cooked": "assets/generated/outer_facility/map_facility_grove_01.glb",
+      "streamable": true,
+      "priority": 50,
+      "estimated_bytes": 16880,
+      "tags": ["environment", "facility", "foliage", "dev_sandbox"]
+    },
+    {
+      "id": "map_facility_trim_01",
+      "kind": "mesh",
+      "source": "tools/assets/cook_outer_facility_trim.py",
+      "cooked": "assets/generated/outer_facility/map_facility_trim_01.glb",
+      "streamable": true,
+      "priority": 50,
+      "estimated_bytes": 9720,
+      "tags": ["environment", "facility", "dev_sandbox"],
+      "dependencies": ["mat_env_movement_accent"]
+    },
+    {
       "id": "prop_range_foliage_01",
       "kind": "mesh",
       "source": "tools/assets/cook_dev_range_foliage.py",

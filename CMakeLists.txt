@@ -70,6 +70,7 @@ add_executable(nemisis_game
     game/src/dev/DevTargetRange.cpp
     game/src/dev/GreyboxCollision.cpp
     game/src/dev/GreyboxWorld.cpp
+    game/src/dev/OuterFacility.cpp
     game/src/input/InputBindings.cpp
     game/src/input/InputCommandBuilder.cpp
     game/src/input/GameplayInputBuffer.cpp
@@ -315,7 +316,20 @@ target_include_directories(nemisis_ui_canvas_tests
 target_link_libraries(nemisis_ui_canvas_tests PRIVATE Novacore::Engine)
 add_test(NAME nemisis_ui_canvas_tests COMMAND nemisis_ui_canvas_tests)
 
+add_executable(nemisis_outer_facility_tests
+    game/src/dev/OuterFacility.cpp
+    game/src/dev/GreyboxWorld.cpp
+    game/src/dev/GreyboxCollision.cpp
+    game/src/dev/DevTargetRange.cpp
+    game/src/dev/DebugTarget.cpp
+    tests/outer_facility_tests.cpp
+)
+target_include_directories(nemisis_outer_facility_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/game/include)
+target_link_libraries(nemisis_outer_facility_tests PRIVATE Novacore::Engine)
+add_test(NAME nemisis_outer_facility_tests COMMAND nemisis_outer_facility_tests)
+
 add_executable(nemisis_dev_range_render_scene_tests
+    game/src/dev/OuterFacility.cpp
     game/src/dev/DebugTarget.cpp
     game/src/dev/DevRangeRenderScene.cpp
     game/src/dev/DevTargetRange.cpp

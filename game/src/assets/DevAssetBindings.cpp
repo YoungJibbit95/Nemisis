@@ -13,6 +13,8 @@ namespace nemisis::assets {
 namespace {
 
 constexpr RequiredDevAssetIds kRequiredDevAssets{
+    "map_facility_grove_01",
+    "map_facility_trim_01",
     "prop_range_foliage_01",
     "prop_target_dummy_01",
     "wpn_ar_01",
