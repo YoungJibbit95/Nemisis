@@ -765,6 +765,11 @@ bool GameApp::usesProjectRig() const {
     return options_.projectFPSPreview && (!options_.fullGame || activeLoadout_.weaponId == kDefaultWeaponId);
 }
 
+bool GameApp::usesFirstPersonHandConstraints() const {
+    return options_.firstPersonHandIK && (!options_.fullGame || usesProjectRig() ||
+        (activeLoadout_.weaponId == "smg_01" && devMeshResources_.contains("wpn_project_smg_fr17")));
+}
+
 void GameApp::updateVisiblePlayerPose(float animationDelta) {
     const bool projectRig = usesProjectRig();
     auto& animator = options_.projectFPSPreview && !projectRig ? alternateArmsAnimator_ : skeletalArmsAnimator_;
@@ -789,7 +794,7 @@ void GameApp::updateVisiblePlayerPose(float animationDelta) {
     presentationDesc.player = currentPlayerRenderState();
     presentationDesc.meshResources = &devMeshResources_;
     presentationDesc.meshCatalog = &devAssetBindings_.meshCatalog();
-    presentationDesc.useHandConstraints = options_.firstPersonHandIK && (!options_.fullGame || projectRig);
+    presentationDesc.useHandConstraints = usesFirstPersonHandConstraints();
     presentationDesc.projectFPSPreview = projectRig;
     presentationDesc.projectRifleReady = options_.projectRifleReady && projectRig;
     firstPersonPresentation_ = dev::evaluateFirstPersonPresentation(presentationDesc);
@@ -941,7 +946,7 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
                 &devAssetBindings_.meshCatalog(),
                 false,
                 firstPersonPresentation_ ? &*firstPersonPresentation_ : nullptr,
-                options_.firstPersonHandIK && (!options_.fullGame || usesProjectRig()),
+                usesFirstPersonHandConstraints(),
                 usesProjectRig(),
                 options_.projectRifleReady && usesProjectRig(),
             });

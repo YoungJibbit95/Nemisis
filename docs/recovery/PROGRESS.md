@@ -52,6 +52,20 @@ Locally verified both suites against NovaCore `50eb84408f6c8e8401ff37967aee8561f
   cover shot timing, aiming-point visibility, and the two-handed reload dip.
   Visual acceptance and ADS sight alignment remain open.
 
+## 2026-11-20 FR17 first-person hand contact
+
+In full-game mode with hand IK enabled, equipping the FR17 now gives the A1
+arms the firing and support sockets of the registered FR17 mesh. The pose
+update and render fallback use the same rule.
+
+Against NovaCore `fbbbfb3a18e945c28c2dc0bc7c5a8d8f8d541f56`, the previous
+path missed the sampled FR17 grips by up to 21.3 cm on the firing side and
+24.8 cm on the support side. The real-asset hand constraint suite passes
+the rifle/SMG switch sequence and 189 FR17 samples through ADS, firing, and
+the 99-tick reload, with a 1 mm grip tolerance. In-game hand posture and
+finger wrap still need a visual check. The reload is the existing procedural
+dip. Glock and the NCAR used by the shotgun slot still need separate pose review.
+
 ## 2026-10-19 Full material-texture consumer gate passed
 
 - Exact game `60cd2596bfb2bbfd072d9f9a33edd44d7385f49f` / public engine

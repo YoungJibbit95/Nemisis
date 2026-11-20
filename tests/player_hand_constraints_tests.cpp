@@ -203,11 +203,66 @@ void verifyContacts(const Fixture& f, const animation::GlobalPose& global, const
         const auto actual = animation::multiply(targets.armsWorld, socket);
         const auto& goal = side == 0 ? targets.rightGripWorld : targets.leftGripWorld;
         expect(distance(animation::matrixTranslation(actual), animation::matrixTranslation(goal)) < 0.001F,
-            "actual hand socket reaches its final M4 grip within one millimetre");
+            "actual hand socket reaches its final weapon grip within one millimetre");
         for (const auto axis : {math::Vec3{0,0,1}, math::Vec3{0,1,0}}) {
             expect(distance(unit(animation::transformDirection(actual, axis)), unit(animation::transformDirection(goal, axis))) < 0.0001F,
                 "authored hand socket rotation matches full weapon-grip orientation");
         }
+    }
+}
+void testFr17FirstPersonActions(const Fixture& f) {
+    nemisis::dev::DevRangeRenderSceneDesc desc{};
+    desc.meshCatalog = &f.catalog;
+    desc.meshResources = &f.lookup;
+    desc.useHandConstraints = true;
+    auto& player = desc.player;
+    player.activeWeaponId = "smg_01";
+    player.activeWeaponClass = nemisis::weapons::WeaponClass::Smg;
+    player.hasCameraRig = true;
+    player.hasAnimationFrame = true;
+    player.cameraPosition = {3.0F, 1.65F, -2.0F};
+
+    PlayerSkeletalAnimator animator;
+    const bool ready = animator.initialize(f.mesh);
+    expect(ready, "FR17 uses the actual alternate A1 arms");
+    if (!ready) { return; }
+    CharacterAnimationState state{};
+    constexpr float stepSeconds = 1.0F / 60.0F;
+    constexpr int reloadStart = 75;
+    constexpr int reloadTicks = 99;
+    for (int step = 0; step < reloadStart + reloadTicks + 15; ++step) {
+        player.adsAlpha = std::min(std::clamp((step - 20) / 9.0F, 0.0F, 1.0F),
+                                   std::clamp((65 - step) / 9.0F, 0.0F, 1.0F));
+        player.weapon.adsAlpha = player.adsAlpha;
+        player.weapon.shotIndex = step >= 37 ? 1U : 0U;
+        player.weapon.recoilPitchOffsetDegrees = step >= 37 && step < 51 ? (51 - step) * 0.22F : 0.0F;
+        player.weapon.reloading = step >= reloadStart && step < reloadStart + reloadTicks;
+        player.weapon.reloadProgress = player.weapon.reloading
+            ? static_cast<float>(step - reloadStart) / reloadTicks : 0.0F;
+        player.cameraView = {20.0F * std::sin(step * 0.4F), 30.0F * std::sin(step * 0.2F)};
+        player.cameraRollDegrees = 8.0F * std::sin(step * 0.3F);
+
+        CharacterAnimationInput input{};
+        input.adsHeld = player.adsAlpha > 0.35F;
+        input.weapon = player.weapon;
+        player.animation = updateCharacterAnimation(state, input);
+        auto armsFrame = player.animation;
+        armsFrame.locomotionClip = armsFrame.upperBodyClip == CharacterAnimationClip::Idle
+            ? CharacterAnimationClip::Idle : CharacterAnimationClip::Ads;
+
+        const auto presentation = nemisis::dev::evaluateFirstPersonPresentation(desc);
+        const bool hasContacts = presentation.weaponAssetId == "wpn_project_smg_fr17" &&
+            presentation.armsAssetId == "chr_a1_fp_arms_01" &&
+            presentation.muzzleWorld && presentation.rightGripWorld && presentation.leftGripWorld;
+        expect(hasContacts, "FR17 uses its cooked weapon and both of its grips");
+        if (!hasContacts) { return; }
+        const PlayerHandTargets targets{firstPersonAttachmentMatrix(presentation.rig.arms),
+            *presentation.rightGripWorld, *presentation.leftGripWorld};
+        const bool updated = animator.update(armsFrame, stepSeconds, &targets);
+        expect(updated && animator.stats().handConstraints.status == HandConstraintStatus::Applied,
+            "FR17 grips remain reachable through hip, ADS, firing and a complete reload");
+        if (!updated || !animator.globalPose()) { return; }
+        verifyContacts(f, *animator.globalPose(), targets);
     }
 }
 void testActualWeaponConstraints(Fixture& f) {
@@ -349,7 +404,7 @@ int main() {
     Fixture fixture;
     const bool ready = fixture.initialize(); expect(ready, "actual M4 and filtered weighted arms import into one NovaCore rig");
     if (ready) { testActualWeaponConstraints(fixture); testBoundsAndInvalidInputs(fixture); testAnimatorUsesOneFinalPose(fixture);
-        testPhysicalOwnershipAcrossRifleSmgSwitch(fixture); }
+        testPhysicalOwnershipAcrossRifleSmgSwitch(fixture); testFr17FirstPersonActions(fixture); }
     if (failures) { std::cerr << failures << " player hand constraint checks failed\n"; return 1; }
     std::cout << "Player hand constraint tests passed\n";
     return 0;
