@@ -20,6 +20,7 @@
 #include <cmath>
 #include <cstdint>
 #include <limits>
+#include <iostream>
 #include <string>
 #include <string_view>
 #include <stdexcept>
@@ -244,7 +245,7 @@ void GameApp::onShutdown() {
             " arms_samples=" + std::to_string(arms.sampledFrameCount) + " arms_skins=" + std::to_string(arms.skinnedFrameCount) +
             " arms_updates=" + std::to_string(armVertexUpdateCount_) + " world_updates=" + std::to_string(worldBodyVertexUpdateCount_) +
             " submitted_body=" + std::to_string(projectFPSBodySubmitted_) + " submitted_arms=" + std::to_string(projectFPSArmsSubmitted_) +
-            " logical_pose_owners=1");
+            " logical_pose_owners=1 rendered_frames=" + std::to_string(projectFPSRenderFrames_));
     }
     if (options_.firstPersonHandIK) {
         const auto& stats = skeletalArmsAnimator_.stats();
@@ -323,16 +324,17 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
     dev::GreyboxCollisionResult collisionSample{};
     if (movementState != nullptr) {
         const auto previousMovementPosition = movementState->position;
-        *movementState = movement_.simulate(*movementState, movementCommand, static_cast<float>(context.fixedDeltaSeconds));
-        const auto mantleForward = view != nullptr
+        const auto viewForward = view != nullptr
             ? player::viewVectors(*view).forward
             : novacore::math::Vec3{0.0F, 0.0F, 1.0F};
+        *movementState = movement_.simulate(*movementState, movementCommand,
+            static_cast<float>(context.fixedDeltaSeconds), viewForward);
         dev::GreyboxCollisionQuery collisionQuery{};
         collisionQuery.position = movementState->position;
         collisionQuery.previousPosition = previousMovementPosition;
         collisionQuery.radius = 0.42F;
         collisionQuery.height = 1.80F;
-        collisionQuery.mantleForward = mantleForward;
+        collisionQuery.mantleForward = viewForward;
         collisionQuery.mantleMaxDistance = movement_.tuning().mantleMaxRange;
         collisionQuery.mantleMinHeight = collisionQuery.maxStepHeight + 0.02F;
         collisionQuery.mantleMaxHeight = movement_.tuning().mantleMaxHeight;
@@ -380,14 +382,19 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
         const bool activeMantleInterpolation =
             movementState->mode == movement::MovementMode::Mantling &&
             movementState->mantleTimeRemaining > 0.0F;
-        const bool wallRunStateReady =
-            movementState->mode == movement::MovementMode::Airborne ||
-            movementState->mode == movement::MovementMode::WallRunning ||
-            movementState->mode == movement::MovementMode::Dashing;
-        const bool wallRunCandidate = collisionSample.nearWallRunSurface &&
-            wallRunStateReady &&
-            movementState->position.y >= movement_.tuning().wallRunMinHeight;
-        if (collisionSample.blocked && !wallRunCandidate && !activeMantleInterpolation) {
+        const bool stableGroundContact = acceptsStableGroundContact(*movementState, movementCommand, collisionSample);
+        if (!activeMantleInterpolation) {
+            movementState->position = collisionSample.position;
+            *movementState = movement_.applyWallRunContact(
+                *movementState, movementCommand,
+                {collisionSample.nearWallRunSurface && !stableGroundContact,
+                    collisionSample.wallNormal, collisionSample.wallTangent},
+                static_cast<float>(context.fixedDeltaSeconds));
+        } else {
+            collisionSample.position = movementState->position;
+        }
+        const bool wallRunning = movementState->mode == movement::MovementMode::WallRunning;
+        if (collisionSample.blocked && !(wallRunning && collisionSample.nearWallRunSurface) && !activeMantleInterpolation) {
             if (std::abs(collisionSample.correction.x) > 0.0001F) {
                 movementState->velocity.x = 0.0F;
             }
@@ -403,14 +410,10 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
                 }
             }
         }
-        const bool stableGroundContact = acceptsStableGroundContact(
-            *movementState,
-            movementCommand,
-            collisionSample);
         if (stableGroundContact && movementState->velocity.y < 0.0F && !activeMantleInterpolation) {
             movementState->velocity.y = 0.0F;
         }
-        if (stableGroundContact && !wallRunCandidate && !activeMantleInterpolation) {
+        if (stableGroundContact && !wallRunning && !activeMantleInterpolation) {
             movementState->groundJumpAvailable = true;
             movementState->hasDoubleJump = true;
             movementState->coyoteTimeRemaining = movement_.tuning().coyoteTimeSeconds;
@@ -422,26 +425,12 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
                 movementState->wallRunTimeRemaining = 0.0F;
                 movementState->hasWallRunContact = false;
             }
-        } else if (!wallRunCandidate &&
+        } else if (!wallRunning &&
             (movementState->mode == movement::MovementMode::Grounded ||
                 movementState->mode == movement::MovementMode::Sliding ||
                 movementState->mode == movement::MovementMode::Dashing)) {
             movementState->mode = movement::MovementMode::Airborne;
             movementState->groundedTimeSeconds = 0.0F;
-        }
-        if (!activeMantleInterpolation) {
-            movementState->position = collisionSample.position;
-            *movementState = movement_.applyWallRunContact(
-                *movementState,
-                movementCommand,
-                movement::WallRunContact{
-                    wallRunCandidate,
-                    collisionSample.wallNormal,
-                    collisionSample.wallTangent,
-                },
-                static_cast<float>(context.fixedDeltaSeconds));
-        } else {
-            collisionSample.position = movementState->position;
         }
         if (auto* transform = world_.getComponent<novacore::ecs::TransformComponent>(localPlayerEntity_);
             transform != nullptr) {
@@ -510,10 +499,17 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
     dev::DebugTargetHitResult targetHit{};
     dev::DevTargetRangeHitResult targetRangeHit{};
     if (hasShotTrace) {
+        dev::ensureDevTargetRange(targetRange_);
+        auto contact = dev::traceDevRangeShot(targetRange_, shotTrace, greyboxWorld_.primitives);
         if (physicsProps_) {
-            (void)physicsProps_->impact(shotTrace.origin, shotTrace.direction * shotTrace.rangeMeters);
+            (void)physicsProps_->impact(shotTrace.origin, shotTrace.direction * contact.distanceMeters);
+            if (const auto& hit = physicsProps_->lastImpact(); hit) {
+                contact.distanceMeters *= hit->fraction;
+                contact.targetLane.reset();
+            }
         }
-        targetRangeHit = dev::applyShotToDevTargetRange(targetRange_, shotTrace);
+        targetRangeHit = dev::applyShotToDevTargetRange(targetRange_, shotTrace, contact);
+        shotTrace.rangeMeters = contact.distanceMeters;
         targetHit = targetRangeHit.targetHit;
     }
     dev::DevRangeShotScoreContext shotScoreContext{};
@@ -658,87 +654,7 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
             });
         hasCharacterAnimationFrame_ = true;
 
-        const float animationDelta = static_cast<float>(context.fixedDeltaSeconds);
-        auto armsAnimationFrame = latestCharacterAnimationFrame_;
-        if (options_.projectFPSPreview) {
-            armsAnimationFrame.upperBodyAlpha = 0.0F;
-            const auto fpsBody = devMeshResources_.find(std::string(dev::kProjectFPSBodyResourceId));
-            if (fpsBody == devMeshResources_.end()) {
-                throw std::runtime_error("Project FPS body resource is unavailable");
-            }
-            if (!skeletalArmsAnimator_.samplePose(armsAnimationFrame, animationDelta)) {
-                const auto& errors = skeletalArmsAnimator_.errors();
-                throw std::runtime_error("Project FPS body pose failed: " +
-                    (errors.empty() ? std::string("no animator diagnostic") : errors.back()));
-            }
-            novacore::animation::Mat4 eye;
-            if (!skeletalArmsAnimator_.socketTransform("socket_fps_eye", eye)) {
-                throw std::runtime_error("Project FPS animated eye attachment is unavailable");
-            }
-            const auto bodyWorld = player::firstPersonAttachmentMatrix(dev::projectFPSPlayerAttachment(currentPlayerRenderState()));
-            cameraRig_.position = novacore::animation::transformPoint(bodyWorld, novacore::animation::matrixTranslation(eye));
-            if (auto* cameraTransform = world_.getComponent<novacore::ecs::TransformComponent>(cameraEntity_); cameraTransform != nullptr) {
-                cameraTransform->position = cameraRig_.position;
-            }
-        }
-
-        // Camera and procedural animation are fixed-tick presentation inputs.
-        // Evaluate final cooked weapon/grips once, before arm skinning/upload.
-        dev::DevRangeRenderSceneDesc presentationDesc{};
-        presentationDesc.player = currentPlayerRenderState();
-        presentationDesc.meshResources = &devMeshResources_;
-        presentationDesc.meshCatalog = &devAssetBindings_.meshCatalog();
-        presentationDesc.useHandConstraints = options_.firstPersonHandIK;
-        presentationDesc.projectFPSPreview = options_.projectFPSPreview;
-        presentationDesc.projectRifleReady = options_.projectRifleReady;
-        firstPersonPresentation_ = dev::evaluateFirstPersonPresentation(presentationDesc);
-
-        const auto bodyMesh = devMeshResources_.find(std::string(dev::kLocalPlayerBodyResourceId));
-        // Until an authored FPS body mask exists, this full body is visible only
-        // outside the camera rig. Avoid skinning/uploading 78k hidden vertices.
-        if (!cameraRig_.initialized && bodyMesh != devMeshResources_.end() &&
-            skeletalBodyAnimator_.update(latestCharacterAnimationFrame_, animationDelta)) {
-            if (const auto* skinnedMesh = skeletalBodyAnimator_.skinnedMesh(); skinnedMesh != nullptr) {
-                if (renderer_.updateMeshResourceVertices(bodyMesh->second, *skinnedMesh)) { ++worldBodyVertexUpdateCount_; }
-            }
-        }
-
-        if (!options_.projectFPSPreview) {
-            armsAnimationFrame.locomotionClip = armsAnimationFrame.upperBodyClip == player::CharacterAnimationClip::Idle
-                ? player::CharacterAnimationClip::Idle : player::CharacterAnimationClip::Ads;
-        }
-        std::optional<player::PlayerHandTargets> handTargets;
-        if (options_.firstPersonHandIK && firstPersonPresentation_->rightGripWorld &&
-            firstPersonPresentation_->leftGripWorld) {
-            handTargets = player::PlayerHandTargets{
-                player::firstPersonAttachmentMatrix(firstPersonPresentation_->rig.arms),
-                *firstPersonPresentation_->rightGripWorld, *firstPersonPresentation_->leftGripWorld};
-        }
-        const auto armsMesh = devMeshResources_.find(std::string(options_.projectFPSPreview
-            ? dev::kProjectFPSArmsResourceId : "chr_a1_fp_arms_01"));
-        if (armsMesh != devMeshResources_.end() &&
-            (options_.projectFPSPreview
-                ? skeletalArmsAnimator_.skinPose(handTargets ? &*handTargets : nullptr)
-                : skeletalArmsAnimator_.update(armsAnimationFrame, animationDelta, handTargets ? &*handTargets : nullptr))) {
-            if (const auto* skinnedMesh = skeletalArmsAnimator_.skinnedMesh(); skinnedMesh != nullptr) {
-                if (renderer_.updateMeshResourceVertices(armsMesh->second, *skinnedMesh)) {
-                    ++armVertexUpdateCount_;
-                } else if (options_.projectFPSPreview) {
-                    throw std::runtime_error("Project FPS arms vertex update failed");
-                }
-            }
-        } else if (options_.projectFPSPreview) {
-            throw std::runtime_error("Project FPS arms pose/resource is unavailable");
-        }
-        if (options_.projectFPSPreview) {
-            const auto fpsBody = devMeshResources_.find(std::string(dev::kProjectFPSBodyResourceId));
-            const auto* mesh = skeletalArmsAnimator_.skinnedCompanion();
-            if (fpsBody == devMeshResources_.end() || !mesh ||
-                !renderer_.updateMeshResourceVertices(fpsBody->second, *mesh)) {
-                throw std::runtime_error("Project FPS body dynamic GPU vertex update failed");
-            }
-            ++fpsBodyVertexUpdateCount_;
-        }
+        pendingAnimationSeconds_ += static_cast<float>(context.fixedDeltaSeconds);
     }
 
     net::PredictionSnapshot predictionSnapshot{};
@@ -781,6 +697,19 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
     }
     const auto predictionStats = predictionHistory_.stats();
 
+    if (hasShotTrace) {
+        const float traceDistance = targetHit.hit && targetHit.distanceMeters > 0.0F
+            ? targetHit.distanceMeters
+            : std::min(std::max(0.0F, shotTrace.rangeMeters), 38.0F);
+        firstPersonShotFeedback_ = dev::FirstPersonShotFeedback{
+            weaponSample.weaponId, shotTrace.shotIndex,
+            shotTrace.origin + (shotTrace.direction * traceDistance), targetHit.hit, targetHit.eliminated};
+    } else if (fireResult.fired || (firstPersonShotFeedback_ &&
+                   (firstPersonShotFeedback_->weaponId != weaponSample.weaponId ||
+                    firstPersonShotFeedback_->shotIndex != weaponSample.shotIndex))) {
+        firstPersonShotFeedback_.reset();
+    }
+
     devSandbox_.recordTick(dev::DevSandboxSample{
         command.tick,
         command,
@@ -812,7 +741,78 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
     });
 }
 
+void GameApp::updateVisiblePlayerPose(float animationDelta) {
+    auto armsAnimationFrame = latestCharacterAnimationFrame_;
+    if (options_.projectFPSPreview) {
+        armsAnimationFrame.upperBodyAlpha = 0.0F;
+        if (!skeletalArmsAnimator_.samplePose(armsAnimationFrame, animationDelta)) {
+            const auto& errors = skeletalArmsAnimator_.errors();
+            throw std::runtime_error("Project FPS body pose failed: " +
+                (errors.empty() ? std::string("no animator diagnostic") : errors.back()));
+        }
+    }
+
+    // Resolve sockets from the new pose before the hand solve and vertex upload.
+    dev::DevRangeRenderSceneDesc presentationDesc{};
+    presentationDesc.player = currentPlayerRenderState();
+    presentationDesc.meshResources = &devMeshResources_;
+    presentationDesc.meshCatalog = &devAssetBindings_.meshCatalog();
+    presentationDesc.useHandConstraints = options_.firstPersonHandIK;
+    presentationDesc.projectFPSPreview = options_.projectFPSPreview;
+    presentationDesc.projectRifleReady = options_.projectRifleReady;
+    firstPersonPresentation_ = dev::evaluateFirstPersonPresentation(presentationDesc);
+
+    const auto bodyMesh = devMeshResources_.find(std::string(dev::kLocalPlayerBodyResourceId));
+    // Until an authored FPS body mask exists, this full body is visible only
+    // outside the camera rig. Avoid skinning/uploading 78k hidden vertices.
+    if (!cameraRig_.initialized && bodyMesh != devMeshResources_.end() &&
+        skeletalBodyAnimator_.update(latestCharacterAnimationFrame_, animationDelta)) {
+        if (const auto* skinnedMesh = skeletalBodyAnimator_.skinnedMesh(); skinnedMesh != nullptr) {
+            if (renderer_.updateMeshResourceVertices(bodyMesh->second, *skinnedMesh)) { ++worldBodyVertexUpdateCount_; }
+        }
+    }
+
+    if (!options_.projectFPSPreview) {
+        armsAnimationFrame.locomotionClip = armsAnimationFrame.upperBodyClip == player::CharacterAnimationClip::Idle
+            ? player::CharacterAnimationClip::Idle : player::CharacterAnimationClip::Ads;
+    }
+    std::optional<player::PlayerHandTargets> handTargets;
+    if (options_.firstPersonHandIK && firstPersonPresentation_->rightGripWorld &&
+        firstPersonPresentation_->leftGripWorld) {
+        handTargets = player::PlayerHandTargets{
+            player::firstPersonAttachmentMatrix(firstPersonPresentation_->rig.arms),
+            *firstPersonPresentation_->rightGripWorld, *firstPersonPresentation_->leftGripWorld};
+    }
+    const auto armsMesh = devMeshResources_.find(std::string(options_.projectFPSPreview
+        ? dev::kProjectFPSArmsResourceId : "chr_a1_fp_arms_01"));
+    if (armsMesh != devMeshResources_.end() &&
+        (options_.projectFPSPreview
+            ? skeletalArmsAnimator_.skinPose(handTargets ? &*handTargets : nullptr)
+            : skeletalArmsAnimator_.update(armsAnimationFrame, animationDelta, handTargets ? &*handTargets : nullptr))) {
+        if (const auto* skinnedMesh = skeletalArmsAnimator_.skinnedMesh(); skinnedMesh != nullptr) {
+            if (renderer_.updateMeshResourceVertices(armsMesh->second, *skinnedMesh)) {
+                ++armVertexUpdateCount_;
+            } else if (options_.projectFPSPreview) {
+                throw std::runtime_error("Project FPS arms vertex update failed");
+            }
+        }
+    } else if (options_.projectFPSPreview) {
+        throw std::runtime_error("Project FPS arms pose/resource is unavailable");
+    }
+    if (options_.projectFPSPreview) {
+        const auto fpsBody = devMeshResources_.find(std::string(dev::kProjectFPSBodyResourceId));
+        const auto* mesh = skeletalArmsAnimator_.skinnedCompanion();
+        if (fpsBody == devMeshResources_.end() || !mesh ||
+            !renderer_.updateMeshResourceVertices(fpsBody->second, *mesh)) {
+            throw std::runtime_error("Project FPS body dynamic GPU vertex update failed");
+        }
+        ++fpsBodyVertexUpdateCount_;
+    }
+}
+
 void GameApp::onFrame(const novacore::core::FrameContext& context) {
+    using Clock = std::chrono::steady_clock;
+    const auto frameStart = options_.profileRange ? Clock::now() : Clock::time_point{};
     window_.pollEvents(input_);
     actions_.update(window_.inputSnapshot());
     if (uiConfirmReleasePending_ && !actions_.stateOrDefault(input::actions::MenuConfirm).down &&
@@ -871,6 +871,13 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
         devSandbox_.onFrame(context.deltaSeconds);
     }
 
+    // Catch-up ticks can advance gameplay several times before the next present.
+    // Deform and upload only the pose that can reach the display.
+    if (pendingAnimationSeconds_ > 0.0F && menu_.gameplayActive()) {
+        updateVisiblePlayerPose(pendingAnimationSeconds_);
+    }
+    pendingAnimationSeconds_ = 0.0F;
+
     const auto meshStats = renderer_.meshResourceStats();
     novacore::render::RenderFrameInfo frameInfo{};
     frameInfo.clearColor = menu_.gameplayActive() ? devSandbox_.clearColor() : menu_.clearColor();
@@ -901,6 +908,7 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
             });
         projectFPSBodySubmitted_ |= latestDevRangeRenderStats_.projectFPSBodyActive;
         projectFPSArmsSubmitted_ |= latestDevRangeRenderStats_.projectFPSArmsActive;
+        if (options_.projectFPSPreview) { ++projectFPSRenderFrames_; }
         if (physicsProps_) { physicsProps_->append(frameInfo); }
     } else {
         latestDevRangeRenderStats_ = {};
@@ -929,8 +937,22 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
         uiShowcase_->render(frameInfo.ui);
     }
 #endif
+    const auto submitStart = options_.profileRange ? Clock::now() : Clock::time_point{};
     renderer_.beginFrame(frameInfo);
     renderer_.endFrame();
+    if (options_.profileRange) {
+        const auto end = Clock::now();
+        if (context.frameIndex >= kRangeProfileWarmupFrames) {
+            using Milliseconds = std::chrono::duration<double, std::milli>;
+            std::cout << "range_frame," << context.frameIndex << ',' << context.tickIndex - lastProfileTick_
+                      << ',' << Milliseconds(end - lastProfileFrameEnd_).count()
+                      << ',' << Milliseconds(frameStart - lastProfileFrameEnd_).count()
+                      << ',' << Milliseconds(submitStart - frameStart).count()
+                      << ',' << Milliseconds(end - submitStart).count() << '\n';
+        }
+        lastProfileFrameEnd_ = end;
+        lastProfileTick_ = context.tickIndex;
+    }
 }
 
 bool GameApp::shouldQuit() const {
@@ -1220,9 +1242,11 @@ void GameApp::ensureLocalPlayer() {
     predictionHistory_.clear();
     localSnapshotInterpolator_.clear();
     pendingAuthoritativeSnapshot_.reset();
+    pendingAnimationSeconds_ = 0.0F;
     player::resetCharacterAnimation(characterAnimation_);
     latestCharacterAnimationFrame_ = {};
     firstPersonPresentation_.reset();
+    firstPersonShotFeedback_.reset();
     hasCharacterAnimationFrame_ = false;
     player::resetCameraRig(cameraRig_);
     gameplayInputBuffer_.clear();
@@ -1268,9 +1292,11 @@ void GameApp::resetDevRangeState() {
     predictionHistory_.clear();
     localSnapshotInterpolator_.clear();
     pendingAuthoritativeSnapshot_.reset();
+    pendingAnimationSeconds_ = 0.0F;
     player::resetCharacterAnimation(characterAnimation_);
     latestCharacterAnimationFrame_ = {};
     firstPersonPresentation_.reset();
+    firstPersonShotFeedback_.reset();
     hasCharacterAnimationFrame_ = false;
     player::resetCameraRig(cameraRig_);
     gameplayInputBuffer_.clear();
@@ -1403,6 +1429,9 @@ void GameApp::registerDevMeshResources() {
                 ++rejected;
                 novacore::core::logWarning("game", "Dev mesh resource registration failed: " + std::string(assetId));
             }
+            // The Project camera uses its cooked body subset for every frame.
+            // The full character is still drawn as a static range asset.
+            if (options_.projectFPSPreview) { continue; }
             animator = &skeletalBodyAnimator_;
         } else if (assetId == "chr_a1_fp_arms_01") {
             animator = &skeletalArmsAnimator_;
@@ -1545,6 +1574,8 @@ dev::DevRangePlayerRenderState GameApp::currentPlayerRenderState() const {
         if (skeletalArmsAnimator_.socketTransform("socket_fps_eye", eye)) {
             const auto bodyWorld = player::firstPersonAttachmentMatrix(dev::projectFPSPlayerAttachment(state));
             state.cameraPosition = novacore::animation::transformPoint(bodyWorld, novacore::animation::matrixTranslation(eye));
+        } else if (hasCharacterAnimationFrame_) {
+            throw std::runtime_error("Project FPS animated eye attachment is unavailable");
         }
         if (options_.projectRifleReady) {
             novacore::animation::Mat4 mount;
@@ -1562,19 +1593,7 @@ dev::DevRangePlayerRenderState GameApp::currentPlayerRenderState() const {
         }
     }
 
-    const auto& sample = devSandbox_.latestSample();
-    state.firedThisFrame = sample.fire.fired;
-    state.hitThisFrame = sample.targetHit.hit;
-    state.eliminatedThisFrame = sample.targetHit.eliminated;
-    state.hitDistanceMeters = sample.targetHit.distanceMeters;
-    if (sample.hasShot) {
-        const float traceDistance = sample.targetHit.hit && sample.targetHit.distanceMeters > 0.0F
-            ? sample.targetHit.distanceMeters
-            : std::min(std::max(0.0F, sample.shot.rangeMeters), 38.0F);
-        state.latestShotOrigin = sample.shot.origin;
-        state.latestShotEnd = sample.shot.origin + (sample.shot.direction * traceDistance);
-        state.hasLatestShotTrace = true;
-    }
+    state.shotFeedback = firstPersonShotFeedback_;
 
     return state;
 }

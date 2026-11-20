@@ -1,5 +1,13 @@
 # Recovery progress
 
+## Dev Range combat HUD, November 2026
+
+Hit confirmation now persists for 240 ms across fixed ticks. The Settings tab
+has independent hit-marker and damage-number controls. The weapon panel shows
+magazine level during firing and refill progress during reload. The session
+and menu tests cover rapid events, expiration, toggles and reload priority.
+Locally verified both suites against NovaCore `50eb84408f6c8e8401ff37967aee8561f419cf36`.
+
 ## 2026-10-19 Armed Idle / direct-light / query consumer gate
 
 - Exact game runtime `7d6b9a57a3091bfb014d455b2aec4811d482e8d4` uses both
@@ -27,6 +35,23 @@
   Exact consumer hosted CI and all device/visual/timing gates remain open.
   GUI remains paused; no new launch, control or successful sight test is claimed.
 
+## 2026-11-20 M4 fire and reload presentation
+
+- [Nemisis #42](https://github.com/YoungJibbit95/Nemisis/pull/42) implements the
+  fixed-tick shot kick, recovery, and two-handed reload dip in runtime
+  `4338fe2458a78eeedcc0059b08f55ad67fd6ee7b` with NovaCore
+  `50eb84408f6c8e8401ff37967aee8561f419cf36`. The weapon mesh, palms, and moving
+  muzzle flash use the same final pose. A retained Dev Range trace preserves
+  the simulation endpoint during the shot window.
+- The focused GCC 13.2 Release build with Project FPS and hand IK passed all
+  86 steps. The scene, Ready, and cook tests all passed in 66.25 seconds.
+  The two 350-tick Ready sequences exercised single shots, bursts, and reload
+  across locomotion changes. Maximum palm position error was 0.998 mm in the
+  direct sequence and 0.985 mm with gameplay animation inputs.
+- The [Vulkan playtest steps](PHASE5_M4_ARMED_IDLE.md#m4-fire-and-reload-presentation)
+  cover shot timing, aiming-point visibility, and the two-handed reload dip.
+  Visual acceptance and ADS sight alignment remain open.
+
 ## 2026-10-19 Full material-texture consumer gate passed
 
 - Exact game `60cd2596bfb2bbfd072d9f9a33edd44d7385f49f` / public engine
@@ -45,6 +70,26 @@
   Source #33's frozen actual Vulkan framing failure remains open; no new GUI.
   Query and direct-light work remain separate reviewed specialist slices.
 
+## 2026-11-20 Fixed-step catch-up in the Vulkan Dev Range
+
+The CLion Debug playtest ran at 1.65 FPS on a Ryzen 5 5500 and RTX 3070 Ti
+at 1280×720. A frame at the 15-tick catch-up limit evaluated hand IK, skinned
+50,068 visible vertices and queued both dynamic mesh updates 15 times.
+The game now accumulates animation time across ticks and deforms only the
+pose submitted by the next frame. Both runs used NovaCore `50eb844`, the
+Project rifle, material textures and Jolt props. Each sample covers 60 frames
+after 12 warm-up frames. Other builds were active on this machine.
+
+| Debug game | Mean FPS | Median frame | 95th percentile frame |
+| --- | ---: | ---: | ---: |
+| Main, with frame timing enabled | 1.65 | 596.86 ms | 630.96 ms |
+| Visible pose once per frame | 13.34 | 63.41 ms | 82.17 ms |
+
+The new run processed 315 physics ticks and submitted 71 poses in 72 frames.
+Both character meshes recorded 71 updates. All 71 hand solves were reachable.
+The optional `--profile-range` switch reproduces the measurement with the
+ordinary game executable. See the playtest preset in the README.
+
 ## 2026-10-19 Optional material-texture consumer integration
 
 - Both pins now select engine `14d33a77a9eedef6a48227226d1ef80d593015b9`
@@ -61,6 +106,29 @@
   teal prototype surface maps and authored modules are audited for later linking;
   they are not neutral concrete textures. No texture/GPU/visual acceptance yet.
   Frozen reviewed Vulkan build/content/shader directories remain unchanged.
+
+## 2026-11-20 Personal Holo step in the Dev Range
+
+An accepted air-jump press spends the charge and releases a small emitter
+in the player's facing direction. It inherits movement velocity and falls
+under the same gravity as the player. When it crosses boot height inside
+the 0.50 m support radius, it gives the configured upward impulse once. The
+usual crossing is on the fourth 60 Hz tick. A miss, early landing or switch
+to another movement mode cancels the pending step. The unfolded surface
+stays at the contact point for 0.32 s.
+
+The previous replay checked for the boost on the input tick. The updated
+replay checks charge consumption and release on that tick, then measures
+the boost at contact. It covers moving throws, repeated input, a saved
+mid-flight state, misses and landing. The scene test exercises the flight
+trail and deployed footprint with developer overlays off.
+
+MSVC 2022 Debug built the dependency-light game and passed both targeted
+suites against NovaCore `50eb84408f6c8e8401ff37967aee8561f419cf36`.
+
+The current rule applies to the local owner's feet. Shared solid surfaces
+and online projectile replication remain open. Manual visibility and feel
+should be checked by sprinting, jumping and pressing Space again in mid-air.
 
 ## 2026-10-19 Local animation direction follows actual view
 
@@ -187,6 +255,19 @@
   Physical-contact mutation checks pass. Updated full/hosted gates remain pending;
   no Vulkan/finger-quality/complete-armed-animation or default migration claim.
 
+
+## 2026-11-20 Wall-run contact and replay
+
+The Dev Range fixed tick catches a tagged panel within 0.12 m of the capsule
+when the player carries at least 4 m/s along its face. A head-on jump stays
+airborne. The run follows incoming momentum and the wall jump carries that
+direction away from the face.
+
+Windows MSVC Debug passed `nemisis_movement_replay_tests` against NovaCore
+`50eb84408f6c8e8401ff37967aee8561f419cf36`. The KCC replay checks mirrored
+panels and both travel directions. At 30, 60 and 144 render updates per second,
+the 60 Hz simulation lands on the same tick and ends at the same position.
+A manual pass along both Dev Range panels remains open.
 
 ## 2026-10-19 Dev Range rigid-body integration
 
@@ -794,6 +875,23 @@ and run startup from source so missing staged configs cannot fake useful boot
 coverage. Then classify tests and inspect the asset contract without touching
 uncommitted source/GLB changes in the original checkout.
 
+## 2026-11-20 Training range shot occlusion
+
+The local fixed tick resolves the nearest live target or blocking greybox
+before awarding training damage. Optional physics props receive a trace
+limited to that distance. The selected distance also bounds the tracer.
+The showcase backboard uses one visible 0.80 m-high collider from the
+original spawn, leaving the four standard target lanes open.
+
+The CPU target-range fixture exercises all four spawn sightlines, visible
+cover before and behind a target, and the inclusive weapon range endpoint.
+The scene tests retain exact world-box counts and the two pressure boxes.
+Both expected totals decrease by one because the duplicate backboard is gone.
+The spawn-view fixture verifies a single low rendered backboard.
+Validation used engine `50eb84408f6c8e8401ff37967aee8561f419cf36`.
+Loopback acknowledgements do not simulate shots. Independent multiplayer
+hit verification remains outside this local training path.
+
 ## 2026-10-18 Phase 1 game test audit
 
 - Inspected all 33 sources / 177 test functions, 37 CTest registrations and the
@@ -1139,3 +1237,23 @@ Dev Range transition/back. Physical Escape stopped Computer Use; no subsequent
 GUI actions were made. Larger-resolution visual/resize/GPU timing acceptance
 remains open. See docs/ui/UI_ROADMAP.md and UI_DESIGN_SYSTEM.md for the bounded
 milestone, reproducible launch and remaining phases.
+
+## 2026-11-20 Dev Range world presentation
+
+The world-presentation pass uses the existing procedural sky and greybox boxes:
+a warm horizon against a cooler floor, lighter cover, teal traversal ramps and
+warm range markers. No geometry, collision, light, shadow-map or asset count is
+added. Game base c4eecc5; NovaCore pin 50eb84408f6c8e8401ff37967aee8561f419cf36.
+The focused greybox world CPU test passed with GCC on Windows. The coordinated
+full build, Vulkan visual comparison and GPU timing remain open; color and
+visibility are not yet visually accepted. Compare at spawn facing the targets,
+then inspect the side traversal area and the sky/horizon with the same settings.
+
+Follow-up: one original procedural foliage cluster (one opaque GLB primitive,
+168 triangles) is placed at (12, 0, -9), outside the central firing lanes and
+wallrun panels. No physics collision or shadow is added; a simple box is used
+if the GPU resource handle is unavailable. Arena mesh selection now excludes
+its authored `col_` collision helpers, including the green wall at z=-8, while
+greybox physics remains unchanged. The targeted render-scene, render-tuning and
+dev-asset-bindings CTests pass (3/3) with GCC 13.2 and the pinned engine.
+Vulkan visual and GPU timing validation remain pending.

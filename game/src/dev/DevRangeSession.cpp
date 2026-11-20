@@ -141,6 +141,8 @@ void preserveCurrentVariantBest(DevRangeDrillState& drill) {
 }
 
 void restartDrill(DevRangeSessionState& session, const DevRangeSessionTuning& tuning) {
+    session.hitFeedbackSeconds = 0.0F;
+    session.lastConfirmedHit = {};
     const auto variant = safeVariant(session.drill.variant);
     const auto bestScore = session.drill.bestScore;
     auto bestScoreByVariant = session.drill.bestScoreByVariant;
@@ -411,6 +413,8 @@ void recordShotResult(
         return;
     }
 
+    session.lastConfirmedHit = hit;
+    session.hitFeedbackSeconds = kHitFeedbackDurationSeconds;
     ++session.score.shotsHit;
     ++session.drill.shotsHit;
     session.score.damageDealt += hit.damageApplied;
@@ -473,7 +477,7 @@ void recordShotResult(
         setEvent(session, stream.str(), tuning);
     } else {
         std::ostringstream stream;
-        stream << "Hit -" << static_cast<int>(hit.damageApplied);
+        stream << "Hit";
         appendScoreDelta(stream, session.drill);
         setEvent(session, stream.str(), tuning);
     }
@@ -586,6 +590,7 @@ void tickDevRangeDrill(
 }
 
 void tickSessionFeedback(DevRangeSessionState& session, float deltaSeconds) {
+    session.hitFeedbackSeconds = consume(session.hitFeedbackSeconds, deltaSeconds);
     session.eventTextSeconds = consume(session.eventTextSeconds, deltaSeconds);
     if (session.eventTextSeconds <= 0.0F) {
         session.eventText.clear();

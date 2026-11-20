@@ -17,6 +17,16 @@
       "tags": ["material", "environment", "dev_sandbox"]
     },
     {
+      "id": "prop_range_foliage_01",
+      "kind": "mesh",
+      "source": "tools/assets/cook_dev_range_foliage.py",
+      "cooked": "assets/generated/dev_range/prop_range_foliage_01.glb",
+      "streamable": true,
+      "priority": 45,
+      "estimated_bytes": 12956,
+      "tags": ["prop", "environment", "foliage", "dev_sandbox"]
+    },
+    {
       "id": "prop_target_dummy_01",
       "kind": "mesh",
       "source": "assets/source/blender/props/prop_target_dummy_01.blend",

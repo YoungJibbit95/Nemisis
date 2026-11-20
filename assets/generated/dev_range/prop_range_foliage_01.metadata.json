@@ -1,0 +1,27 @@
+{
+  "id": "prop_range_foliage_01",
+  "source": "tools/assets/cook_dev_range_foliage.py",
+  "export": "assets/generated/dev_range/prop_range_foliage_01.glb",
+  "category": "prop",
+  "scale_meters": true,
+  "runtime_up_axis": "Y",
+  "gameplay_forward_axis": "+Z",
+  "origin": "Ground center of cluster",
+  "dimensions_m": [
+    2.68,
+    0.95,
+    1.15
+  ],
+  "collision": "none",
+  "lods": [
+    "prop_range_foliage_01_lod0"
+  ],
+  "license": "original_project_asset",
+  "external_assets": false,
+  "generated_by": "tools/assets/cook_dev_range_foliage.py",
+  "stats": {
+    "mesh_objects": 1,
+    "triangles_estimate": 168
+  },
+  "sockets": []
+}

@@ -26,7 +26,6 @@ constexpr std::array<float, 4> kWeaponMeshTint{0.56F, 0.58F, 0.54F, 1.0F};
 constexpr std::array<float, 4> kSmgMeshTint{0.42F, 0.54F, 0.58F, 1.0F};
 constexpr std::array<float, 4> kSidearmMeshTint{0.58F, 0.54F, 0.48F, 1.0F};
 constexpr std::array<float, 4> kArmsTint{0.48F, 0.52F, 0.48F, 1.0F};
-constexpr std::array<float, 4> kAssetStageBackboardTint{0.05F, 0.28F, 0.34F, 0.78F};
 constexpr std::array<float, 4> kAssetStagePlinthTint{0.18F, 0.22F, 0.23F, 1.0F};
 
 struct StaticMeshPlacement final {
@@ -250,6 +249,35 @@ struct FirstPersonCookedArmsRig final {
     result.alpha = 1;
     result.visible = true;
     return result;
+}
+
+[[nodiscard]] float firstPersonShotAmount(const weapons::WeaponRuntimeState& weapon, float duration) {
+    return weapon.shotIndex == 0U
+        ? 0.0F : std::clamp(1.0F - (weapon.timeSinceLastShotSeconds / duration), 0.0F, 1.0F);
+}
+
+[[nodiscard]] player::FirstPersonRigAttachment projectRifleActionAttachment(
+    const novacore::animation::Mat4& authoredMount,
+    const weapons::WeaponRuntimeState& weapon) {
+    const auto base = rigidChestAttachment(authoredMount);
+    const float kick = firstPersonShotAmount(weapon, 0.115F);
+    const float recoil = kick * kick * (1.0F - 0.30F * weapon.adsAlpha);
+    const float reloadProgress = weapon.reloading ? weapon.reloadProgress : 0.0F;
+    const float reloadRamp = std::clamp(std::min(reloadProgress / 0.22F, (1.0F - reloadProgress) / 0.36F), 0.0F, 1.0F);
+    const float reload = reloadRamp * reloadRamp * (3.0F - 2.0F * reloadRamp);
+    if (recoil == 0.0F && reload == 0.0F) {
+        return base;
+    }
+
+    // Compose on the rigid authored mount before evaluating the hands or FX.
+    // Reload remains a two-handed dip driven by the actual simulation timer.
+    const player::FirstPersonRigAttachment action{
+        .position = {0.0F, -0.040F * reload, -0.024F * recoil - 0.018F * reload},
+        .pitchDegrees = -3.0F * recoil + 7.0F * reload,
+        .rollDegrees = -5.0F * reload,
+    };
+    return rigidChestAttachment(novacore::animation::multiply(
+        player::firstPersonAttachmentMatrix(base), player::firstPersonAttachmentMatrix(action)));
 }
 
 [[nodiscard]] FirstPersonCookedArmsRig cookedArmsSocketRig(const DevRangeRenderSceneDesc& desc,
@@ -959,68 +987,72 @@ void appendFirstPersonRigPrimitives(
 void appendWeaponFeedbackPrimitives(
     novacore::render::RenderFrameInfo& frame,
     const DevRangeRenderSceneDesc& desc,
-    const player::FirstPersonRigFrame& rig,
+    const FirstPersonPresentation& presentation,
     DevRangeRenderSceneStats& stats) {
-    const bool recentFire = desc.player.firedThisFrame ||
-        desc.player.animation.fireAlpha > 0.08F ||
-        (desc.player.weapon.shotIndex > 0U && desc.player.weapon.timeSinceLastShotSeconds < 0.075F);
-    if (!recentFire && !desc.player.hitThisFrame) {
+    const auto& weapon = desc.player.weapon;
+    const float flash = firstPersonShotAmount(weapon, 0.075F);
+    if (flash <= 0.0F) {
         return;
     }
 
+    const auto& rig = presentation.rig;
     const auto& muzzle = player::firstPersonRigSocket(rig, player::FirstPersonRigSocket::Muzzle);
     const auto& ejection = player::firstPersonRigSocket(rig, player::FirstPersonRigSocket::EjectionPort);
-    const auto muzzlePosition = muzzle.valid ? muzzle.worldPosition : rig.muzzle.position;
-    const auto flashAlpha = std::max(0.34F, desc.player.animation.fireAlpha);
-    if (recentFire) {
+    const auto muzzlePosition = presentation.muzzleWorld
+        ? novacore::animation::matrixTranslation(*presentation.muzzleWorld)
+        : muzzle.valid ? muzzle.worldPosition : rig.muzzle.position;
+    const auto flashTip = presentation.muzzleWorld
+        ? novacore::animation::transformPoint(*presentation.muzzleWorld, {0.0F, 0.0F, 0.075F})
+        : muzzlePosition + rotateY(rotateX({0.0F, 0.0F, 0.075F}, muzzle.pitchDegrees), muzzle.yawDegrees);
+    appendBox(
+        frame,
+        muzzlePosition,
+        {0.046F + (0.020F * flash), 0.041F, 0.082F + (0.038F * flash)},
+        {1.0F, 0.72F, 0.18F, 0.88F * flash},
+        stats);
+    ++stats.firstPersonFeedbackPrimitiveCount;
+    appendBox(
+        frame,
+        flashTip,
+        {0.025F, 0.021F, 0.075F},
+        {1.0F, 0.94F, 0.52F, 0.74F * flash},
+        stats);
+    ++stats.firstPersonFeedbackPrimitiveCount;
+    if (presentation.ejectionWorld || (!desc.projectRifleReady && ejection.valid)) {
         appendBox(
             frame,
-            muzzlePosition,
-            {0.070F + (0.025F * flashAlpha), 0.050F, 0.110F + (0.040F * flashAlpha)},
-            {1.0F, 0.72F, 0.18F, 0.88F},
+            presentation.ejectionWorld ? novacore::animation::matrixTranslation(*presentation.ejectionWorld)
+                                       : ejection.worldPosition,
+            {0.026F, 0.012F, 0.010F},
+            {0.98F, 0.78F, 0.32F, 0.92F * flash},
             stats);
         ++stats.firstPersonFeedbackPrimitiveCount;
-        appendBox(
-            frame,
-            muzzlePosition + novacore::math::Vec3{0.0F, 0.018F, 0.075F},
-            {0.028F, 0.024F, 0.150F},
-            {1.0F, 0.94F, 0.52F, 0.74F},
-            stats);
-        ++stats.firstPersonFeedbackPrimitiveCount;
-        if (ejection.valid) {
-            appendBox(
-                frame,
-                ejection.worldPosition + novacore::math::Vec3{0.045F, 0.018F, -0.010F},
-                {0.026F, 0.012F, 0.010F},
-                {0.98F, 0.78F, 0.32F, 0.92F},
-                stats);
-            ++stats.firstPersonFeedbackPrimitiveCount;
-        }
     }
 
-    if (!desc.player.hasLatestShotTrace) {
+    const auto& shot = desc.player.shotFeedback;
+    if (!shot || shot->weaponId != weapon.weaponId || shot->shotIndex != weapon.shotIndex) {
         return;
     }
 
-    const auto lineColor = desc.player.hitThisFrame
+    const auto lineColor = shot->hit
         ? std::array<float, 4>{1.0F, 0.28F, 0.18F, 0.92F}
         : std::array<float, 4>{1.0F, 0.78F, 0.22F, 0.58F};
     frame.worldLines.push_back(novacore::render::RenderLine3D{
         muzzlePosition,
-        desc.player.latestShotEnd,
+        shot->traceEnd,
         lineColor,
     });
     ++stats.worldLineCount;
     ++stats.hitFeedbackLineCount;
 
-    if (desc.player.hitThisFrame) {
+    if (shot->hit) {
         appendBox(
             frame,
-            desc.player.latestShotEnd,
-            desc.player.eliminatedThisFrame
+            shot->traceEnd,
+            shot->eliminated
                 ? novacore::math::Vec3{0.22F, 0.22F, 0.22F}
                 : novacore::math::Vec3{0.14F, 0.14F, 0.14F},
-            desc.player.eliminatedThisFrame
+            shot->eliminated
                 ? std::array<float, 4>{1.0F, 0.36F, 0.18F, 0.96F}
                 : std::array<float, 4>{1.0F, 0.84F, 0.24F, 0.90F},
             stats);
@@ -1072,7 +1104,6 @@ void appendLanePressureVisuals(
 void appendAssetStageGuides(
     novacore::render::RenderFrameInfo& frame,
     DevRangeRenderSceneStats& stats) {
-    appendBox(frame, {0.0F, 1.28F, -5.45F}, {4.95F, 1.24F, 0.08F}, kAssetStageBackboardTint, stats);
     appendBox(frame, {-2.75F, 0.08F, -5.15F}, {0.62F, 0.08F, 0.44F}, kAssetStagePlinthTint, stats);
     appendBox(frame, {-1.25F, 0.88F, -6.65F}, {0.70F, 0.08F, 0.38F}, kAssetStagePlinthTint, stats);
     appendBox(frame, {0.95F, 0.90F, -6.65F}, {0.74F, 0.08F, 0.38F}, kAssetStagePlinthTint, stats);
@@ -1180,19 +1211,19 @@ FirstPersonPresentation evaluateFirstPersonPresentation(const DevRangeRenderScen
     if (desc.projectRifleReady) {
         result.rig = rig;
         result.rig.arms = projectFPSPlayerAttachment(desc.player);
-        result.rig.weapon = result.rig.arms;
         const auto playerWorld = player::firstPersonAttachmentMatrix(result.rig.arms);
         if (!desc.player.rifleReadyMount) {
             throw std::runtime_error("Sampled Project Rifle Ready chest mount is missing");
         }
         const auto authoredMount = novacore::animation::multiply(playerWorld, *desc.player.rifleReadyMount);
-        result.rig.weapon = rigidChestAttachment(authoredMount);
+        result.rig.weapon = projectRifleActionAttachment(authoredMount, desc.player.weapon);
         result.weaponWorld = player::firstPersonAttachmentMatrix(result.rig.weapon);
         result.weaponAssetId = kProjectReadyWeaponAssetId;
         result.armsAssetId = kProjectFPSArmsAssetId;
         result.weaponColor = mount.color;
         result.armsColor = armsMount.color;
         result.muzzleWorld = cookedMarkerWorld(desc, result.weaponAssetId, "socket_muzzle", result.weaponWorld);
+        result.ejectionWorld = cookedMarkerWorld(desc, result.weaponAssetId, "socket_eject", result.weaponWorld);
         result.rightGripWorld =
             cookedMarkerWorld(desc, result.weaponAssetId, "socket_palm_contact_r", result.weaponWorld);
         result.leftGripWorld =
@@ -1259,6 +1290,7 @@ FirstPersonPresentation evaluateFirstPersonPresentation(const DevRangeRenderScen
     result.armsColor = armsMount.color;
     result.weaponWorld = player::firstPersonAttachmentMatrix(presentedRig.weapon);
     result.muzzleWorld = cookedMarkerWorld(desc, selectedWeaponAssetId, "socket_muzzle", result.weaponWorld);
+    result.ejectionWorld = cookedMarkerWorld(desc, selectedWeaponAssetId, "socket_eject", result.weaponWorld);
     result.rightGripWorld = cookedMarkerWorld(desc, selectedWeaponAssetId, "socket_grip_r", result.weaponWorld);
     result.leftGripWorld = cookedMarkerWorld(desc, selectedWeaponAssetId, "socket_grip_l", result.weaponWorld);
     return result;
@@ -1300,6 +1332,20 @@ DevRangeRenderSceneStats DevRangeRenderSceneBuilder::append(
     appendLocalPlayerBodyMesh(frame, desc, stats);
     if (stats.firstPersonViewmodelActive) {
         appendFirstPersonMeshes(frame, desc, stats);
+    }
+    const auto& step = desc.player.movementTech;
+    if (step.energyPlatformSeconds > 0.0F || step.doubleJumpPlatformThrown) {
+        const float halfWidth = step.energyPlatformInFlight ? 0.11F : 0.50F;
+        appendBox(frame, step.energyPlatformCenter, {halfWidth, 0.018F, halfWidth},
+            {0.18F, 0.82F, 1.0F, 1.0F}, stats);
+        frame.worldBoxes.back().castsShadow = false;
+        appendBox(frame, step.energyPlatformCenter + novacore::math::Vec3{0.0F, 0.028F, 0.0F},
+            {halfWidth * 0.64F, 0.012F, halfWidth * 0.64F}, {0.88F, 0.98F, 1.0F, 1.0F}, stats);
+        frame.worldBoxes.back().castsShadow = false;
+        if (step.energyPlatformInFlight) {
+            frame.worldLines.push_back({step.energyPlatformPreviousCenter, step.energyPlatformCenter,
+                {0.39F, 0.91F, 1.0F, 0.75F}});
+        }
     }
     if (desc.showWorldDebugLines) {
         appendMovementTechVisuals(frame, desc, stats);
@@ -1431,6 +1477,20 @@ void DevRangeRenderSceneBuilder::appendStaticShowcaseMeshes(
     novacore::render::RenderFrameInfo& frame,
     const DevRangeRenderSceneDesc& desc,
     DevRangeRenderSceneStats& stats) const {
+    // One opaque cluster at the right edge, clear of the central firing lanes and
+    // side traversal panels. The asset is a single primitive, with no per-leaf draws.
+    if (appendMesh(frame, desc, "prop_range_foliage_01", {12.0F, 0.0F, -9.0F},
+            {1.0F, 1.0F, 1.0F}, 0.0F, {0.25F, 0.52F, 0.28F, 1.0F}, stats,
+            0.0F, 0.0F, novacore::render::RenderMeshLayer::World, false)) {
+        frame.worldMeshes.back().castsShadow = false;
+        frame.worldMeshes.back().receivesShadow = false;
+    } else {
+        // Preserve a visible landmark if GPU mesh registration fails.
+        appendBox(frame, {12.0F, 0.34F, -9.0F}, {1.25F, 0.34F, 0.35F},
+            {0.25F, 0.52F, 0.28F, 1.0F}, stats);
+        frame.worldBoxes.back().castsShadow = false;
+        frame.worldBoxes.back().receivesShadow = false;
+    }
     appendAssetStageGuides(frame, stats);
     appendWeaponPickupPads(frame, stats);
     for (const auto& placement : staticShowcaseMeshes()) {
@@ -1569,7 +1629,7 @@ void DevRangeRenderSceneBuilder::appendFirstPersonMeshes(
             ++stats.firstPersonSocketCount;
         }
     }
-    appendWeaponFeedbackPrimitives(frame, desc, presentedRig, stats);
+    appendWeaponFeedbackPrimitives(frame, desc, presentation, stats);
 
     const bool weaponMeshAppended = appendMesh(
         frame, desc, presentation.weaponAssetId,
@@ -1646,25 +1706,6 @@ void DevRangeRenderSceneBuilder::appendMovementTechVisuals(
             : std::array<float, 4>{0.08F, 0.86F, 1.0F, 1.0F};
         appendBox(frame, bootBase + (right * 0.18F), {0.09F, 0.035F, 0.14F}, glowColor, stats);
         appendBox(frame, bootBase - (right * 0.18F), {0.09F, 0.035F, 0.14F}, glowColor, stats);
-
-    }
-
-    if (tech.doubleJumpPlatformThrown || tech.energyPlatformSeconds > 0.0F) {
-        const auto platformCenter = tech.energyPlatformCenter.lengthSquared() > 0.0001F
-            ? tech.energyPlatformCenter
-            : desc.player.position + novacore::math::Vec3{0.0F, -0.18F, 0.0F};
-        appendBox(
-            frame,
-            platformCenter,
-            {0.52F, 0.018F, 0.32F},
-            {0.18F, 0.82F, 1.0F, 1.0F},
-            stats);
-        appendBox(
-            frame,
-            platformCenter + novacore::math::Vec3{0.0F, 0.028F, 0.0F},
-            {0.32F, 0.012F, 0.18F},
-            {0.88F, 0.98F, 1.0F, 1.0F},
-            stats);
 
     }
 
