@@ -51,6 +51,26 @@ cmake --build --preset windows-msvc-debug
 
 `windows-msvc-debug` uses the Visual Studio generator and does not require Ninja or `VCPKG_ROOT`.
 
+### Play the Dev Range on Vulkan
+
+Use the NovaCore revision in `cmake/novacore-revision.txt` in the sibling
+`Novacore-Engine` checkout. The Ninja playtest preset builds an optimized game
+with the Project rifle, hand IK, native UI and Jolt. On Windows run the game
+from its staged directory so it finds the cooked meshes and runtime settings.
+
+```powershell
+cmake --preset playtest-vulkan
+cmake --build --preset playtest-vulkan
+cd build/playtest-vulkan
+./nemisis_game.exe --vulkan --dev-range --project-rifle-ready --material-textures --physics-props
+```
+
+Append `--profile-range` to record 60 frames after 12 warm-up frames and exit.
+Each `range_frame` CSV row contains the frame index, fixed ticks since the last
+frame, total frame time, time before the frame callback, scene preparation time
+and time spent in the renderer calls. Timings use wall-clock milliseconds and
+include any waits.
+
 ### Full vcpkg/Ninja support:
 
 ```powershell

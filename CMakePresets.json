@@ -2,6 +2,23 @@
   "version": 6,
   "configurePresets": [
     {
+      "name": "playtest-vulkan",
+      "displayName": "Dev Range playtest (Vulkan Release)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "NOVACORE_ENABLE_SDL3": "ON",
+        "NOVACORE_ENABLE_VULKAN": "ON",
+        "NOVACORE_ENABLE_JOLT": "ON",
+        "NOVACORE_BUILD_SANDBOX": "OFF",
+        "NEMISIS_ENABLE_RMLUI": "ON",
+        "NEMISIS_ENABLE_HAND_IK": "ON",
+        "NEMISIS_BUILD_PROJECT_FPS_CANDIDATE": "ON",
+        "NEMISIS_COPY_RUNTIME_DATA": "ON"
+      }
+    },
+    {
       "name": "local-debug-no-deps",
       "displayName": "Local Debug without external dependencies",
       "generator": "Ninja",
@@ -149,6 +166,11 @@
     }
   ],
   "buildPresets": [
+    {
+      "name": "playtest-vulkan",
+      "configurePreset": "playtest-vulkan",
+      "targets": ["nemisis_game"]
+    },
     {
       "name": "local-debug-no-deps",
       "configurePreset": "local-debug-no-deps"

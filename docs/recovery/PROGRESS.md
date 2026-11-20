@@ -70,6 +70,26 @@ Locally verified both suites against NovaCore `50eb84408f6c8e8401ff37967aee8561f
   Source #33's frozen actual Vulkan framing failure remains open; no new GUI.
   Query and direct-light work remain separate reviewed specialist slices.
 
+## 2026-11-20 Fixed-step catch-up in the Vulkan Dev Range
+
+The CLion Debug playtest ran at 1.65 FPS on a Ryzen 5 5500 and RTX 3070 Ti
+at 1280×720. A frame at the 15-tick catch-up limit evaluated hand IK, skinned
+50,068 visible vertices and queued both dynamic mesh updates 15 times.
+The game now accumulates animation time across ticks and deforms only the
+pose submitted by the next frame. Both runs used NovaCore `50eb844`, the
+Project rifle, material textures and Jolt props. Each sample covers 60 frames
+after 12 warm-up frames. Other builds were active on this machine.
+
+| Debug game | Mean FPS | Median frame | 95th percentile frame |
+| --- | ---: | ---: | ---: |
+| Main, with frame timing enabled | 1.65 | 596.86 ms | 630.96 ms |
+| Visible pose once per frame | 13.34 | 63.41 ms | 82.17 ms |
+
+The new run processed 315 physics ticks and submitted 71 poses in 72 frames.
+Both character meshes recorded 71 updates. All 71 hand solves were reachable.
+The optional `--profile-range` switch reproduces the measurement with the
+ordinary game executable. See the playtest preset in the README.
+
 ## 2026-10-19 Optional material-texture consumer integration
 
 - Both pins now select engine `14d33a77a9eedef6a48227226d1ef80d593015b9`
