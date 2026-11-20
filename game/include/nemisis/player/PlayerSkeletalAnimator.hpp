@@ -7,6 +7,8 @@
 #include "novacore/assets/GltfAnimationBridge.hpp"
 #include "novacore/assets/GltfDocument.hpp"
 
+#include <array>
+#include <initializer_list>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -34,6 +36,12 @@ struct PlayerSkeletalAnimatorStats final {
     bool poseReady = false;
 };
 
+struct ProjectRifleAim final {
+    float weight = 0.0F;
+    float modelPitchDegrees = 0.0F;
+    float modelYawDegrees = 0.0F;
+};
+
 class PlayerSkeletalAnimator final {
   public:
     [[nodiscard]] bool initialize(const novacore::assets::GltfMeshData& meshData,
@@ -43,8 +51,9 @@ class PlayerSkeletalAnimator final {
     [[nodiscard]] bool update(const CharacterAnimationFrame& frame, float deltaSeconds,
                               const PlayerHandTargets* handTargets = nullptr);
 
-    // Fixed tick order: sample once, read eye, evaluate shared weapon, constrain/skin once.
-    [[nodiscard]] bool samplePose(const CharacterAnimationFrame& frame, float deltaSeconds);
+    // Sample once, read eye, evaluate the shared weapon, constrain and skin once.
+    [[nodiscard]] bool samplePose(const CharacterAnimationFrame& frame, float deltaSeconds,
+                                  ProjectRifleAim aim = {});
     [[nodiscard]] bool skinPose(const PlayerHandTargets* handTargets = nullptr);
 
     [[nodiscard]] const novacore::assets::GltfMeshData* skinnedMesh() const;
@@ -80,6 +89,7 @@ class PlayerSkeletalAnimator final {
     novacore::animation::LocalPose constrainedLocal_;
     novacore::animation::GlobalPose constrainedGlobal_;
     bool constrainedPoseReady_ = false;
+    std::array<novacore::animation::JointIndex, 2> projectAimChest_{};
     const novacore::animation::AnimationClip* activeClip_ = nullptr;
     const novacore::animation::AnimationClip* readyClip_ = nullptr;
     const novacore::animation::AnimationClip* armedIdleClip_ = nullptr;

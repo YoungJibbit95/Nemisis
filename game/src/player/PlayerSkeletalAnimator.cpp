@@ -22,6 +22,67 @@ namespace {
     return lowercase(name).find(lowercase(hint)) != std::string::npos;
 }
 
+[[nodiscard]] float dot(novacore::math::Vec3 a, novacore::math::Vec3 b) {
+    return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+[[nodiscard]] novacore::math::Vec3 cross(novacore::math::Vec3 a, novacore::math::Vec3 b) {
+    return {a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x};
+}
+
+[[nodiscard]] novacore::math::Vec3 unit(novacore::math::Vec3 v) {
+    const auto length = std::sqrt(v.lengthSquared());
+    return length > 1e-6F ? v * (1.0F / length) : novacore::math::Vec3{};
+}
+
+[[nodiscard]] bool applyProjectRifleAim(
+    const novacore::animation::Skeleton& skeleton,
+    const novacore::animation::GlobalPose& sampled,
+    const std::array<novacore::animation::JointIndex, 2>& chest,
+    ProjectRifleAim aim,
+    novacore::animation::LocalPose& pose) {
+    using namespace novacore::animation;
+    Mat4 mount;
+    if (!evaluateSocket(skeleton, sampled, "socket_rifle_ready", mount)) {
+        return false;
+    }
+    const auto hipForward = unit(transformDirection(mount, {0, 0, 1}));
+    if (hipForward.lengthSquared() < .99F) {
+        return false;
+    }
+    constexpr float radiansPerDegree = 3.14159265358979323846F / 180.F;
+    const float pitch = aim.modelPitchDegrees * radiansPerDegree;
+    const float yaw = aim.modelYawDegrees * radiansPerDegree;
+    const novacore::math::Vec3 aimForward{
+        std::sin(yaw) * std::cos(pitch), std::sin(pitch), std::cos(yaw) * std::cos(pitch)};
+    auto axis = cross(hipForward, aimForward);
+    float rotationW = 1.0F + dot(hipForward, aimForward);
+    if (rotationW <= 1e-5F) {
+        const novacore::math::Vec3 reference = std::abs(hipForward.y) < .9F
+            ? novacore::math::Vec3{0, 1, 0} : novacore::math::Vec3{1, 0, 0};
+        axis = unit(reference - hipForward * dot(reference, hipForward));
+        rotationW = 0.0F;
+    }
+    const auto correction = slerp({}, normalize({axis.x, axis.y, axis.z, rotationW}), aim.weight);
+    const novacore::math::Vec3 modelAxis{correction.x, correction.y, correction.z};
+    for (auto joint : chest) {
+        const auto parent = skeleton.joints[joint].parent;
+        if (parent < 0) {
+            return false;
+        }
+        const auto& frame = sampled.joints[static_cast<std::size_t>(parent)];
+        const auto x = unit(transformDirection(frame, {1, 0, 0}));
+        const auto z = unit(cross(x, transformDirection(frame, {0, 1, 0})));
+        if (z.lengthSquared() < .99F) {
+            return false;
+        }
+        const auto y = cross(z, x);
+        const novacore::math::Quat parentCorrection{dot(modelAxis, x), dot(modelAxis, y), dot(modelAxis, z), correction.w};
+        pose.joints[joint].rotation = normalize(multiply(parentCorrection, pose.joints[joint].rotation));
+    }
+    return true;
+}
+
 [[nodiscard]] float transitionDuration(CharacterAnimationClip clip) {
     switch (clip) {
     case CharacterAnimationClip::Jump:
@@ -182,6 +243,17 @@ bool PlayerSkeletalAnimator::initialize(const novacore::assets::GltfMeshData& me
     armedIdleClip_ = readyClip_ != nullptr ? findClipByHints({"project m4 armed idle"}) : nullptr;
     readyWalkClip_ = readyClip_ != nullptr ? findClipByHints({"developer rifle ready walk composition"}) : nullptr;
     readyRunClip_ = readyClip_ != nullptr ? findClipByHints({"developer rifle ready run composition"}) : nullptr;
+    if (readyClip_ != nullptr) {
+        // Rigify stores the head/shoulder controls and weighted jacket chest
+        // on separate branches. Move both while keeping the pelvis/legs in gait.
+        const auto control = novacore::animation::findJoint(animationAsset_.skeleton, "spine_fk.003");
+        const auto deform = novacore::animation::findJoint(animationAsset_.skeleton, "DEF-spine.003");
+        if (!control || !deform) {
+            errors_.push_back("Project M4 ADS requires both authored chest branches");
+            return false;
+        }
+        projectAimChest_ = {*control, *deform};
+    }
     activeClip_ = selectClip(CharacterAnimationClip::Idle);
     if (activeClip_ == nullptr && !animationAsset_.clips.empty()) {
         activeClip_ = &animationAsset_.clips.front();
@@ -272,7 +344,8 @@ bool PlayerSkeletalAnimator::update(const CharacterAnimationFrame& frame, float 
     return samplePose(frame, deltaSeconds) && skinPose(handTargets);
 }
 
-bool PlayerSkeletalAnimator::samplePose(const CharacterAnimationFrame& frame, float deltaSeconds) {
+bool PlayerSkeletalAnimator::samplePose(const CharacterAnimationFrame& frame, float deltaSeconds,
+                                       ProjectRifleAim aim) {
     if (!stats_.initialized || samplePending_) {
         return false;
     }
@@ -347,6 +420,21 @@ bool PlayerSkeletalAnimator::samplePose(const CharacterAnimationFrame& frame, fl
         constrainedPoseReady_ = true;
         stats_.upperBodyClip = readyClip_->name;
         stats_.upperBodyWeight = 1;
+    }
+    aim.weight = projectRifleAimWeight(aim.weight);
+    if (readyClip_ != nullptr && aim.weight > 0.0F) {
+        const auto& sampled = constrainedPoseReady_ ? constrainedGlobal_ : runtime_.globalPose();
+        if (!constrainedPoseReady_) {
+            constrainedLocal_ = runtime_.localPose();
+        }
+        if (!applyProjectRifleAim(animationAsset_.skeleton, sampled, projectAimChest_, aim, constrainedLocal_) ||
+            !novacore::animation::evaluateGlobalPose(animationAsset_.skeleton, constrainedLocal_, constrainedGlobal_)) {
+            errors_.push_back("Project M4 ADS chest pose could not be evaluated");
+            ++stats_.failedFrameCount;
+            stats_.poseReady = false;
+            return false;
+        }
+        constrainedPoseReady_ = true;
     }
     samplePending_ = true;
     stats_.poseReady = true;
