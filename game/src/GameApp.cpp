@@ -1419,6 +1419,9 @@ void GameApp::registerDevMeshResources() {
                 ++rejected;
                 novacore::core::logWarning("game", "Dev mesh resource registration failed: " + std::string(assetId));
             }
+            // The Project camera uses its cooked body subset for every frame.
+            // The full character is still drawn as a static range asset.
+            if (options_.projectFPSPreview) { continue; }
             animator = &skeletalBodyAnimator_;
         } else if (assetId == "chr_a1_fp_arms_01") {
             animator = &skeletalArmsAnimator_;
