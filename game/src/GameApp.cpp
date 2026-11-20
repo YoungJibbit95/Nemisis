@@ -1014,7 +1014,7 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
                 menu_.showLoadingScreen(ui::GameScreen::OuterFacility);
                 deploymentSmokeStage_ = 2;
             }
-        } else if (menu_.gameplayActive() && ++deploymentPlayableFrames_ >= 3U) {
+        } else if (menu_.gameplayActive() && hasCharacterAnimationFrame_ && ++deploymentPlayableFrames_ >= 3U) {
             deploymentPlayableFrames_ = 0;
             if (deploymentSmokeStage_ == 2) {
                 const auto facility = assets::outerFacilityRenderableAssetIds();
