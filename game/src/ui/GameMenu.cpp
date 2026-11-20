@@ -660,6 +660,7 @@ void renderSettingsTab(
     addSelectableRow(frame, 340.0F, 328.0F, 620.0F, "HUD Scale", fixedTwo(settings.video.hudScale), selectedIndex == 2U, palette::Accent);
     addSelectableRow(frame, 340.0F, 384.0F, 620.0F, "Aim Assist", std::string(yesNo(settings.controller.aimAssistEnabled)), selectedIndex == 3U, palette::Warning);
     addSelectableRow(frame, 340.0F, 440.0F, 620.0F, "Damage Numbers", std::string(yesNo(settings.gameplay.showDamageNumbers)), selectedIndex == 4U, palette::Warning);
+    addSelectableRow(frame, 340.0F, 496.0F, 620.0F, "Hit Markers", std::string(yesNo(settings.gameplay.showHitMarkers)), selectedIndex == 5U, palette::Warning);
     addPanel(frame, 72.0F, 400.0F, 220.0F, 96.0F, 10.0F, palette::Accent, true);
     addText(frame, 90.0F, 424.0F, 2.0F, palette::TextPrimary, "LEFT/RIGHT");
     addText(frame, 90.0F, 456.0F, 1.0F, palette::TextSecondary, "Adjusts values live.");
@@ -738,6 +739,39 @@ void renderLoadingScreen(
     addText(frame, 120.0F, 552.0F, 2.0F, palette::TextSecondary, "Design target: readable BO-like gunfights, Apex-lite motion, server-authoritative spine.");
 }
 
+void renderHitFeedback(
+    novacore::render::RenderFrameInfo& frame,
+    const dev::DevRangeSessionState& session,
+    const settings::GameplaySettings& settings,
+    const HudLayout& layout) {
+    if (session.hitFeedbackSeconds <= 0.0F) {
+        return;
+    }
+
+    const float remaining = std::clamp(session.hitFeedbackSeconds / dev::kHitFeedbackDurationSeconds, 0.0F, 1.0F);
+    const float opacity = std::min(1.0F, remaining * 2.0F);
+    const auto& hit = session.lastConfirmedHit;
+    auto ink = hit.eliminated ? palette::Warning : palette::TextPrimary;
+    ink[3] *= opacity;
+    if (settings.showHitMarkers) {
+        const float inner = 6.0F + 3.0F * remaining;
+        const float outer = inner + (hit.eliminated ? 9.0F : 5.0F);
+        for (const float x : {-1.0F, 1.0F}) {
+            for (const float y : {-1.0F, 1.0F}) {
+                const float x0 = 640.0F + x * inner;
+                const float y0 = 360.0F + y * inner;
+                const float x1 = 640.0F + x * outer;
+                const float y1 = 360.0F + y * outer;
+                addHudLine(frame, layout, x0, y0 + 1.0F, x1, y1 + 1.0F, {0.0F, 0.0F, 0.0F, 0.85F * opacity});
+                addHudLine(frame, layout, x0, y0, x1, y1, ink);
+            }
+        }
+    }
+    if (settings.showDamageNumbers) {
+        addHudText(frame, layout, 665.0F, 331.0F, 1.40F, ink, "-" + fixedOne(hit.damageApplied));
+    }
+}
+
 void renderDevRangeHud(
     novacore::render::RenderFrameInfo& frame,
     const dev::DevSandboxSample& sample,
@@ -754,7 +788,8 @@ void renderDevRangeHud(
         360.0F,
         std::max(4.0F, crosshairGap),
         12.0F,
-        sample.targetHit.hit ? palette::Danger : palette::TextPrimary);
+        palette::TextPrimary);
+    renderHitFeedback(frame, sample.rangeSession, settings.gameplay, layout);
 
     const float healthRatio = sample.playerHealth.maxHealth > 0.0F
         ? std::clamp(sample.playerHealth.health / sample.playerHealth.maxHealth, 0.0F, 1.0F)
@@ -794,7 +829,7 @@ void renderDevRangeHud(
     addHudProgress(
         frame,
         layout,
-        {layout.safeInsetX + 16.0F, 720.0F - layout.safeInsetY - 18.0F, 284.0F, 12.0F},
+        {layout.safeInsetX + 16.0F, 720.0F - layout.safeInsetY - 22.0F, 284.0F, 7.0F},
         healthRatio,
         {0.08F, 0.05F, 0.05F, 0.95F},
         healthColor);
@@ -833,21 +868,22 @@ void renderDevRangeHud(
         1.15F,
         palette::TextSecondary,
         "/ " + std::to_string(attachmentSummary.effectiveMagazineSize));
-    addHudMetric(
-        frame,
-        layout,
-        1280.0F - layout.safeInsetX - 334.0F,
-        720.0F - layout.safeInsetY - 40.0F,
-        "ADS",
-        fixedOne(sample.weapon.adsAlpha));
-    const float reloadProgress = sample.weapon.reloading ? sample.weapon.reloadProgress : 0.0F;
+    const float magazineRatio = attachmentSummary.effectiveMagazineSize > 0
+        ? static_cast<float>(sample.weapon.ammoInMagazine) / static_cast<float>(attachmentSummary.effectiveMagazineSize)
+        : 0.0F;
+    const bool lowAmmo = magazineRatio <= 0.25F;
+    if (sample.weapon.reloading || lowAmmo) {
+        const char* status = sample.weapon.reloading ? "RELOADING" : sample.weapon.ammoInMagazine == 0 ? "EMPTY" : "LOW AMMO";
+        addHudText(frame, layout, 1280.0F - layout.safeInsetX - 334.0F,
+            720.0F - layout.safeInsetY - 41.0F, 1.20F, palette::Warning, status);
+    }
     addHudProgress(
         frame,
         layout,
-        {1280.0F - layout.safeInsetX - 334.0F, 720.0F - layout.safeInsetY - 14.0F, 306.0F, 8.0F},
-        sample.weapon.reloading ? reloadProgress : sample.weapon.adsAlpha,
+        {1280.0F - layout.safeInsetX - 334.0F, 720.0F - layout.safeInsetY - 24.0F, 314.0F, 7.0F},
+        sample.weapon.reloading ? sample.weapon.reloadProgress : magazineRatio,
         {0.06F, 0.07F, 0.075F, 0.92F},
-        sample.weapon.reloading ? palette::Warning : palette::Accent);
+        (sample.weapon.reloading || lowAmmo) ? palette::Warning : palette::Accent);
 
     addHudPanel(frame, layout, 386.0F, layout.safeInsetY, 508.0F, 84.0F, 10.0F, palette::Success, true);
     addHudText(
@@ -904,19 +940,6 @@ void renderDevRangeHud(
             "  LIVE " + std::to_string(dev::aliveTargetCount(sample.targetRange)) + "/" +
             std::to_string(dev::totalTargetCount(sample.targetRange)));
 
-    if (sample.fire.fired) {
-        addHudText(
-            frame,
-            layout,
-            sample.targetHit.hit ? 598.0F : 586.0F,
-            286.0F,
-            2.25F,
-            sample.targetHit.hit ? palette::Danger : palette::Warning,
-            sample.targetHit.hit ? "HIT" : "MISS");
-    }
-    if (sample.targetHit.hit && settings.gameplay.showDamageNumbers) {
-        addHudText(frame, layout, 674.0F, 292.0F, 1.30F, palette::Warning, "-" + fixedOne(sample.targetHit.damageApplied));
-    }
     if (!sample.rangeSession.eventText.empty()) {
         addHudText(frame, layout, 536.0F, 248.0F, 1.70F, palette::Accent, sample.rangeSession.eventText);
     }
@@ -1458,6 +1481,9 @@ void GameMenu::adjustCurrentValue(
         case 4:
             settings::toggleDamageNumbers(settings);
             break;
+        case 5:
+            settings.gameplay.showHitMarkers = !settings.gameplay.showHitMarkers;
+            break;
         default:
             break;
         }
@@ -1541,7 +1567,7 @@ std::size_t GameMenu::itemCountForTab() const {
     case MenuTab::Character:
         return 4U;
     case MenuTab::Settings:
-        return 5U;
+        return 6U;
     case MenuTab::Account:
         return 4U;
     }

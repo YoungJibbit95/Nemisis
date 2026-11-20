@@ -190,6 +190,12 @@ void testPointerNavigationActivatesMenuRows() {
     });
     expect(settings.mouse.sensitivityX > originalSensitivity, "pointer click adjusts settings row");
 
+    menu.update(actions, settings, loadout, attachments, nemisis::ui::MenuPointerState{
+        440.0F, 514.0F, true, true, true, false,
+    });
+    expect(!settings.gameplay.showHitMarkers && settings.gameplay.showDamageNumbers,
+        "hit markers can be toggled independently from damage numbers");
+
     menu.showMainMenu(nemisis::ui::MenuTab::Play);
     menu.update(actions, settings, loadout, attachments, nemisis::ui::MenuPointerState{
         470.0F,
@@ -283,6 +289,53 @@ void testDevRangeHudUsesPlayableResponsiveLayout() {
         "loadout panel anchors to the bottom-right after 1920x1080 scaling");
 }
 
+void testCombatFeedbackBetweenSimulationTicks() {
+    nemisis::ui::GameMenu menu;
+    menu.showDevRange();
+    nemisis::dev::DevSandboxSample sample{};
+    nemisis::settings::GameSettings settings{};
+    nemisis::weapons::AttachmentRegistry attachments;
+    nemisis::weapons::AttachmentBuildSummary build{};
+    build.effectiveMagazineSize = 30;
+    const auto render = [&] {
+        novacore::render::RenderFrameInfo frame{};
+        menu.appendRenderCommands(frame, sample, {}, "Vulkan", "", 0, {}, {}, {}, {},
+            settings, {}, attachments, build, {});
+        return frame;
+    };
+    const auto showsText = [](const auto& frame, std::string_view text) {
+        return std::any_of(frame.debugTexts.begin(), frame.debugTexts.end(),
+            [text](const auto& command) { return command.text == text; });
+    };
+
+    sample.weapon.ammoInMagazine = 2;
+    const auto idle = render();
+    expect(showsText(idle, "LOW AMMO"), "low magazine is readable without aiming down sights");
+    nemisis::weapons::FireResult fired{};
+    fired.fired = true;
+    nemisis::dev::DebugTargetHitResult hit{};
+    hit.hit = true;
+    hit.damageApplied = 17.5F;
+    nemisis::dev::recordShotResult(sample.rangeSession, fired, hit);
+    nemisis::dev::tickSessionFeedback(sample.rangeSession, 2.0F / 60.0F);
+    sample.weapon.reloading = true;
+    const auto confirmed = render();
+    expect(confirmed.debugLines.size() > idle.debugLines.size() && showsText(confirmed, "-17.5"),
+        "marker and damage survive subsequent fixed ticks without a new shot");
+    expect(showsText(confirmed, "RELOADING") && !showsText(confirmed, "LOW AMMO"), "reload takes priority");
+    settings.gameplay.showHitMarkers = false;
+    const auto numbersOnly = render();
+    expect(numbersOnly.debugLines.size() == idle.debugLines.size() && showsText(numbersOnly, "-17.5"),
+        "disabling markers keeps the normal crosshair and optional damage number");
+    settings.gameplay.showHitMarkers = true;
+    settings.gameplay.showDamageNumbers = false;
+    const auto markerOnly = render();
+    expect(markerOnly.debugLines.size() == confirmed.debugLines.size() && !showsText(markerOnly, "-17.5"),
+        "damage numbers can be hidden independently");
+    nemisis::dev::tickSessionFeedback(sample.rangeSession, 1.0F);
+    expect(render().debugLines.size() == idle.debugLines.size(), "expired markers leave the crosshair clear");
+}
+
 void testNetworkDebugOverlayIncludesPredictionTelemetry() {
     auto actions = nemisis::input::createDefaultActionMap();
     nemisis::ui::GameMenu menu;
@@ -368,6 +421,7 @@ int main() {
     testMenuTabsSettingsAndLoadoutMutateRuntimeData();
     testPointerNavigationActivatesMenuRows();
     testDevRangeHudUsesPlayableResponsiveLayout();
+    testCombatFeedbackBetweenSimulationTicks();
     testNetworkDebugOverlayIncludesPredictionTelemetry();
 
     if (failures > 0) {
