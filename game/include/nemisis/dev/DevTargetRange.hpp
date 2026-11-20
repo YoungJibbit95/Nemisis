@@ -1,10 +1,13 @@
 #pragma once
 
 #include "nemisis/dev/DebugTarget.hpp"
+#include "nemisis/dev/GreyboxWorld.hpp"
 
 #include "novacore/math/Types.hpp"
 
 #include <cstddef>
+#include <optional>
+#include <span>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -47,6 +50,15 @@ struct DevTargetRangeHitResult final {
     DebugTargetHitResult targetHit{};
 };
 
+struct DevRangeShotContact final {
+    float distanceMeters = 0.0F;
+    std::optional<std::size_t> targetLane;
+};
+
+[[nodiscard]] DevRangeShotContact traceDevRangeShot(
+    const DevTargetRangeState& range, const weapons::ShotTraceResult& shot,
+    std::span<const GreyboxPrimitive> geometry);
+
 [[nodiscard]] DevTargetRangeState makeDefaultDevTargetRange();
 [[nodiscard]] DevTargetRangeState makeDevTargetRangeForDrillVariant(DevRangeDrillVariant variant);
 
@@ -61,6 +73,9 @@ void configureDevTargetRangeForDrillVariant(DevTargetRangeState& range, DevRange
 [[nodiscard]] DevTargetRangeHitResult applyShotToDevTargetRange(
     DevTargetRangeState& range,
     const weapons::ShotTraceResult& shot);
+
+[[nodiscard]] DevTargetRangeHitResult applyShotToDevTargetRange(
+    DevTargetRangeState& range, const weapons::ShotTraceResult& shot, const DevRangeShotContact& contact);
 
 void beginTargetLaneRespawn(
     DevTargetRangeState& range,

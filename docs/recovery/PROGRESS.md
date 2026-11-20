@@ -794,6 +794,20 @@ and run startup from source so missing staged configs cannot fake useful boot
 coverage. Then classify tests and inspect the asset contract without touching
 uncommitted source/GLB changes in the original checkout.
 
+## 2026-11-20 Training range shot occlusion
+
+The local fixed tick resolves the nearest live target or blocking greybox
+before awarding training damage. Optional physics props receive a trace
+limited to that distance. The selected distance also bounds the tracer.
+The showcase backboard uses one visible 0.80 m-high collider from the
+original spawn, leaving the four standard target lanes open.
+
+The CPU target-range fixture exercises all four spawn sightlines, visible
+cover before and behind a target, and the inclusive weapon range endpoint.
+Engine reference: `50eb84408f6c8e8401ff37967aee8561f419cf36`.
+Loopback acknowledgements do not simulate shots. Independent multiplayer
+hit verification remains outside this local training path.
+
 ## 2026-10-18 Phase 1 game test audit
 
 - Inspected all 33 sources / 177 test functions, 37 CTest registrations and the
