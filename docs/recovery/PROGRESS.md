@@ -27,6 +27,23 @@
   Exact consumer hosted CI and all device/visual/timing gates remain open.
   GUI remains paused; no new launch, control or successful sight test is claimed.
 
+## 2026-11-20 M4 fire and reload presentation
+
+- [Nemisis #42](https://github.com/YoungJibbit95/Nemisis/pull/42) implements the
+  fixed-tick shot kick, recovery, and two-handed reload dip in runtime
+  `4338fe2458a78eeedcc0059b08f55ad67fd6ee7b` with NovaCore
+  `50eb84408f6c8e8401ff37967aee8561f419cf36`. The weapon mesh, palms, and moving
+  muzzle flash use the same final pose. A retained Dev Range trace preserves
+  the simulation endpoint during the shot window.
+- The focused GCC 13.2 Release build with Project FPS and hand IK passed all
+  86 steps. The scene, Ready, and cook tests all passed in 66.25 seconds.
+  The two 350-tick Ready sequences exercised single shots, bursts, and reload
+  across locomotion changes. Maximum palm position error was 0.998 mm in the
+  direct sequence and 0.985 mm with gameplay animation inputs.
+- The [Vulkan playtest steps](PHASE5_M4_ARMED_IDLE.md#m4-fire-and-reload-presentation)
+  cover shot timing, aiming-point visibility, and the two-handed reload dip.
+  Visual acceptance and ADS sight alignment remain open.
+
 ## 2026-10-19 Full material-texture consumer gate passed
 
 - Exact game `60cd2596bfb2bbfd072d9f9a33edd44d7385f49f` / public engine
