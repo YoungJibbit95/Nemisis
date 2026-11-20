@@ -571,6 +571,46 @@ void testWorldPresentationAssets() {
     }
 }
 
+void testFacilityAssetBatchAndSummary() {
+    using namespace nemisis::assets;
+    const auto facility = outerFacilityRenderableAssetIds();
+    const auto& all = requiredDevSandboxRenderableAssetIds();
+    expect(facility.size() == 17 && facility.size() < all.size(), "facility loads a strict subset");
+    for (const auto id : facility) {
+        expect(std::ranges::count(all, id) == 1 && std::ranges::count(facility, id) == 1,
+               "facility ID appears once in both facility and complete lists");
+    }
+    GameAssetCatalog catalog;
+    const std::filesystem::path root{NEMISIS_SOURCE_ROOT};
+    expect(catalog.loadFromJson(root / "configs/assets/nemisis_assets.json").ok(), "actual asset catalog loads");
+    DevAssetBindings bindings;
+    const auto first = bindings.bindAssets(catalog, facility.first(8), root);
+    const auto second = bindings.bindAssets(catalog, facility.subspan(8), root, true);
+    expect(first.ready() && second.ready(), "both real facility batches import successfully");
+    auto total = first;
+    total.include(second);
+    expect(total.ready() && total.requiredAssetCount == facility.size() && bindings.meshCount() == facility.size(),
+           "aggregated batches retain correct readiness and count");
+    DevAssetBindingSummary unit{};
+    unit.requiredAssetCount = unit.renderableAssetCount = unit.metadataAssetCount = unit.importedAssetCount = 1;
+    unit.totalMeshCount = unit.totalNodeCount = unit.totalMaterialCount = unit.skinnedAssetCount = 1;
+    unit.animatedAssetCount = unit.totalSkinCount = unit.totalAnimationCount = unit.extractedAssetCount = 1;
+    unit.totalPrimitiveCount = unit.totalVertexCount = unit.totalIndexCount = unit.totalBinaryBytes = 1;
+    unit.missingAssetCount = 1;
+    unit.errors.push_back("sample error");
+    auto sum = unit;
+    sum.include(unit);
+    expect(sum.requiredAssetCount == 2 && sum.renderableAssetCount == 2 && sum.metadataAssetCount == 2 &&
+           sum.importedAssetCount == 2 && sum.totalMeshCount == 2 && sum.totalNodeCount == 2 &&
+           sum.totalMaterialCount == 2 && sum.skinnedAssetCount == 2 && sum.animatedAssetCount == 2 &&
+           sum.totalSkinCount == 2 && sum.totalAnimationCount == 2 && sum.extractedAssetCount == 2 &&
+           sum.totalPrimitiveCount == 2 && sum.totalVertexCount == 2 && sum.totalIndexCount == 2 &&
+           sum.totalBinaryBytes == 2 && sum.missingAssetCount == 2 && sum.errors.size() == 2 && !sum.ready(),
+           "include accumulates every counter and retains failure diagnostics");
+    unit.include(unit);
+    expect(unit.errors.size() == 2 && unit.requiredAssetCount == 2, "self-include preserves diagnostics safely");
+}
+
 void testFirstPersonArmsExcludeAuthoringHelpers() {
     const std::filesystem::path sourceRoot{NEMISIS_SOURCE_ROOT};
     nemisis::assets::GameAssetCatalog catalog;
@@ -614,6 +654,7 @@ int main() {
     testRepresentativeCookedWeaponContract();
     testFR17PhysicalGripOwnership();
     testGlockPhysicalPistolGripAndMuzzle();
+    testFacilityAssetBatchAndSummary();
     testFirstPersonArmsExcludeAuthoringHelpers();
     testWorldPresentationAssets();
 

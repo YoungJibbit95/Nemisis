@@ -54,6 +54,18 @@ constexpr RequiredDevAssetIds kRequiredDevAssets{
     "env_project_skybox1",
 };
 
+// Facility world, target and sky fallback, physics crate, all four selectable
+// viewmodels plus their fallback assets, and the A1 first-person arms. Cooked
+// Project FPS / Rifle Ready preview assets are mounted separately.
+constexpr std::array<std::string_view, 17> kOuterFacilityAssets{
+    "map_facility_grove_01", "map_facility_trim_01", "prop_range_foliage_01",
+    "chr_project_male1", "chr_dev_soldier_a", "prop_target_dummy_01", "map_target_stand_01",
+    "map_a2_cover_crate_01", "chr_a1_fp_arms_01",
+    "wpn_project_rifle_m4a1", "wpn_project_smg_fr17", "wpn_project_rifle_ncar",
+    "wpn_project_sidearm_glock19", "wpn_a2_modular_rifle_01", "wpn_a2_blackout_carbine_01",
+    "wpn_a2_striker_sidearm_01", "env_project_skybox1",
+};
+
 [[nodiscard]] std::filesystem::path resolveRuntimeAssetPath(
     const std::filesystem::path& runtimeRoot,
     const std::filesystem::path& assetPath) {
@@ -97,6 +109,36 @@ void appendErrors(
 
 const RequiredDevAssetIds& requiredDevSandboxRenderableAssetIds() {
     return kRequiredDevAssets;
+}
+
+std::span<const std::string_view> outerFacilityRenderableAssetIds() {
+    return kOuterFacilityAssets;
+}
+
+void DevAssetBindingSummary::include(const DevAssetBindingSummary& batch) {
+    if (this == &batch) {
+        const auto copy = batch;
+        include(copy);
+        return;
+    }
+    requiredAssetCount += batch.requiredAssetCount;
+    renderableAssetCount += batch.renderableAssetCount;
+    metadataAssetCount += batch.metadataAssetCount;
+    importedAssetCount += batch.importedAssetCount;
+    totalMeshCount += batch.totalMeshCount;
+    totalNodeCount += batch.totalNodeCount;
+    totalMaterialCount += batch.totalMaterialCount;
+    skinnedAssetCount += batch.skinnedAssetCount;
+    animatedAssetCount += batch.animatedAssetCount;
+    totalSkinCount += batch.totalSkinCount;
+    totalAnimationCount += batch.totalAnimationCount;
+    extractedAssetCount += batch.extractedAssetCount;
+    totalPrimitiveCount += batch.totalPrimitiveCount;
+    totalVertexCount += batch.totalVertexCount;
+    totalIndexCount += batch.totalIndexCount;
+    totalBinaryBytes += batch.totalBinaryBytes;
+    missingAssetCount += batch.missingAssetCount;
+    errors.insert(errors.end(), batch.errors.begin(), batch.errors.end());
 }
 
 void DevAssetBindings::clear() {
