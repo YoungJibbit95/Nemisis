@@ -1257,3 +1257,14 @@ its authored `col_` collision helpers, including the green wall at z=-8, while
 greybox physics remains unchanged. The targeted render-scene, render-tuning and
 dev-asset-bindings CTests pass (3/3) with GCC 13.2 and the pinned engine.
 Vulkan visual and GPU timing validation remain pending.
+
+## 2026-11-20 Outer Facility map foundation
+
+An independently selectable 70 x 70 m facility adds a courtyard, two
+walk-through buildings, visible/collidable cover, three target lanes, 24 batched
+low-poly trees with collision, four undergrowth clusters, and one reusable
+textured wall/path mesh. API, content budget and open graphical validation are
+recorded in `OUTER_FACILITY.md`. Based on game 5c0ff6f and NovaCore
+fbbbfb3a18e945c28c2dc0bc7c5a8d8f8d541f56. Focused world, scene and real asset
+binding CPU tests pass; a dependency-light game build is in progress. Graphical
+appearance, target-device timing and playthrough remain open.

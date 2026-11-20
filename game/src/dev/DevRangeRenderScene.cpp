@@ -1,4 +1,5 @@
 #include "nemisis/dev/DevRangeRenderScene.hpp"
+#include "nemisis/dev/OuterFacility.hpp"
 
 #include "nemisis/player/PlayerFirstPersonRig.hpp"
 #include "nemisis/player/PlayerView.hpp"
@@ -1437,6 +1438,10 @@ void DevRangeRenderSceneBuilder::appendWorldGeometry(
     }
 
     for (const auto& primitive : desc.greyboxWorld->primitives) {
+        if (desc.greyboxWorld->id == kOuterFacilityWorldId && primitive.id.starts_with("grove_trunk_") &&
+            findMesh(desc, "map_facility_grove_01").isValid()) {
+            continue; // Matching visible trunks are bundled into the grove resource.
+        }
         if (primitive.kind == GreyboxPrimitiveKind::Target && hasTargetRange(desc)) {
             continue;
         }
@@ -1477,6 +1482,44 @@ void DevRangeRenderSceneBuilder::appendStaticShowcaseMeshes(
     novacore::render::RenderFrameInfo& frame,
     const DevRangeRenderSceneDesc& desc,
     DevRangeRenderSceneStats& stats) const {
+    if (desc.greyboxWorld && desc.greyboxWorld->id == kOuterFacilityWorldId) {
+        // Four single-primitive clusters and one textured trim mesh; none casts
+        // a dynamic shadow or supplies collision. All cover comes from the world.
+        constexpr std::array positions{
+            novacore::math::Vec3{-8.0F, 0.0F, -20.0F},
+            novacore::math::Vec3{8.0F, 0.0F, -20.0F},
+            novacore::math::Vec3{-28.0F, 0.0F, 6.0F},
+            novacore::math::Vec3{28.0F, 0.0F, 6.0F},
+        };
+        for (const auto& position : positions) {
+            if (appendMesh(frame, desc, "prop_range_foliage_01", position,
+                    {1,1,1}, 0.0F, {0.25F,0.52F,0.28F,1}, stats,
+                    0.0F, 0.0F, novacore::render::RenderMeshLayer::World, false)) {
+                frame.worldMeshes.back().castsShadow = false;
+                frame.worldMeshes.back().receivesShadow = false;
+            } else {
+                appendBox(frame, position + novacore::math::Vec3{0,0.34F,0},
+                    {1.25F,0.34F,0.35F}, {0.25F,0.52F,0.28F,1}, stats);
+                frame.worldBoxes.back().castsShadow = false;
+                frame.worldBoxes.back().receivesShadow = false;
+            }
+        }
+        for (const auto& position : kFacilityGroveCenters) {
+            if (appendMesh(frame, desc, "map_facility_grove_01", position, {1,1,1},
+                    0.0F, {1,1,1,1}, stats, 0.0F, 0.0F,
+                    novacore::render::RenderMeshLayer::World, false)) {
+                frame.worldMeshes.back().castsShadow = false;
+                frame.worldMeshes.back().receivesShadow = false;
+            }
+        }
+        if (appendMesh(frame, desc, "map_facility_trim_01", {0,0,0}, {1,1,1},
+                0.0F, {1,1,1,1}, stats, 0.0F, 0.0F,
+                novacore::render::RenderMeshLayer::World, false)) {
+            frame.worldMeshes.back().castsShadow = false;
+            frame.worldMeshes.back().receivesShadow = false;
+        }
+        return;
+    }
     // One opaque cluster at the right edge, clear of the central firing lanes and
     // side traversal panels. The asset is a single primitive, with no per-leaf draws.
     if (appendMesh(frame, desc, "prop_range_foliage_01", {12.0F, 0.0F, -9.0F},

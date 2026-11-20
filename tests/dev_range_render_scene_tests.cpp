@@ -1,6 +1,7 @@
 #include "nemisis/dev/DevRangeRenderScene.hpp"
 #include "nemisis/dev/DevRangeSession.hpp"
 #include "nemisis/dev/GreyboxWorld.hpp"
+#include "nemisis/dev/OuterFacility.hpp"
 #include "nemisis/player/PlayerFirstPersonRig.hpp"
 #include "nemisis/player/PlayerView.hpp"
 #if defined(NEMISIS_PROJECT_FPS_CANDIDATE_ROOT)
@@ -59,7 +60,9 @@ novacore::assets::GltfMeshData makeMesh() {
 }
 
 nemisis::dev::MeshResourceLookup registerSceneMeshes(novacore::render::Renderer& renderer) {
-    static constexpr std::array<std::string_view, 37> kSceneMeshes{
+    static constexpr std::array<std::string_view, 39> kSceneMeshes{
+        "map_facility_grove_01",
+        "map_facility_trim_01",
         "prop_range_foliage_01",
         nemisis::dev::kLocalPlayerBodyResourceId,
         "env_test_arena_kit_01",
@@ -1117,6 +1120,44 @@ void testDevRangeRenderSceneAcceptsSpeedClearTargetLayout() {
     expect(nemisis::dev::activeTargetLane(targetRange) != nullptr, "speed-clear target layout exposes an active lane");
 }
 
+void testOuterFacilitySubmitsBoundedPresentation() {
+    novacore::render::Renderer renderer;
+    auto lookup = registerSceneMeshes(renderer);
+    const auto world = nemisis::dev::createOuterFacilityWorld();
+    const auto targets = nemisis::dev::makeOuterFacilityTargets();
+    nemisis::dev::DevRangeRenderSceneDesc desc{};
+    desc.greyboxWorld = &world;
+    desc.targetRange = &targets;
+    desc.meshResources = &lookup;
+    desc.player.position = world.playerSpawn;
+    novacore::render::RenderFrameInfo frame{};
+    (void)nemisis::dev::DevRangeRenderSceneBuilder{}.append(frame, desc);
+    expect(std::ranges::count_if(frame.worldMeshes, [](const auto& mesh) {
+        return mesh.assetId == "prop_range_foliage_01" && !mesh.castsShadow;
+    }) == 4, "facility uses four shadow-free foliage clusters");
+    expect(std::ranges::count_if(frame.worldMeshes, [](const auto& mesh) {
+        return mesh.assetId == "map_facility_grove_01" && !mesh.castsShadow;
+    }) == 4, "facility uses four batched six-tree groves");
+    expect(std::ranges::count_if(frame.worldMeshes, [](const auto& mesh) {
+        return mesh.assetId == "map_facility_trim_01" && !mesh.castsShadow;
+    }) == 1, "facility submits a single textured trim mesh");
+    expect(std::ranges::none_of(frame.worldMeshes, [](const auto& mesh) {
+        return mesh.assetId == "env_test_arena_kit_01";
+    }), "facility excludes the Dev Range showcase arena");
+    expect(frame.worldBoxes.size() <= 40, "facility box budget remains bounded");
+    lookup.erase("map_facility_grove_01");
+    novacore::render::RenderFrameInfo groveFallback{};
+    (void)nemisis::dev::DevRangeRenderSceneBuilder{}.append(groveFallback, desc);
+    expect(groveFallback.worldBoxes.size() == frame.worldBoxes.size() + 24,
+           "missing grove resource renders its collision trunks as fallback");
+    lookup.erase("prop_range_foliage_01");
+    novacore::render::RenderFrameInfo fallback{};
+    (void)nemisis::dev::DevRangeRenderSceneBuilder{}.append(fallback, desc);
+    expect(std::ranges::count_if(fallback.worldBoxes, [](const auto& box) {
+        return !box.castsShadow && !box.receivesShadow && box.center.y == 0.34F;
+    }) == 4, "facility foliage has four bounded visual fallbacks");
+}
+
 void testFoliagePlacementAndFallback() {
     novacore::render::Renderer renderer;
     auto lookup = registerSceneMeshes(renderer);
@@ -2147,6 +2188,7 @@ int main(int argc, char** argv) {
     testHoloStepRendersWithoutDiagnostics();
     testDevRangeRenderSceneDrawsLanePressure();
     testDevRangeRenderSceneAcceptsSpeedClearTargetLayout();
+    testOuterFacilitySubmitsBoundedPresentation();
     testFoliagePlacementAndFallback();
     testDevRangeRenderSceneCountsMissingMeshHandles();
     testDevRangeRenderSceneKeepsSkyboxMeshFallbackWhenSkyPassDisabled();
