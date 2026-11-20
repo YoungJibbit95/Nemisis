@@ -87,9 +87,48 @@ void testRoutesAndFire() {
     expect(!blocked.targetLane && blocked.distanceMeters < 5.0F, "visible cover blocks shots");
     expect(world.primitives.size() == 59, "35 scene boxes and 24 tree collision boxes are present");
 }
+void testMannequinHitZonesAndCoverOrder() {
+    using namespace nemisis::dev;
+    auto targets = makeOuterFacilityTargets();
+    targets.lanes.resize(1);
+    auto& target = targets.lanes[0].target;
+    target.position = {0,1.65F,10};
+    nemisis::weapons::ShotTraceResult shot{};
+    shot.direction = {0,0,1}; shot.rangeMeters = 30; shot.damage = 20;
+    for (const auto p : {novacore::math::Vec3{-.13F,.30F,0}, {.13F,.30F,0},
+                         {0,1.10F,0}, {0,1.52F,0}}) {
+        shot.origin = p;
+        const auto contact = traceDevRangeShot(targets, shot, {});
+        expect(contact.targetLane == 0, "left leg, right leg, chest and head are hittable");
+        const auto before = target.health;
+        expect(applyShotToDevTargetRange(targets, shot, contact).hit && target.health < before,
+               "zone contact produces actual damage");
+    }
+    shot.origin = {.34F,1.10F,0};
+    expect(!traceDevRangeShot(targets, shot, {}).targetLane, "shot just outside torso misses");
+    shot.origin = {0,1.70F,0};
+    expect(!traceDevRangeShot(targets, shot, {}).targetLane, "shot just above head misses");
+    shot.origin = {0,0.30F,0};
+    expect(!traceDevRangeShot(targets, shot, {}).targetLane, "gap between legs does not count as a hit");
+    const auto world = createOuterFacilityWorld();
+    target.position = {5,1.65F,10};
+    shot.origin = {5,1.10F,0};
+    auto contact = traceDevRangeShot(targets, shot, world.primitives);
+    const float before = target.health;
+    expect(!contact.targetLane && contact.distanceMeters < 5 &&
+           !applyShotToDevTargetRange(targets, shot, contact).hit && target.health == before,
+           "visible cover wins over a mannequin behind it");
+    target.position.z = 3;
+    contact = traceDevRangeShot(targets, shot, world.primitives);
+    expect(contact.targetLane == 0 && contact.distanceMeters < 3,
+           "mannequin in front of cover is hit first");
+    shot.rangeMeters = 2.7F;
+    expect(!traceDevRangeShot(targets, shot, world.primitives).targetLane, "out-of-range zone is not hit");
+}
 } // namespace
 int main() {
     testRoutesAndFire();
+    testMannequinHitZonesAndCoverOrder();
     if (failures) return EXIT_FAILURE;
     std::cout << "Outer Facility tests passed\n";
     return EXIT_SUCCESS;

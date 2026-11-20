@@ -7,7 +7,10 @@ building and an east shelter. Each building has doors through both end walls;
 low courtyard cover and interior consoles provide alternate routes and cover.
 A cyan stripe marks the west exterior wallrun face. Eight 0.4 m steps on the
 courtyard side ascend to a clear west-roof landing at 3.2 m.
-The three targets are located in the court, west exit and east entry.
+The three targets are located in the court, west exit and east entry. Their
+facility-only hit zones approximate both legs, torso and head of the floor-rooted
+0.92-scale mannequin; they share one damage value and the nearest zone competes
+with the nearest cover. Dev Range targets retain their original sphere trace.
 
 The world primitives are the source of movement and shot collision, and the
 same boxes are rendered. Four decorative grove instances each contain six trees;
@@ -37,7 +40,7 @@ Python sources and use one meter per unit, Y up. No runtime `.blend` is loaded.
   foliage budget is a design cap, not a measured GPU-time guarantee.
 - CPU checks exercise the real KCC adapter through both building doorways,
   the spawn and interior routes, a continuous swept stair-to-roof ascent, the
-  marked wallrun contact, all tree trunks, visible cover, target line of
+  marked wallrun contact, all tree trunks, limb and head hit zones, visible cover, target line of
   sight, packaged material/texture data, scene selection and resource fallbacks.
   Vulkan appearance, textured draw counts, timing and a complete playthrough
   require separate in-game validation on the target hardware.

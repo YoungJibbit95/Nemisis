@@ -1614,12 +1614,16 @@ void DevRangeRenderSceneBuilder::appendTargetLaneMeshes(
                 ? kActiveTargetTint
                 : kDummyTargetTint;
 
-        appendBox(
-            frame,
-            lane.target.position,
-            {lane.target.radiusMeters, 0.95F, lane.target.radiusMeters},
-            {color[0] * 0.55F, color[1] * 0.55F, color[2] * 0.55F, 0.75F},
-            stats);
+        // Facility uses anatomically sized hit zones; do not draw the legacy
+        // oversized range proxy as if it were the mannequin's collision shape.
+        if (!lane.target.humanoidHitZones) {
+            appendBox(
+                frame,
+                lane.target.position,
+                {lane.target.radiusMeters, 0.95F, lane.target.radiusMeters},
+                {color[0] * 0.55F, color[1] * 0.55F, color[2] * 0.55F, 0.75F},
+                stats);
+        }
         appendLanePressureVisuals(frame, desc, lane, stats);
 
         const auto actorAsset = eliminated ? std::string_view("prop_target_dummy_01") : std::string_view("chr_project_male1");
