@@ -935,7 +935,7 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
     renderer_.endFrame();
     if (options_.profileRange) {
         const auto end = Clock::now();
-        if (context.frameIndex >= 12) {
+        if (context.frameIndex >= kRangeProfileWarmupFrames) {
             using Milliseconds = std::chrono::duration<double, std::milli>;
             std::cout << "range_frame," << context.frameIndex << ',' << context.tickIndex - lastProfileTick_
                       << ',' << Milliseconds(end - lastProfileFrameEnd_).count()

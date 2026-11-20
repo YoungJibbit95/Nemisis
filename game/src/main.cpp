@@ -2,6 +2,8 @@
 
 #include "novacore/core/Application.hpp"
 
+#include <charconv>
+#include <cstdint>
 #include <string_view>
 #include <iostream>
 #include <exception>
@@ -13,6 +15,7 @@ int main(int argc, char** argv) {
     desc.maxFrames = 0;
 
     nemisis::game::GameAppOptions gameOptions{};
+    std::uint32_t measuredFrames = 60;
     bool smokeTest = false;
     for (int i = 1; i < argc; ++i) {
         const std::string_view argument(argv[i]);
@@ -31,7 +34,16 @@ int main(int argc, char** argv) {
             else if (size == "1920x1080") { gameOptions.uiPreviewWidth = 1920; gameOptions.uiPreviewHeight = 1080; }
             else if (size == "2560x1440") { gameOptions.uiPreviewWidth = 2560; gameOptions.uiPreviewHeight = 1440; }
             else { std::cerr << "UI size must be 1280x720, 1920x1080 or 2560x1440\n"; return 2; }
-        } else if (argument == "--profile-range") {
+        } else if (argument == "--profile-range" || argument.starts_with("--profile-range=")) {
+            if (argument.starts_with("--profile-range=")) {
+                const auto count = argument.substr(std::string_view("--profile-range=").size());
+                const auto end = count.data() + count.size();
+                const auto parsed = std::from_chars(count.data(), end, measuredFrames);
+                if (parsed.ec != std::errc{} || parsed.ptr != end || measuredFrames == 0) {
+                    std::cerr << "--profile-range expects a positive frame count\n";
+                    return 2;
+                }
+            }
             gameOptions.profileRange = true;
         } else if (argument == "--physics-props") {
             gameOptions.physicsProps = true;
@@ -148,7 +160,7 @@ int main(int argc, char** argv) {
         gameOptions.preferVulkanRenderer = true;
         gameOptions.autoEnterDevRange = true;
         gameOptions.lockDevRange = true;
-        desc.maxFrames = 72;
+        desc.maxFrames = nemisis::game::kRangeProfileWarmupFrames + measuredFrames;
     }
 
     if (gameOptions.projectFPSLookDown && !gameOptions.projectFPSPreview) {

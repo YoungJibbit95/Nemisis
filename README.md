@@ -66,6 +66,7 @@ cd build/playtest-vulkan
 ```
 
 Append `--profile-range` to record 60 frames after 12 warm-up frames and exit.
+Use `--profile-range=600` for a longer sample while moving through the range.
 Each `range_frame` CSV row contains the frame index, fixed ticks since the last
 frame, total frame time, time before the frame callback, scene preparation time
 and time spent in the renderer calls. Timings use wall-clock milliseconds and
