@@ -694,6 +694,7 @@ add_test(NAME nemisis_dev_range_session_tests COMMAND nemisis_dev_range_session_
 add_executable(nemisis_dev_target_range_tests
     game/src/dev/DebugTarget.cpp
     game/src/dev/DevTargetRange.cpp
+    game/src/dev/GreyboxWorld.cpp
     tests/dev_target_range_tests.cpp
 )
 

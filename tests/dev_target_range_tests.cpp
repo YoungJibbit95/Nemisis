@@ -113,6 +113,42 @@ void testLanePressureBuildsAndDecays() {
     expect(range.lanes[eliminatedLaneIndex].pressure01 < pressure.pressure01, "eliminated lane pressure decays");
 }
 
+void testVisibleShootingLanesAndCover() {
+    using namespace nemisis::dev;
+    const auto world = createDevRangeGreyboxWorld();
+    auto range = makeDefaultDevTargetRange();
+    for (std::size_t lane = 0; lane < range.lanes.size(); ++lane) {
+        auto shot = aimedShot(range.lanes[lane].target.position);
+        shot.origin = world.playerSpawn + novacore::math::Vec3{0.0F, 1.65F, 0.0F};
+        const auto delta = range.lanes[lane].target.position - shot.origin;
+        shot.direction = delta * (1.0F / std::sqrt(delta.lengthSquared()));
+        const auto contact = traceDevRangeShot(range, shot, world.primitives);
+        expect(contact.targetLane == lane, "each default target is visible from the standing spawn eye");
+    }
+
+    range.lanes.resize(1);
+    auto& target = range.lanes.front().target;
+    target.position = {8.0F, 0.8F, 10.0F};
+    target.radiusMeters = 0.5F;
+    nemisis::weapons::ShotTraceResult shot{};
+    shot.origin = {8.0F, 0.8F, 0.0F};
+    shot.direction = {0.0F, 0.0F, 1.0F};
+    shot.rangeMeters = 30.0F;
+    shot.damage = 20.0F;
+    const auto blocked = traceDevRangeShot(range, shot, world.primitives);
+    expect(!blocked.targetLane && blocked.distanceMeters == 3.0F, "the visible right-hand cover stops the tracer at its near face");
+    const auto health = target.health;
+    expect(!applyShotToDevTargetRange(range, shot, blocked).hit && target.health == health,
+           "cover prevents damage and target-hit feedback");
+    target.position.z = 2.0F;
+    const auto inFront = traceDevRangeShot(range, shot, world.primitives);
+    expect(inFront.targetLane == 0U && inFront.distanceMeters == 1.5F, "the target wins when it stands in front of cover");
+    shot.rangeMeters = 1.49F;
+    expect(!traceDevRangeShot(range, shot, world.primitives).targetLane, "weapon range ends before the target surface");
+    shot.rangeMeters = 1.5F;
+    expect(traceDevRangeShot(range, shot, world.primitives).targetLane == 0U, "the exact range endpoint is hittable");
+}
+
 } // namespace
 
 int main() {
@@ -121,6 +157,7 @@ int main() {
     testLaneEliminatesAndRespawnsIndependently();
     testResetRestoresAllLanes();
     testLanePressureBuildsAndDecays();
+    testVisibleShootingLanesAndCover();
 
     if (failures > 0) {
         std::cerr << failures << " dev target range test(s) failed\n";

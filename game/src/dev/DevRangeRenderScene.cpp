@@ -26,7 +26,6 @@ constexpr std::array<float, 4> kWeaponMeshTint{0.56F, 0.58F, 0.54F, 1.0F};
 constexpr std::array<float, 4> kSmgMeshTint{0.42F, 0.54F, 0.58F, 1.0F};
 constexpr std::array<float, 4> kSidearmMeshTint{0.58F, 0.54F, 0.48F, 1.0F};
 constexpr std::array<float, 4> kArmsTint{0.48F, 0.52F, 0.48F, 1.0F};
-constexpr std::array<float, 4> kAssetStageBackboardTint{0.05F, 0.28F, 0.34F, 0.78F};
 constexpr std::array<float, 4> kAssetStagePlinthTint{0.18F, 0.22F, 0.23F, 1.0F};
 
 struct StaticMeshPlacement final {
@@ -1072,7 +1071,6 @@ void appendLanePressureVisuals(
 void appendAssetStageGuides(
     novacore::render::RenderFrameInfo& frame,
     DevRangeRenderSceneStats& stats) {
-    appendBox(frame, {0.0F, 1.28F, -5.45F}, {4.95F, 1.24F, 0.08F}, kAssetStageBackboardTint, stats);
     appendBox(frame, {-2.75F, 0.08F, -5.15F}, {0.62F, 0.08F, 0.44F}, kAssetStagePlinthTint, stats);
     appendBox(frame, {-1.25F, 0.88F, -6.65F}, {0.70F, 0.08F, 0.38F}, kAssetStagePlinthTint, stats);
     appendBox(frame, {0.95F, 0.90F, -6.65F}, {0.74F, 0.08F, 0.38F}, kAssetStagePlinthTint, stats);

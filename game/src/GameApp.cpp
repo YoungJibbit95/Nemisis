@@ -510,10 +510,17 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
     dev::DebugTargetHitResult targetHit{};
     dev::DevTargetRangeHitResult targetRangeHit{};
     if (hasShotTrace) {
+        dev::ensureDevTargetRange(targetRange_);
+        auto contact = dev::traceDevRangeShot(targetRange_, shotTrace, greyboxWorld_.primitives);
         if (physicsProps_) {
-            (void)physicsProps_->impact(shotTrace.origin, shotTrace.direction * shotTrace.rangeMeters);
+            (void)physicsProps_->impact(shotTrace.origin, shotTrace.direction * contact.distanceMeters);
+            if (const auto& hit = physicsProps_->lastImpact(); hit) {
+                contact.distanceMeters *= hit->fraction;
+                contact.targetLane.reset();
+            }
         }
-        targetRangeHit = dev::applyShotToDevTargetRange(targetRange_, shotTrace);
+        targetRangeHit = dev::applyShotToDevTargetRange(targetRange_, shotTrace, contact);
+        shotTrace.rangeMeters = contact.distanceMeters;
         targetHit = targetRangeHit.targetHit;
     }
     dev::DevRangeShotScoreContext shotScoreContext{};

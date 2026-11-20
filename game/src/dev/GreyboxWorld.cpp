@@ -59,7 +59,7 @@ GreyboxWorld createDevRangeGreyboxWorld() {
     addPrimitive(world, "wallrun_right_panel_b", GreyboxPrimitiveKind::WallRunPanel, Vec3{18.5F, 1.45F, 2.5F}, Vec3{0.18F, 1.45F, 3.4F}, {0.12F, 0.62F, 0.76F, 1.0F}, true);
     addPrimitive(world, "asset_a2_wallrun_panel_collision", GreyboxPrimitiveKind::WallRunPanel, Vec3{5.35F, 1.45F, -5.20F}, Vec3{0.18F, 1.45F, 2.20F}, {0.10F, 0.68F, 0.78F, 0.74F}, true);
 
-    addPrimitive(world, "asset_stage_backboard_collision", GreyboxPrimitiveKind::Wall, Vec3{0.0F, 1.28F, -5.45F}, Vec3{4.95F, 1.24F, 0.08F}, {0.18F, 0.30F, 0.34F, 0.52F}, true);
+    addPrimitive(world, "asset_stage_backboard_collision", GreyboxPrimitiveKind::Wall, Vec3{0.0F, 0.42F, -5.45F}, Vec3{4.95F, 0.38F, 0.08F}, {0.05F, 0.28F, 0.34F, 0.78F}, true);
     addPrimitive(world, "asset_stage_operator_plinth_collision", GreyboxPrimitiveKind::Cover, Vec3{-2.75F, 0.08F, -5.15F}, Vec3{0.62F, 0.08F, 0.44F}, {0.18F, 0.32F, 0.34F, 0.58F}, true, GreyboxRampDirection::None, 0.16F);
     addPrimitive(world, "asset_stage_carbine_plinth_collision", GreyboxPrimitiveKind::Cover, Vec3{-1.25F, 0.88F, -6.65F}, Vec3{0.70F, 0.08F, 0.38F}, {0.18F, 0.32F, 0.34F, 0.58F}, true, GreyboxRampDirection::None, 0.16F);
     addPrimitive(world, "asset_stage_rifle_plinth_collision", GreyboxPrimitiveKind::Cover, Vec3{0.95F, 0.90F, -6.65F}, Vec3{0.74F, 0.08F, 0.38F}, {0.18F, 0.32F, 0.34F, 0.58F}, true, GreyboxRampDirection::None, 0.16F);
