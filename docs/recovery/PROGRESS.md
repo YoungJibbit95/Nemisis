@@ -188,6 +188,19 @@
   no Vulkan/finger-quality/complete-armed-animation or default migration claim.
 
 
+## 2026-11-20 Wall-run contact and replay
+
+The Dev Range fixed tick catches a tagged panel within 0.12 m of the capsule
+when the player carries at least 4 m/s along its face. A head-on jump stays
+airborne. The run follows incoming momentum and the wall jump carries that
+direction away from the face.
+
+Windows MSVC Debug passed `nemisis_movement_replay_tests` against NovaCore
+`50eb84408f6c8e8401ff37967aee8561f419cf36`. The KCC replay checks mirrored
+panels and both travel directions. At 30, 60 and 144 render updates per second,
+the 60 Hz simulation lands on the same tick and ends at the same position.
+A manual pass along both Dev Range panels remains open.
+
 ## 2026-10-19 Dev Range rigid-body integration
 
 - Main now consumes exact public engine `cca45a41aded8b13171943553e27f85071c76ed3`

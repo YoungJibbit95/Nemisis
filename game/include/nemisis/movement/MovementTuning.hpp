@@ -51,7 +51,7 @@ struct MovementTuning final {
     float wallRunMaxDurationSeconds = 1.35F;
     float wallJumpImpulse = 6.2F;
     float wallRunMinHeight = 0.35F;
-    float wallRunProbeDistance = 0.82F;
+    float wallRunProbeDistance = 0.12F;
     float wallRunContactGraceSeconds = 0.12F;
     float wallRunDetachCooldownSeconds = 0.16F;
 

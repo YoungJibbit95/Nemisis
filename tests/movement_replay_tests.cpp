@@ -2,6 +2,8 @@
 #include "nemisis/movement/MovementConfig.hpp"
 
 #include "novacore/core/ConfigDocument.hpp"
+#include "novacore/core/FixedStep.hpp"
+#include "novacore/physics/CharacterController.hpp"
 
 #include <cstdint>
 #include <cstdlib>
@@ -360,6 +362,96 @@ void testWallRunContactGraceReplay() {
     expect(state.wallRunDetachCooldownRemaining > 0.05F, "wall jump starts detach cooldown to prevent instant reattach jitter");
 }
 
+void testWallRunOnMirroredPanels() {
+    using namespace nemisis::movement;
+    using namespace novacore::physics;
+    MovementSystem movement;
+    constexpr float dt = 1.0F / 60.0F;
+    for (float wallSide : {-1.0F, 1.0F}) {
+        PhysicsWorld world;
+        world.addStaticCollider({"panel", SurfaceKind::WallRun, {wallSide, 2.0F, 0.0F}, {0.18F, 2.0F, 4.0F}});
+        auto tick = [&](PlayerMovementState state, const nemisis::player::PlayerInputCommand& command) {
+            CharacterSweepQuery query{};
+            query.startPosition = state.position;
+            state = movement.simulate(state, command, dt);
+            query.desiredDisplacement = state.position - query.startPosition;
+            query.wallProbeDistance = movement.tuning().wallRunProbeDistance;
+            query.enableStepUp = false;
+            query.enableGroundSnap = false;
+            const auto resolved = world.sweepCharacter(query).resolve;
+            state.position = resolved.position;
+            return movement.applyWallRunContact(state, command,
+                {resolved.nearWallRunSurface, resolved.wallNormal, resolved.wallTangent}, dt);
+        };
+
+        PlayerMovementState start{};
+        start.mode = MovementMode::Airborne;
+        start.position = {wallSide * 0.4F, 2.0F, 0.0F};
+        start.velocity = {wallSide * 7.0F, -2.0F, 0.0F};
+        nemisis::player::PlayerInputCommand command{};
+        auto frontal = tick(start, command);
+        expect(frontal.mode == MovementMode::Airborne, "head-on panel impact cannot start a wallrun");
+        expectNear(frontal.velocity.z, 0.0F, 0.0001F, "head-on impact adds no arbitrary sideways speed");
+
+        auto distant = start;
+        distant.position.x = 0.0F; // The capsule surface is 0.40 m away from the panel.
+        distant.velocity = {0.0F, -2.0F, 6.0F};
+        expect(tick(distant, command).mode == MovementMode::Airborne, "running through open air beside a panel cannot attach");
+
+        for (float travel : {-1.0F, 1.0F}) {
+            start.velocity = {0.0F, -2.0F, travel * 5.0F};
+            command = {};
+            auto run = tick(start, command);
+            expect(run.mode == MovementMode::WallRunning, "parallel momentum catches either panel");
+            // Hold toward the panel and slightly back, as a player can while looking across it.
+            command.move = {wallSide, -travel * 0.05F};
+            const auto next = tick(run, command);
+            expectNear((next.velocity.z - run.velocity.z) * travel, movement.tuning().wallRunAcceleration * dt,
+                       0.0001F, "sustained contact accelerates once along the incoming direction per tick");
+            expectNear(next.velocity.y - run.velocity.y, movement.tuning().wallRunVerticalAcceleration * dt,
+                       0.0001F, "sustained contact applies vertical acceleration once per tick");
+            command.jumpPressed = true;
+            const auto jump = tick(next, command);
+            expect(jump.mode == MovementMode::Airborne && !jump.hasWallRunContact,
+                   "wall jump detaches even while the panel is still in probe range");
+            expect(jump.velocity.x * wallSide < -4.0F && jump.velocity.z * travel > 4.0F,
+                   "wall jump travels away from either panel and preserves the run direction");
+        }
+
+        int referenceLanding = -1;
+        novacore::math::Vec3 referenceEnd{};
+        for (const int frameHz : {30, 60, 144}) {
+            novacore::core::FixedStepAccumulator clock({60.0, 0.25});
+            auto state = start;
+            int landingTick = -1;
+            while (clock.consumedSteps() < 90) {
+                clock.advance(1.0 / frameHz);
+                while (clock.shouldStep() && clock.consumedSteps() < 90) {
+                    command = {};
+                    command.tick = clock.consumedSteps();
+                    command.jumpPressed = command.tick == 12;
+                    state = tick(state, command);
+                    if (command.jumpPressed) {
+                        expect(state.tech.wallJumpDetachTriggered, "jump command detaches on tick 12 at every render rate");
+                    }
+                    if (state.landedThisTick) {
+                        landingTick = static_cast<int>(command.tick);
+                    }
+                    clock.consumeStep();
+                }
+            }
+            expect(landingTick > 12, "wall jump lands during the replay");
+            if (frameHz == 30) {
+                referenceLanding = landingTick;
+                referenceEnd = state.position;
+            } else {
+                expect(landingTick == referenceLanding && (state.position - referenceEnd).lengthSquared() == 0.0F,
+                       "30/60/144 Hz produce the same landing tick and position");
+            }
+        }
+    }
+}
+
 void testMantleCandidateReplay() {
     nemisis::movement::MovementSystem movement;
     nemisis::movement::PlayerMovementState state{};
@@ -605,6 +697,7 @@ int main() {
     testSlideBufferMakesSprintSlideReliable();
     testWallRunContactAndWallJumpReplay();
     testWallRunContactGraceReplay();
+    testWallRunOnMirroredPanels();
     testMantleCandidateReplay();
     testCrouchTransitionReplay();
     testAirControlPreservesMomentumReplay();
