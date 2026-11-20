@@ -4,6 +4,10 @@
   "blender_build_hash": "adfe2921d5f3",
   "source_character_sha256": "e53f5ba51ce08b660e87ecb1f39bb3414e465329bf09dd947e74d44fb3a55f9b",
   "weapon_sha256": "1a9350d4f59d2f50b35906f11eaa8ad8e72539f8c80f83146ff1cb2ab341ff0b",
+  "ads_sight": {
+    "rear_aperture_m": [0.0000653, 0.1462775, 0.0127741],
+    "front_post_tip_m": [0.0, 0.1516599, 0.4241422]
+  },
   "weapon_model_transform": [
     [
       1.0,

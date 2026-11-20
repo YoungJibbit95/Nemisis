@@ -12,6 +12,13 @@
 
 namespace nemisis::player {
 
+[[nodiscard]] constexpr float projectRifleAimWeight(float adsAlpha) {
+    if (!(adsAlpha > .001F)) {
+        return 0.0F;
+    }
+    return adsAlpha >= .999F ? 1.0F : adsAlpha;
+}
+
 enum class CharacterAnimationClip {
     Idle,
     Walk,

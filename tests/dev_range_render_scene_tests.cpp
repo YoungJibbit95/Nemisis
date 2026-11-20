@@ -1702,7 +1702,7 @@ void testArmedIdleReadability(const novacore::assets::GltfMeshData& arms,
            "actual source-weighted firing hand remains readable around its physical pistol grip after weapon occlusion");
 }
 
-void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false) {
+void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false, bool aimSequence = false) {
     using namespace novacore;
     namespace dev = nemisis::dev;
     namespace player = nemisis::player;
@@ -1717,6 +1717,12 @@ void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false) 
     }
     if (!imported) {
         expect(false, "actual Ready variants import");
+        return;
+    }
+    const auto sight = std::ranges::find(weapon.nodeMarkers, std::string_view("socket_ads_sight"),
+                                         &assets::GltfNodeMarker::name);
+    if (sight == weapon.nodeMarkers.end()) {
+        expect(false, "actual M4 sight frame survives the cook and engine import");
         return;
     }
     player::PlayerSkeletalAnimator animator;
@@ -1793,6 +1799,8 @@ void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false) 
     float largestResidual = 0;
     float smallestForwardDot = 1;
     float smallestRightMargin = 1000;
+    float maximumSightError = 0;
+    std::size_t sightSamples = 0;
     std::size_t ticks = 0;
     std::array<std::size_t, 2> visibleHandVertices{};
     player::CharacterAnimationState animationState;
@@ -1814,7 +1822,8 @@ void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false) 
         for (int phase = 0; phase < frames; ++phase) {
             auto& weaponState = desc.player.weapon;
             weaponState.timeSinceLastShotSeconds += 1.F / 60;
-            const bool fired = std::ranges::find(shotTicks, ticks) != shotTicks.end();
+            const bool fired = std::ranges::find(shotTicks, ticks) != shotTicks.end() ||
+                (aimSequence && (ticks == 258 || ticks == 298));
             if (fired) {
                 ++weaponState.shotIndex;
                 weaponState.timeSinceLastShotSeconds = 0;
@@ -1826,6 +1835,11 @@ void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false) 
             weaponState.reloading = reloadStart != reloadStartTicks.end();
             weaponState.reloadProgress = weaponState.reloading
                 ? static_cast<float>(ticks - *reloadStart) / 24.F : 1.F;
+            const bool aimHeld = aimSequence && ticks > 0 &&
+                (ticks < 116 || (ticks >= 129 && ticks < 197) || ticks >= 216);
+            const float aimTarget = aimHeld && !weaponState.reloading ? 1.F : 0.F;
+            desc.player.adsAlpha += std::clamp(aimTarget - desc.player.adsAlpha, -1.F / 9, 1.F / 9);
+            weaponState.adsAlpha = desc.player.adsAlpha;
 
             desc.player.cameraRollDegrees = std::sin(static_cast<float>(ticks) * .13F) * 12.F;
             desc.player.animation.thirdPersonBodyPitchDegrees = clip == player::CharacterAnimationClip::Sprint ? 8 : 0;
@@ -1833,6 +1847,11 @@ void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false) 
             desc.player.position = {3, 0, -5};
             desc.player.view.yawDegrees = static_cast<float>(ticks) * 2;
             desc.player.cameraView = desc.player.view;
+            if (aimSequence) {
+                desc.player.cameraView.yawDegrees += std::sin(static_cast<float>(ticks) * .103F) * 10.F;
+                desc.player.cameraView.pitchDegrees = std::sin(static_cast<float>(ticks) * .079F) *
+                    (ticks < 240 ? 32.F : 87.F);
+            }
             if (productionComposition) {
                 player::CharacterAnimationInput input;
                 const auto facing = player::viewVectors(desc.player.view);
@@ -1844,12 +1863,18 @@ void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false) 
                                   std::cos(static_cast<float>(ticks) * .07F) * speed};
                 input.cameraRollDegrees = desc.player.cameraRollDegrees;
                 input.sprintHeld = clip == Clip::Sprint;
+                input.adsHeld = aimHeld;
                 input.weapon = weaponState;
                 desc.player.animation = player::updateCharacterAnimation(animationState, input);
                 expect(desc.player.animation.locomotionClip == clip,
                        "actual gameplay animation composition follows Idle/Walk/Sprint requests with view-relative facing");
             }
-            expect(animator.samplePose(desc.player.animation, 1.F / 60), "one fixed-tick sample");
+            const player::ProjectRifleAim aim{
+                desc.player.adsAlpha,
+                desc.player.cameraView.pitchDegrees + desc.player.animation.thirdPersonBodyPitchDegrees,
+                desc.player.cameraView.yawDegrees - desc.player.view.yawDegrees,
+            };
+            expect(animator.samplePose(desc.player.animation, 1.F / 60, aim), "one fixed-tick sample");
             expect(!animator.samplePose(desc.player.animation, 1.F / 60), "an unconsumed sample cannot advance twice");
             expect(!animator.skinnedMesh() && !animator.skinnedCompanion(),
                    "sample never exposes stale mesh as the new skin");
@@ -1866,6 +1891,27 @@ void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false) 
                 expect(false, "real M4 contact goals");
                 return;
             }
+            if (desc.player.adsAlpha >= .999F && !weaponState.reloading &&
+                weaponState.timeSinceLastShotSeconds >= .115F) {
+                const auto cameraForward = player::viewVectors(desc.player.cameraView).forward;
+                const auto sightForward = animation::transformDirection(presentation.weaponWorld, sight->worldForward);
+                const auto rear = animation::transformPoint(presentation.weaponWorld, sight->worldPosition);
+                const auto eyeToRear = rear - desc.player.cameraPosition;
+                const float depth = dot(eyeToRear, cameraForward);
+                const float error = std::sqrt((eyeToRear - cameraForward * depth).lengthSquared());
+                maximumSightError = std::max(maximumSightError, error);
+                ++sightSamples;
+                expect(depth > .10F && error < .0001F && dot(sightForward, cameraForward) > .999995F,
+                       "settled M4 aperture and front sight are centered along the displayed camera ray");
+                if (ticks == 14) {
+                    auto hip = desc;
+                    hip.player.adsAlpha = 0;
+                    const auto hipRear = animation::transformPoint(
+                        dev::evaluateFirstPersonPresentation(hip).weaponWorld, sight->worldPosition);
+                    expect((hipRear - rear).lengthSquared() > .06F * .06F,
+                           "ADS physically raises and centers the real sight from the hip pose");
+                }
+            }
             if (fired || ticks == 23 || (weaponState.reloading && (ticks - *reloadStart) % 12 == 0) || ticks == 60) {
                 auto neutral = desc;
                 neutral.player.weapon = {};
@@ -1876,7 +1922,9 @@ void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false) 
                 if (fired) {
                     const auto baseForward = animation::transformDirection(base.weaponWorld, {0, 0, 1});
                     const auto shotForward = animation::transformDirection(presentation.weaponWorld, {0, 0, 1});
-                    expect(dot(displacement, baseForward) < -.023F && dot(shotForward, baseUp) > .05F,
+                    const float kickScale = 1.F - .30F * weaponState.adsAlpha;
+                    expect(dot(displacement, baseForward) < -.023F * kickScale &&
+                               dot(shotForward, baseUp) > .05F * kickScale,
                            "M4 backs into the shoulder and pitches up immediately on a shot");
                 } else if (weaponState.reloading && weaponState.reloadProgress == .5F) {
                     expect(dot(displacement, baseUp) < -.039F, "the actual reload timer drives a visible two-handed dip");
@@ -1912,8 +1960,10 @@ void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false) 
             const auto cameraRight = horizontalRight * std::cos(roll) + unrolledUp * std::sin(roll);
             const auto firingOffset = animation::matrixTranslation(targets.rightGripWorld) - desc.player.cameraPosition;
             const float rightMargin = dot(firingOffset, cameraRight);
-            smallestRightMargin = std::min(smallestRightMargin, rightMargin);
-            if (rightMargin <= 0) {
+            if (desc.player.adsAlpha == 0) {
+                smallestRightMargin = std::min(smallestRightMargin, rightMargin);
+            }
+            if (desc.player.adsAlpha == 0 && rightMargin <= 0) {
                 const auto authoredWorld = animation::multiply(model, chestMount);
                 const auto authoredX = animation::transformDirection(authoredWorld, {1, 0, 0});
                 const auto eyeLocal = animation::matrixTranslation(eye);
@@ -1924,7 +1974,7 @@ void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false) 
                           << " eye_model=" << eyeLocal.x << ',' << eyeLocal.y << ',' << eyeLocal.z
                           << " mount_model=" << mountLocal.x << ',' << mountLocal.y << ',' << mountLocal.z << '\n';
             }
-            expect(rightMargin > 0,
+            expect(desc.player.adsAlpha > 0 || rightMargin > 0,
                    "hip firing grip stays right of anatomical camera across movement and yaw");
             const auto weaponForward = animation::transformPoint(presentation.weaponWorld, {0, 0, 1}) -
                                        animation::matrixTranslation(presentation.weaponWorld);
@@ -1938,7 +1988,8 @@ void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false) 
             expect(animator.skinPose(&targets), "common constrained pose skins both original meshes");
             const auto& result = animator.stats().handConstraints;
             if (result.status != player::HandConstraintStatus::Applied) {
-                std::cerr << "Ready tick=" << ticks << " residual=" << result.residualMeters[0] << ','
+                std::cerr << "Ready tick=" << ticks << " ADS=" << desc.player.adsAlpha
+                          << " pitch=" << desc.player.cameraView.pitchDegrees << " residual=" << result.residualMeters[0] << ','
                           << result.residualMeters[1] << '\n';
             }
             expect(result.status == player::HandConstraintStatus::Applied,
@@ -2099,12 +2150,15 @@ void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false) 
                    "settled Idle returns to its authored clip without a stale Developer mask after interrupted requests");
         }
     }
-    std::cout << "Project Ready " << (productionComposition ? "production-input" : "direct-frame-stress")
+    std::cout << "Project Ready " << (aimSequence ? "ADS" : productionComposition ? "production-input" : "direct-frame-stress")
               << " common-pose ticks=" << ticks << " max_world_contact_m=" << largestResidual
               << " min_weapon_camera_forward_dot=" << smallestForwardDot
               << " min_firing_camera_right_m=" << smallestRightMargin
               << " hip_hand_frustum_vertices=" << visibleHandVertices[0] << ',' << visibleHandVertices[1]
-              << "; developer Ready over original locomotion, no directional/ADS/reload completeness claim\n";
+              << " centered_sight_samples=" << sightSamples << " max_sight_error_m=" << maximumSightError << '\n';
+    if (aimSequence) {
+        expect(sightSamples > 80U, "held ADS endpoint is exercised throughout the action sequence");
+    }
     expect(visibleHandVertices[0] > 10 && visibleHandVertices[1] > 10,
            "both actual weighted hands intersect the anatomical hip camera frustum (not an occlusion/pixel oracle)");
     auto mismatch = body;
@@ -2162,6 +2216,11 @@ int main(int argc, char** argv) {
     if (argc == 2 && std::string_view(argv[1]) == "--ready-only") {
         testProjectReadyUsesOneConstrainedPose();
         testProjectReadyUsesOneConstrainedPose(true);
+        testProjectReadyUsesOneConstrainedPose(true, true);
+        return failures == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+    }
+    if (argc == 2 && std::string_view(argv[1]) == "--ads-only") {
+        testProjectReadyUsesOneConstrainedPose(true, true);
         return failures == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
     }
 #else

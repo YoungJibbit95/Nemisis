@@ -257,10 +257,50 @@ struct FirstPersonCookedArmsRig final {
         ? 0.0F : std::clamp(1.0F - (weapon.timeSinceLastShotSeconds / duration), 0.0F, 1.0F);
 }
 
+[[nodiscard]] player::FirstPersonRigAttachment projectRifleAimMount(
+    const player::FirstPersonRigAttachment& hip,
+    const novacore::animation::Mat4& sightLocal,
+    const DevRangePlayerRenderState& state,
+    novacore::math::Vec3 eye,
+    player::PlayerViewComponent view) {
+    const float ads = player::projectRifleAimWeight(state.adsAlpha);
+    if (ads == 0.0F) {
+        return hip;
+    }
+
+    // Map the rifle's physical sight frame onto the displayed camera ray.
+    // The authored sight is rigid, so its inverse rotation is its transpose.
+    using namespace novacore::animation;
+    Mat4 weaponFromSight{};
+    for (std::size_t row = 0; row < 3; ++row) {
+        for (std::size_t column = 0; column < 3; ++column) {
+            weaponFromSight.at(row, column) = sightLocal.at(column, row);
+        }
+    }
+    const auto offset = transformDirection(weaponFromSight, matrixTranslation(sightLocal) * -1.0F);
+    weaponFromSight.at(0, 3) = offset.x;
+    weaponFromSight.at(1, 3) = offset.y;
+    weaponFromSight.at(2, 3) = offset.z;
+    constexpr float eyeReliefMeters = 0.14F;
+    const player::FirstPersonRigAttachment sightWorld{
+        .position = eye + player::viewVectors(view).forward * eyeReliefMeters,
+        .yawDegrees = view.yawDegrees,
+        .pitchDegrees = -view.pitchDegrees,
+        .rollDegrees = -state.cameraRollDegrees,
+    };
+    const auto target = multiply(player::firstPersonAttachmentMatrix(sightWorld), weaponFromSight);
+    auto blended = player::firstPersonAttachmentMatrix(hip);
+    for (std::size_t row = 0; row < 3; ++row) {
+        for (std::size_t column = 0; column < 4; ++column) {
+            blended.at(row, column) = std::lerp(blended.at(row, column), target.at(row, column), ads);
+        }
+    }
+    return rigidChestAttachment(blended);
+}
+
 [[nodiscard]] player::FirstPersonRigAttachment projectRifleActionAttachment(
-    const novacore::animation::Mat4& authoredMount,
+    const player::FirstPersonRigAttachment& base,
     const weapons::WeaponRuntimeState& weapon) {
-    const auto base = rigidChestAttachment(authoredMount);
     const float kick = firstPersonShotAmount(weapon, 0.115F);
     const float recoil = kick * kick * (1.0F - 0.30F * weapon.adsAlpha);
     const float reloadProgress = weapon.reloading ? weapon.reloadProgress : 0.0F;
@@ -1217,7 +1257,12 @@ FirstPersonPresentation evaluateFirstPersonPresentation(const DevRangeRenderScen
             throw std::runtime_error("Sampled Project Rifle Ready chest mount is missing");
         }
         const auto authoredMount = novacore::animation::multiply(playerWorld, *desc.player.rifleReadyMount);
-        result.rig.weapon = projectRifleActionAttachment(authoredMount, desc.player.weapon);
+        const auto sight = cookedMarkerWorld(desc, kProjectReadyWeaponAssetId, "socket_ads_sight", {});
+        if (!sight) {
+            throw std::runtime_error("Authored Project M4 sight marker is missing");
+        }
+        const auto aimedMount = projectRifleAimMount(rigidChestAttachment(authoredMount), *sight, desc.player, eye, view);
+        result.rig.weapon = projectRifleActionAttachment(aimedMount, desc.player.weapon);
         result.weaponWorld = player::firstPersonAttachmentMatrix(result.rig.weapon);
         result.weaponAssetId = kProjectReadyWeaponAssetId;
         result.armsAssetId = kProjectFPSArmsAssetId;

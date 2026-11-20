@@ -62,6 +62,21 @@ def marker(doc, name, rows, parent=None):
         doc["nodes"][parent].setdefault("children", []).append(index)
 
 
+def append_ads_sight(doc, sight):
+    # Aperture center on Sight_2 and crown of the front post in the LOD0 mesh.
+    # The points belong to the hash-checked normalized weapon in metres.
+    rear, front = sight["rear_aperture_m"], sight["front_post_tip_m"]
+    require(len(rear) == len(front) == 3 and front[2] > rear[2],
+            "Expected a forward physical ADS sight line")
+    line = [b - a for a, b in zip(rear, front)]
+    length = math.hypot(*line)
+    z = [component / length for component in line]
+    horizontal = math.hypot(z[0], z[2])
+    x = [z[2] / horizontal, 0.0, -z[0] / horizontal]
+    y = [z[1] * x[2], z[2] * x[0] - z[0] * x[2], -z[1] * x[0]]
+    marker(doc, "socket_ads_sight", [[a, b, c, d] for a, b, c, d in zip(x, y, z, rear)] + [[0, 0, 0, 1]])
+
+
 def validate_physical_contacts(pose, weapon_doc):
     """Reject exchanged anatomical/physical ownership before writing a GLB.
 
@@ -231,6 +246,7 @@ def cook(candidate):
         # Developer fallback clips also use this frame and are not visually
         # accepted; no duplicate runtime grip owner or per-clip marker API.
         marker(doc, "socket_palm_contact_" + side.lower(), armed_idle["weapon_contact_frames"][side]["matrix"])
+    append_ads_sight(doc, armed_idle["ads_sight"])
     outputs["rifle_ready.glb"] = encode(doc, binary)
     cooked = "project-fps-candidate/rifle_ready.glb"
     manifest["assets"].append(
@@ -250,7 +266,7 @@ def cook(candidate):
         "scale_meters": True,
         "runtime_up_axis": "Y",
         "gameplay_forward_axis": "+Z",
-        "sockets": ["socket_muzzle", "socket_palm_contact_r", "socket_palm_contact_l"],
+        "sockets": ["socket_muzzle", "socket_palm_contact_r", "socket_palm_contact_l", "socket_ads_sight"],
         "collision": "none",
         "license": "original_project_asset",
         "generated_by": "tools/assets/cook_project_rifle_ready.py",

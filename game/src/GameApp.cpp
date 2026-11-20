@@ -771,7 +771,13 @@ void GameApp::updateVisiblePlayerPose(float animationDelta) {
     auto armsAnimationFrame = latestCharacterAnimationFrame_;
     if (projectRig) {
         armsAnimationFrame.upperBodyAlpha = 0.0F;
-        if (!skeletalArmsAnimator_.samplePose(armsAnimationFrame, animationDelta)) {
+        const auto* view = world_.getComponent<player::PlayerViewComponent>(localPlayerEntity_);
+        const player::ProjectRifleAim aim{
+            options_.projectRifleReady ? cameraRig_.adsAlpha : 0.0F,
+            cameraRig_.view.pitchDegrees + armsAnimationFrame.thirdPersonBodyPitchDegrees,
+            view != nullptr ? cameraRig_.view.yawDegrees - view->yawDegrees : 0.0F,
+        };
+        if (!skeletalArmsAnimator_.samplePose(armsAnimationFrame, animationDelta, aim)) {
             const auto& errors = skeletalArmsAnimator_.errors();
             throw std::runtime_error("Project FPS body pose failed: " +
                 (errors.empty() ? std::string("no animator diagnostic") : errors.back()));
