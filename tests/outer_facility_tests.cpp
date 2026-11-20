@@ -49,6 +49,30 @@ void testRoutesAndFire() {
     throughEast.useSweep = true;
     expect(!resolveGreyboxPlayerCollision(world, physics, throughEast).blocked,
            "east doorway admits a swept player capsule");
+    auto wallrun = queryAt({-21.7F,0.8F,0});
+    wallrun.wallProbeDistance = 0.7F;
+    wallrun.enableGroundSnap = false;
+    const auto runnable = resolveGreyboxPlayerCollision(world, physics, wallrun);
+    expect(runnable.nearWallRunSurface && runnable.wallPrimitiveId == "west_left",
+           "long exterior face supplies wallrun contacts");
+    auto position = novacore::math::Vec3{-4.8F,0,-8.2F};
+    for (int i = 0; i < 53; ++i) {
+        auto q = queryAt(position + novacore::math::Vec3{0,0,0.2F});
+        q.previousPosition = position;
+        q.useSweep = true;
+        const auto result = resolveGreyboxPlayerCollision(world, physics, q);
+        position = result.position;
+    }
+    expect(position.y > 3.1F && position.z > 1.7F,
+           "continuous capsule movement can climb the eight steps");
+    for (int i = 0; i < 20; ++i) {
+        auto q = queryAt(position + novacore::math::Vec3{-0.2F,0,0});
+        q.previousPosition = position;
+        q.useSweep = true;
+        position = resolveGreyboxPlayerCollision(world, physics, q).position;
+    }
+    expect(position.x < -7.3F && position.y > 3.1F,
+           "roof landing is reachable from the upper step");
     const auto wall = resolveGreyboxPlayerCollision(world, physics, queryAt({-7,0,0}));
     expect(wall.blocked, "visible building wall blocks movement");
     const auto cover = resolveGreyboxPlayerCollision(world, physics, queryAt({5,0,5}));
@@ -61,7 +85,7 @@ void testRoutesAndFire() {
     shot.origin = {5,0.8F,0}; shot.direction = {0,0,1};
     const auto blocked = traceDevRangeShot(targets, shot, world.primitives);
     expect(!blocked.targetLane && blocked.distanceMeters < 5.0F, "visible cover blocks shots");
-    expect(world.primitives.size() == 50, "26 scene boxes and 24 tree collision boxes are present");
+    expect(world.primitives.size() == 59, "35 scene boxes and 24 tree collision boxes are present");
 }
 } // namespace
 int main() {
