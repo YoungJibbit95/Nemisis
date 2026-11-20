@@ -1,5 +1,13 @@
 # Recovery progress
 
+## Dev Range combat HUD, November 2026
+
+Hit confirmation now persists for 240 ms across fixed ticks. The Settings tab
+has independent hit-marker and damage-number controls. The weapon panel shows
+magazine level during firing and refill progress during reload. The session
+and menu tests cover rapid events, expiration, toggles and reload priority.
+Locally verified both suites against NovaCore `50eb84408f6c8e8401ff37967aee8561f419cf36`.
+
 ## 2026-10-19 Armed Idle / direct-light / query consumer gate
 
 - Exact game runtime `7d6b9a57a3091bfb014d455b2aec4811d482e8d4` uses both

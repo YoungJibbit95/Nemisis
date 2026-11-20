@@ -82,6 +82,31 @@ void testRespawnAndResetTimers() {
     expect(session.targetRespawnSeconds == 0.0F, "range reset clears target respawn timer");
 }
 
+void testConfirmedHitLifetime() {
+    using namespace nemisis::dev;
+    DevRangeSessionState session{};
+    DebugTargetHitResult hit{};
+    hit.hit = true;
+    hit.damageApplied = 28.0F;
+    recordShotResult(session, {}, hit);
+    expect(session.hitFeedbackSeconds == 0.0F, "feedback requires a fired shot");
+    recordShotResult(session, firedShot(), hit);
+    tickSessionFeedback(session, 0.05F);
+    const float remaining = session.hitFeedbackSeconds;
+    recordShotResult(session, firedShot(), {});
+    expect(remaining > 0.0F && session.hitFeedbackSeconds == remaining, "a miss does not renew or erase a confirmed hit");
+    hit.eliminated = true;
+    hit.damageApplied = 7.5F;
+    recordShotResult(session, firedShot(), hit);
+    expect(session.hitFeedbackSeconds == kHitFeedbackDurationSeconds && session.lastConfirmedHit.eliminated
+        && session.lastConfirmedHit.damageApplied == 7.5F, "latest hit restarts the cue with its own result");
+    tickSessionFeedback(session, kHitFeedbackDurationSeconds);
+    expect(session.hitFeedbackSeconds == 0.0F, "confirmed hit expires in simulation time");
+    recordShotResult(session, firedShot(), hit);
+    recordRangeReset(session);
+    expect(session.hitFeedbackSeconds == 0.0F, "range reset clears pending feedback");
+}
+
 void testPlayerDamageRegenAndRespawn() {
     nemisis::dev::DevRangeSessionState session{};
     nemisis::dev::DevRangeSessionTuning tuning{};
@@ -260,6 +285,7 @@ void testVariantMultiplierBreakdownIsDeterministic() {
 int main() {
     testScoreAndAccuracy();
     testRespawnAndResetTimers();
+    testConfirmedHitLifetime();
     testPlayerDamageRegenAndRespawn();
     testTimedDrillLaneTtkAndRecoilScoring();
     testDrillTimerCompletesAndResetRestarts();
