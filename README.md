@@ -67,7 +67,7 @@ cd build/playtest-vulkan
 ./nemisis_game.exe --game
 ```
 
-Use `--game --outer-facility --profile-range=600` to profile the relay yard, or `--vulkan --dev-range --project-rifle-ready --material-textures --physics-props --profile-range=600` for the original firing range. Both record after 12 warm-up frames and exit.
+Use `--game --outer-facility --profile-range=600` to profile the relay yard, or `--vulkan --dev-range --project-rifle-ready --material-textures --physics-props --profile-range=600` for the original firing range. Both record after 12 warm-up frames and exit. The facility profile runs a repeatable sprint, slide, jump and aimed burst sequence from the south gate. It reports distance traveled, shots and hits at shutdown.
 Each `range_frame` CSV row contains the frame index, fixed ticks since the last
 frame, total frame time, time before the frame callback, scene preparation time
 and time spent in the renderer calls. Timings use wall-clock milliseconds and

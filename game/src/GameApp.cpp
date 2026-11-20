@@ -32,6 +32,22 @@ namespace {
 
 constexpr std::string_view kDefaultWeaponId = "ar_01";
 
+// Deterministic input for the Outer Facility profile. It uses the same command,
+// movement, weapon, and collision paths as a player starting at the south gate.
+[[nodiscard]] player::PlayerInputCommand facilityProfileCommand(std::uint64_t tick) {
+    player::PlayerInputCommand command{};
+    command.tick = tick;
+    command.move.y = tick < 210 ? 1.0F : 0.0F;
+    command.sprintHeld = tick < 90;
+    command.slidePressed = tick == 90;
+    command.slideHeld = tick >= 90 && tick < 116;
+    command.jumpPressed = tick == 116;
+    command.adsHeld = tick >= 175;
+    command.fireHeld = tick >= 200 && tick % 60 < 19;
+    command.reloadPressed = tick == 400;
+    return command;
+}
+
 struct DevRangeWeaponPickup final {
     std::string_view weaponId;
     std::string_view label;
@@ -234,6 +250,13 @@ void GameApp::onStartup() {
 }
 
 void GameApp::onShutdown() {
+    if (options_.profileRange && options_.startInFacility) {
+        if (const auto* player = world_.getComponent<movement::PlayerMovementState>(localPlayerEntity_)) {
+            novacore::core::logInfo("game", "Facility profile route: forward_meters=" +
+                std::to_string(player->position.z - greyboxWorld_.playerSpawn.z) + " shots=" +
+                std::to_string(devRangeSession_.score.shotsFired) + " hits=" + std::to_string(devRangeSession_.score.shotsHit));
+        }
+    }
     if (options_.projectFPSPreview) {
         const auto& body = skeletalArmsAnimator_.stats();
         const auto& arms = skeletalArmsAnimator_.stats();
@@ -298,6 +321,9 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
 
     auto command = input::buildPlayerInputCommand(actions_, context.tickIndex, settings_);
     gameplayInputBuffer_.consumeInto(command);
+    if (options_.profileRange && options_.startInFacility) {
+        command = facilityProfileCommand(context.tickIndex);
+    }
     (void)localCommandQueue_.push(command);
 
     player::PlayerId playerId = 1;
@@ -469,7 +495,7 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
             fireResult = weapons::simulateWeaponTick(weapon, *weaponState, fireRequest);
             if (fireResult.fired && movementState != nullptr) {
                 weapons::ShotTraceRequest shotRequest{};
-                shotRequest.origin = movementState->position + novacore::math::Vec3{0.0F, 1.65F, 0.0F};
+                shotRequest.origin = player::gameplayEyePosition(movementState->position, movementState->mode, command.crouchHeld);
                 if (view != nullptr) {
                     shotRequest.forward = player::viewVectors(*view).forward;
                 } else {
