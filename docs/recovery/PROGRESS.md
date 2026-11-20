@@ -1273,3 +1273,9 @@ A follow-up adds a visibly marked west wallrun surface and eight 0.4 m steps
 leading from the courtyard onto the west roof. The focused KCC test traverses
 the steps continuously and reaches the roof, and checks wallrun contact; all
 three world/scene/asset suites pass. Actual in-game movement feel remains open.
+
+Facility mannequins now use separate, approximate floor-rooted leg, torso and
+head hit zones instead of the range-only sphere, and no longer render the large
+legacy target box. Tests cover both legs, torso, head, near misses, gaps,
+range and closest cover/target order; existing spherical Range target suites
+still pass. Target shapes are gameplay approximations, not per-triangle hits.

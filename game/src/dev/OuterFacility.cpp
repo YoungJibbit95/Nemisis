@@ -17,6 +17,7 @@ DevTargetLane target(const char* id, const char* label, Vec3 position) {
     lane.target.maxHealth = 150.0F;
     lane.target.health = 150.0F;
     lane.target.radiusMeters = 0.72F;
+    lane.target.humanoidHitZones = true;
     return lane;
 }
 } // namespace
