@@ -20,7 +20,11 @@ int main(int argc, char** argv) {
     bool smokeTest = false;
     for (int i = 1; i < argc; ++i) {
         const std::string_view argument(argv[i]);
-        if (argument == "--game" || argument == "--outer-facility") {
+        if (argument == "--game-deploy-smoke-test") {
+            gameOptions.fullGame = true;
+            gameOptions.runDeploymentSmoke = true;
+            smokeTest = true;
+        } else if (argument == "--game" || argument == "--outer-facility") {
             gameOptions.fullGame = true;
             if (argument == "--outer-facility") { gameOptions.startInFacility = true; }
         } else if (argument == "--ui-showcase") {
@@ -161,7 +165,7 @@ int main(int argc, char** argv) {
         gameOptions.lockDevRange = true;
     }
     if (smokeTest) {
-        desc.maxFrames = gameOptions.runMenuFlowSmoke ? 58 : gameOptions.physicsProps ? 120 :
+        desc.maxFrames = gameOptions.runDeploymentSmoke ? 0 : gameOptions.runMenuFlowSmoke ? 58 : gameOptions.physicsProps ? 120 :
             (gameOptions.firstPersonHandIK || gameOptions.projectFPSPreview) ? 60 : 5;
     }
     if (gameOptions.profileRange) {

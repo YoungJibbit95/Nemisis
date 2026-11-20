@@ -108,7 +108,8 @@ target_include_directories(nemisis_game
         ${CMAKE_CURRENT_SOURCE_DIR}/game/include
 )
 
-target_link_libraries(nemisis_game PRIVATE Novacore::Engine)
+find_package(Threads REQUIRED)
+target_link_libraries(nemisis_game PRIVATE Novacore::Engine Threads::Threads)
 
 # CLion filters profiles by the selected build target. The executable remains
 # nemisis_game, while this target identifies the optimized playable preset.
@@ -220,6 +221,13 @@ function(nemisis_add_runtime_smoke test_name argument require_vulkan)
             -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/RunGameSmoke.cmake"
     )
 endfunction()
+
+add_test(NAME nemisis_game_deployment_smoke
+    COMMAND ${CMAKE_COMMAND} "-DGAME_EXECUTABLE=$<TARGET_FILE:nemisis_game>"
+        "-DSMOKE_ARGUMENT=--game-deploy-smoke-test" -DREQUIRE_VULKAN=OFF
+        -DREQUIRE_DEPLOYMENT=ON -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/RunGameSmoke.cmake")
+set_tests_properties(nemisis_game_deployment_smoke PROPERTIES
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" TIMEOUT 240)
 
 nemisis_add_runtime_smoke(nemisis_game_smoke --smoke-test OFF)
 nemisis_add_runtime_smoke(nemisis_game_vulkan_smoke --vulkan-smoke-test ON)

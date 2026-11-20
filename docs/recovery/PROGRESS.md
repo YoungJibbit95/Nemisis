@@ -1322,3 +1322,20 @@ head hit zones instead of the range-only sphere, and no longer render the large
 legacy target box. Tests cover both legs, torso, head, near misses, gaps,
 range and closest cover/target order; existing spherical Range target suites
 still pass. Target shapes are gameplay approximations, not per-triangle hits.
+
+## 2026-11-20 Responsive deployment loading
+
+Normal full-game deployments import the catalog, optional Project preview and
+map meshes on a cooperatively stoppable CPU worker; renderer and animator
+registration remain on the main thread, one ordinary mesh per frame. The menu
+cannot enter gameplay until its selected map is ready. Cancelled imports retain
+CPU data but register only assets required by the current destination. An
+individual in-flight asset import and a single GPU registration remain bounded
+only by their own work; shutdown waits for the current import to finish.
+
+At game base 30aa9b1 and NovaCore fbbbfb3a18e945c28c2dc0bc7c5a8d8f8d541f56,
+the dependency-light game build and four CPU suites passed: deployment smoke
+(rendered worker frames, cancel/retarget, deferred unrelated meshes and both map
+switches), existing synchronous game smoke, menu gating/Escape and real binding
+retry/asset tests. CLion MinGW 13.1 passed a GameApp syntax check. Vulkan and
+live loading responsiveness remain pending coordinated validation.

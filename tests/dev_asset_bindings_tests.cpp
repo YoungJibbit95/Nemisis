@@ -571,6 +571,34 @@ void testWorldPresentationAssets() {
     }
 }
 
+void testMissingBatchCanRetryAfterPartialImport() {
+    const auto root = std::filesystem::temp_directory_path() / "nemisis_dev_asset_bindings_retry";
+    std::filesystem::remove_all(root);
+    std::filesystem::create_directories(root);
+    const std::array<AssetSpec, 2> specs{{
+        {"first", "mesh", "prop", "source/first", "assets/first.glb"},
+        {"second", "mesh", "prop", "source/second", "assets/second.glb"},
+    }};
+    writeManifest(root / "assets.json", specs);
+    writeMetadata(root, specs[0]);
+    writeTinyGlb(root / specs[0].cooked, specs[0].id);
+    writeTinyGlb(root / specs[1].cooked, specs[1].id);
+    nemisis::assets::GameAssetCatalog catalog;
+    expect(catalog.loadFromJson(root / "assets.json").ok(), "retry fixture catalog loads");
+    nemisis::assets::DevAssetBindings bindings;
+    const std::array<std::string_view, 2> ids{"first", "second"};
+    const auto first = bindings.bindMissingAssets(catalog, ids, root);
+    expect(!first.ready() && bindings.meshCount() == 1, "failed later asset leaves earlier import available");
+    writeMetadata(root, specs[1]);
+    const auto retry = bindings.bindMissingAssets(catalog, ids, root);
+    expect(retry.ready() && retry.requiredAssetCount == 1 && bindings.meshCount() == 2,
+           "retry skips existing mesh and imports only repaired missing asset");
+    const auto noOp = bindings.bindMissingAssets(catalog, ids, root);
+    expect(noOp.ready() && noOp.requiredAssetCount == 0 && bindings.meshCount() == 2,
+           "repeating complete batch is an idempotent no-op");
+    std::filesystem::remove_all(root);
+}
+
 void testFacilityAssetBatchAndSummary() {
     using namespace nemisis::assets;
     const auto facility = outerFacilityRenderableAssetIds();
@@ -654,6 +682,7 @@ int main() {
     testRepresentativeCookedWeaponContract();
     testFR17PhysicalGripOwnership();
     testGlockPhysicalPistolGripAndMuzzle();
+    testMissingBatchCanRetryAfterPartialImport();
     testFacilityAssetBatchAndSummary();
     testFirstPersonArmsExcludeAuthoringHelpers();
     testWorldPresentationAssets();

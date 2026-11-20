@@ -5,12 +5,17 @@ if(NOT REQUIRE_VULKAN)
     list(PREPEND smoke_arguments --no-vulkan)
 endif()
 
+if(REQUIRE_DEPLOYMENT)
+    set(smoke_timeout 220)
+else()
+    set(smoke_timeout 110)
+endif()
 execute_process(
     COMMAND "${GAME_EXECUTABLE}" ${smoke_arguments}
     RESULT_VARIABLE smoke_result
     OUTPUT_VARIABLE smoke_output
     ERROR_VARIABLE smoke_error
-    TIMEOUT 110
+    TIMEOUT ${smoke_timeout}
 )
 string(CONCAT smoke_output "${smoke_output}" "${smoke_error}")
 message("${smoke_output}")
@@ -24,6 +29,10 @@ if(NOT smoke_output MATCHES "Asset catalog loaded: [1-9][0-9]* assets" OR
 endif()
 if(smoke_output MATCHES "Initial config load failed|Dev asset binding failed|Dev mesh resource missing|Dev mesh resource registration failed")
     message(FATAL_ERROR "Game smoke reported missing or invalid runtime data")
+endif()
+if(REQUIRE_DEPLOYMENT AND NOT smoke_output MATCHES
+    "Deployment smoke complete: loading_frames=[1-9][0-9]* worker_frames=([2-9]|[1-9][0-9]+) cancelled=1 range_only_deferred=1 switched=1 returned=1 map=outer_facility")
+    message(FATAL_ERROR "Deployment smoke requires rendered worker frames, cancellation and both map transitions")
 endif()
 if(REQUIRE_VULKAN AND NOT smoke_output MATCHES "Vulkan backend active:")
     message(FATAL_ERROR "Graphics smoke requires an active Vulkan backend; headless/null fallback is not graphics validation")
