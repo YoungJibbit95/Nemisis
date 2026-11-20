@@ -323,16 +323,17 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
     dev::GreyboxCollisionResult collisionSample{};
     if (movementState != nullptr) {
         const auto previousMovementPosition = movementState->position;
-        *movementState = movement_.simulate(*movementState, movementCommand, static_cast<float>(context.fixedDeltaSeconds));
-        const auto mantleForward = view != nullptr
+        const auto viewForward = view != nullptr
             ? player::viewVectors(*view).forward
             : novacore::math::Vec3{0.0F, 0.0F, 1.0F};
+        *movementState = movement_.simulate(*movementState, movementCommand,
+            static_cast<float>(context.fixedDeltaSeconds), viewForward);
         dev::GreyboxCollisionQuery collisionQuery{};
         collisionQuery.position = movementState->position;
         collisionQuery.previousPosition = previousMovementPosition;
         collisionQuery.radius = 0.42F;
         collisionQuery.height = 1.80F;
-        collisionQuery.mantleForward = mantleForward;
+        collisionQuery.mantleForward = viewForward;
         collisionQuery.mantleMaxDistance = movement_.tuning().mantleMaxRange;
         collisionQuery.mantleMinHeight = collisionQuery.maxStepHeight + 0.02F;
         collisionQuery.mantleMaxHeight = movement_.tuning().mantleMaxHeight;

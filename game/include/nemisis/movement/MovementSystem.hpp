@@ -17,6 +17,13 @@ enum class MovementMode {
     Mantling
 };
 
+struct HoloStepFlight final {
+    novacore::math::Vec3 position{};
+    novacore::math::Vec3 velocity{};
+    float ageSeconds = 0.0F;
+    bool active = false;
+};
+
 struct PlayerMovementState final {
     novacore::math::Vec3 position{};
     novacore::math::Vec3 velocity{};
@@ -53,6 +60,7 @@ struct PlayerMovementState final {
     bool crouched = false;
     bool landedThisTick = false;
     bool slideHeldConsumed = false;
+    HoloStepFlight holoStep{};
 };
 
 struct WallRunContact final {
@@ -77,7 +85,8 @@ public:
     [[nodiscard]] PlayerMovementState simulate(
         PlayerMovementState state,
         const player::PlayerInputCommand& command,
-        float fixedDeltaSeconds) const;
+        float fixedDeltaSeconds,
+        novacore::math::Vec3 facing = {0.0F, 0.0F, 1.0F}) const;
 
     [[nodiscard]] PlayerMovementState applyWallRunContact(
         PlayerMovementState state,

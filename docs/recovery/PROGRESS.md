@@ -62,6 +62,29 @@
   they are not neutral concrete textures. No texture/GPU/visual acceptance yet.
   Frozen reviewed Vulkan build/content/shader directories remain unchanged.
 
+## 2026-11-20 Personal Holo step in the Dev Range
+
+An accepted air-jump press spends the charge and releases a small emitter
+in the player's facing direction. It inherits movement velocity and falls
+under the same gravity as the player. When it crosses boot height inside
+the 0.50 m support radius, it gives the configured upward impulse once. The
+usual crossing is on the fourth 60 Hz tick. A miss, early landing or switch
+to another movement mode cancels the pending step. The unfolded surface
+stays at the contact point for 0.32 s.
+
+The previous replay checked for the boost on the input tick. The updated
+replay checks charge consumption and release on that tick, then measures
+the boost at contact. It covers moving throws, repeated input, a saved
+mid-flight state, misses and landing. The scene test exercises the flight
+trail and deployed footprint with developer overlays off.
+
+MSVC 2022 Debug built the dependency-light game and passed both targeted
+suites against NovaCore `50eb84408f6c8e8401ff37967aee8561f419cf36`.
+
+The current rule applies to the local owner's feet. Shared solid surfaces
+and online projectile replication remain open. Manual visibility and feel
+should be checked by sprinting, jumping and pressing Space again in mid-air.
+
 ## 2026-10-19 Local animation direction follows actual view
 
 - GameApp now supplies the existing animation input's horizontal forward/right
