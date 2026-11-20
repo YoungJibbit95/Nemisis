@@ -11,7 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(NEMISIS_WARNINGS_AS_ERRORS "Treat warnings as errors" OFF)
-option(NEMISIS_COPY_RUNTIME_DATA "Copy configs and asset docs beside the game executable" ON)
+option(NEMISIS_COPY_RUNTIME_DATA "Stage runtime configs and assets beside the game executable" ON)
 set(NOVACORE_ENGINE_ROOT "" CACHE PATH "Path to a NovaCore Engine checkout")
 
 if(MSVC)
@@ -115,12 +115,8 @@ set_target_properties(nemisis_game PROPERTIES
 
 if(NEMISIS_COPY_RUNTIME_DATA)
     add_custom_command(TARGET nemisis_game POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${CMAKE_CURRENT_SOURCE_DIR}/configs"
-            "$<TARGET_FILE_DIR:nemisis_game>/configs"
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${CMAKE_CURRENT_SOURCE_DIR}/assets"
-            "$<TARGET_FILE_DIR:nemisis_game>/assets"
+        COMMAND ${CMAKE_COMMAND} "-DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}"
+            "-DDEST=$<TARGET_FILE_DIR:nemisis_game>" -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/StageRuntimeData.cmake"
         VERBATIM
     )
 endif()

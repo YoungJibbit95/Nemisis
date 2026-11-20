@@ -25,6 +25,9 @@ vcpkg_installed/
 *.exe
 *.dll
 
+# Player preferences written by the full game
+/configs/user/nemisis_user.json
+
 # Ninja
 .ninja_deps
 .ninja_log
