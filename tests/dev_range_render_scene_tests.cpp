@@ -967,6 +967,40 @@ void testFirstPersonArmsHaveOnePresentationOwner() {
         "missing arms retain the existing safe procedural fallback");
 }
 
+void testHoloStepRendersWithoutDiagnostics() {
+    const auto world = nemisis::dev::createDevRangeGreyboxWorld();
+    const nemisis::dev::MeshResourceLookup meshes{};
+    nemisis::dev::DevRangeRenderSceneDesc desc{};
+    desc.greyboxWorld = &world;
+    desc.meshResources = &meshes;
+    desc.showWorldDebugLines = false;
+    auto& step = desc.player.movementTech;
+    step.energyPlatformSeconds = 0.2F;
+    step.energyPlatformPreviousCenter = {6.0F, 2.0F, 3.0F};
+    step.energyPlatformCenter = {6.1F, 1.6F, 3.0F};
+    step.energyPlatformInFlight = true;
+    nemisis::dev::DevRangeRenderSceneBuilder builder;
+    novacore::render::RenderFrameInfo flight;
+    (void)builder.append(flight, desc);
+    const auto atCenter = [&](const auto& box) {
+        return (box.center - step.energyPlatformCenter).lengthSquared() == 0.0F && !box.castsShadow;
+    };
+    expect(std::ranges::any_of(flight.worldBoxes, [&](const auto& box) {
+        return atCenter(box) && box.halfExtents.x < 0.12F;
+    }), "normal play draws the compact flying emitter at its simulated position");
+    expect(std::ranges::any_of(flight.worldLines, [&](const auto& line) {
+        return (line.start - step.energyPlatformPreviousCenter).lengthSquared() == 0.0F &&
+            (line.end - step.energyPlatformCenter).lengthSquared() == 0.0F;
+    }), "flight trail joins consecutive fixed-tick positions");
+    step.energyPlatformInFlight = false;
+    step.energyPlatformCenter = {6.2F, 1.1F, 3.0F};
+    novacore::render::RenderFrameInfo contact;
+    (void)builder.append(contact, desc);
+    expect(std::ranges::any_of(contact.worldBoxes, [&](const auto& box) {
+        return atCenter(box) && box.halfExtents.x == 0.50F;
+    }), "normal play draws the deployed footprint at its contact position");
+}
+
 void testDevRangeRenderSceneDrawsSocketDrivenShotFeedback() {
     novacore::render::Renderer renderer;
     auto lookup = registerSceneMeshes(renderer);
@@ -1997,6 +2031,7 @@ int main(int argc, char** argv) {
     testDevRangeRenderSceneRigsFirstPersonBodyForLookDown();
     testFirstPersonArmsHaveOnePresentationOwner();
     testDevRangeRenderSceneDrawsSocketDrivenShotFeedback();
+    testHoloStepRendersWithoutDiagnostics();
     testDevRangeRenderSceneDrawsLanePressure();
     testDevRangeRenderSceneAcceptsSpeedClearTargetLayout();
     testDevRangeRenderSceneCountsMissingMeshHandles();
