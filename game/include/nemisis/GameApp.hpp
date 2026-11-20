@@ -49,6 +49,8 @@
 
 namespace nemisis::game {
 
+inline constexpr std::uint64_t kRangeProfileWarmupFrames = 12;
+
 struct GameAppOptions final {
     bool profileRange = false;
     bool preferVulkanRenderer = true;
