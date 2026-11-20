@@ -429,6 +429,7 @@ void addHudMetric(
     std::size_t wall = 0;
     std::size_t bounds = 0;
     std::size_t sweep = 0;
+    std::size_t ceiling = 0;
     for (const auto& contact : collision.contacts) {
         switch (contact.role) {
         case dev::GreyboxContactRole::Ground:
@@ -443,6 +444,9 @@ void addHudMetric(
         case dev::GreyboxContactRole::Bounds:
             ++bounds;
             break;
+        case dev::GreyboxContactRole::Ceiling:
+            ++ceiling;
+            break;
         case dev::GreyboxContactRole::Sweep:
             ++sweep;
             break;
@@ -450,7 +454,7 @@ void addHudMetric(
     }
 
     std::ostringstream stream;
-    stream << "G" << ground << " S" << step << " W" << wall << " B" << bounds << " X" << sweep;
+    stream << "G" << ground << " S" << step << " W" << wall << " B" << bounds << " X" << sweep << " C" << ceiling;
     return stream.str();
 }
 

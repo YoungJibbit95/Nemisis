@@ -1,4 +1,5 @@
 #include "nemisis/dev/GreyboxCollision.hpp"
+#include "nemisis/movement/MovementSystem.hpp"
 
 #include "novacore/physics/CharacterController.hpp"
 
@@ -408,6 +409,75 @@ void testVerticalCapsuleSweepCatchesFastLanding() {
            "vertical capsule landing resolves to top surface without tunneling");
 }
 
+void testJumpUnderLowRoof(novacore::math::Vec2 move) {
+    using namespace nemisis;
+    dev::GreyboxWorld world;
+    constexpr float underside = 2.20F;
+    world.primitives.push_back({"low_roof", dev::GreyboxPrimitiveKind::Wall,
+        {0.0F, underside + 0.1F, 0.0F}, {4.0F, 0.1F, 4.0F}, {}, true});
+    const auto physics = dev::buildGreyboxPhysicsWorld(world);
+    movement::MovementSystem motor;
+    movement::PlayerMovementState state;
+    player::PlayerInputCommand command;
+    command.move = move;
+    constexpr float dt = 1.0F / 60.0F;
+    for (int tick = 0; tick < 30; ++tick) {
+        command.jumpPressed = tick == 0;
+        const auto start = state.position;
+        state = motor.simulate(state, command, dt);
+        auto query = queryAt(state.position);
+        query.previousPosition = start;
+        query.useSweep = true;
+        query.enableGroundSnap = false;
+        query.enableStepUp = false;
+        const auto collision = dev::resolveGreyboxPlayerCollision(world, physics, query);
+        state.position = collision.position;
+        const auto incoming = state.velocity;
+        state.velocity = dev::clipGreyboxVelocity(incoming, collision, false);
+        expect(state.position.y + query.height <= underside + 0.001F, "capsule head stays below the roof");
+        if (!collision.ceilingHit) {
+            continue;
+        }
+        expect(std::any_of(collision.contacts.begin(), collision.contacts.end(), [](const auto& contact) {
+            return contact.primitiveId == "low_roof" && contact.role == dev::GreyboxContactRole::Ceiling &&
+                contact.normal.y < -0.99F && contact.blocking && !contact.walkable;
+        }), "roof is reported as a blocking downward ceiling contact");
+        expect(incoming.y > 0.0F && state.velocity.y == 0.0F, "ceiling immediately cancels rising jump speed");
+        expect(!collision.grounded && state.mode == movement::MovementMode::Airborne, "a head bump is airborne");
+        expect(state.velocity.x == incoming.x && state.velocity.z == incoming.z,
+            "roof preserves both horizontal velocity components");
+        if (move.x != 0.0F) {
+            expect(state.position.x > start.x && state.position.z > start.z,
+                "diagonal jump continues along the underside during the impact tick");
+        }
+        const auto falling = motor.simulate(state, command, dt);
+        expect(falling.velocity.y < 0.0F && falling.position.y < state.position.y,
+            "gravity takes the player away from the roof on the next tick");
+        return;
+    }
+    expect(false, "upward sweep reaches the roof during a real jump");
+}
+
+void testSecondaryRoofContactAfterWall() {
+    using namespace nemisis::dev;
+    GreyboxWorld world;
+    world.primitives = {
+        {"side_wall", GreyboxPrimitiveKind::Wall, {1.0F, 1.0F, 0.0F}, {0.1F, 1.0F, 3.0F}, {}, true},
+        {"roof", GreyboxPrimitiveKind::Wall, {0.0F, 2.4F, 0.0F}, {3.0F, 0.1F, 3.0F}, {}, true},
+    };
+    auto query = queryAt({1.2F, 0.75F, 1.0F});
+    query.previousPosition = {};
+    query.useSweep = true;
+    query.enableGroundSnap = false;
+    query.enableStepUp = false;
+    const auto collision = resolveGreyboxPlayerCollision(world, query);
+    expect(collision.sweepPrimitiveId == "side_wall" && collision.ceilingHit,
+        "wall-first diagonal sweep retains the secondary roof impact");
+    const auto velocity = clipGreyboxVelocity({12.0F, 7.5F, 10.0F}, collision, false);
+    expect(velocity.x == 0.0F && velocity.y == 0.0F && velocity.z == 10.0F,
+        "wall and roof stop their incoming axes while preserving travel along the crease");
+}
+
 void testGroundSnapDistanceAndSlopeLimit() {
     novacore::physics::PhysicsWorld floorWorld;
     novacore::physics::CharacterQuery floorQuery{};
@@ -457,6 +527,9 @@ int main() {
     testDepenetrationIsIndependentOfColliderInsertionOrder();
     testCapsuleSweepUsesRoundedCorner();
     testVerticalCapsuleSweepCatchesFastLanding();
+    testJumpUnderLowRoof({});
+    testJumpUnderLowRoof({0.7F, 0.7F});
+    testSecondaryRoofContactAfterWall();
     testGroundSnapDistanceAndSlopeLimit();
 
     if (failures > 0) {

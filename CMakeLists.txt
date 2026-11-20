@@ -574,6 +574,7 @@ target_link_libraries(nemisis_greybox_world_tests PRIVATE Novacore::Engine)
 add_test(NAME nemisis_greybox_world_tests COMMAND nemisis_greybox_world_tests)
 
 add_executable(nemisis_greybox_collision_tests
+    game/src/movement/MovementSystem.cpp
     game/src/dev/GreyboxCollision.cpp
     game/src/dev/GreyboxWorld.cpp
     tests/greybox_collision_tests.cpp

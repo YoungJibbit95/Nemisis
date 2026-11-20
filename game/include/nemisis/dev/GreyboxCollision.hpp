@@ -36,6 +36,7 @@ enum class GreyboxContactRole {
     Wall,
     Bounds,
     Sweep,
+    Ceiling,
 };
 
 struct GreyboxContact final {
@@ -73,6 +74,7 @@ struct GreyboxCollisionResult final {
     bool mantleCandidate = false;
     bool swept = false;
     bool sweepHit = false;
+    bool ceilingHit = false;
     std::string lastPrimitiveId;
     std::string groundPrimitiveId;
     std::string wallPrimitiveId;
@@ -103,6 +105,8 @@ struct GreyboxCollisionResult final {
     const GreyboxWorld& world,
     const novacore::physics::PhysicsWorld& physicsWorld,
     GreyboxCollisionQuery query);
+[[nodiscard]] novacore::math::Vec3 clipGreyboxVelocity(
+    novacore::math::Vec3 velocity, const GreyboxCollisionResult& collision, bool wallRunning);
 [[nodiscard]] const char* greyboxContactRoleName(GreyboxContactRole role);
 
 } // namespace nemisis::dev

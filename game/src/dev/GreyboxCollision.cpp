@@ -3,6 +3,7 @@
 #include "novacore/physics/CharacterController.hpp"
 
 #include <algorithm>
+#include <cmath>
 
 namespace nemisis::dev {
 
@@ -112,6 +113,8 @@ namespace {
         return GreyboxContactRole::Wall;
     case novacore::physics::CharacterContactRole::Bounds:
         return GreyboxContactRole::Bounds;
+    case novacore::physics::CharacterContactRole::Ceiling:
+        return GreyboxContactRole::Ceiling;
     case novacore::physics::CharacterContactRole::Sweep:
         return GreyboxContactRole::Sweep;
     }
@@ -204,6 +207,7 @@ GreyboxCollisionResult resolveGreyboxPlayerCollision(
     result.wallPrimitiveId = resolved.wallColliderId;
     result.swept = query.useSweep;
     result.sweepHit = swept.hit;
+    result.ceilingHit = swept.ceilingHit;
     result.sweepPrimitiveId = swept.hitColliderId;
     result.groundKind = kindForPrimitiveId(world, resolved.groundColliderId, resolved.groundKind);
     result.wallKind = kindForPrimitiveId(world, resolved.wallColliderId, resolved.wallKind);
@@ -243,6 +247,24 @@ GreyboxCollisionResult resolveGreyboxPlayerCollision(
     return result;
 }
 
+novacore::math::Vec3 clipGreyboxVelocity(
+    novacore::math::Vec3 velocity, const GreyboxCollisionResult& collision, bool wallRunning) {
+    if (collision.ceilingHit && velocity.y > 0.0F) {
+        velocity.y = 0.0F;
+    }
+    if (collision.blocked && !(wallRunning && collision.nearWallRunSurface)) {
+        if (std::abs(collision.correction.x) > 0.0001F ||
+            (collision.sweepHit && std::abs(collision.sweepNormal.x) > 0.50F)) {
+            velocity.x = 0.0F;
+        }
+        if (std::abs(collision.correction.z) > 0.0001F ||
+            (collision.sweepHit && std::abs(collision.sweepNormal.z) > 0.50F)) {
+            velocity.z = 0.0F;
+        }
+    }
+    return velocity;
+}
+
 const char* greyboxContactRoleName(GreyboxContactRole role) {
     switch (role) {
     case GreyboxContactRole::Ground:
@@ -253,6 +275,8 @@ const char* greyboxContactRoleName(GreyboxContactRole role) {
         return "wall";
     case GreyboxContactRole::Bounds:
         return "bounds";
+    case GreyboxContactRole::Ceiling:
+        return "ceiling";
     case GreyboxContactRole::Sweep:
         return "sweep";
     }
