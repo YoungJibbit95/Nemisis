@@ -256,6 +256,25 @@ should be checked by sprinting, jumping and pressing Space again in mid-air.
   no Vulkan/finger-quality/complete-armed-animation or default migration claim.
 
 
+## 2026-11-20 Sprint, slide steering and jump input
+
+A slide now catches incoming ground or landing velocity. Lateral input turns
+that momentum in proportion to stick deflection. Opposing input brakes and a
+slide jump carries the direction reached on the launch tick.
+
+At 60 fixed ticks per second, sprinting forward and pressing slide and diagonal
+strafe together formerly snapped the velocity by 45 degrees. Entry now stays
+straight at 10.00 m/s with default tuning. From a 9 m/s slide, eight ticks of
+full side input retain 8.07 m/s versus 7.33 previously. Quarter and full stick
+produce 0.25 and 1.00 m/s lateral speed respectively, previously 0.69 for both.
+
+Using the game's action map, command buffer and view transform, the 100-tick
+replay agrees tick-for-tick on position, velocity, mode and landings at 30,
+60 and 144 render updates per second. One physical jump press reaches one fixed
+tick even during catch-up, preserving the air jump. GNU Release passed the
+movement and input suites against NovaCore `fbbbfb3a18e945c28c2dc0bc7c5a8d8f8d541f56`.
+Manual input and camera feel remain to be checked in the integrated playtest.
+
 ## 2026-11-20 Wall-run contact and replay
 
 The Dev Range fixed tick catches a tagged panel within 0.12 m of the capsule
