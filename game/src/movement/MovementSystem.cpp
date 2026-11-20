@@ -174,17 +174,14 @@ struct HorizontalInput final {
 
 void beginSlide(
     PlayerMovementState& state,
-    novacore::math::Vec3 direction,
+    novacore::math::Vec3 inputDirection,
     bool slideHeld,
     const MovementTuning& tuning) {
-    const auto velocityDirection = normalizedOrZero(horizontalVelocity(state.velocity));
+    auto direction = normalizedOrZero(horizontalVelocity(state.velocity));
     if (direction.lengthSquared() <= 0.0001F) {
-        direction = velocityDirection.lengthSquared() > 0.0001F
-            ? velocityDirection
+        direction = inputDirection.lengthSquared() > 0.0001F
+            ? inputDirection
             : novacore::math::Vec3{0.0F, 0.0F, 1.0F};
-    }
-    if (velocityDirection.lengthSquared() > 0.0001F && dotHorizontal(direction, velocityDirection) < 0.35F) {
-        direction = velocityDirection;
     }
 
     const float entrySpeed = std::max(horizontalSpeed(state.velocity), tuning.slideMinEntrySpeed);
@@ -402,7 +399,11 @@ PlayerMovementState MovementSystem::simulate(
         }
     }
 
-    if (state.mode == MovementMode::Grounded) {
+    if (state.mode == MovementMode::Grounded && state.slideBufferRemaining > 0.0F &&
+        state.slideCooldownRemaining <= 0.0F && horizontalSpeed(state.velocity) >= tuning_.slideMinEntrySpeed) {
+        // Catch the incoming momentum before ordinary ground steering can change it.
+        beginSlide(state, direction, command.slideHeld, tuning_);
+    } else if (state.mode == MovementMode::Grounded) {
         if (hasMoveInput) {
             const auto targetVelocity = direction * targetSpeed;
             const auto currentDirection = normalizedOrZero(horizontalVelocity(state.velocity));
@@ -446,20 +447,17 @@ PlayerMovementState MovementSystem::simulate(
         state.velocity.x *= drag;
         state.velocity.z *= drag;
     } else if (state.mode == MovementMode::Sliding) {
-        if (hasMoveInput) {
-            const auto desired = direction * std::max(horizontalSpeed(state.velocity), tuning_.slideEndSpeed);
-            state.velocity = approachHorizontalVelocity(
-                state.velocity,
-                desired,
-                tuning_.slideSteeringAcceleration,
-                fixedDeltaSeconds);
-        }
         const float speed = horizontalSpeed(state.velocity);
         if (speed > 0.001F) {
-            const float newSpeed = std::max(0.0F, speed - (tuning_.slideFriction * fixedDeltaSeconds));
-            const float scale = newSpeed / speed;
-            state.velocity.x *= scale;
-            state.velocity.z *= scale;
+            const auto forward = horizontalVelocity(state.velocity) * (1.0F / speed);
+            const novacore::math::Vec3 lateral{forward.z, 0.0F, -forward.x};
+            const float steeringStep = std::max(0.0F, tuning_.slideSteeringAcceleration) * input.magnitude * fixedDeltaSeconds;
+            const float sideStep = dotHorizontal(direction, lateral) * steeringStep;
+            const float brakingStep = std::max(0.0F, -dotHorizontal(direction, forward)) * steeringStep;
+            const auto heading = normalizedOrZero(horizontalVelocity(state.velocity) + lateral * sideStep);
+            const float newSpeed = std::max(0.0F, speed - tuning_.slideFriction * fixedDeltaSeconds - brakingStep);
+            state.velocity.x = heading.x * newSpeed;
+            state.velocity.z = heading.z * newSpeed;
         }
     } else if (state.mode == MovementMode::Dashing && hasMoveInput) {
         const auto desired = direction * std::max(horizontalSpeed(state.velocity), tuning_.sprintSpeed);
@@ -470,16 +468,6 @@ PlayerMovementState MovementSystem::simulate(
             fixedDeltaSeconds);
     } else if (state.mode == MovementMode::WallRunning) {
         accelerateWallRun(state, tuning_, fixedDeltaSeconds);
-    }
-
-    if (state.slideBufferRemaining > 0.0F &&
-        state.mode == MovementMode::Grounded &&
-        state.slideCooldownRemaining <= 0.0F &&
-        currentHorizontalSpeed >= tuning_.slideMinEntrySpeed) {
-        const auto slideDirection = hasMoveInput
-            ? direction
-            : normalizedOrZero(horizontalVelocity(state.velocity));
-        beginSlide(state, slideDirection, command.slideHeld, tuning_);
     }
 
     if (command.dashPressed &&

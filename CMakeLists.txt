@@ -244,9 +244,12 @@ set_tests_properties(
 )
 
 add_executable(nemisis_movement_replay_tests
+    game/src/input/GameplayInputBuffer.cpp
+    game/src/input/InputBindings.cpp
     game/src/input/InputCommandBuilder.cpp
     game/src/movement/MovementConfig.cpp
     game/src/movement/MovementSystem.cpp
+    game/src/player/PlayerView.cpp
     game/src/settings/GameSettings.cpp
     tests/movement_replay_tests.cpp
 )

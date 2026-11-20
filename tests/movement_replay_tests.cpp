@@ -1,10 +1,15 @@
 #include "nemisis/movement/MovementSystem.hpp"
+#include "nemisis/input/GameplayInputBuffer.hpp"
+#include "nemisis/input/InputBindings.hpp"
+#include "nemisis/input/InputCommandBuilder.hpp"
+#include "nemisis/player/PlayerView.hpp"
 #include "nemisis/movement/MovementConfig.hpp"
 
 #include "novacore/core/ConfigDocument.hpp"
 #include "novacore/core/FixedStep.hpp"
 #include "novacore/physics/CharacterController.hpp"
 
+#include <cmath>
 #include <cstdint>
 #include <cstdlib>
 #include <iostream>
@@ -354,6 +359,113 @@ void testSlideBufferMakesSprintSlideReliable() {
     expect(state.mode == nemisis::movement::MovementMode::Sliding, "landing with buffered sprint slide enters sliding");
     expect(state.slideBufferRemaining <= 0.0001F, "slide consumes buffer");
     expect(state.slideHeldConsumed, "held slide is latched after starting slide");
+}
+
+void testSlideSteeringAndBraking() {
+    using namespace nemisis::movement;
+    MovementSystem movement;
+    constexpr float dt = 1.0F / 60.0F;
+    PlayerMovementState slide{};
+    slide.mode = MovementMode::Sliding;
+    slide.velocity = {0, 0, 9};
+    slide.slideTimeRemaining = 0.7F;
+    const auto replay = [&](float side, float forward) {
+        auto state = slide;
+        nemisis::player::PlayerInputCommand command{};
+        command.move = {side, forward};
+        for (int tick = 0; tick < 8; ++tick) {
+            state = movement.simulate(state, command, dt);
+        }
+        return state;
+    };
+    const auto coast = replay(0, 0);
+    const auto fullStick = replay(1, 0);
+    const auto quarterStick = replay(0.25F, 0);
+    const auto brake = replay(0, -1);
+    expectNear(coast.lastHorizontalSpeed, 9.0F - 8.0F * movement.tuning().slideFriction * dt, 0.001F,
+               "unsteered slide loses the tuned friction per second");
+    expect(fullStick.velocity.x > 0.7F && quarterStick.velocity.x > 0.15F &&
+               quarterStick.velocity.x < fullStick.velocity.x * 0.35F, "analog pressure meters the carve");
+    expect(fullStick.lastHorizontalSpeed > coast.lastHorizontalSpeed - 0.15F &&
+               fullStick.lastHorizontalSpeed <= coast.lastHorizontalSpeed + 0.001F,
+           "a lateral carve preserves most of the forward momentum without adding speed");
+    expect(brake.velocity.z > 0.0F && brake.lastHorizontalSpeed < coast.lastHorizontalSpeed - 0.8F,
+           "opposite input brakes the slide without reversing it");
+    auto landing = slide;
+    landing.mode = MovementMode::Airborne;
+    landing.position.y = 0.01F;
+    landing.velocity.y = -3.0F;
+    nemisis::player::PlayerInputCommand press{};
+    press.move = {0.7071F, 0.7071F};
+    press.slidePressed = true;
+    const auto caught = movement.simulate(landing, press, dt);
+    expect(caught.landedThisTick && caught.mode == MovementMode::Sliding &&
+               std::abs(caught.velocity.x) < 0.5F, "buffered landing keeps the incoming direction");
+}
+
+void testSprintSlideJumpAcrossFrameRates() {
+    using namespace nemisis;
+    constexpr float dt = 1.0F / 60.0F;
+    std::vector<movement::PlayerMovementState> reference;
+    for (int hz : {30, 60, 144}) {
+        movement::MovementSystem movement;
+        movement::PlayerMovementState state{};
+        auto actions = input::createDefaultActionMap();
+        novacore::platform::InputSnapshot snapshot;
+        input::GameplayInputBuffer edges;
+        novacore::core::FixedStepAccumulator clock({60.0, 0.25});
+        std::vector<movement::PlayerMovementState> path;
+        int launches = 0;
+        while (path.size() < 100) {
+            const auto nextTick = clock.consumedSteps();
+            snapshot.beginFrame();
+            const auto key = [&](std::uint16_t code, bool down) {
+                snapshot.setButton({novacore::platform::InputControlKind::KeyboardKey, code}, down,
+                    novacore::platform::InputDeviceKind::KeyboardMouse);
+            };
+            key(input::key_codes::W, true);
+            key(input::key_codes::LeftShift, true);
+            key(input::key_codes::D, nextTick >= 30 && nextTick < 40);
+            key(input::key_codes::C, nextTick >= 30 && nextTick < 42);
+            key(input::key_codes::Space, nextTick >= 40 && nextTick < 42);
+            actions.update(snapshot);
+            edges.captureFrameEdges(actions);
+            clock.advance(1.0 / hz);
+            while (clock.shouldStep() && path.size() < 100) {
+                const auto tick = clock.consumedSteps();
+                auto command = input::buildPlayerInputCommand(actions, tick);
+                edges.consumeInto(command);
+                launches += command.jumpPressed;
+                state = movement.simulate(state, player::commandRelativeToView(command, {}), dt);
+                path.push_back(state);
+                clock.consumeStep();
+            }
+        }
+        expect(launches == 1, "one physical jump edge reaches exactly one fixed tick");
+        expect(path[30].mode == movement::MovementMode::Sliding && std::abs(path[30].velocity.x) < 0.001F,
+               "slide starts immediately along the sprint when the player also presses strafe");
+        expect(path[40].mode == movement::MovementMode::Airborne && path[40].velocity.y > 0.0F &&
+                   path[40].lastHorizontalSpeed > path[39].lastHorizontalSpeed,
+               "the slide jump responds on the command tick and carries the carved momentum");
+        expect(path[41].hasDoubleJump && !path[41].holoStep.active,
+               "holding the launch button into a catch-up tick preserves the air jump");
+        expect(path.back().mode == movement::MovementMode::Grounded, "the chain returns to the ground");
+        if (reference.empty()) {
+            reference = path;
+        } else {
+            for (std::size_t tick = 0; tick < path.size(); ++tick) {
+                const auto& a = reference[tick];
+                const auto& b = path[tick];
+                if (a.mode != b.mode || a.landedThisTick != b.landedThisTick ||
+                    (a.position - b.position).lengthSquared() != 0.0F ||
+                    (a.velocity - b.velocity).lengthSquared() != 0.0F) {
+                    std::cerr << "First divergent slide replay tick " << tick << " at " << hz << " Hz\n";
+                    expect(false, "30/60/144 Hz agree on each sprint, slide, jump and landing tick");
+                    break;
+                }
+            }
+        }
+    }
 }
 
 void testWallRunContactAndWallJumpReplay() {
@@ -763,6 +875,8 @@ int main() {
     testDashCooldownReplay();
     testSlideDurationAndSlideJumpReplay();
     testSlideBufferMakesSprintSlideReliable();
+    testSlideSteeringAndBraking();
+    testSprintSlideJumpAcrossFrameRates();
     testWallRunContactAndWallJumpReplay();
     testWallRunContactGraceReplay();
     testWallRunOnMirroredPanels();
