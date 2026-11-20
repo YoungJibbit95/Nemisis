@@ -204,7 +204,7 @@ void GameApp::onStartup() {
     rendererInfo.requireVulkan = options_.requireVulkanRenderer;
     renderer_.create(window_, rendererInfo);
     if (!options_.fullGame || menu_.gameplayActive()) {
-        loadPlayableResources();
+        loadPlayableResources(menu_.screen());
         if (physicsProps_) { physicsProps_->reset(greyboxWorld_); }
         else { staticCollision_ = dev::buildGreyboxPhysicsWorld(greyboxWorld_); }
     }
@@ -866,7 +866,7 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
 #endif
     menu_.update(actions_, settings_, activeLoadout_, attachmentRegistry_, buildMenuPointerState(window_, actions_));
     if (options_.fullGame && previousScreen == ui::GameScreen::Loading && menu_.loadingPlayableMap()) {
-        loadPlayableResources();
+        loadPlayableResources(menu_.loadingTarget());
     }
     menu_.updateFrame(context.deltaSeconds);
     if (options_.lockDevRange && menu_.screen() != ui::GameScreen::DevRange) { menu_.showDevRange(); }
@@ -970,7 +970,8 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
         activeLoadout_,
         attachmentRegistry_,
         activeAttachmentBuild_,
-        accountStats_);
+        accountStats_,
+        usesProjectRig() && options_.projectRifleReady ? player::projectRifleAimWeight(cameraRig_.adsAlpha) : 0.0F);
 #if NEMISIS_HAS_RMLUI
     if (uiShowcase_) {
         uiShowcase_->render(frameInfo.ui);
@@ -1002,11 +1003,52 @@ bool GameApp::isHeadless() const {
     return window_.isHeadless();
 }
 
-void GameApp::loadPlayableResources() {
-    if (playableResourcesLoaded_) { return; }
-    loadAssetCatalog();
-    registerDevMeshResources();
-    if (options_.physicsProps) {
+void GameApp::loadPlayableResources(ui::GameScreen screen) {
+    const bool facilityOnly = options_.fullGame && screen == ui::GameScreen::OuterFacility;
+    if (rangeResourcesLoaded_ || (facilityOnly && playableResourcesLoaded_)) { return; }
+    const auto start = std::chrono::steady_clock::now();
+    if (!playableResourcesLoaded_) { loadAssetCatalog(); }
+    const std::span<const std::string_view> requested = facilityOnly ? assets::outerFacilityRenderableAssetIds()
+        : std::span<const std::string_view>{assets::requiredDevSandboxRenderableAssetIds()};
+    std::vector<std::string_view> missing;
+    for (const auto id : requested) {
+        if (!devAssetBindings_.meshCatalog().findByAssetId(id)) {
+            missing.push_back(id);
+            if (options_.fullGame) {
+                if (const auto* record = assetCatalog_.find(id)) { assetStreamer_.request(record->id, record->priority, 0); }
+            }
+        }
+    }
+    const auto batch = devAssetBindings_.bindAssets(assetCatalog_, missing, ".", true);
+    devAssetSummary_.include(batch);
+    if (options_.fullGame && !batch.ready()) {
+        throw std::runtime_error("Playable map asset import failed: " + (batch.errors.empty() ? std::string("incomplete batch") : batch.errors.front()));
+    }
+    novacore::core::logInfo(
+        "game",
+        "Dev mesh assets ready: " + std::to_string(devAssetSummary_.renderableAssetCount) + "/" +
+            std::to_string(devAssetSummary_.requiredAssetCount) +
+            " metadata=" + std::to_string(devAssetSummary_.metadataAssetCount) +
+            " imported=" + std::to_string(devAssetSummary_.importedAssetCount) +
+            " meshes=" + std::to_string(devAssetSummary_.totalMeshCount) +
+            " nodes=" + std::to_string(devAssetSummary_.totalNodeCount) +
+            " materials=" + std::to_string(devAssetSummary_.totalMaterialCount) +
+            " skinned=" + std::to_string(devAssetSummary_.skinnedAssetCount) +
+            " animated=" + std::to_string(devAssetSummary_.animatedAssetCount) +
+            " skins=" + std::to_string(devAssetSummary_.totalSkinCount) +
+            " clips=" + std::to_string(devAssetSummary_.totalAnimationCount) +
+            " primitives=" + std::to_string(devAssetSummary_.totalPrimitiveCount) +
+            " vertices=" + std::to_string(devAssetSummary_.totalVertexCount) +
+            " indices=" + std::to_string(devAssetSummary_.totalIndexCount));
+    for (const auto& error : devAssetSummary_.errors) {
+        novacore::core::logWarning("game", "Dev asset binding failed: " + error);
+    }
+    novacore::core::logInfo("game", "Dev sandbox asset preload requests queued: " + std::to_string(assetStreamer_.pendingCount()));
+    registerDevMeshResources(missing);
+    novacore::core::logInfo("game", std::string("Map resources ready: ") + (facilityOnly ? "outer_facility" : "firing_range") +
+        " new_meshes=" + std::to_string(batch.renderableAssetCount) + " total_meshes=" + std::to_string(devAssetSummary_.renderableAssetCount) +
+        " load_ms=" + std::to_string(std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count()));
+    if (options_.physicsProps && !physicsProps_) {
         physicsProps_ = std::make_unique<dev::DevRangeRigidBodies>();
         const auto* crate = devAssetBindings_.meshCatalog().findByAssetId("map_a2_cover_crate_01");
         const auto handle = devMeshResources_.find("map_a2_cover_crate_01");
@@ -1016,6 +1058,7 @@ void GameApp::loadPlayableResources() {
         physicsProps_->setVisual(handle->second, *crate->meshData);
     }
     playableResourcesLoaded_ = true;
+    rangeResourcesLoaded_ = !facilityOnly;
 }
 
 void GameApp::loadAssetCatalog() {
@@ -1027,9 +1070,7 @@ void GameApp::loadAssetCatalog() {
         return;
     }
 
-    const auto devZone = assetCatalog_.devSandboxStreamingZone();
-    assetStreamer_.requestZone(devZone, 0);
-    devAssetSummary_ = devAssetBindings_.bindRequiredAssets(assetCatalog_, ".");
+    if (!options_.fullGame) { assetStreamer_.requestZone(assetCatalog_.devSandboxStreamingZone(), 0); }
     if (options_.projectFPSPreview) {
 #if defined(NEMISIS_PROJECT_FPS_PREVIEW)
         const auto manifest = std::filesystem::path("project-fps-candidate") /
@@ -1060,28 +1101,6 @@ void GameApp::loadAssetCatalog() {
     novacore::core::logInfo(
         "game",
         "Asset catalog loaded: " + std::to_string(assetCatalog_.assetCount()) + " assets");
-    novacore::core::logInfo(
-        "game",
-        "Dev sandbox asset preload requests queued: " + std::to_string(assetStreamer_.pendingCount()));
-    novacore::core::logInfo(
-        "game",
-        "Dev mesh assets ready: " + std::to_string(devAssetSummary_.renderableAssetCount) + "/" +
-            std::to_string(devAssetSummary_.requiredAssetCount) +
-            " metadata=" + std::to_string(devAssetSummary_.metadataAssetCount) +
-            " imported=" + std::to_string(devAssetSummary_.importedAssetCount) +
-            " meshes=" + std::to_string(devAssetSummary_.totalMeshCount) +
-            " nodes=" + std::to_string(devAssetSummary_.totalNodeCount) +
-            " materials=" + std::to_string(devAssetSummary_.totalMaterialCount) +
-            " skinned=" + std::to_string(devAssetSummary_.skinnedAssetCount) +
-            " animated=" + std::to_string(devAssetSummary_.animatedAssetCount) +
-            " skins=" + std::to_string(devAssetSummary_.totalSkinCount) +
-            " clips=" + std::to_string(devAssetSummary_.totalAnimationCount) +
-            " primitives=" + std::to_string(devAssetSummary_.totalPrimitiveCount) +
-            " vertices=" + std::to_string(devAssetSummary_.totalVertexCount) +
-            " indices=" + std::to_string(devAssetSummary_.totalIndexCount));
-    for (const auto& error : devAssetSummary_.errors) {
-        novacore::core::logWarning("game", "Dev asset binding failed: " + error);
-    }
 }
 
 void GameApp::applyConfig(std::string_view name) {
@@ -1310,7 +1329,7 @@ void GameApp::ensureLocalPlayer() {
 }
 
 void GameApp::enterPlayableMap() {
-    loadPlayableResources();
+    loadPlayableResources(menu_.screen());
     greyboxWorld_ = menu_.screen() == ui::GameScreen::OuterFacility
         ? dev::createOuterFacilityWorld() : dev::createDevRangeGreyboxWorld();
     if (!physicsProps_) { staticCollision_ = dev::buildGreyboxPhysicsWorld(greyboxWorld_); }
@@ -1437,12 +1456,12 @@ void GameApp::advanceMenuFlowSmoke(const novacore::core::FrameContext& context) 
         label = "main_menu/account";
         break;
     case 4:
-        menu_.showLoadingScreen(ui::GameScreen::DevRange, 0.58F);
-        label = "loading/dev_range";
+        menu_.showLoadingScreen(ui::GameScreen::OuterFacility, 0.58F);
+        label = "loading/outer_facility";
         break;
     case 5:
-        menu_.showDevRange();
-        label = "dev_range";
+        menu_.showOuterFacility();
+        label = "outer_facility";
         break;
     case 6:
         menu_.showLoadingScreen(ui::GameScreen::TeamDeathmatch, 0.64F);
@@ -1461,8 +1480,8 @@ void GameApp::advanceMenuFlowSmoke(const novacore::core::FrameContext& context) 
         label = "control";
         break;
     case 10:
-        menu_.showOuterFacility();
-        label = "outer_facility";
+        menu_.showDevRange();
+        label = "dev_range";
         break;
     case 11:
         menu_.showMainMenu();
@@ -1487,12 +1506,11 @@ void GameApp::syncRelativeMouseMode() {
     }
 }
 
-void GameApp::registerDevMeshResources() {
-    devMeshResources_.clear();
+void GameApp::registerDevMeshResources(std::span<const std::string_view> assetIds) {
 
     std::size_t missing = 0;
     std::size_t rejected = 0;
-    for (const auto assetId : assets::requiredDevSandboxRenderableAssetIds()) {
+    for (const auto assetId : assetIds) {
         if (options_.projectFPSPreview && !options_.fullGame && assetId == "chr_a1_fp_arms_01") { continue; }
         const auto* source = devAssetBindings_.meshCatalog().findByAssetId(assetId);
         if (source == nullptr || !source->meshData.has_value()) {
@@ -1558,7 +1576,7 @@ void GameApp::registerDevMeshResources() {
         devMeshResources_[std::string(resourceId)] = handle;
     }
 
-    if (options_.projectFPSPreview) {
+    if (options_.projectFPSPreview && !playableResourcesLoaded_) {
         const auto* arms = devAssetBindings_.meshCatalog().findByAssetId(dev::kProjectFPSArmsAssetId);
         const auto* body = devAssetBindings_.meshCatalog().findByAssetId(dev::kProjectFPSBodyAssetId);
         if (!arms || !body || !arms->meshData || !body->meshData ||

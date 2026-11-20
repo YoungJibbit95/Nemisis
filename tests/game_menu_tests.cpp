@@ -316,10 +316,10 @@ void testCombatFeedbackBetweenSimulationTicks() {
     nemisis::weapons::AttachmentRegistry attachments;
     nemisis::weapons::AttachmentBuildSummary build{};
     build.effectiveMagazineSize = 30;
-    const auto render = [&] {
+    const auto render = [&](float physicalSightWeight = 0.0F) {
         novacore::render::RenderFrameInfo frame{};
         menu.appendRenderCommands(frame, sample, {}, "Vulkan", "", 0, {}, {}, {}, {},
-            settings, {}, attachments, build, {});
+            settings, {}, attachments, build, {}, physicalSightWeight);
         return frame;
     };
     const auto showsText = [](const auto& frame, std::string_view text) {
@@ -329,6 +329,7 @@ void testCombatFeedbackBetweenSimulationTicks() {
 
     sample.weapon.ammoInMagazine = 2;
     const auto idle = render();
+    expect(render(1.0F).debugLines.size() < idle.debugLines.size(), "held iron sights replace the hip crosshair");
     expect(showsText(idle, "LOW AMMO"), "low magazine is readable without aiming down sights");
     nemisis::weapons::FireResult fired{};
     fired.fired = true;

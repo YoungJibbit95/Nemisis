@@ -32,6 +32,7 @@ endif()
 list(FIND smoke_arguments "--menu-flow-smoke-test" menu_flow_index)
 if(NOT menu_flow_index EQUAL -1)
     foreach(expected IN ITEMS "start_screen=menu lock_dev_range=false" "main_menu/settings"
+            "Map resources ready: outer_facility" "Map resources ready: firing_range"
             "Entered playable map: outer_facility_01" "Entered playable map: dev_range_greybox_01" "main_menu/return")
         string(FIND "${smoke_output}" "${expected}" marker)
         if(marker EQUAL -1)

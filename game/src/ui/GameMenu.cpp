@@ -806,18 +806,16 @@ void renderDevRangeHud(
     const weapons::AttachmentBuildSummary& attachmentSummary,
     const settings::GameSettings& settings,
     const HudLayout& layout,
-    bool facility) {
+    bool facility,
+    float physicalSightWeight) {
     const float crosshairGap = 6.0F +
         (sample.fire.movementSpreadDegrees * 1.4F) -
         (std::clamp(sample.weapon.adsAlpha, 0.0F, 1.0F) * 1.6F);
-    addHudCrosshair(
-        frame,
-        layout,
-        640.0F,
-        360.0F,
-        std::max(4.0F, crosshairGap),
-        12.0F,
-        palette::TextPrimary);
+    if (physicalSightWeight < 0.995F) {
+        auto ink = palette::TextPrimary;
+        ink[3] *= 1.0F - physicalSightWeight;
+        addHudCrosshair(frame, layout, 640.0F, 360.0F, std::max(4.0F, crosshairGap), 12.0F, ink);
+    }
     renderHitFeedback(frame, sample.rangeSession, settings.gameplay, layout);
 
     const float healthRatio = sample.playerHealth.maxHealth > 0.0F
@@ -1300,7 +1298,8 @@ void GameMenu::appendRenderCommands(
     const weapons::WeaponLoadout& loadout,
     const weapons::AttachmentRegistry& attachments,
     const weapons::AttachmentBuildSummary& attachmentSummary,
-    const player::AccountStats& accountStats) const {
+    const player::AccountStats& accountStats,
+    float physicalSightWeight) const {
     const auto layout = makeHudLayout(backendFrameStats, settings);
     addRect(frame, 0.0F, 0.0F, layout.screenWidth, layout.screenHeight, {0.0F, 0.0F, 0.0F, 0.05F});
 
@@ -1313,7 +1312,7 @@ void GameMenu::appendRenderCommands(
         renderMainMenuShell(frame, tab_, selectedIndex_, settings, loadout, attachments, attachmentSummary, accountStats);
     } else if (gameplayActive()) {
         (void)greyboxWorld;
-        renderDevRangeHud(frame, sample, attachmentSummary, settings, layout, screen_ == GameScreen::OuterFacility);
+        renderDevRangeHud(frame, sample, attachmentSummary, settings, layout, screen_ == GameScreen::OuterFacility, physicalSightWeight);
     } else {
         renderPlaceholderMode(frame, screen_);
     }

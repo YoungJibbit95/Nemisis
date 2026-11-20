@@ -43,6 +43,7 @@
 #include <filesystem>
 #include <memory>
 #include <optional>
+#include <span>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -86,7 +87,7 @@ public:
 private:
     [[nodiscard]] bool usesProjectRig() const;
     void enterPlayableMap();
-    void loadPlayableResources();
+    void loadPlayableResources(ui::GameScreen screen);
     void updateVisiblePlayerPose(float animationDelta);
     void loadAssetCatalog();
     void applyConfig(std::string_view name);
@@ -102,7 +103,7 @@ private:
     void tickRangeSession(float fixedDeltaSeconds);
     void advanceMenuFlowSmoke(const novacore::core::FrameContext& context);
     void syncRelativeMouseMode();
-    void registerDevMeshResources();
+    void registerDevMeshResources(std::span<const std::string_view> assetIds);
     void releaseDevMeshResources();
     [[nodiscard]] dev::DevRangePlayerRenderState currentPlayerRenderState() const;
 
@@ -131,6 +132,7 @@ private:
     std::unique_ptr<dev::DevRangeRigidBodies> physicsProps_;
     dev::DevRangeRenderSceneBuilder devRangeRenderer_;
     bool playableResourcesLoaded_ = false;
+    bool rangeResourcesLoaded_ = false;
     dev::DevRangeRenderSceneStats latestDevRangeRenderStats_;
     ui::GameMenu menu_;
 #if NEMISIS_HAS_RMLUI

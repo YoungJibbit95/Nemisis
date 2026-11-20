@@ -88,13 +88,15 @@ public:
         const weapons::WeaponLoadout& loadout,
         const weapons::AttachmentRegistry& attachments,
         const weapons::AttachmentBuildSummary& attachmentSummary,
-        const player::AccountStats& accountStats) const;
+        const player::AccountStats& accountStats,
+        float physicalSightWeight = 0.0F) const;
 
     [[nodiscard]] GameScreen screen() const;
     [[nodiscard]] MenuTab tab() const;
     [[nodiscard]] bool gameplayActive() const;
     [[nodiscard]] bool quitRequested() const { return quitRequested_; }
     [[nodiscard]] bool loadingPlayableMap() const;
+    [[nodiscard]] GameScreen loadingTarget() const { return loadingTarget_; }
     [[nodiscard]] bool debugOverlayEnabled() const;
     [[nodiscard]] DebugPage debugPage() const;
     [[nodiscard]] float loadingProgress() const;
