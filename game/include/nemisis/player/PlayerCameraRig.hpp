@@ -87,7 +87,7 @@ struct CameraRigState final {
 void resetCameraRig(CameraRigState& state);
 
 [[nodiscard]] novacore::math::Vec3 gameplayEyePosition(novacore::math::Vec3 feet,
-    movement::MovementMode mode, bool crouchHeld, const CameraRigTuning& tuning = {});
+    movement::MovementMode mode, float crouchFraction, const CameraRigTuning& tuning = {});
 
 [[nodiscard]] float cameraRigHorizontalSpeed(novacore::math::Vec3 velocity);
 

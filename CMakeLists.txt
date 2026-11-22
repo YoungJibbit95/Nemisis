@@ -62,45 +62,29 @@ add_executable(nemisis_game
     game/src/GameApp.cpp
     game/src/assets/DevAssetBindings.cpp
     game/src/assets/GameAssetCatalog.cpp
-    game/src/dev/DebugTarget.cpp
     game/src/dev/DevRangeRenderScene.cpp
     game/src/dev/DevRangeRigidBodies.cpp
     game/src/dev/DevRangeSession.cpp
     game/src/dev/DevSandbox.cpp
-    game/src/dev/DevTargetRange.cpp
-    game/src/dev/GreyboxCollision.cpp
-    game/src/dev/GreyboxWorld.cpp
-    game/src/dev/OuterFacility.cpp
     game/src/input/InputBindings.cpp
     game/src/input/InputCommandBuilder.cpp
     game/src/input/GameplayInputBuffer.cpp
     game/src/main.cpp
     game/src/movement/MovementConfig.cpp
-    game/src/movement/MovementSystem.cpp
-    game/src/net/CommandMessages.cpp
     game/src/net/LoopbackCommandBridge.cpp
-    game/src/net/PredictionHistory.cpp
     game/src/net/SnapshotInterpolation.cpp
-    game/src/net/SnapshotMessages.cpp
     game/src/player/PlayerAnimation.cpp
     game/src/player/PlayerCommandQueue.cpp
-    game/src/player/PlayerCameraRig.cpp
     game/src/player/PlayerFirstPersonRig.cpp
-    game/src/player/PlayerHealth.cpp
     game/src/player/PlayerProfile.cpp
     game/src/player/PlayerSkeletalAnimator.cpp
     game/src/player/PlayerSpawn.cpp
-    game/src/player/PlayerView.cpp
     game/src/render/RenderTuning.cpp
     game/src/settings/GameSettings.cpp
     game/src/settings/UserSettingsPersistence.cpp
     game/src/ui/GameMenu.cpp
     game/src/ui/UiCanvas.cpp
     game/src/weapons/WeaponAttachments.cpp
-    game/src/weapons/WeaponMetrics.cpp
-    game/src/weapons/WeaponShot.cpp
-    game/src/weapons/WeaponSimulation.cpp
-    game/src/weapons/WeaponSystem.cpp
 )
 
 target_include_directories(nemisis_game
@@ -903,3 +887,4 @@ if(NEMISIS_ENABLE_HAND_IK)
 endif()
 
 include(cmake/RmlUi.cmake)
+include(cmake/FacilityMatch.cmake)

@@ -1156,6 +1156,30 @@ void renderDebugOverlay(
 
 } // namespace
 
+void fitInterfaceCanvas(novacore::render::RenderFrameInfo& frame,
+    const novacore::render::RenderBackendFrameStats& backend, std::size_t firstRect,
+    std::size_t firstLine, std::size_t firstText, float textScale) {
+    const auto layout = makeHudLayout(backend, {});
+    if (layout.scale == 1.0F && layout.originX == 0.0F && layout.originY == 0.0F && textScale == 1.0F) return;
+    for (auto& rect : std::span(frame.debugRects).subspan(firstRect)) {
+        rect.x = hudX(layout, rect.x);
+        rect.y = hudY(layout, rect.y);
+        rect.width *= layout.scale;
+        rect.height *= layout.scale;
+    }
+    for (auto& line : std::span(frame.debugLines).subspan(firstLine)) {
+        line.x0 = hudX(layout, line.x0);
+        line.x1 = hudX(layout, line.x1);
+        line.y0 = hudY(layout, line.y0);
+        line.y1 = hudY(layout, line.y1);
+    }
+    for (auto& text : std::span(frame.debugTexts).subspan(firstText)) {
+        text.x = hudX(layout, text.x);
+        text.y = hudY(layout, text.y);
+        text.scale *= layout.scale * textScale;
+    }
+}
+
 void GameMenu::update(const novacore::platform::InputActionMap& actions) {
     settings::GameSettings settings;
     weapons::AttachmentRegistry attachments;

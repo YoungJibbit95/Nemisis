@@ -1,6 +1,7 @@
 #pragma once
 
 #include "nemisis/weapons/WeaponShot.hpp"
+#include "nemisis/player/PlayerHealth.hpp"
 
 #include "novacore/math/Types.hpp"
 
@@ -30,6 +31,7 @@ struct DebugTargetHitResult final {
 struct DebugTargetTraceResult final {
     bool hit = false;
     float distanceMeters = 0.0F;
+    player::DamageZone zone = player::DamageZone::Body;
 };
 
 void resetDebugTarget(DebugTargetState& target);

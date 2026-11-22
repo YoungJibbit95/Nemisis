@@ -51,6 +51,10 @@ struct MenuPointerState final {
     bool primaryReleased = false;
 };
 
+void fitInterfaceCanvas(novacore::render::RenderFrameInfo& frame,
+    const novacore::render::RenderBackendFrameStats& backend, std::size_t firstRect,
+    std::size_t firstLine, std::size_t firstText, float textScale = 1.0F);
+
 class GameMenu final {
 public:
     explicit GameMenu(bool showDebugOverlay = true) : debugOverlayEnabled_(showDebugOverlay) {}
