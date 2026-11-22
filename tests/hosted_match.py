@@ -4,11 +4,18 @@ import contextlib
 import heapq
 import queue
 import socket
+import struct
 import subprocess
 import sys
 import tempfile
 import threading
 import time
+
+
+MATCH_PROTOCOL = 0x4D415405
+READY_HEADER = struct.pack("<IB", MATCH_PROTOCOL, 6)
+SNAPSHOT_HEADER = struct.Struct("<IBQBBBII")
+DUEL_SECONDS = 20
 
 
 def stop_process(process):
@@ -38,7 +45,7 @@ def wait_for_line(output, transcript, prefix, deadline):
 
 
 @contextlib.contextmanager
-def lagged_endpoint(server):
+def lagged_endpoint(server, *, ready_release=None, held_snapshots=None):
     """Each client gets a separate source endpoint and a deterministic impairer."""
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as relay:
         relay.bind(("127.0.0.1", 0))
@@ -51,6 +58,7 @@ def lagged_endpoint(server):
 
         def forward():
             client = None
+            withheld_ready = False
             pending = []
             ordering = 0
             try:
@@ -73,6 +81,14 @@ def lagged_endpoint(server):
                             continue
                         direction, destination = 0, server
                     received[direction] += 1
+                    if ready_release is not None and not ready_release.is_set():
+                        if direction == 0 and payload.startswith(READY_HEADER):
+                            withheld_ready = True
+                            continue
+                        if direction == 1 and withheld_ready and len(payload) >= SNAPSHOT_HEADER.size:
+                            version, kind, token, _, phase, interrupted, tick, remaining = SNAPSHOT_HEADER.unpack_from(payload)
+                            if version == MATCH_PROTOCOL and kind == 5 and token:
+                                held_snapshots.put((phase, interrupted, tick, remaining))
                     if received[direction] % (11 if direction == 0 else 13) == 0:
                         dropped[direction] += 1
                         continue
@@ -100,10 +116,15 @@ def play_round(executable, server, player_count, rules, deadline, impair=False):
     with contextlib.ExitStack() as cleanup:
         processes = []
         dropped_counts = []
+        ready_release = threading.Event()
+        held_snapshots = queue.Queue()
         for index in range(player_count):
             port = server[1]
             if impair:
-                port, dropped, admitted = cleanup.enter_context(lagged_endpoint(server))
+                hold = index == 1
+                port, dropped, admitted = cleanup.enter_context(lagged_endpoint(
+                    server, ready_release=ready_release if hold else None, held_snapshots=held_snapshots
+                ))
                 dropped_counts.append(dropped)
             report = cleanup.enter_context(tempfile.TemporaryFile(mode="w+", encoding="utf-8", errors="replace"))
             probe = subprocess.Popen(
@@ -117,6 +138,17 @@ def play_round(executable, server, player_count, rules, deadline, impair=False):
                 assert admitted.wait(5), "First duel client did not receive a lobby snapshot"
                 # Hold one admitted player in the lobby beyond the eight-second peer timeout.
                 time.sleep(8.5)
+            if impair and index == 1:
+                # These snapshots are observed only after the admitted peer's Ready was withheld.
+                ready_deadline = time.monotonic() + 6
+                for _ in range(3):
+                    try:
+                        state = held_snapshots.get(timeout=max(0, ready_deadline - time.monotonic()))
+                    except queue.Empty as error:
+                        raise AssertionError("No Waiting snapshots after withholding Ready") from error
+                    assert state == (0, 0, 0, DUEL_SECONDS * 60), state
+                ready_release.set()
+                print("MATCH_READY_GATE waiting_snapshots=3 tick=0", flush=True)
 
         slots = []
         results = []
@@ -194,7 +226,7 @@ def main():
                 "--match-server=0",
                 "--bind=127.0.0.1",
                 "--round=dev-range,tdm,6,10000,2",
-                "--round=outer-facility,duel,1,2,20",
+                f"--round=outer-facility,duel,1,2,{DUEL_SECONDS}",
             ],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,

@@ -17,8 +17,8 @@ Windows dependency-light Release server.
 Each `--round` specifies the map, mode, players per team, score limit and round
 duration in seconds, in that order. Both `outer-facility` and `dev-range`
 support `duel` (1v1) and `tdm` (one to six players per team). The score limit
-accepts 1–10000 and duration accepts 1–3600 seconds. A round starts when all
-slots are occupied. Join order alternates teams. A kill awards one point. At
+accepts 1–10000 and duration accepts 1–3600 seconds. A round starts when all slots are occupied and every player has rendered the
+server-selected map and reported ready. The timer remains stopped while players load. Join order alternates teams. A kill awards one point. At
 the score or time limit the server sends the final scores, clears the sessions
 and opens the next lobby on the same UDP port. The rotation repeats. Players
 rejoin to enter the next round. An active player timing out after eight seconds

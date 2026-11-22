@@ -63,7 +63,7 @@ void sanitizeMatchCommand(player::PlayerInputCommand &command) {
     command.look = {bounded(command.look.x, 180), bounded(command.look.y, 180)};
 }
 namespace {
-constexpr std::uint32_t protocol = 0x4d415404;
+constexpr std::uint32_t protocol = 0x4d415405;
 // A player can advance at most one command and register one hit per server tick.
 // Even the longest supported round fits in three base-128 groups.
 void writeTickCounter(novacore::net::PacketWriter& writer, std::uint32_t value) {
@@ -110,7 +110,7 @@ bool readRemotePose(novacore::net::PacketReader& reader, Duelist& p) {
     p.movement.hasWallRunContact = (flags & 32) != 0;
     return true;
 }
-constexpr std::uint8_t joinType = 1, challengeType = 2, acceptType = 3, commandType = 4, snapshotType = 5;
+constexpr std::uint8_t joinType = 1, challengeType = 2, acceptType = 3, commandType = 4, snapshotType = 5, readyType = 6;
 void header(novacore::net::PacketWriter &w, std::uint8_t type) {
     w.writeU32(protocol);
     w.writeU8(type);
@@ -154,6 +154,10 @@ std::optional<std::uint64_t> decodeMatchChallenge(const std::vector<std::uint8_t
 std::vector<std::uint8_t> encodeMatchAccept(std::uint64_t token) { return tokenPacket(acceptType, token); }
 std::optional<std::uint64_t> decodeMatchAccept(const std::vector<std::uint8_t> &b) {
     return readToken(b, acceptType);
+}
+std::vector<std::uint8_t> encodeMatchReady(std::uint64_t token) { return tokenPacket(readyType, token); }
+std::optional<std::uint64_t> decodeMatchReady(const std::vector<std::uint8_t> &bytes) {
+    return readToken(bytes, readyType);
 }
 std::vector<std::uint8_t> encodeMatchCommands(unsigned slot, std::uint64_t token,
                                               const std::vector<MatchInput> &inputs) {

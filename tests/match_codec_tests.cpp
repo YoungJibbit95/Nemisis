@@ -81,6 +81,9 @@ int main() {
     if (!isMatchJoin(encodeMatchJoin()) || decodeMatchChallenge(encodeMatchAccept(123)) ||
         decodeMatchAccept(encodeMatchAccept(123)) != 123)
         return 7;
+    if (decodeMatchReady(encodeMatchReady(123)) != 123 ||
+        decodeMatchAccept(encodeMatchReady(123)) || decodeMatchReady(encodeMatchReady(0)))
+        return 11;
     std::cout << "Match codec bytes: " << bytes.size() << '\n';
     return 0;
 }

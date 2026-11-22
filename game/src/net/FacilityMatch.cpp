@@ -45,6 +45,7 @@ struct Peer {
     Clock::time_point lastSeen{};
     std::map<std::uint64_t, MatchInput> inputs;
     unsigned firstAckSamples = 0;
+    bool ready = false;
 };
 
 struct RoundStats {
@@ -110,7 +111,7 @@ public:
                 }
             }
             if (frame_.phase == MatchPhase::Waiting &&
-                std::ranges::all_of(peers_, [](const Peer& peer) { return peer.token != 0; }))
+                std::ranges::all_of(peers_, [](const Peer& peer) { return peer.token != 0 && peer.ready; }))
                 frame_.phase = MatchPhase::Playing;
 
             const bool simulated = frame_.phase == MatchPhase::Playing;
@@ -138,7 +139,10 @@ private:
             return;
         }
         if (frame_.phase == MatchPhase::Waiting) {
-            if (decodeMatchAccept(bytes) == peer->token) peer->lastSeen = now;
+            if (decodeMatchReady(bytes) == peer->token) {
+                peer->lastSeen = now;
+                peer->ready = true;
+            } else if (decodeMatchAccept(bytes) == peer->token) peer->lastSeen = now;
             else if (isMatchJoin(bytes)) socket_.send(source, encodeMatchChallenge(peer->token));
             return;
         }
@@ -274,6 +278,7 @@ int runFacilityMatchProbe(Endpoint remote) {
         // Hold additional inputs until the first acknowledgement is applied.
         client.tick(tracedPrediction && !tracedAck ? std::nullopt : std::optional{command});
         const auto& frame = client.authoritative();
+        if (frame.phase == MatchPhase::Waiting) client.confirmMapReady();
         if (frame.phase != MatchPhase::Waiting && !tracedPrediction) {
             std::cout << "MATCH_RULES " << mapName(frame.rules.map) << ' ' << modeName(frame.rules.mode)
                 << ' ' << frame.rules.teamSize << "\nMATCH_SLOT " << client.slot()

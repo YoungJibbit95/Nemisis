@@ -39,6 +39,7 @@ public:
     ~FacilityMatchClient();
     // An empty input polls snapshots and resends pending commands without predicting a new tick.
     void tick(std::optional<player::PlayerInputCommand> command);
+    void confirmMapReady();
     [[nodiscard]] unsigned slot() const;
     [[nodiscard]] const MatchFrame& authoritative() const;
     [[nodiscard]] const Duelist& predicted() const;

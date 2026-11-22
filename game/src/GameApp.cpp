@@ -1027,6 +1027,9 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
     const auto submitStart = options_.profileRange ? Clock::now() : Clock::time_point{};
     renderer_.beginFrame(frameInfo);
     renderer_.endFrame();
+    // The negotiated world and its resources have now reached an actual frame.
+    if (facilityMatch_ && menu_.gameplayActive() && !window_.isHeadless())
+        facilityMatch_->confirmMapReady();
     if (options_.runDeploymentSmoke) {
         if (menu_.loadingPlayableMap()) {
             ++deploymentLoadingFrames_;

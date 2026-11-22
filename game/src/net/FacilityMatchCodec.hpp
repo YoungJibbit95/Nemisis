@@ -24,6 +24,8 @@ std::vector<std::uint8_t> encodeMatchChallenge(std::uint64_t token);
 std::optional<std::uint64_t> decodeMatchChallenge(const std::vector<std::uint8_t> &);
 std::vector<std::uint8_t> encodeMatchAccept(std::uint64_t token);
 std::optional<std::uint64_t> decodeMatchAccept(const std::vector<std::uint8_t> &);
+std::vector<std::uint8_t> encodeMatchReady(std::uint64_t token);
+std::optional<std::uint64_t> decodeMatchReady(const std::vector<std::uint8_t> &);
 std::vector<std::uint8_t> encodeMatchCommands(unsigned slot, std::uint64_t token,
                                               const std::vector<MatchInput> &inputs);
 std::optional<MatchCommandMessage> decodeMatchCommands(const std::vector<std::uint8_t> &);

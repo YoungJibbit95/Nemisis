@@ -25,6 +25,7 @@ struct FacilityMatchClient::Impl {
     std::deque<MatchInput> pending;
     std::uint64_t nextInput = 0, token = 0;
     bool received = false;
+    bool ready = false;
     Clock::time_point lastSeen = Clock::now();
     Clock::time_point lastRetry{};
     Clock::time_point challengeTime{};
@@ -37,6 +38,10 @@ FacilityMatchClient::~FacilityMatchClient() = default;
 unsigned FacilityMatchClient::slot() const { return impl_->slot; }
 const MatchFrame &FacilityMatchClient::authoritative() const { return impl_->frame; }
 const Duelist &FacilityMatchClient::predicted() const { return impl_->predicted; }
+void FacilityMatchClient::confirmMapReady() {
+    if (impl_->received && impl_->frame.phase == MatchPhase::Waiting)
+        impl_->ready = true;
+}
 void FacilityMatchClient::tick(std::optional<Command> command) {
     auto &c = *impl_;
     const bool wasPlaying = c.frame.phase == MatchPhase::Playing;
@@ -89,13 +94,22 @@ void FacilityMatchClient::tick(std::optional<Command> command) {
         for (const auto &input : c.pending)
             c.arena->simulate(c.predicted, input.command);
     }
+    // Consume queued playing snapshots before considering a fresh lobby handshake.
+    if (!newest && c.received && c.frame.phase == MatchPhase::Waiting &&
+        Clock::now() - c.lastSeen > std::chrono::seconds(3)) {
+        c.received = false;
+        c.ready = false;
+        c.token = 0;
+        c.lastRetry = {};
+        c.lastSeen = Clock::now();
+    }
     if (Clock::now() - c.lastSeen > std::chrono::seconds(10))
         throw std::runtime_error("Match server timed out");
     if (c.frame.phase == MatchPhase::Waiting) {
         const auto now = Clock::now();
         if (now - c.lastRetry >= std::chrono::milliseconds(250)) {
             if (c.token && (c.received || now - c.challengeTime < std::chrono::seconds(2)))
-                c.socket.send(c.remote, encodeMatchAccept(c.token));
+                c.socket.send(c.remote, c.ready ? encodeMatchReady(c.token) : encodeMatchAccept(c.token));
             else {
                 if (!c.received)
                     c.token = 0;
