@@ -31,6 +31,7 @@ struct MatchFrame;
 class MatchArena final {
 public:
     explicit MatchArena(MatchMap map);
+    [[nodiscard]] const dev::GreyboxWorld& world() const { return world_; }
     void spawn(Duelist& actor, unsigned slot) const;
     std::optional<weapons::ShotTraceResult> simulate(Duelist& actor, const player::PlayerInputCommand& input) const;
     void record(const MatchFrame& frame);

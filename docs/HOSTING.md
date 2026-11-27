@@ -1,5 +1,25 @@
 # Hosting a Nemisis match
 
+Select **Play → Private Match with Bots** for a five-minute, 20-point 2v2 match
+on Outer Facility. You and one bot face two opponents. The in-process host uses
+the same movement, damage, scoring and respawn rules as the dedicated server.
+Escape returns to the main menu. No additional game window or server is needed.
+
+The [Play menu](recovery/visual/private-match/menu.png) and
+[Outer Facility during respawn](recovery/visual/private-match/outer-facility.png)
+are 1280×720 captures of the Vulkan game at `d0e3c382bcd810bbd525cd6fdced1b8e34897707`
+with engine `413f73997f6f498a6793fb999a104bd39f49c515`. The second frame
+shows two independently posed opponents. This release uses the existing training
+weapon and environment presentation on this host revision.
+
+Run `nemisis_game --game --private-match-smoke` from a directory containing the
+game assets and configs to repeat the menu, match and Escape paths. In the captured
+run the host reached tick 541 with three posed remote operators and 53 bot hits.
+Escape released all three mesh handles and the match session. The dedicated,
+loopback, private-match, rules, codec and menu tests also passed.
+
+## Dedicated host
+
 Build Nemisis against the NovaCore revision in `cmake/novacore-revision.txt`. The
 `nemisis_match_server` target runs the authoritative simulation without a game
 window, GPU initialization or game asset directory. Build `nemisis_game` with

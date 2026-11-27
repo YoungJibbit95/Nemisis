@@ -14,6 +14,8 @@ add_library(nemisis_match STATIC
     game/src/weapons/WeaponSimulation.cpp
     game/src/weapons/WeaponSystem.cpp
     game/src/net/MatchRules.cpp
+    game/src/net/PrivateMatch.cpp
+    game/src/net/MatchSimulation.cpp
     game/src/net/MatchCommandLine.cpp
     game/src/net/CommandMessages.cpp
     game/src/net/PredictionHistory.cpp
@@ -31,7 +33,7 @@ add_executable(nemisis_match_server game/src/net/MatchServerMain.cpp)
 target_link_libraries(nemisis_match_server PRIVATE nemisis_match)
 nemisis_copy_mingw_runtime(nemisis_match_server)
 
-foreach(suite IN ITEMS match_rules match_codec)
+foreach(suite IN ITEMS match_rules match_codec private_match)
     add_executable(nemisis_${suite}_tests tests/${suite}_tests.cpp)
     target_link_libraries(nemisis_${suite}_tests PRIVATE nemisis_match)
     nemisis_copy_mingw_runtime(nemisis_${suite}_tests)

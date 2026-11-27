@@ -1,3 +1,4 @@
+#include "MatchSimulation.hpp"
 #include "nemisis/net/FacilityMatch.hpp"
 #include "FacilityMatchCodec.hpp"
 
@@ -183,36 +184,23 @@ private:
     }
 
     void simulate() {
-        ++frame_.tick;
-        --frame_.remaining;
-        std::array<std::optional<weapons::ShotTraceResult>, maxMatchPlayers> shots;
-        std::array<std::uint32_t, maxMatchPlayers> viewed{};
+        std::array<MatchInput, maxMatchPlayers> inputs{};
         for (unsigned i = 0; i < peers_.size(); ++i) {
-            auto& actor = frame_.players[i];
-            if (actor.respawn && --actor.respawn == 0) {
-                arena_.spawn(actor, i);
-                actor.spawnTick = frame_.tick;
-            }
-            MatchInput input{};
             auto& queue = peers_[i].inputs;
-            if (!queue.empty() && queue.begin()->first == actor.acknowledged + 1) {
-                input = queue.begin()->second;
-                actor.acknowledged = input.command.tick;
+            if (!queue.empty() && queue.begin()->first == frame_.players[i].acknowledged + 1) {
+                inputs[i] = queue.begin()->second;
                 queue.erase(queue.begin());
             }
-            shots[i] = arena_.simulate(actor, input.command);
-            viewed[i] = input.observedTick;
-            if (diagnostic_ && actor.acknowledged == 1 && peers_[i].firstAckSamples < 8) {
+        }
+        advanceMatch(arena_, frame_, std::span(inputs).first(peers_.size()));
+        if (!diagnostic_) return;
+        for (unsigned i = 0; i < peers_.size(); ++i) {
+            const auto& actor = frame_.players[i];
+            if (actor.acknowledged == 1 && peers_[i].firstAckSamples < 8) {
                 ++peers_[i].firstAckSamples;
                 std::cout << "MATCH_AUTH slot=" << i << " ack=1 z=" << actor.movement.position.z << " server=" << frame_.tick << std::endl;
             }
         }
-        // Sample after everyone moves so every shot can trade on the same simulation tick.
-        arena_.record(frame_);
-        for (unsigned i = 0; i < peers_.size(); ++i)
-            if (shots[i]) arena_.resolveShot(frame_, i, *shots[i], viewed[i]);
-        if (!frame_.remaining || std::ranges::max(frame_.teamScores) >= frame_.rules.scoreLimit)
-            frame_.phase = MatchPhase::Finished;
     }
 
     void broadcast(bool measure) {

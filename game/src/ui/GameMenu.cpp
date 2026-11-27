@@ -1,4 +1,5 @@
 #include "nemisis/ui/GameMenu.hpp"
+#include <utility>
 
 #include "nemisis/input/InputBindings.hpp"
 #include "nemisis/dev/OuterFacility.hpp"
@@ -612,13 +613,14 @@ void renderPlayTab(
     addSelectableRow(frame, 416.0F, 216.0F, 700.0F, "Outer Facility", "Deploy to the relay yard", selectedIndex == 0U);
     addSelectableRow(frame, 416.0F, 272.0F, 700.0F, "Firing Range", "Training drills", selectedIndex == 1U);
     addSelectableRow(frame, 416.0F, 328.0F, 700.0F, "Loadout", "Weapons and attachments", selectedIndex == 2U);
-    addSelectableRow(frame, 416.0F, 384.0F, 700.0F, "Exit to desktop", "", selectedIndex == 3U);
+    addSelectableRow(frame, 416.0F, 384.0F, 700.0F, "Private Match with Bots", "Outer Facility / 2 vs 2", selectedIndex == 3U);
+    addSelectableRow(frame, 416.0F, 440.0F, 700.0F, "Exit to desktop", "", selectedIndex == 4U);
 
-    addPanel(frame, 66.0F, 430.0F, 870.0F, 126.0F, 10.0F, palette::Accent, true);
-    addText(frame, 88.0F, 452.0F, 2.0F, palette::Accent, "EQUIPPED LOADOUT");
-    addMetric(frame, 88.0F, 486.0F, "EFFECTIVE MAG", std::to_string(buildSummary.effectiveMagazineSize));
-    addMetric(frame, 402.0F, 486.0F, "ADS", fixedTwo(buildSummary.effectiveWeapon.adsTimeSeconds) + "s");
-    addMetric(frame, 650.0F, 486.0F, "RELOAD", fixedTwo(buildSummary.effectiveWeapon.reloadTimeSeconds) + "s");
+    addPanel(frame, 66.0F, 496.0F, 870.0F, 126.0F, 10.0F, palette::Accent, true);
+    addText(frame, 88.0F, 518.0F, 2.0F, palette::Accent, "EQUIPPED LOADOUT");
+    addMetric(frame, 88.0F, 552.0F, "EFFECTIVE MAG", std::to_string(buildSummary.effectiveMagazineSize));
+    addMetric(frame, 402.0F, 552.0F, "ADS", fixedTwo(buildSummary.effectiveWeapon.adsTimeSeconds) + "s");
+    addMetric(frame, 650.0F, 552.0F, "RELOAD", fixedTwo(buildSummary.effectiveWeapon.reloadTimeSeconds) + "s");
 }
 
 void renderGamemodesTab(novacore::render::RenderFrameInfo& frame, std::size_t selectedIndex) {
@@ -1296,6 +1298,8 @@ void GameMenu::showLoadingScreen(GameScreen target, float progress) {
     screen_ = GameScreen::Loading;
 }
 
+bool GameMenu::consumePrivateMatchRequest() { return std::exchange(privateMatchRequested_, false); }
+
 void GameMenu::showDevRange() {
     setScreen(GameScreen::DevRange);
 }
@@ -1516,6 +1520,9 @@ void GameMenu::activateSelection(
             startLoading(GameScreen::DevRange);
         } else if (selectedIndex_ == 2U) {
             setTab(MenuTab::Loadout);
+        } else if (selectedIndex_ == 3U) {
+            privateMatchRequested_ = true;
+            startLoading(GameScreen::OuterFacility);
         } else {
             quitRequested_ = true;
         }
@@ -1666,7 +1673,7 @@ void GameMenu::updatePointer(
 std::size_t GameMenu::itemCountForTab() const {
     switch (tab_) {
     case MenuTab::Play:
-        return 4U;
+        return 5U;
     case MenuTab::Gamemodes:
         return 2U;
     case MenuTab::Loadout:

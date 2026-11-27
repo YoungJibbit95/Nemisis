@@ -74,6 +74,7 @@ public:
     void showMainMenu(MenuTab tab = MenuTab::Play);
     void showLoadingScreen(GameScreen target, float progress = 0.0F);
     void showDevRange();
+    bool consumePrivateMatchRequest();
     void showOuterFacility();
     void showTeamDeathmatch();
     void showControl();
@@ -142,6 +143,7 @@ private:
     float loadingProgress_ = 0.0F;
     MenuPointerState previousPointer_{};
     bool quitRequested_ = false;
+    bool privateMatchRequested_ = false;
     bool debugOverlayEnabled_ = true;
 };
 

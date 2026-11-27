@@ -68,6 +68,7 @@ struct GameAppOptions final {
     bool lockDevRange = false;
     bool runMenuFlowSmoke = false;
     bool runDeploymentSmoke = false;
+    bool runPrivateMatchSmoke = false;
     bool uiShowcase = false;
     int uiPreviewWidth = 1280;
     int uiPreviewHeight = 720;
@@ -98,9 +99,12 @@ private:
     void enterPlayableMap();
     void tickFacilityMatch(player::PlayerInputCommand command);
     void syncMatchMap(net::MatchMap map);
-    void updateRemoteMatchPose(float deltaSeconds);
+    void updateRemoteMatchPose(unsigned slot, float deltaSeconds);
+    void releaseRemoteOperators();
     void drawFacilityMatch(novacore::render::RenderFrameInfo& frame) const;
     void leaveFacilityMatch();
+    void drivePrivateMatchSmoke(ui::MenuPointerState& pointer, std::uint64_t frame);
+    [[nodiscard]] bool matchRequested() const { return privateMatchRequested_ || options_.localMatchPort != 0; }
     void loadPlayableResources(ui::GameScreen screen);
     [[nodiscard]] bool updatePlayableResourceLoading();
     void finishPlayableResources(ui::GameScreen screen);
@@ -126,10 +130,17 @@ private:
 
     GameAppOptions options_;
     std::unique_ptr<net::FacilityMatchClient> facilityMatch_;
-    std::unique_ptr<player::PlayerSkeletalAnimator> remoteMatchAnimator_;
-    player::CharacterAnimationState remoteAnimationState_{};
-    float remotePoseElapsed_ = 0;
-    novacore::math::Vec3 remoteVelocity_{};
+    bool privateMatchRequested_ = false;
+    unsigned privateSmokeStage_ = 0;
+    struct RemotePose {
+        std::unique_ptr<player::PlayerSkeletalAnimator> animator;
+        novacore::render::MeshResourceHandle mesh;
+        player::CharacterAnimationState animation{};
+        novacore::math::Vec3 velocity{};
+        float elapsed = 0;
+        bool posed = false;
+    };
+    std::array<RemotePose, net::maxMatchPlayers> remotePoses_{};
     std::uint32_t confirmedHitUntil_ = 0;
     std::chrono::steady_clock::time_point lastProfileFrameEnd_{};
     std::uint64_t lastProfileTick_ = 0;

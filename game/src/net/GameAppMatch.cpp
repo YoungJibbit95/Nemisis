@@ -1,4 +1,5 @@
 #include "nemisis/GameApp.hpp"
+#include "nemisis/input/InputBindings.hpp"
 #include "nemisis/player/PlayerView.hpp"
 #include "nemisis/ui/UiCanvas.hpp"
 #include "novacore/ecs/Components.hpp"
@@ -7,26 +8,52 @@
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
+#include <iostream>
 #include "novacore/net/LocalDatagram.hpp"
 
 namespace nemisis::game {
-namespace {
-const std::string remoteMeshId = "match_remote_operator";
+void GameApp::releaseRemoteOperators() {
+    for (auto& pose : remotePoses_) {
+        if (pose.mesh.isValid()) renderer_.releaseMeshResource(pose.mesh);
+        pose = {};
+    }
 }
 
 void GameApp::leaveFacilityMatch() {
     facilityMatch_.reset();
-    if (const auto entry = devMeshResources_.find(remoteMeshId); entry != devMeshResources_.end()) {
-        renderer_.releaseMeshResource(entry->second);
-        devMeshResources_.erase(entry);
-    }
-    remoteMatchAnimator_.reset();
-    remoteAnimationState_ = {};
-    remotePoseElapsed_ = 0;
-    remoteVelocity_ = {};
+    privateMatchRequested_ = false;
+    releaseRemoteOperators();
     confirmedHitUntil_ = 0;
     options_.localMatchPort = 0;
     gameplayInputBuffer_.clear();
+}
+
+void GameApp::drivePrivateMatchSmoke(ui::MenuPointerState& pointer, std::uint64_t frame) {
+    if (privateSmokeStage_ == 0 && frame >= 4 && menu_.screen() == ui::GameScreen::MainMenu) {
+        pointer = {470, 400, true, true, true, false};
+        privateSmokeStage_ = 1;
+        std::cout << "PRIVATE_MATCH_MENU frame=" << frame << '\n';
+    } else if (privateSmokeStage_ == 1 && facilityMatch_ && facilityMatch_->isPrivateMatch() &&
+               facilityMatch_->authoritative().tick >= 540) {
+        const auto& game = facilityMatch_->authoritative();
+        const unsigned botHits = game.players[1].hits + game.players[2].hits + game.players[3].hits;
+        const auto posed = std::ranges::count_if(remotePoses_, [](const auto& pose) { return pose.posed; });
+        if (!botHits || posed != 3 || game.rules.teamSize != 2 || renderer_.backendName() != "vulkan-world")
+            throw std::runtime_error("Private match did not present the expected Vulkan roster and host hits");
+        std::cout << "PRIVATE_MATCH_PLAY frame=" << frame << " tick=" << game.tick << " posed_operators=" << posed << " bot_hits=" << botHits << '\n';
+        novacore::platform::InputSnapshot escape;
+        escape.setButton({novacore::platform::InputControlKind::KeyboardKey, input::key_codes::Escape},
+                         true, novacore::platform::InputDeviceKind::KeyboardMouse);
+        actions_.update(escape);
+        privateSmokeStage_ = 2;
+    } else if (privateSmokeStage_ == 2 && menu_.screen() == ui::GameScreen::MainMenu) {
+        if (facilityMatch_ || privateMatchRequested_ || std::ranges::any_of(remotePoses_,
+                [](const auto& pose) { return pose.animator || pose.mesh.isValid(); }))
+            throw std::runtime_error("Private match retained an operator or session after Escape");
+        privateSmokeStage_ = 3;
+        std::cout << "PRIVATE_MATCH_EXIT frame=" << frame << " active_sessions=0 remote_meshes=0\n";
+        uiQuitRequested_ = true;
+    }
 }
 
 void GameApp::tickFacilityMatch(player::PlayerInputCommand command) {
@@ -34,28 +61,36 @@ void GameApp::tickFacilityMatch(player::PlayerInputCommand command) {
         // Load the two supported maps' shared asset superset before admission.
         // A slower disk must not stall network heartbeats after a map is announced.
         loadPlayableResources(ui::GameScreen::DevRange);
-        const auto endpoint = novacore::net::DatagramEndpoint::parse(options_.matchHost, options_.localMatchPort);
-        if (!endpoint) throw std::runtime_error("Invalid match host");
-        facilityMatch_ = std::make_unique<net::FacilityMatchClient>(*endpoint);
+        if (privateMatchRequested_) {
+            facilityMatch_ = std::make_unique<net::FacilityMatchClient>(
+                net::MatchRules{net::MatchMap::OuterFacility, net::MatchMode::TeamDeathmatch, 2, 20, 5 * 60 * 60});
+        } else {
+            const auto endpoint = novacore::net::DatagramEndpoint::parse(options_.matchHost, options_.localMatchPort);
+            if (!endpoint) throw std::runtime_error("Invalid match host");
+            facilityMatch_ = std::make_unique<net::FacilityMatchClient>(*endpoint);
+        }
     }
     const auto oldState = facilityMatch_->authoritative().players[facilityMatch_->slot()];
     const auto& before = facilityMatch_->authoritative();
     const auto oldTick = before.tick;
     const auto oldPhase = before.phase;
-    const auto& priorOpponent = before.players[1 - facilityMatch_->slot() % 2];
-    const auto oldPosition = priorOpponent.movement.position;
-    const auto oldSpawn = priorOpponent.spawnTick;
+    std::array<novacore::math::Vec3, net::maxMatchPlayers> oldFeet{};
+    std::array<std::uint32_t, net::maxMatchPlayers> oldSpawns{};
+    for (unsigned i = 0; i < before.rules.teamSize * 2; ++i) {
+        oldFeet[i] = before.players[i].movement.position;
+        oldSpawns[i] = before.players[i].spawnTick;
+    }
     facilityMatch_->tick(command);
     const auto& snapshot = facilityMatch_->authoritative();
     syncMatchMap(snapshot.rules.map);
     if (snapshot.phase == net::MatchPhase::Waiting) return;
-    const auto& opponent = snapshot.players[1 - facilityMatch_->slot() % 2];
-    if (oldPhase != net::MatchPhase::Playing || opponent.spawnTick != oldSpawn || opponent.health.eliminated) {
-        remoteVelocity_ = {};
-    } else if (snapshot.tick > oldTick) {
-        // Compact remote snapshots carry feet, facing, stance and magazine.
-        // Derive presentation from consecutive confirmed server ticks.
-        remoteVelocity_ = (opponent.movement.position-oldPosition) * (60.0F/static_cast<float>(snapshot.tick-oldTick));
+    for (unsigned i = 0; i < snapshot.rules.teamSize * 2; ++i) {
+        const auto& actor = snapshot.players[i];
+        if (oldPhase != net::MatchPhase::Playing || actor.spawnTick != oldSpawns[i] || actor.health.eliminated) {
+            remotePoses_[i].velocity = {};
+        } else if (snapshot.tick > oldTick) {
+            remotePoses_[i].velocity = (actor.movement.position - oldFeet[i]) * (60.0F / (snapshot.tick - oldTick));
+        }
     }
     const auto& actor = facilityMatch_->predicted();
     const auto& motion = actor.movement;
@@ -80,42 +115,41 @@ void GameApp::tickFacilityMatch(player::PlayerInputCommand command) {
     if (confirmed.hits > oldState.hits) confirmedHitUntil_ = snapshot.tick + 14;
 }
 
-void GameApp::updateRemoteMatchPose(float deltaSeconds) {
+void GameApp::updateRemoteMatchPose(unsigned slot, float deltaSeconds) {
+    auto& visual = remotePoses_[slot];
     const auto& snapshot = facilityMatch_->authoritative();
-    const auto& other = snapshot.players[1 - facilityMatch_->slot() % 2];
+    const auto& other = snapshot.players[slot];
     if (snapshot.phase == net::MatchPhase::Waiting || other.health.eliminated) return;
     const auto& local = facilityMatch_->predicted();
     const auto offset = other.movement.position-local.movement.position;
     const auto look = player::viewVectors(local.view).forward;
     const float facing = offset.x*look.x + offset.y*look.y + offset.z*look.z;
-    if (facing < -1.0F) return;
-    remotePoseElapsed_ += std::clamp(deltaSeconds,0.0F,0.1F);
+    if (facing < -1.0F && visual.posed) return;
+    visual.elapsed += std::clamp(deltaSeconds,0.0F,0.1F);
     const float cadence = offset.lengthSquared() > 30*30 ? 1.0F/15 : 1.0F/30;
-    if (remotePoseElapsed_ < cadence) return;
-    const float elapsed = std::min(remotePoseElapsed_,0.1F);
-    remotePoseElapsed_ = 0;
-    if (!remoteMatchAnimator_) {
+    if (visual.posed && visual.elapsed < cadence) return;
+    const float elapsed = std::min(visual.elapsed,0.1F);
+    visual.elapsed = 0;
+    if (!visual.animator) {
         const auto* model = devAssetBindings_.meshCatalog().findByAssetId(dev::kLocalPlayerBodyAssetId);
         if (!model || !model->meshData) return;
-        remoteMatchAnimator_ = std::make_unique<player::PlayerSkeletalAnimator>();
-        if (!remoteMatchAnimator_->initialize(*model->meshData)) {
+        visual.animator = std::make_unique<player::PlayerSkeletalAnimator>();
+        if (!visual.animator->initialize(*model->meshData)) {
             novacore::core::logWarning("match","Remote operator clip initialization failed");
             return;
         }
-        const auto handle = renderer_.registerMeshResource(remoteMeshId,*remoteMatchAnimator_->skinnedMesh(),
+        visual.mesh = renderer_.registerMeshResource("match_remote_operator_" + std::to_string(slot),*visual.animator->skinnedMesh(),
             novacore::render::MeshResourceUsage::DynamicVertices);
-        if (handle.isValid()) devMeshResources_.emplace(remoteMeshId,handle);
     }
-    const auto mesh = devMeshResources_.find(remoteMeshId);
-    if (mesh == devMeshResources_.end()) return;
+    if (!visual.mesh.isValid()) return;
     const auto& motion = other.movement;
     const auto forward = player::viewVectors(other.view);
     player::CharacterAnimationInput input{};
-    input.velocity = remoteVelocity_;
-    input.movementMode = std::abs(remoteVelocity_.y) > 0.8F ? movement::MovementMode::Airborne : movement::MovementMode::Grounded;
+    input.velocity = visual.velocity;
+    input.movementMode = std::abs(visual.velocity.y) > 0.8F ? movement::MovementMode::Airborne : movement::MovementMode::Grounded;
     input.movementTech = motion.tech;
     input.weapon = other.weapon;
-    input.speed01 = std::clamp(player::cameraRigHorizontalSpeed(remoteVelocity_)/movement_.tuning().tacticalSprintSpeed,0.0F,1.0F);
+    input.speed01 = std::clamp(player::cameraRigHorizontalSpeed(visual.velocity)/movement_.tuning().tacticalSprintSpeed,0.0F,1.0F);
     input.fixedDeltaSeconds = elapsed;
     input.hasWallRunContact = motion.hasWallRunContact;
     input.adsHeld = other.weapon.adsAlpha > 0.5F;
@@ -126,11 +160,13 @@ void GameApp::updateRemoteMatchPose(float deltaSeconds) {
     input.facingForward = forward.horizontalForward;
     input.facingRight = forward.horizontalRight;
     input.aimPitchDegrees = other.view.pitchDegrees;
-    const auto pose = player::updateCharacterAnimation(remoteAnimationState_,input);
-    const bool initial = remoteMatchAnimator_->stats().evaluatedFrameCount == 0;
-    if (remoteMatchAnimator_->update(pose,elapsed) &&
-        renderer_.updateMeshResourceVertices(mesh->second,*remoteMatchAnimator_->skinnedMesh()) && initial) {
-        const auto& stats = remoteMatchAnimator_->stats();
+    const auto pose = player::updateCharacterAnimation(visual.animation,input);
+    const bool initial = visual.animator->stats().evaluatedFrameCount == 0;
+    if (!visual.animator->update(pose,elapsed) ||
+        !renderer_.updateMeshResourceVertices(visual.mesh,*visual.animator->skinnedMesh())) return;
+    visual.posed = true;
+    if (initial) {
+        const auto& stats = visual.animator->stats();
         novacore::core::logInfo("match","Remote skeletal upload: clip=" + stats.currentClip + " joints=" +
             std::to_string(stats.jointCount) + " vertices=" + std::to_string(stats.skinnedVertexCount));
     }
@@ -162,11 +198,15 @@ void GameApp::drawFacilityMatch(novacore::render::RenderFrameInfo& frame) const 
         const float heightScale = 1.0F - 0.28F * other.movement.crouchFraction;
         const auto color = i % 2 == team ? std::array{0.35F,0.65F,0.90F,1.0F} :
             std::array{0.85F,0.52F,0.36F,1.0F};
-        auto mesh = i == 1 - index % 2 ? devMeshResources_.find(remoteMeshId) : devMeshResources_.end();
-        if (mesh == devMeshResources_.end()) mesh = devMeshResources_.find(std::string(dev::kLocalPlayerBodyAssetId));
-        if (mesh != devMeshResources_.end()) {
+        auto mesh = remotePoses_[i].posed ? remotePoses_[i].mesh : novacore::render::MeshResourceHandle{};
+        if (!mesh.isValid()) {
+            if (facilityMatch_->isPrivateMatch()) continue;
+            const auto model = devMeshResources_.find(std::string(dev::kLocalPlayerBodyAssetId));
+            if (model != devMeshResources_.end()) mesh = model->second;
+        }
+        if (mesh.isValid()) {
             novacore::render::RenderMesh3D model{};
-            model.mesh = mesh->second;
+            model.mesh = mesh;
             model.assetId = std::string(dev::kLocalPlayerBodyAssetId);
             model.position = position;
             model.scale = {0.92F,0.92F*heightScale,0.92F};
