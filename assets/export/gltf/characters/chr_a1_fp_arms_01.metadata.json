@@ -9,9 +9,9 @@
   "blender_up_axis": "+Z",
   "blender_forward_axis": "-Y",
   "dimensions_m": [
-    0.6206,
-    0.8221,
-    0.3355
+    0.6573,
+    0.7428,
+    0.3664
   ],
   "target_dimensions_m": [
     0.58,
@@ -28,41 +28,54 @@
   ],
   "collision": "none",
   "lods": [
-    "chr_a1_fp_arms_01_lod0",
-    "chr_a1_fp_arms_01_lod1"
+    "chr_a1_fp_arms_01_lod0"
   ],
   "license": "original_project_asset",
   "external_assets": false,
-  "visual_reference_note": "Original procedural blockout inspired by broad sci-fi shooter silhouettes; no protected marks, copied geometry, or real functional implementation details.",
-  "generated_by": "tools/blender/make_a1_prototype_pack.py",
-  "generated_at_utc": "2026-07-10T14:40:51+00:00",
+  "visual_reference_note": "Project human hand surface tailored as fitted field leather, with original woven sleeves and stitched panels.",
+  "generated_by": "tools/blender/a1_anatomical_arms.py",
+  "generated_at_utc": "2026-11-27T17:12:23+00:00",
   "stats": {
-    "mesh_objects": 10,
-    "vertices": 160,
-    "polygons": 100,
-    "triangles_estimate": 280
+    "mesh_objects": 8,
+    "vertices": 10520,
+    "polygons": 14646,
+    "triangles_estimate": 20572
   },
   "skin": "rig_chr_a1_fp_arms_01",
   "skinned_meshes": [
-    "chr_a1_fp_arms_01_lod0_forearm_l",
-    "chr_a1_fp_arms_01_lod0_forearm_r",
-    "chr_a1_fp_arms_01_lod0_hand_l",
-    "chr_a1_fp_arms_01_lod0_hand_r",
-    "chr_a1_fp_arms_01_lod0_upper_arm_l",
-    "chr_a1_fp_arms_01_lod0_upper_arm_r",
-    "chr_a1_fp_arms_01_lod0_weapon_alignment_bar",
-    "chr_a1_fp_arms_01_lod0_wrist_plate_l",
-    "chr_a1_fp_arms_01_lod0_wrist_plate_r",
-    "chr_a1_fp_arms_01_lod1_blockout"
+    "chr_a1_fp_arms_01_lod0_dorsal_l",
+    "chr_a1_fp_arms_01_lod0_dorsal_r",
+    "chr_a1_fp_arms_01_lod0_dorsal_seam_l",
+    "chr_a1_fp_arms_01_lod0_dorsal_seam_r",
+    "chr_a1_fp_arms_01_lod0_glove_l",
+    "chr_a1_fp_arms_01_lod0_glove_r",
+    "chr_a1_fp_arms_01_lod0_rubber_l",
+    "chr_a1_fp_arms_01_lod0_rubber_r"
   ],
   "animation_clips": [
     "chr_a1_fp_arms_01_aim",
-    "chr_a1_fp_arms_01_idle"
+    "chr_a1_fp_arms_01_idle",
+    "chr_a1_fp_arms_01_land",
+    "chr_a1_fp_arms_01_reload",
+    "chr_a1_fp_arms_01_sprint",
+    "vesper_field_exchange",
+    "vesper_field_grasp"
   ],
   "animation_clip_roles": {
     "chr_a1_fp_arms_01_aim": "aim",
-    "chr_a1_fp_arms_01_idle": "idle"
+    "chr_a1_fp_arms_01_idle": "idle",
+    "chr_a1_fp_arms_01_land": "land",
+    "chr_a1_fp_arms_01_reload": "reload",
+    "chr_a1_fp_arms_01_sprint": "sprint",
+    "vesper_field_exchange": "vesper_field_exchange",
+    "vesper_field_grasp": "vesper_field_grasp"
   },
   "rig_type": "deforming_armature",
-  "bytes": 51820
+  "geometry_reference": {
+    "path": "assets/processed/normalized/project_assets/chr_project_male1.glb",
+    "sha256": "e53f5ba51ce08b660e87ecb1f39bb3414e465329bf09dd947e74d44fb3a55f9b",
+    "use": "Palm, thumb web and digital surface from the local Body primitive, fitted to the field glove.",
+    "license": "original_project_asset"
+  },
+  "bytes": 1076148
 }
