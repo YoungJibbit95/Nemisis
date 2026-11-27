@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <array>
-#include <limits>
 #include <optional>
 #include <cmath>
 
@@ -15,8 +14,7 @@ namespace {
 }
 
 // Facility mannequins render the normalized, 0.92-scale 1.786 m model at
-// floor level. These floor-relative zones approximate legs, torso and head;
-// all use one damage value and report the nearest surface for cover ordering.
+// floor level. Keep the closest zone and its surface distance for cover ordering.
 [[nodiscard]] std::optional<float> hitZone(
     const weapons::ShotTraceResult& shot, novacore::math::Vec3 center, novacore::math::Vec3 half) {
     float entry = 0.0F;
@@ -38,18 +36,21 @@ namespace {
 [[nodiscard]] DebugTargetTraceResult traceHumanoid(
     const DebugTargetState& target, const weapons::ShotTraceResult& shot) {
     const float floor = target.position.y - 1.65F;
-    struct Zone { novacore::math::Vec3 center; novacore::math::Vec3 half; };
+    struct Zone { novacore::math::Vec3 center; novacore::math::Vec3 half; player::DamageZone type; };
     const std::array zones{
-        Zone{{target.position.x - .13F, floor + .44F, target.position.z}, {.12F, .39F, .19F}},
-        Zone{{target.position.x + .13F, floor + .44F, target.position.z}, {.12F, .39F, .19F}},
-        Zone{{target.position.x, floor + 1.12F, target.position.z}, {.32F, .34F, .21F}},
-        Zone{{target.position.x, floor + 1.52F, target.position.z}, {.18F, .16F, .18F}},
+        Zone{{target.position.x - .13F, floor + .44F, target.position.z}, {.12F, .39F, .19F}, player::DamageZone::Legs},
+        Zone{{target.position.x + .13F, floor + .44F, target.position.z}, {.12F, .39F, .19F}, player::DamageZone::Legs},
+        Zone{{target.position.x, floor + 1.12F, target.position.z}, {.32F, .34F, .21F}, player::DamageZone::Body},
+        Zone{{target.position.x, floor + 1.52F, target.position.z}, {.18F, .16F, .18F}, player::DamageZone::Head},
     };
-    float nearest = std::numeric_limits<float>::infinity();
+    DebugTargetTraceResult nearest{};
     for (const auto& zone : zones) {
-        if (const auto distance = hitZone(shot, zone.center, zone.half)) nearest = std::min(nearest, *distance);
+        if (const auto distance = hitZone(shot, zone.center, zone.half);
+            distance && (!nearest.hit || *distance < nearest.distanceMeters)) {
+            nearest = {true, *distance, zone.type};
+        }
     }
-    return std::isfinite(nearest) ? DebugTargetTraceResult{true, nearest} : DebugTargetTraceResult{};
+    return nearest;
 }
 
 } // namespace

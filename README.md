@@ -20,6 +20,9 @@ Nemisis is a ground-up game project targeting a commercial-ready competitive FPS
 - Custom networking architecture
 - Cross-platform support (Windows/Linux first)
 
+For server startup, map rotations, team sizes and the client join command, see
+the [match hosting guide](docs/HOSTING.md).
+
 ## Project Structure
 
 - `game/include/nemisis/` - Game-layer headers

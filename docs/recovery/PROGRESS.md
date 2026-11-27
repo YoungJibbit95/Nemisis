@@ -1339,3 +1339,26 @@ the dependency-light game build and four CPU suites passed: deployment smoke
 switches), existing synchronous game smoke, menu gating/Escape and real binding
 retry/asset tests. CLion MinGW 13.1 passed a GameApp syntax check. Vulkan and
 live loading responsiveness remain pending coordinated validation.
+
+## 2026-11-22 Hosted matches
+
+The dedicated host and game client share the match simulation. Outer Facility
+and Dev Range support duel and team deathmatch. Rotation, port, team size, time
+limit and score limit are configured at launch. See [Hosting](../HOSTING.md).
+The public NovaCore transport is pinned to
+`413f73997f6f498a6793fb999a104bd39f49c515` (NovaCore PR #33).
+
+On Windows 11, Ryzen 5 5500, MSVC Release, twelve scripted clients moved and
+fired for 1,200 ticks on Dev Range over a local IPv4 interface. Every client
+agreed with the host on the terminal result. Tick work including network I/O
+was 0.6 ms p50, 3.0 ms p95 and 7.4 ms p99. Seven ticks exceeded 16.67 ms and
+the maximum was 36.406 ms on this occupied development machine. Outgoing
+snapshot payload averaged 29,443 B/s per client, with a maximum datagram of
+982 bytes. This is one local process workload. Independent WAN machines and
+long-running public server traffic were outside this measurement.
+
+The integration fixture also exercises same-port rotation into a duel, lobby
+heartbeats and matched terminal state under repeatable loss and 60–72 ms
+additional round-trip latency. A separate peer-departure check confirmed
+terminal state delivery to the surviving client. That check exposed unbounded
+test-only ACK trace output while a peer was missing; the host now caps it.

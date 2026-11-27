@@ -184,8 +184,9 @@ constexpr float kPi = 3.14159265358979323846F;
 } // namespace
 
 novacore::math::Vec3 gameplayEyePosition(novacore::math::Vec3 feet,
-    movement::MovementMode mode, bool crouchHeld, const CameraRigTuning& tuning) {
-    feet.y += crouchHeld || isSliding(mode) ? tuning.crouchEyeHeight : tuning.eyeHeight;
+    movement::MovementMode mode, float crouchFraction, const CameraRigTuning& tuning) {
+    const float fraction = isSliding(mode) ? 1.0F : std::clamp(crouchFraction, 0.0F, 1.0F);
+    feet.y += std::lerp(tuning.eyeHeight, tuning.crouchEyeHeight, fraction);
     return feet;
 }
 

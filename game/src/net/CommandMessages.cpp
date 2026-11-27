@@ -109,7 +109,7 @@ std::optional<CommandPacket> deserializeCommandPacket(const std::vector<std::uin
     std::uint16_t commandCount = 0;
 
     if (!reader.readU32(magic) || !reader.readU16(version) || magic != kCommandMagic || version != kProtocolVersion ||
-        !reader.readU32(playerId) || !reader.readU16(commandCount)) {
+        !reader.readU32(playerId) || !reader.readU16(commandCount) || commandCount > reader.remaining() / 44) {
         return std::nullopt;
     }
 

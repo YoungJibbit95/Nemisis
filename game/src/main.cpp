@@ -18,6 +18,12 @@ int main(int argc, char** argv) {
     gameOptions.fullGame = argc == 1;
     std::uint32_t measuredFrames = 60;
     bool smokeTest = false;
+    if (const auto result = nemisis::net::runMatchCommandLine(argc, argv, false,
+            gameOptions.matchHost, gameOptions.localMatchPort)) return *result;
+    if (gameOptions.localMatchPort) {
+        gameOptions.fullGame = true;
+        gameOptions.startInFacility = true;
+    }
     for (int i = 1; i < argc; ++i) {
         const std::string_view argument(argv[i]);
         if (argument == "--game-deploy-smoke-test") {
@@ -134,7 +140,7 @@ int main(int argc, char** argv) {
 
     if (gameOptions.fullGame) {
         gameOptions.materialTextures = true;
-        gameOptions.physicsProps = novacore::physics::RigidBodyWorld::backendAvailable();
+        gameOptions.physicsProps = !gameOptions.localMatchPort && novacore::physics::RigidBodyWorld::backendAvailable();
 #if defined(NEMISIS_PROJECT_FPS_PREVIEW) && defined(NEMISIS_ENABLE_HAND_IK)
         gameOptions.projectRifleReady = true;
         gameOptions.projectFPSPreview = true;
@@ -169,7 +175,7 @@ int main(int argc, char** argv) {
             (gameOptions.firstPersonHandIK || gameOptions.projectFPSPreview) ? 60 : 5;
     }
     if (gameOptions.profileRange) {
-        if (gameOptions.uiShowcase || smokeTest) {
+        if (gameOptions.uiShowcase || smokeTest || gameOptions.localMatchPort) {
             std::cerr << "--profile-range requires a dedicated Dev Range run\n";
             return 2;
         }

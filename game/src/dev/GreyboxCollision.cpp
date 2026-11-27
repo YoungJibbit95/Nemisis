@@ -140,6 +140,24 @@ namespace {
 
 } // namespace
 
+float playerCapsuleHeight(float crouchFraction) {
+    return std::lerp(kPlayerStandingHeight, kPlayerCrouchHeight, std::clamp(crouchFraction, 0.0F, 1.0F));
+}
+
+bool canStandFromCrouch(const novacore::physics::PhysicsWorld& physicsWorld,
+    novacore::math::Vec3 feet, float crouchFraction) {
+    // Sweep the current capsule's head through the space the standing shape would occupy.
+    // This is only a clearance test; the stance change never moves the feet.
+    novacore::physics::CharacterSweepQuery clearance{};
+    clearance.startPosition = feet;
+    clearance.radius = kPlayerCapsuleRadius;
+    clearance.height = playerCapsuleHeight(crouchFraction);
+    clearance.desiredDisplacement.y = kPlayerStandingHeight - clearance.height;
+    clearance.enableGroundSnap = false;
+    clearance.enableStepUp = false;
+    return !physicsWorld.sweepCharacter(clearance).ceilingHit;
+}
+
 novacore::physics::PhysicsWorld buildGreyboxPhysicsWorld(const GreyboxWorld& world) {
     return buildPhysicsWorld(world);
 }

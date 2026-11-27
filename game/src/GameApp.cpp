@@ -330,6 +330,22 @@ void GameApp::onShutdown() {
 }
 
 void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
+    if (options_.localMatchPort && menu_.gameplayActive()) {
+        ensureLocalPlayer();
+        auto command = player::PlayerInputCommand{};
+        if (!uiConfirmReleasePending_) {
+            command = input::buildPlayerInputCommand(actions_, context.tickIndex, settings_);
+            gameplayInputBuffer_.consumeInto(command);
+        }
+        try {
+            tickFacilityMatch(command);
+        } catch (const std::runtime_error& error) {
+            novacore::core::logWarning("match", error.what());
+            leaveFacilityMatch();
+            menu_.showMainMenu();
+        }
+        return;
+    }
     if (!menu_.gameplayActive() || uiConfirmReleasePending_) {
         return;
     }
@@ -768,12 +784,14 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
 }
 
 bool GameApp::usesProjectRig() const {
-    return options_.projectFPSPreview && (!options_.fullGame || activeLoadout_.weaponId == kDefaultWeaponId);
+    const auto& weaponId = facilityMatch_ ? facilityMatch_->predicted().weapon.weaponId : activeLoadout_.weaponId;
+    return options_.projectFPSPreview && (!options_.fullGame || weaponId == kDefaultWeaponId);
 }
 
 bool GameApp::usesFirstPersonHandConstraints() const {
+    const auto& weaponId = facilityMatch_ ? facilityMatch_->predicted().weapon.weaponId : activeLoadout_.weaponId;
     return options_.firstPersonHandIK && (!options_.fullGame || usesProjectRig() ||
-        (activeLoadout_.weaponId == "smg_01" && devMeshResources_.contains("wpn_project_smg_fr17")));
+        (weaponId == "smg_01" && devMeshResources_.contains("wpn_project_smg_fr17")));
 }
 
 void GameApp::updateVisiblePlayerPose(float animationDelta) {
@@ -897,9 +915,14 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
     } else {
         gameplayInputBuffer_.clear();
     }
-    syncRuntimeLoadout();
-    persistUserSettingsIfChanged();
-    if (menu_.gameplayActive() && actionPressed(actions_, input::actions::ResetRange)) {
+    if (options_.localMatchPort && menu_.screen() == ui::GameScreen::MainMenu) {
+        leaveFacilityMatch();
+    }
+    if (!options_.localMatchPort) {
+        syncRuntimeLoadout();
+        persistUserSettingsIfChanged();
+    }
+    if (!options_.localMatchPort && menu_.gameplayActive() && actionPressed(actions_, input::actions::ResetRange)) {
         resetDevRangeState();
     }
     if (menu_.screen() == ui::GameScreen::DevRange && actionPressed(actions_, input::actions::CycleDrillVariant)) {
@@ -944,7 +967,7 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
             frameInfo,
             dev::DevRangeRenderSceneDesc{
                 &greyboxWorld_,
-                &targetRange_,
+                options_.localMatchPort ? nullptr : &targetRange_,
                 &devSandbox_.latestSample().collision,
                 &devMeshResources_,
                 currentPlayerRenderState(),
@@ -971,7 +994,15 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
 #if NEMISIS_HAS_RMLUI
     if (!uiShowcase_)
 #endif
-    menu_.appendRenderCommands(
+    if (facilityMatch_ && menu_.gameplayActive()) {
+        updateRemoteMatchPose(static_cast<float>(context.deltaSeconds));
+        const auto firstRect = frameInfo.debugRects.size();
+        const auto firstLine = frameInfo.debugLines.size();
+        const auto firstText = frameInfo.debugTexts.size();
+        drawFacilityMatch(frameInfo);
+        ui::fitInterfaceCanvas(frameInfo, renderer_.backendFrameStats(), firstRect, firstLine, firstText,
+                               settings_.video.hudScale);
+    } else menu_.appendRenderCommands(
         frameInfo,
         devSandbox_.latestSample(),
         greyboxWorld_,
@@ -996,6 +1027,9 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
     const auto submitStart = options_.profileRange ? Clock::now() : Clock::time_point{};
     renderer_.beginFrame(frameInfo);
     renderer_.endFrame();
+    // The negotiated world and its resources have now reached an actual frame.
+    if (facilityMatch_ && menu_.gameplayActive() && !window_.isHeadless())
+        facilityMatch_->confirmMapReady();
     if (options_.runDeploymentSmoke) {
         if (menu_.loadingPlayableMap()) {
             ++deploymentLoadingFrames_;
@@ -1500,6 +1534,14 @@ void GameApp::ensureLocalPlayer() {
     novacore::core::logInfo("game", "Local player entity spawned");
 }
 
+void GameApp::syncMatchMap(net::MatchMap map) {
+    const auto screen = map == net::MatchMap::OuterFacility ? ui::GameScreen::OuterFacility : ui::GameScreen::DevRange;
+    if (menu_.screen() == screen) return;
+    if (screen == ui::GameScreen::OuterFacility) menu_.showOuterFacility();
+    else menu_.showDevRange();
+    enterPlayableMap();
+}
+
 void GameApp::enterPlayableMap() {
     loadPlayableResources(menu_.screen());
     greyboxWorld_ = menu_.screen() == ui::GameScreen::OuterFacility
@@ -1840,6 +1882,12 @@ dev::DevRangePlayerRenderState GameApp::currentPlayerRenderState() const {
     state.activeWeaponId = activeAttachmentBuild_.effectiveWeapon.id;
     state.activeWeaponClass = activeAttachmentBuild_.effectiveWeapon.weaponClass;
     state.effectiveMagazineSize = activeAttachmentBuild_.effectiveMagazineSize;
+    if (facilityMatch_) {
+        state.activeWeaponId = facilityMatch_->predicted().weapon.weaponId;
+        const bool sidearm = state.activeWeaponId == "sidearm_01";
+        state.activeWeaponClass = sidearm ? weapons::WeaponClass::Sidearm : weapons::WeaponClass::AssaultRifle;
+        state.effectiveMagazineSize = sidearm ? 15 : 30;
+    }
     if (hasCharacterAnimationFrame_) {
         state.animation = latestCharacterAnimationFrame_;
         state.hasAnimationFrame = true;

@@ -4,12 +4,16 @@
 #include "nemisis/player/PlayerComponents.hpp"
 
 #include "novacore/net/Loopback.hpp"
+#include "novacore/net/BitStream.hpp"
 
 #include <cstdint>
 #include <optional>
 #include <vector>
 
 namespace nemisis::net {
+
+void writeWeaponRuntime(novacore::net::PacketWriter&, const weapons::WeaponRuntimeState&);
+bool readWeaponRuntime(novacore::net::PacketReader&, weapons::WeaponRuntimeState&);
 
 struct PlayerSnapshotState final {
     player::PlayerId playerId = 0;

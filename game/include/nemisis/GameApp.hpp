@@ -12,6 +12,7 @@
 #include "nemisis/movement/MovementConfig.hpp"
 #include "nemisis/movement/MovementSystem.hpp"
 #include "nemisis/net/LoopbackCommandBridge.hpp"
+#include "nemisis/net/FacilityMatch.hpp"
 #include "nemisis/net/PredictionHistory.hpp"
 #include "nemisis/net/SnapshotInterpolation.hpp"
 #include "nemisis/player/PlayerAnimation.hpp"
@@ -57,6 +58,8 @@ inline constexpr std::uint64_t kRangeProfileWarmupFrames = 12;
 
 struct GameAppOptions final {
     bool fullGame = false;
+    std::uint16_t localMatchPort = 0;
+    std::string matchHost = "127.0.0.1";
     bool startInFacility = false;
     bool profileRange = false;
     bool preferVulkanRenderer = true;
@@ -93,6 +96,11 @@ private:
     [[nodiscard]] bool usesProjectRig() const;
     [[nodiscard]] bool usesFirstPersonHandConstraints() const;
     void enterPlayableMap();
+    void tickFacilityMatch(player::PlayerInputCommand command);
+    void syncMatchMap(net::MatchMap map);
+    void updateRemoteMatchPose(float deltaSeconds);
+    void drawFacilityMatch(novacore::render::RenderFrameInfo& frame) const;
+    void leaveFacilityMatch();
     void loadPlayableResources(ui::GameScreen screen);
     [[nodiscard]] bool updatePlayableResourceLoading();
     void finishPlayableResources(ui::GameScreen screen);
@@ -117,6 +125,12 @@ private:
     [[nodiscard]] dev::DevRangePlayerRenderState currentPlayerRenderState() const;
 
     GameAppOptions options_;
+    std::unique_ptr<net::FacilityMatchClient> facilityMatch_;
+    std::unique_ptr<player::PlayerSkeletalAnimator> remoteMatchAnimator_;
+    player::CharacterAnimationState remoteAnimationState_{};
+    float remotePoseElapsed_ = 0;
+    novacore::math::Vec3 remoteVelocity_{};
+    std::uint32_t confirmedHitUntil_ = 0;
     std::chrono::steady_clock::time_point lastProfileFrameEnd_{};
     std::uint64_t lastProfileTick_ = 0;
     novacore::platform::InputSystem input_;
