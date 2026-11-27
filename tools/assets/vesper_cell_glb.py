@@ -120,5 +120,3 @@ def attach(source, destination, recipe, mesh_index=None):
     primitive.setdefault("extras",{})["novacoreIndexLods"] = levels
     destination.write_bytes(encode(doc,data))
     return [count//3 for count in counts]
-
-
