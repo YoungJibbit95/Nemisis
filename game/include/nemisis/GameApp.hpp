@@ -1,4 +1,5 @@
 #pragma once
+#include "nemisis/dev/DevConsole.hpp"
 
 #include "nemisis/assets/DevAssetBindings.hpp"
 #include "nemisis/assets/GameAssetCatalog.hpp"
@@ -132,6 +133,7 @@ private:
     std::unique_ptr<net::FacilityMatchClient> facilityMatch_;
     bool privateMatchRequested_ = false;
     unsigned privateSmokeStage_ = 0;
+    unsigned consoleSmokeStep_ = 0;
     struct RemotePose {
         std::unique_ptr<player::PlayerSkeletalAnimator> animator;
         novacore::render::MeshResourceHandle mesh;
@@ -169,6 +171,7 @@ private:
     bool rangeResourcesLoaded_ = false;
     dev::DevRangeRenderSceneStats latestDevRangeRenderStats_;
     ui::GameMenu menu_;
+    dev::DevConsole devConsole_;
 #if NEMISIS_HAS_RMLUI
     std::unique_ptr<ui::UiShowcase> uiShowcase_;
 #endif

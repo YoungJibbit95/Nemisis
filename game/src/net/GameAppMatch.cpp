@@ -29,6 +29,19 @@ void GameApp::leaveFacilityMatch() {
 }
 
 void GameApp::drivePrivateMatchSmoke(ui::MenuPointerState& pointer, std::uint64_t frame) {
+    if (privateSmokeStage_ == 1 && facilityMatch_ && facilityMatch_->isPrivateMatch()) {
+        constexpr std::array<unsigned,8> ticks{180,190,200,210,220,230,380,400};
+        constexpr std::array<int,8> rows{-1,0,1,1,2,3,4,-1};
+        if (consoleSmokeStep_ < ticks.size() && facilityMatch_->authoritative().tick >= ticks[consoleSmokeStep_]) {
+            const int row = rows[consoleSmokeStep_++];
+            if (row < 0) {
+                novacore::platform::InputSnapshot key;
+                key.setButton({novacore::platform::InputControlKind::KeyboardKey,'O'},true,
+                              novacore::platform::InputDeviceKind::KeyboardMouse);
+                actions_.update(key);
+            } else pointer = {1000,175.F+44.F*row,true,true,true,false};
+        }
+    }
     if (privateSmokeStage_ == 0 && frame >= 4 && menu_.screen() == ui::GameScreen::MainMenu) {
         pointer = {470, 400, true, true, true, false};
         privateSmokeStage_ = 1;

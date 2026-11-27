@@ -59,6 +59,7 @@ else()
 endif()
 
 add_executable(nemisis_game
+    game/src/dev/DevConsole.cpp
     game/src/GameApp.cpp
     game/src/assets/DevAssetBindings.cpp
     game/src/assets/GameAssetCatalog.cpp

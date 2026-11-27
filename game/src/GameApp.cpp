@@ -336,7 +336,7 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
     if (matchRequested() && menu_.gameplayActive()) {
         ensureLocalPlayer();
         auto command = player::PlayerInputCommand{};
-        if (!uiConfirmReleasePending_) {
+        if (!uiConfirmReleasePending_ && !devConsole_.isOpen()) {
             command = input::buildPlayerInputCommand(actions_, context.tickIndex, settings_);
             gameplayInputBuffer_.consumeInto(command);
         }
@@ -358,7 +358,9 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
 
     syncRuntimeLoadout();
 
-    auto command = input::buildPlayerInputCommand(actions_, context.tickIndex, settings_);
+    auto command = devConsole_.isOpen() ? player::PlayerInputCommand{} :
+        input::buildPlayerInputCommand(actions_, context.tickIndex, settings_);
+    command.tick = context.tickIndex;
     gameplayInputBuffer_.consumeInto(command);
     if (options_.profileRange && options_.startInFacility) {
         command = facilityProfileCommand(context.tickIndex);
@@ -883,6 +885,8 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
     actions_.update(window_.inputSnapshot());
     auto menuPointer = buildMenuPointerState(window_, actions_);
     if (options_.runPrivateMatchSmoke) drivePrivateMatchSmoke(menuPointer, context.frameIndex);
+    const bool consoleInput = devConsole_.update(actions_,menuPointer,previousScreen == ui::GameScreen::MainMenu);
+    if (consoleInput && !devConsole_.isOpen()) uiConfirmReleasePending_ = true;
     if (uiConfirmReleasePending_ && !actions_.stateOrDefault(input::actions::MenuConfirm).down &&
         !actions_.stateOrDefault(input::actions::Fire).down) uiConfirmReleasePending_ = false;
 #if NEMISIS_HAS_RMLUI
@@ -899,7 +903,7 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
         }
     } else
 #endif
-    menu_.update(actions_, settings_, activeLoadout_, attachmentRegistry_, menuPointer);
+    if (!consoleInput) menu_.update(actions_, settings_, activeLoadout_, attachmentRegistry_, menuPointer);
     if (menu_.consumePrivateMatchRequest()) privateMatchRequested_ = true;
     bool playableResourcesReady = true;
     if (options_.fullGame && !options_.runMenuFlowSmoke) {
@@ -917,7 +921,7 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
         uiConfirmReleasePending_ = actions_.stateOrDefault(input::actions::MenuConfirm).down ||
             actions_.stateOrDefault(input::actions::Fire).down;
     }
-    if (menu_.gameplayActive() && !uiConfirmReleasePending_) {
+    if (!consoleInput && menu_.gameplayActive() && !uiConfirmReleasePending_) {
         gameplayInputBuffer_.captureFrameEdges(actions_);
     } else {
         gameplayInputBuffer_.clear();
@@ -929,10 +933,10 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
         syncRuntimeLoadout();
         persistUserSettingsIfChanged();
     }
-    if (!matchRequested() && menu_.gameplayActive() && actionPressed(actions_, input::actions::ResetRange)) {
+    if (!consoleInput && !matchRequested() && menu_.gameplayActive() && actionPressed(actions_, input::actions::ResetRange)) {
         resetDevRangeState();
     }
-    if (menu_.screen() == ui::GameScreen::DevRange && actionPressed(actions_, input::actions::CycleDrillVariant)) {
+    if (!consoleInput && menu_.screen() == ui::GameScreen::DevRange && actionPressed(actions_, input::actions::CycleDrillVariant)) {
         dev::cycleDevRangeDrillVariant(devRangeSession_, devRangeTuning_);
         dev::configureDevTargetRangeForDrillVariant(targetRange_, devRangeSession_.drill.variant);
     }
@@ -1038,6 +1042,18 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
         uiShowcase_->render(frameInfo.ui);
     }
 #endif
+    const auto* localMatch = facilityMatch_ && facilityMatch_->isPrivateMatch() ? &facilityMatch_->authoritative() : nullptr;
+    const bool practice = menu_.gameplayActive() && !matchRequested();
+    const auto beforeZones = frameInfo.worldLines.size();
+    devConsole_.apply(frameInfo,practice ? &targetRange_ : nullptr,localMatch,localMatch ? facilityMatch_->slot() : 0);
+    if (options_.runPrivateMatchSmoke && localMatch && consoleSmokeStep_ == 6) {
+        unsigned alive = 0;
+        for (unsigned i=1; i<localMatch->rules.teamSize*2; ++i) alive += !localMatch->players[i].health.eliminated;
+        if (!devConsole_.isOpen() || frameInfo.materialTexturesEnabled || frameInfo.directionalShadows.enabled ||
+            frameInfo.lighting.contactShadowsEnabled || frameInfo.worldLines.size()-beforeZones != alive*48)
+            throw std::runtime_error("Console settings did not reach the private match frame");
+    }
+    devConsole_.draw(frameInfo,renderer_.backendFrameStats(),menu_.screen()==ui::GameScreen::MainMenu,practice || localMatch);
     const auto submitStart = options_.profileRange ? Clock::now() : Clock::time_point{};
     renderer_.beginFrame(frameInfo);
     renderer_.endFrame();
@@ -1723,7 +1739,7 @@ void GameApp::advanceMenuFlowSmoke(const novacore::core::FrameContext& context) 
 }
 
 void GameApp::syncRelativeMouseMode() {
-    const bool wantsRelativeMouse = menu_.gameplayActive() && !window_.isHeadless();
+    const bool wantsRelativeMouse = menu_.gameplayActive() && !devConsole_.isOpen() && !window_.isHeadless();
     if (relativeMouseDesired_ == wantsRelativeMouse) {
         return;
     }

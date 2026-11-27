@@ -35,17 +35,10 @@ namespace {
 
 [[nodiscard]] DebugTargetTraceResult traceHumanoid(
     const DebugTargetState& target, const weapons::ShotTraceResult& shot) {
-    const float floor = target.position.y - 1.65F;
-    struct Zone { novacore::math::Vec3 center; novacore::math::Vec3 half; player::DamageZone type; };
-    const std::array zones{
-        Zone{{target.position.x - .13F, floor + .44F, target.position.z}, {.12F, .39F, .19F}, player::DamageZone::Legs},
-        Zone{{target.position.x + .13F, floor + .44F, target.position.z}, {.12F, .39F, .19F}, player::DamageZone::Legs},
-        Zone{{target.position.x, floor + 1.12F, target.position.z}, {.32F, .34F, .21F}, player::DamageZone::Body},
-        Zone{{target.position.x, floor + 1.52F, target.position.z}, {.18F, .16F, .18F}, player::DamageZone::Head},
-    };
+    const auto feet = target.position - novacore::math::Vec3{0, 1.65F, 0};
     DebugTargetTraceResult nearest{};
-    for (const auto& zone : zones) {
-        if (const auto distance = hitZone(shot, zone.center, zone.half);
+    for (const auto& zone : humanoidHitZones) {
+        if (const auto distance = hitZone(shot, feet + zone.center, zone.half);
             distance && (!nearest.hit || *distance < nearest.distanceMeters)) {
             nearest = {true, *distance, zone.type};
         }

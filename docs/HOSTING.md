@@ -18,7 +18,25 @@ run the host reached tick 541 with three posed remote operators and 53 bot hits.
 Escape released all three mesh handles and the match session. The dedicated,
 loopback, private-match, rules, codec and menu tests also passed.
 
-## Dedicated host
+## Inspect a private match
+
+Click **Dev console** on the Play screen or press **O** during the match. Click
+a setting to cycle its value. The arrow keys and Enter also work. Escape closes
+the panel first and leaves the match on the next press. Bots keep moving while
+the panel is open.
+
+**Hit volumes** draws the same rotated head, torso and leg volumes used by the
+private host for hit registration. The training range also draws its spherical
+targets. **Material textures** changes the material sampling path. **Shadow map**
+selects the scene setting, Off, 512, 1024 or 2048. **Contact shadows** controls
+the separate lighting effect. **Restore scene settings** clears the overrides.
+These settings apply to the current session.
+
+[Native 1280×720 panel during a private match](recovery/visual/private-match/dev-console.png).
+The graphical smoke test exercises the buttons and checks the actual draw settings,
+48 box edges per live remote operator, and cleanup on exit.
+
+## Dedicated server
 
 Build Nemisis against the NovaCore revision in `cmake/novacore-revision.txt`. The
 `nemisis_match_server` target runs the authoritative simulation without a game
