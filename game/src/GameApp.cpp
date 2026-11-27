@@ -324,6 +324,7 @@ void GameApp::onShutdown() {
             std::to_string(stats.materialImageBudgetBytes) + " budget_rejects=" +
             std::to_string(stats.materialImageBudgetRejectCount));
     }
+    releaseRemoteOperators();
     releaseDevMeshResources();
     renderer_.shutdown();
     window_.shutdown();
@@ -1003,7 +1004,12 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
     if (!uiShowcase_)
 #endif
     if (facilityMatch_ && menu_.gameplayActive()) {
-        updateRemoteMatchPose(static_cast<float>(context.deltaSeconds));
+        const auto localSlot = facilityMatch_->slot();
+        const auto slots = 2 * facilityMatch_->authoritative().rules.teamSize;
+        for (unsigned i = 0; i < slots; ++i) {
+            if (i != localSlot && (facilityMatch_->isPrivateMatch() || i == 1 - localSlot % 2))
+                updateRemoteMatchPose(i, static_cast<float>(context.deltaSeconds));
+        }
         const auto firstRect = frameInfo.debugRects.size();
         const auto firstLine = frameInfo.debugLines.size();
         const auto firstText = frameInfo.debugTexts.size();

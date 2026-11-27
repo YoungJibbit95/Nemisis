@@ -99,7 +99,8 @@ private:
     void enterPlayableMap();
     void tickFacilityMatch(player::PlayerInputCommand command);
     void syncMatchMap(net::MatchMap map);
-    void updateRemoteMatchPose(float deltaSeconds);
+    void updateRemoteMatchPose(unsigned slot, float deltaSeconds);
+    void releaseRemoteOperators();
     void drawFacilityMatch(novacore::render::RenderFrameInfo& frame) const;
     void leaveFacilityMatch();
     void drivePrivateMatchSmoke(ui::MenuPointerState& pointer, std::uint64_t frame);
@@ -131,10 +132,15 @@ private:
     std::unique_ptr<net::FacilityMatchClient> facilityMatch_;
     bool privateMatchRequested_ = false;
     unsigned privateSmokeStage_ = 0;
-    std::unique_ptr<player::PlayerSkeletalAnimator> remoteMatchAnimator_;
-    player::CharacterAnimationState remoteAnimationState_{};
-    float remotePoseElapsed_ = 0;
-    novacore::math::Vec3 remoteVelocity_{};
+    struct RemotePose {
+        std::unique_ptr<player::PlayerSkeletalAnimator> animator;
+        novacore::render::MeshResourceHandle mesh;
+        player::CharacterAnimationState animation{};
+        novacore::math::Vec3 velocity{};
+        float elapsed = 0;
+        bool posed = false;
+    };
+    std::array<RemotePose, net::maxMatchPlayers> remotePoses_{};
     std::uint32_t confirmedHitUntil_ = 0;
     std::chrono::steady_clock::time_point lastProfileFrameEnd_{};
     std::uint64_t lastProfileTick_ = 0;
