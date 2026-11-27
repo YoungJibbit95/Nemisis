@@ -37,7 +37,7 @@ index 1afc07a..70f6be4 100644
              animator.fitElbowPolesToHands(*handTargets);
          } else if (a1Rifle) {
 diff --git a/game/src/dev/DevRangeRenderScene.cpp b/game/src/dev/DevRangeRenderScene.cpp
-index 1dc9f53..fbd0e7e 100644
+index 1dc9f53..a95b372 100644
 --- a/game/src/dev/DevRangeRenderScene.cpp
 +++ b/game/src/dev/DevRangeRenderScene.cpp
 @@ -328,6 +328,8 @@ struct FirstPersonCookedArmsRig final {
@@ -61,7 +61,7 @@ index 1dc9f53..fbd0e7e 100644
          const auto carry = player::firstPersonAttachmentMatrix({
 -            .position={.105F,-.062F,.032F}, .yawDegrees=8.F, .pitchDegrees=2.F});
 -        authoredMount = novacore::animation::multiply(authoredMount,carry);
-+            .position={-.005F,-.018F,.065F}, .yawDegrees=3.F, .pitchDegrees=2.F});
++            .position={.022F,-.025F,.043F}, .yawDegrees=3.F, .pitchDegrees=2.F});
 +        const auto authoredMount = novacore::animation::multiply(chestMount,carry);
          const auto sight = cookedMarkerWorld(desc, kProjectReadyWeaponAssetId, "socket_ads_sight", {});
          if (!sight) {
