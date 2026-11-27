@@ -1,5 +1,11 @@
 # Hosting a Nemisis match
 
+Select **Play → Private Match with Bots** for a five-minute, 20-point 2v2 match
+on Outer Facility. You and one bot face two opponents. The in-process host uses
+the same movement, damage, scoring and respawn rules as the dedicated server.
+Escape returns to the main menu. No additional game window or server is needed.
+
+
 Build Nemisis against the NovaCore revision in `cmake/novacore-revision.txt`. The
 `nemisis_match_server` target runs the authoritative simulation without a game
 window, GPU initialization or game asset directory. Build `nemisis_game` with

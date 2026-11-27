@@ -68,6 +68,7 @@ struct GameAppOptions final {
     bool lockDevRange = false;
     bool runMenuFlowSmoke = false;
     bool runDeploymentSmoke = false;
+    bool runPrivateMatchSmoke = false;
     bool uiShowcase = false;
     int uiPreviewWidth = 1280;
     int uiPreviewHeight = 720;
@@ -101,6 +102,8 @@ private:
     void updateRemoteMatchPose(float deltaSeconds);
     void drawFacilityMatch(novacore::render::RenderFrameInfo& frame) const;
     void leaveFacilityMatch();
+    void drivePrivateMatchSmoke(ui::MenuPointerState& pointer, std::uint64_t frame);
+    [[nodiscard]] bool matchRequested() const { return privateMatchRequested_ || options_.localMatchPort != 0; }
     void loadPlayableResources(ui::GameScreen screen);
     [[nodiscard]] bool updatePlayableResourceLoading();
     void finishPlayableResources(ui::GameScreen screen);
@@ -126,6 +129,8 @@ private:
 
     GameAppOptions options_;
     std::unique_ptr<net::FacilityMatchClient> facilityMatch_;
+    bool privateMatchRequested_ = false;
+    unsigned privateSmokeStage_ = 0;
     std::unique_ptr<player::PlayerSkeletalAnimator> remoteMatchAnimator_;
     player::CharacterAnimationState remoteAnimationState_{};
     float remotePoseElapsed_ = 0;

@@ -244,6 +244,10 @@ void testPointerNavigationActivatesMenuRows() {
     menu.update(actions, settings, loadout, attachments, hovering);
     expect(menu.selectedIndex() == 1U, "a stationary pointer preserves keyboard focus");
     menu.update(actions, settings, loadout, attachments, {470.0F, 400.0F, true, true, true, false});
+    expect(menu.consumePrivateMatchRequest() && !menu.consumePrivateMatchRequest() && menu.loadingPlayableMap(),
+        "the Play row requests a private roster once and loads its arena");
+    menu.showMainMenu();
+    menu.update(actions, settings, loadout, attachments, {470.0F, 456.0F, true, true, true, false});
     expect(menu.quitRequested(), "Exit to desktop requests an orderly shutdown");
 }
 

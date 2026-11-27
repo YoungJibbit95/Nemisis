@@ -1,4 +1,5 @@
 #include "nemisis/GameApp.hpp"
+#include "nemisis/input/InputBindings.hpp"
 #include "nemisis/player/PlayerView.hpp"
 #include "nemisis/ui/UiCanvas.hpp"
 #include "novacore/ecs/Components.hpp"
@@ -7,6 +8,7 @@
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
+#include <iostream>
 #include "novacore/net/LocalDatagram.hpp"
 
 namespace nemisis::game {
@@ -16,6 +18,7 @@ const std::string remoteMeshId = "match_remote_operator";
 
 void GameApp::leaveFacilityMatch() {
     facilityMatch_.reset();
+    privateMatchRequested_ = false;
     if (const auto entry = devMeshResources_.find(remoteMeshId); entry != devMeshResources_.end()) {
         renderer_.releaseMeshResource(entry->second);
         devMeshResources_.erase(entry);
@@ -29,14 +32,45 @@ void GameApp::leaveFacilityMatch() {
     gameplayInputBuffer_.clear();
 }
 
+void GameApp::drivePrivateMatchSmoke(ui::MenuPointerState& pointer, std::uint64_t frame) {
+    if (privateSmokeStage_ == 0 && frame >= 4 && menu_.screen() == ui::GameScreen::MainMenu) {
+        pointer = {470, 400, true, true, true, false};
+        privateSmokeStage_ = 1;
+        std::cout << "PRIVATE_MATCH_MENU frame=" << frame << '\n';
+    } else if (privateSmokeStage_ == 1 && facilityMatch_ && facilityMatch_->isPrivateMatch() &&
+               facilityMatch_->authoritative().tick >= 540) {
+        const auto& game = facilityMatch_->authoritative();
+        const unsigned botHits = game.players[1].hits + game.players[2].hits + game.players[3].hits;
+        if (!botHits || game.rules.teamSize != 2 || renderer_.backendName() != "vulkan-world")
+            throw std::runtime_error("Private match did not present the expected Vulkan roster and host hits");
+        std::cout << "PRIVATE_MATCH_PLAY frame=" << frame << " tick=" << game.tick << " bot_hits=" << botHits << '\n';
+        novacore::platform::InputSnapshot escape;
+        escape.setButton({novacore::platform::InputControlKind::KeyboardKey, input::key_codes::Escape},
+                         true, novacore::platform::InputDeviceKind::KeyboardMouse);
+        actions_.update(escape);
+        privateSmokeStage_ = 2;
+    } else if (privateSmokeStage_ == 2 && menu_.screen() == ui::GameScreen::MainMenu) {
+        if (facilityMatch_ || privateMatchRequested_ || remoteMatchAnimator_ || devMeshResources_.contains(remoteMeshId))
+            throw std::runtime_error("Private match retained an operator or session after Escape");
+        privateSmokeStage_ = 3;
+        std::cout << "PRIVATE_MATCH_EXIT frame=" << frame << " active_sessions=0 remote_meshes=0\n";
+        uiQuitRequested_ = true;
+    }
+}
+
 void GameApp::tickFacilityMatch(player::PlayerInputCommand command) {
     if (!facilityMatch_) {
         // Load the two supported maps' shared asset superset before admission.
         // A slower disk must not stall network heartbeats after a map is announced.
         loadPlayableResources(ui::GameScreen::DevRange);
-        const auto endpoint = novacore::net::DatagramEndpoint::parse(options_.matchHost, options_.localMatchPort);
-        if (!endpoint) throw std::runtime_error("Invalid match host");
-        facilityMatch_ = std::make_unique<net::FacilityMatchClient>(*endpoint);
+        if (privateMatchRequested_) {
+            facilityMatch_ = std::make_unique<net::FacilityMatchClient>(
+                net::MatchRules{net::MatchMap::OuterFacility, net::MatchMode::TeamDeathmatch, 2, 20, 5 * 60 * 60});
+        } else {
+            const auto endpoint = novacore::net::DatagramEndpoint::parse(options_.matchHost, options_.localMatchPort);
+            if (!endpoint) throw std::runtime_error("Invalid match host");
+            facilityMatch_ = std::make_unique<net::FacilityMatchClient>(*endpoint);
+        }
     }
     const auto oldState = facilityMatch_->authoritative().players[facilityMatch_->slot()];
     const auto& before = facilityMatch_->authoritative();

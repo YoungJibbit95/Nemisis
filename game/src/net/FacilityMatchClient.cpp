@@ -1,4 +1,5 @@
 #include "FacilityMatchCodec.hpp"
+#include "PrivateMatch.hpp"
 #include "nemisis/net/FacilityMatch.hpp"
 #include "nemisis/net/MatchRules.hpp"
 #include "novacore/net/LocalDatagram.hpp"
@@ -34,15 +35,25 @@ FacilityMatchClient::FacilityMatchClient(std::uint16_t port)
     : FacilityMatchClient(*novacore::net::DatagramEndpoint::parse("127.0.0.1", port)) {}
 FacilityMatchClient::FacilityMatchClient(novacore::net::DatagramEndpoint remote)
     : impl_(std::make_unique<Impl>(remote)) {}
+FacilityMatchClient::FacilityMatchClient(const MatchRules& rules) : local_(std::make_unique<PrivateMatch>(rules)) {}
+const dev::GreyboxWorld* FacilityMatchClient::negotiatedWorld() const {
+    if (local_) return &local_->world();
+    return impl_->received && impl_->arena ? &impl_->arena->world() : nullptr;
+}
 FacilityMatchClient::~FacilityMatchClient() = default;
-unsigned FacilityMatchClient::slot() const { return impl_->slot; }
-const MatchFrame &FacilityMatchClient::authoritative() const { return impl_->frame; }
-const Duelist &FacilityMatchClient::predicted() const { return impl_->predicted; }
+unsigned FacilityMatchClient::slot() const { return local_ ? 0U : impl_->slot; }
+const MatchFrame &FacilityMatchClient::authoritative() const { return local_ ? local_->frame() : impl_->frame; }
+const Duelist &FacilityMatchClient::predicted() const { return local_ ? local_->frame().players[0] : impl_->predicted; }
 void FacilityMatchClient::confirmMapReady() {
+    if (local_) { local_->ready(); return; }
     if (impl_->received && impl_->frame.phase == MatchPhase::Waiting)
         impl_->ready = true;
 }
 void FacilityMatchClient::tick(std::optional<Command> command) {
+    if (local_) {
+        if (command) local_->tick(*command, local_->frame().tick);
+        return;
+    }
     auto &c = *impl_;
     const bool wasPlaying = c.frame.phase == MatchPhase::Playing;
     const auto observedTick = c.frame.tick;

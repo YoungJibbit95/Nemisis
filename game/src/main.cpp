@@ -26,7 +26,11 @@ int main(int argc, char** argv) {
     }
     for (int i = 1; i < argc; ++i) {
         const std::string_view argument(argv[i]);
-        if (argument == "--game-deploy-smoke-test") {
+        if (argument == "--private-match-smoke") {
+            gameOptions.fullGame = true;
+            gameOptions.runPrivateMatchSmoke = true;
+            smokeTest = true;
+        } else if (argument == "--game-deploy-smoke-test") {
             gameOptions.fullGame = true;
             gameOptions.runDeploymentSmoke = true;
             smokeTest = true;
@@ -171,7 +175,7 @@ int main(int argc, char** argv) {
         gameOptions.lockDevRange = true;
     }
     if (smokeTest) {
-        desc.maxFrames = gameOptions.runDeploymentSmoke ? 0 : gameOptions.runMenuFlowSmoke ? 58 : gameOptions.physicsProps ? 120 :
+        desc.maxFrames = (gameOptions.runDeploymentSmoke || gameOptions.runPrivateMatchSmoke) ? 0 : gameOptions.runMenuFlowSmoke ? 58 : gameOptions.physicsProps ? 120 :
             (gameOptions.firstPersonHandIK || gameOptions.projectFPSPreview) ? 60 : 5;
     }
     if (gameOptions.profileRange) {

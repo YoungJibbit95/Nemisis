@@ -32,20 +32,25 @@ struct MatchFrame {
     MatchPhase phase = MatchPhase::Waiting;
     bool interrupted = false;
 };
+class PrivateMatch;
 class FacilityMatchClient final {
 public:
+    explicit FacilityMatchClient(const MatchRules& localRules);
     explicit FacilityMatchClient(std::uint16_t port);
     explicit FacilityMatchClient(novacore::net::DatagramEndpoint remote);
     ~FacilityMatchClient();
     // An empty input polls snapshots and resends pending commands without predicting a new tick.
     void tick(std::optional<player::PlayerInputCommand> command);
     void confirmMapReady();
+    [[nodiscard]] bool isPrivateMatch() const { return static_cast<bool>(local_); }
+    [[nodiscard]] const dev::GreyboxWorld* negotiatedWorld() const;
     [[nodiscard]] unsigned slot() const;
     [[nodiscard]] const MatchFrame& authoritative() const;
     [[nodiscard]] const Duelist& predicted() const;
 private:
     struct Impl;
     std::unique_ptr<Impl> impl_;
+    std::unique_ptr<PrivateMatch> local_;
 };
 int runFacilityMatchServer(novacore::net::DatagramEndpoint bind,
     std::span<const MatchRules> rotation, bool singleRound);
