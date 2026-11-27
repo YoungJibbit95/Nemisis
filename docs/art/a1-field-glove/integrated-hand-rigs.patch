@@ -1,0 +1,525 @@
+diff --git a/game/include/nemisis/dev/DevRangeRenderScene.hpp b/game/include/nemisis/dev/DevRangeRenderScene.hpp
+index 7fcd273..c1a221a 100644
+--- a/game/include/nemisis/dev/DevRangeRenderScene.hpp
++++ b/game/include/nemisis/dev/DevRangeRenderScene.hpp
+@@ -124,6 +124,7 @@ struct FirstPersonPresentation final {
+     std::optional<novacore::animation::Mat4> leftGripWorld;
+     std::optional<novacore::animation::Mat4> fieldCellWorld;
+     novacore::math::Vec3 magazineWorldOffset{};
++    float projectSupportRelease = 0.0F;
+     std::size_t cookedSocketCount = 0;
+     std::size_t alignedMeshCount = 0;
+     std::size_t gripBoundCount = 0;
+diff --git a/game/include/nemisis/player/PlayerHandConstraints.hpp b/game/include/nemisis/player/PlayerHandConstraints.hpp
+index cc30c50..d1d4540 100644
+--- a/game/include/nemisis/player/PlayerHandConstraints.hpp
++++ b/game/include/nemisis/player/PlayerHandConstraints.hpp
+@@ -29,6 +29,8 @@ struct PlayerHandTargets final {
+     novacore::animation::Mat4 rightGripWorld{};
+     novacore::animation::Mat4 leftGripWorld{};
+     std::optional<std::array<novacore::math::Vec3, 2>> elbowPolesModel{};
++    bool projectRifleGrip = false;
++    float projectSupportRelease = 0.0F;
+ };
+ 
+ enum class HandConstraintStatus { Disabled, Applied, Unreachable, Invalid };
+diff --git a/game/src/GameApp.cpp b/game/src/GameApp.cpp
+index 1afc07a..70f6be4 100644
+--- a/game/src/GameApp.cpp
++++ b/game/src/GameApp.cpp
+@@ -1008,6 +1008,8 @@ void GameApp::updateVisiblePlayerPose(float animationDelta) {
+         handTargets = player::PlayerHandTargets{
+             player::firstPersonAttachmentMatrix(firstPersonPresentation_->rig.arms),
+             *firstPersonPresentation_->rightGripWorld, *firstPersonPresentation_->leftGripWorld};
++        handTargets->projectRifleGrip = projectRig && firstPersonPresentation_->weaponAssetId == dev::kProjectReadyWeaponAssetId;
++        handTargets->projectSupportRelease = firstPersonPresentation_->projectSupportRelease;
+         if (presentationDesc.a1MatchPrimary || presentationDesc.projectRifleReady) {
+             animator.fitElbowPolesToHands(*handTargets);
+         } else if (a1Rifle) {
+diff --git a/game/src/dev/DevRangeRenderScene.cpp b/game/src/dev/DevRangeRenderScene.cpp
+index 1dc9f53..fbd0e7e 100644
+--- a/game/src/dev/DevRangeRenderScene.cpp
++++ b/game/src/dev/DevRangeRenderScene.cpp
+@@ -328,6 +328,8 @@ struct FirstPersonCookedArmsRig final {
+ 
+ void applyProjectSupportTravel(const DevRangeRenderSceneDesc& desc, const player::ProjectWeaponMotion& motion,
+                                FirstPersonPresentation& presentation) {
++    if (presentation.weaponAssetId == kProjectReadyWeaponAssetId)
++        presentation.projectSupportRelease = motion.supportReloadAlpha;
+     if (presentation.weaponAssetId==kVesperAssetId && desc.meshCatalog) {
+         const auto* resource=desc.meshCatalog->findByAssetId(kVesperAssetId);
+         const auto& weapon=desc.player.weapon;
+@@ -1460,29 +1462,28 @@ FirstPersonPresentation evaluateFirstPersonPresentation(const DevRangeRenderScen
+         if (!desc.player.rifleReadyMount) {
+             throw std::runtime_error("Sampled Project Rifle Ready chest mount is missing");
+         }
+-        auto authoredMount = novacore::animation::multiply(playerWorld, *desc.player.rifleReadyMount);
++        const auto chestMount = novacore::animation::multiply(playerWorld, *desc.player.rifleReadyMount);
+         // Bring the weapon across the chest in free carry. Keeping the
+         // firing wrist only 20 cm in front of the same-side shoulder folds a
+         // human forearm sharply even with a perfectly pinned palm surface.
+         const auto carry = player::firstPersonAttachmentMatrix({
+-            .position={.105F,-.062F,.032F}, .yawDegrees=8.F, .pitchDegrees=2.F});
+-        authoredMount = novacore::animation::multiply(authoredMount,carry);
++            .position={-.005F,-.018F,.065F}, .yawDegrees=3.F, .pitchDegrees=2.F});
++        const auto authoredMount = novacore::animation::multiply(chestMount,carry);
+         const auto sight = cookedMarkerWorld(desc, kProjectReadyWeaponAssetId, "socket_ads_sight", {});
+         if (!sight) {
+             throw std::runtime_error("Authored Project M4 sight marker is missing");
+         }
+-        const auto aimedMount = projectWeaponAimMount(rigidChestAttachment(authoredMount), *sight, desc.player, eye, view);
+-        result.rig.weapon = projectWeaponActionAttachment(aimedMount, motion);
++        auto aimedMount = projectWeaponAimMount(rigidChestAttachment(authoredMount), *sight, desc.player, eye, view);
+         if (animation.reloadAlpha > 0.0F) {
+-            const auto camera = player::firstPersonAttachmentMatrix({
+-                .position=eye, .yawDegrees=view.yawDegrees, .pitchDegrees=-view.pitchDegrees,
+-                .rollDegrees=-desc.player.cameraRollDegrees});
++            // Keep the exchange in the sampled shoulder frame. A camera-relative
++            // mount pulled the wrist past its reach as the eye turned or pitched.
+             const auto exchange = player::firstPersonAttachmentMatrix({
+-                .position={-.07F,-.008F,.407F}, .yawDegrees=43.F, .pitchDegrees=-15.F, .rollDegrees=9.F});
++                .position={.09F,-.01F,.11F}, .yawDegrees=43.F, .pitchDegrees=-15.F, .rollDegrees=9.F});
+             const float w = animation.reloadAlpha;
+-            result.rig.weapon = blendWeaponMount(result.rig.weapon,
+-                novacore::animation::multiply(camera,exchange),w*w*(3.F-2.F*w));
++            aimedMount = blendWeaponMount(aimedMount,
++                novacore::animation::multiply(chestMount,exchange),w*w*(3.F-2.F*w));
+         }
++        result.rig.weapon = projectWeaponActionAttachment(aimedMount, motion);
+         result.weaponWorld = player::firstPersonAttachmentMatrix(result.rig.weapon);
+         result.weaponAssetId = kProjectReadyWeaponAssetId;
+         result.armsAssetId = kProjectFPSArmsAssetId;
+diff --git a/game/src/net/GameAppMatch.cpp b/game/src/net/GameAppMatch.cpp
+index f311eb4..c085577 100644
+--- a/game/src/net/GameAppMatch.cpp
++++ b/game/src/net/GameAppMatch.cpp
+@@ -438,7 +438,8 @@ void GameApp::updateRemoteMatchOperator(unsigned slot, const net::Duelist& other
+         if (!presentation->rightGripWorld || !presentation->leftGripWorld) return;
+         const player::PlayerHandTargets targets{
+             player::firstPersonAttachmentMatrix(presentation->rig.arms),
+-            *presentation->rightGripWorld, *presentation->leftGripWorld};
++            *presentation->rightGripWorld, *presentation->leftGripWorld, {},
++            presentation->weaponAssetId == dev::kProjectReadyWeaponAssetId, presentation->projectSupportRelease};
+         poseTimer.finish();
+         auto timer = measureMatchPhase(matchProfile_.cpu.remoteSkinMs);
+         skinned = animator.skinPose(&targets, skinningOutput());
+diff --git a/game/src/player/HandPoseTrace.hpp b/game/src/player/HandPoseTrace.hpp
+index 085dd6e..45bc135 100644
+--- a/game/src/player/HandPoseTrace.hpp
++++ b/game/src/player/HandPoseTrace.hpp
+@@ -50,6 +50,23 @@ inline void traceHandGeometry(PlayerSkeletalAnimator& animator, const dev::DevRa
+         for (const auto* transform:{&pose.weaponWorld,&*pose.fieldCellWorld})
+             for (const auto value:transform->values) cell << ',' << value;
+         cell << '\n';
++        if (const auto* global = animator.globalPose()) {
++            static std::map<std::filesystem::path,std::ofstream> wristTimelines;
++            auto& wrist = wristTimelines[actorDirectory];
++            if (!wrist.is_open()) {
++                wrist.open(actorDirectory / "wrist.csv");
++                wrist << std::setprecision(9) << "tick,joint,r00,r01,r02,x,r10,r11,r12,y,r20,r21,r22,z\n";
++            }
++            for (std::size_t i = 0; i < global->joints.size(); ++i) {
++                const auto& name = animator.skeleton().joints[i].name;
++                if (!(name.starts_with("lower_arm.") || name.starts_with("hand.") ||
++                      name.starts_with("middle.01."))) continue;
++                wrist << state.animation.simulationTick << ',' << name;
++                for (int row = 0; row < 3; ++row)
++                    for (int col = 0; col < 4; ++col) wrist << ',' << global->joints[i].at(row,col);
++                wrist << '\n';
++            }
++        }
+     }
+     std::string_view phase;
+     if (pose.fieldCellWorld && state.weapon.reloading) {
+diff --git a/game/src/player/PlayerHandConstraints.cpp b/game/src/player/PlayerHandConstraints.cpp
+index ec20ab4..769e8ae 100644
+--- a/game/src/player/PlayerHandConstraints.cpp
++++ b/game/src/player/PlayerHandConstraints.cpp
+@@ -325,7 +325,20 @@ PlayerHandConstraintResult applyPlayerHandConstraints(
+             const float along = dot({delta.x, delta.y, delta.z}, foreAxis);
+             const math::Quat twist{along*foreAxis.x, along*foreAxis.y, along*foreAxis.z, delta.w};
+             if (animation::quaternionLengthSquared(twist) > kLengthEpsilon) {
+-                const auto foreRoll = animation::slerp({}, animation::normalize(twist), .72F);
++                // The two-bone solution defines the elbow's swing plane. Its
++                // distal roll follows the mounted palm, leaving a small amount
++                // at the wrist. A fraction of the shortest arc jumps when the
++                // left palm passes a half turn during the cell exchange. A
++                // periodic residual agrees on either side of that crossing
++                // and gives a direct pose seek the same result as playback.
++                const auto unitTwist = animation::normalize(twist);
++                const float sineHalf = dot({unitTwist.x, unitTwist.y, unitTwist.z}, foreAxis);
++                constexpr float maxWristRollRadians = .25F;
++                const float halfResidual = maxWristRollRadians * sineHalf * unitTwist.w;
++                const float sineResidual = std::sin(halfResidual);
++                const math::Quat wristRoll{foreAxis.x * sineResidual, foreAxis.y * sineResidual,
++                                           foreAxis.z * sineResidual, std::cos(halfResidual)};
++                const auto foreRoll = animation::multiply(unitTwist, animation::conjugate(wristRoll));
+                 auto& elbowRotation = outLocal.joints[arm.elbow].rotation;
+                 elbowRotation = animation::multiply(elbowRotation, foreRoll);
+                 wristLocal = animation::multiply(animation::conjugate(foreRoll), wristLocal);
+diff --git a/game/src/player/ProjectHandConstraints.cpp b/game/src/player/ProjectHandConstraints.cpp
+index bf1439a..e27434a 100644
+--- a/game/src/player/ProjectHandConstraints.cpp
++++ b/game/src/player/ProjectHandConstraints.cpp
+@@ -192,18 +192,14 @@ bool chain(const animation::Skeleton& skeleton, const HandIKArm& arm, std::strin
+            arm.socketIndex < skeleton.sockets.size() && skeleton.sockets[arm.socketIndex].joint == arm.wrist;
+ }
+ bool orientWrist(const animation::Skeleton& skeleton, const HandIKArm& arm, const M3& desired, const M3& modelWorld,
+-                 animation::LocalPose& local, const animation::GlobalPose& global, math::Vec3& offset) {
+-    const auto parent = skeleton.joints[arm.wrist].parent;
+-    if (parent < 0) {
+-        return false;
+-    }
++                 animation::LocalPose& local, const animation::Mat4& handParent, math::Vec3& offset) {
+     const auto& wrist = local.joints[arm.wrist];
+     const auto& socket = skeleton.sockets[arm.socketIndex].local;
+     if (!positive(wrist.scale) || !positive(socket.scale)) {
+         return false;
+     }
+     M3 invParent, rotation;
+-    const auto parentLinear = linear(global.joints[static_cast<std::size_t>(parent)]);
++    const auto parentLinear = linear(handParent);
+     const auto p = multiply(modelWorld, parentLinear);
+     auto b = linear(animation::matrixFromTransform(socket));
+     const std::array scales{wrist.scale.x, wrist.scale.y, wrist.scale.z};
+@@ -222,6 +218,84 @@ bool orientWrist(const animation::Skeleton& skeleton, const HandIKArm& arm, cons
+                   socket.translation);
+     return animation::isFinite(offset);
+ }
++
++math::Quat around(math::Vec3 axis, float radians) {
++    const float half = 0.5F * radians;
++    const float sine = std::sin(half);
++    return {axis.x * sine, axis.y * sine, axis.z * sine, std::cos(half)};
++}
++
++float axialRoll(math::Quat rotation, math::Quat neutral, math::Vec3 axis) {
++    const auto delta = animation::multiply(rotation, animation::conjugate(neutral));
++    const float along = dot({delta.x, delta.y, delta.z}, axis);
++    // Double angle makes the measurement independent of quaternion hemisphere.
++    return std::atan2(2.F * along * delta.w, delta.w * delta.w - along * along);
++}
++
++// A real weighted joint half way down each Project forearm lets the sleeve
++// follow pronation. Rotate around the joint-to-wrist lines in the actual
++// scaled pose. Neither roll is allowed to displace the wrist endpoint.
++bool shareProjectForearmRoll(const animation::Skeleton& skeleton, const HandIKArm& arm, const M3& desired,
++                             const M3& modelWorld, animation::LocalPose& local, const animation::GlobalPose& global) {
++    const auto distal = skeleton.joints[arm.wrist].parent;
++    const auto upper = skeleton.joints[arm.elbow].parent;
++    const auto& hand = local.joints[arm.wrist];
++    const auto neutral = skeleton.joints[arm.wrist].bindLocal.rotation;
++    auto& forearm = local.joints[arm.elbow];
++    auto& cuff = local.joints[distal];
++    animation::Mat4 inverseForearm;
++    math::Vec3 foreAxis, cuffAxis, wristAxis;
++    if (!affineInverse(preScale(global.joints[arm.elbow], forearm.scale), inverseForearm) ||
++        !unit(animation::transformPoint(inverseForearm, animation::matrixTranslation(global.joints[arm.wrist])), foreAxis) ||
++        !unit({cuff.scale.x * hand.translation.x, cuff.scale.y * hand.translation.y, cuff.scale.z * hand.translation.z}, cuffAxis) ||
++        !unit(hand.translation, wristAxis)) return false;
++
++    const float roll = axialRoll(hand.rotation, neutral, wristAxis);
++    // The support palm crosses +/-180 degrees in ADS. Bias the middle of the
++    // sleeve toward its authored inward roll at that pose; smooth periodic
++    // terms give the same result on both sides of the crossing and on a seek.
++    const float proximalRoll = 0.68F * (std::cos(roll) - 1.F) + 0.70F * std::sin(roll)
++                             + 0.18F * (1.F - std::cos(2.F * roll));
++    forearm.rotation = animation::multiply(forearm.rotation, around(foreAxis, proximalRoll));
++    const auto foreWorld = animation::multiply(global.joints[upper], animation::matrixFromTransform(forearm));
++    const auto cuffWorld = [&] { return animation::multiply(foreWorld, animation::matrixFromTransform(cuff)); };
++    math::Vec3 offset;
++    if (!orientWrist(skeleton, arm, desired, modelWorld, local, cuffWorld(), offset)) return false;
++    const float remaining = axialRoll(hand.rotation, neutral, wristAxis);
++    constexpr float maxWristRoll = 0.18F;
++    const float distalRoll = remaining - maxWristRoll * std::sin(remaining);
++    cuff.rotation = animation::multiply(cuff.rotation, around(cuffAxis, distalRoll));
++    return orientWrist(skeleton, arm, desired, modelWorld, local, cuffWorld(), offset);
++}
++
++void articulateProjectPinky(const animation::Skeleton& skeleton, std::size_t side, float supportRelease,
++                            animation::LocalPose& local) {
++    const bool left = side == 1;
++    const auto base = animation::findJoint(skeleton, left ? "DEF-f_pinky.01.L" : "DEF-f_pinky.01.R");
++    const auto middle = animation::findJoint(skeleton, left ? "DEF-f_pinky.02.L" : "DEF-f_pinky.02.R");
++    const auto tip = animation::findJoint(skeleton, left ? "DEF-f_pinky.03.L" : "DEF-f_pinky.03.R");
++    if (!base || !middle || !tip || skeleton.joints[*middle].parent != static_cast<int>(*base) ||
++        skeleton.joints[*tip].parent != static_cast<int>(*middle)) return;
++    // The M4 source concentrates the little finger curl at the knuckle
++    // (100/0/0 degrees on the support hand). Use its three cooked hinge
++    // directions. Opening the hand or reaching the exchange grip fades out
++    // the redistribution, so the authored magazine contact remains exact.
++    constexpr float rad = 0.01745329252F;
++    const float mirror = left ? 1.F : -1.F;
++    const std::array<math::Vec3,3> hinges{math::Vec3{.99955F,0,.03007F*mirror},
++        math::Vec3{.99923F,0,.03912F*mirror}, math::Vec3{.99936F,0,.03570F*mirror}};
++    const auto knuckleDelta = animation::multiply(animation::conjugate(skeleton.joints[*base].bindLocal.rotation),
++                                                    local.joints[*base].rotation);
++    const float hinge = axialRoll(knuckleDelta, {}, hinges[0]);
++    const float closed = std::clamp((hinge / rad - 55.F) / 40.F, 0.F, 1.F);
++    const float weight = closed * closed * (3.F - 2.F * closed) * (left ? 1.F - std::clamp(supportRelease,0.F,1.F) : 1.F);
++    const std::array<float,3> correction = left ? std::array{-10.F,15.F,8.F} : std::array{-5.F,7.F,5.F};
++    const std::array joints{*base,*middle,*tip};
++    for (std::size_t i = 0; i < joints.size(); ++i) {
++        auto& rotation = local.joints[joints[i]].rotation;
++        rotation = animation::multiply(rotation, around(hinges[i], correction[i] * rad * weight));
++    }
++}
+ } // namespace
+ 
+ bool buildProjectHandConstraintRig(const animation::Skeleton& skeleton, PlayerHandConstraintRig& outRig) {
+@@ -317,6 +391,7 @@ PlayerHandConstraintResult applyProjectHandConstraints(const PlayerHandConstrain
+     const auto modelWorld = linear(targets.armsWorld);
+     for (std::size_t side = 0; side < 2; ++side) {
+         const auto& a = rig.arms[side];
++        const auto wristParent = skeleton.joints[a.wrist].parent;
+         const auto modelGrip = animation::multiply(invWorld, grips[side]);
+         M3 desired;
+         if (!polar(linear(grips[side]), desired)) {
+@@ -343,9 +418,11 @@ PlayerHandConstraintResult applyProjectHandConstraints(const PlayerHandConstrain
+         auto bestLocal = outLocal;
+         auto bestGlobal = outGlobal;
+         double bestScore = 1.e30;
++        math::Vec3 rollOffset{};
++        if (targets.projectRifleGrip) articulateProjectPinky(skeleton, side, targets.projectSupportRelease, outLocal);
+         for (int pass = 0; pass < kMaximumPasses; ++pass) {
+             math::Vec3 offset;
+-            if (!orientWrist(skeleton, a, desired, modelWorld, outLocal, outGlobal, offset) ||
++            if (!orientWrist(skeleton, a, desired, modelWorld, outLocal, outGlobal.joints[wristParent], offset) ||
+                 !positive(outLocal.joints[a.shoulder].scale) || !positive(outLocal.joints[a.elbow].scale)) {
+                 return invalid();
+             }
+@@ -364,7 +441,7 @@ PlayerHandConstraintResult applyProjectHandConstraints(const PlayerHandConstrain
+             if (dot(axis, a.bendAxisMid) < 0) {
+                 axis = axis * -1.0F;
+             }
+-            const auto goal = target - offset;
++            const auto goal = target - offset - rollOffset;
+             const auto m0 = toOzz(start), m1 = toOzz(mid), m2 = toOzz(outGlobal.joints[a.wrist]);
+             ozz::math::SimdQuaternion q0, q1;
+             ozz::animation::IKTwoBoneJob job;
+@@ -383,7 +460,7 @@ PlayerHandConstraintResult applyProjectHandConstraints(const PlayerHandConstrain
+                 animation::multiply(outLocal.joints[a.shoulder].rotation, fromOzz(q0));
+             outLocal.joints[a.elbow].rotation = animation::multiply(outLocal.joints[a.elbow].rotation, fromOzz(q1));
+             if (!evaluateHandPose(skeleton, evaluator, outLocal, outGlobal) ||
+-                !orientWrist(skeleton, a, desired, modelWorld, outLocal, outGlobal, offset) ||
++                !orientWrist(skeleton, a, desired, modelWorld, outLocal, outGlobal.joints[wristParent], offset) ||
+                 !evaluateHandPose(skeleton, evaluator, outLocal, outGlobal)) {
+                 return invalid();
+             }
+@@ -391,6 +468,19 @@ PlayerHandConstraintResult applyProjectHandConstraints(const PlayerHandConstrain
+             if (!animation::evaluateSocket(skeleton, outGlobal, a.socketIndex, palm)) {
+                 return invalid();
+             }
++            const auto unrolledElbow = outLocal.joints[a.elbow].rotation;
++            const auto unrolledCuff = outLocal.joints[wristParent].rotation;
++            const auto unrolledWrist = outLocal.joints[a.wrist].rotation;
++            if (targets.projectRifleGrip) {
++                // The orientation stays rigid, but the nonuniform sleeve scale
++                // changes the off-axis palm socket's lever arm. Solve against
++                // its measured displacement on the next two-bone iteration.
++                const auto before = animation::matrixTranslation(palm);
++                if (!shareProjectForearmRoll(skeleton, a, desired, modelWorld, outLocal, outGlobal) ||
++                    !evaluateHandPose(skeleton, evaluator, outLocal, outGlobal) ||
++                    !animation::evaluateSocket(skeleton, outGlobal, a.socketIndex, palm)) return invalid();
++                rollOffset = animation::matrixTranslation(palm) - before;
++            }
+             M3 actual;
+             if (!polar(multiply(modelWorld, linear(palm)), actual)) {
+                 return invalid();
+@@ -417,6 +507,12 @@ PlayerHandConstraintResult applyProjectHandConstraints(const PlayerHandConstrain
+             if (result.reached[side]) {
+                 break;
+             }
++            if (targets.projectRifleGrip && pass + 1 < kMaximumPasses) {
++                outLocal.joints[a.elbow].rotation = unrolledElbow;
++                outLocal.joints[wristParent].rotation = unrolledCuff;
++                outLocal.joints[a.wrist].rotation = unrolledWrist;
++                if (!evaluateHandPose(skeleton, evaluator, outLocal, outGlobal)) return invalid();
++            }
+         }
+         outLocal = std::move(bestLocal);
+         outGlobal = std::move(bestGlobal);
+diff --git a/tests/dev_range_render_scene_tests.cpp b/tests/dev_range_render_scene_tests.cpp
+index b00518f..3dadf69 100644
+--- a/tests/dev_range_render_scene_tests.cpp
++++ b/tests/dev_range_render_scene_tests.cpp
+@@ -1931,7 +1931,8 @@ void checkProjectWeaponMovementContacts(nemisis::player::PlayerSkeletalAnimator&
+                 expect(false, "real movement pose keeps both weapon contacts and its muzzle");
+                 return;
+             }
+-            const player::PlayerHandTargets targets{model, *pose.rightGripWorld, *pose.leftGripWorld};
++            const player::PlayerHandTargets targets{model, *pose.rightGripWorld, *pose.leftGripWorld, {},
++                pose.weaponAssetId == dev::kProjectReadyWeaponAssetId, pose.projectSupportRelease};
+             if (!animator.skinPose(&targets)) {
+                 expect(false, "real movement pose keeps both skinned arms and weapon contacts");
+                 return;
+@@ -2022,7 +2023,8 @@ void checkM4SupportFingers(const novacore::assets::GltfMeshData& arms,
+             expect(false, "walking M4 resolves cooked palm contacts");
+             return;
+         }
+-        const player::PlayerHandTargets targets{model, *aim.rightGripWorld, *aim.leftGripWorld};
++        const player::PlayerHandTargets targets{model, *aim.rightGripWorld, *aim.leftGripWorld, {},
++            aim.weaponAssetId == dev::kProjectReadyWeaponAssetId, aim.projectSupportRelease};
+         if (!standard.skinPose(&targets) || !held.skinPose(&targets)) {
+             expect(false, "both walking M4 poses skin at identical contacts");
+             return;
+@@ -2200,7 +2202,8 @@ void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false,
+                             }
+                         }
+                         if (!active.rightGripWorld || !active.leftGripWorld) { return; }
+-                        const player::PlayerHandTargets targets{root, *active.rightGripWorld, *active.leftGripWorld};
++                        const player::PlayerHandTargets targets{root, *active.rightGripWorld, *active.leftGripWorld, {},
++                            active.weaponAssetId == dev::kProjectReadyWeaponAssetId, active.projectSupportRelease};
+                         expect(compactAnimator.skinPose(&targets), "compact weapon skins both Project subsets");
+                         const auto& contacts = compactAnimator.stats().handConstraints;
+                         if (contacts.status != player::HandConstraintStatus::Applied) {
+@@ -2530,7 +2533,8 @@ void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false,
+                            "kick recovery, reload start and reload completion meet the idle mount");
+                 }
+             }
+-            const player::PlayerHandTargets targets{model, *presentation.rightGripWorld, *presentation.leftGripWorld};
++            const player::PlayerHandTargets targets{model, *presentation.rightGripWorld, *presentation.leftGripWorld, {},
++                presentation.weaponAssetId == dev::kProjectReadyWeaponAssetId, presentation.projectSupportRelease};
+             const auto physicalFiring = std::ranges::find(weapon.nodeMarkers, std::string_view("socket_grip_r"),
+                                                           &assets::GltfNodeMarker::name);
+             const auto physicalSupport = std::ranges::find(weapon.nodeMarkers, std::string_view("socket_grip_l"),
+@@ -2781,6 +2785,7 @@ void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false,
+                     expect((rifle->position - animation::matrixTranslation(presentation.weaponWorld)).lengthSquared() <
+                                1e-10F,
+                            "rendered rifle uses the same final pose as both contact targets");
++                    const auto magazine = std::ranges::find(frame.worldMeshes, magazineHandle, &render::RenderMesh3D::mesh);
+                     for (const auto name : {"socket_muzzle", "socket_palm_contact_r", "socket_palm_contact_l"}) {
+                         const auto marker = std::ranges::find(weapon.nodeMarkers, std::string_view(name),
+                                                               &assets::GltfNodeMarker::name);
+@@ -2790,14 +2795,24 @@ void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false,
+                                                  : presentation.leftGripWorld;
+                         const auto motion = player::evaluateProjectWeaponMotion(desc.player.animation, weaponState,
+                             nemisis::weapons::WeaponClass::AssaultRifle, desc.player.adsAlpha, 0.0F);
+-                        const auto localTravel = std::string_view(name) == "socket_palm_contact_l"
+-                            ? motion.supportTravel : math::Vec3{};
+-                        expect(marker != weapon.nodeMarkers.end() && target &&
+-                                   (worldPoint(*rifle, marker->worldPosition + localTravel) - animation::matrixTranslation(*target))
+-                                           .lengthSquared() < 1e-9F,
+-                               "rendered rifle and intentional palm offset reconstruct the cached muzzle and contacts");
++                        if (marker == weapon.nodeMarkers.end() || !target) {
++                            expect(false, "all presented muzzle and palm markers exist");
++                            continue;
++                        }
++                        auto expected = worldPoint(*rifle, marker->worldPosition);
++                        if (std::string_view(name) == "socket_palm_contact_l" && motion.supportReloadAlpha > 0) {
++                            const auto socket = std::ranges::find(weapon.nodeMarkers, "socket_reload_l",
++                                &assets::GltfNodeMarker::name);
++                            if (socket != weapon.nodeMarkers.end() && magazine != frame.worldMeshes.end()) {
++                                expected = expected + (worldPoint(*magazine, socket->worldPosition) - expected) * motion.supportReloadAlpha;
++                            } else {
++                                // Legacy fixtures without a separate reload marker use the authored free-hand path.
++                                expected = worldPoint(*rifle, marker->worldPosition + motion.supportTravel);
++                            }
++                        }
++                        expect((expected - animation::matrixTranslation(*target)).lengthSquared() < 1e-9F,
++                               "rendered receiver and moving magazine reconstruct the muzzle and palm contacts");
+                     }
+-                    const auto magazine = std::ranges::find(frame.worldMeshes, magazineHandle, &render::RenderMesh3D::mesh);
+                     expect(magazine != frame.worldMeshes.end(), "the real magazine has its own draw transform");
+                     if (magazine != frame.worldMeshes.end()) {
+                         const auto displacement = magazine->position - rifle->position;
+diff --git a/tests/project_hand_constraints_tests.cpp b/tests/project_hand_constraints_tests.cpp
+index 28e96d4..6899646 100644
+--- a/tests/project_hand_constraints_tests.cpp
++++ b/tests/project_hand_constraints_tests.cpp
+@@ -83,6 +83,87 @@ void orientation(const animation::Mat4& actual, const animation::Mat4& desired)
+     require(metric[0][0] > 0 && metric[0][0] * metric[1][1] - metric[0][1] * metric[1][0] > 0,
+             "palm orientation does not reflect or collapse the real affine frame");
+ }
++
++void rifleForearmAndDigits(const animation::Skeleton& skeleton, const PlayerHandConstraintRig& rig,
++                          const animation::GlobalPoseEvaluator& evaluator) {
++    constexpr float rad = 0.01745329252F;
++    const auto around = [](math::Vec3 axis, float angle) {
++        const auto s = std::sin(angle * .5F);
++        return math::Quat{axis.x*s,axis.y*s,axis.z*s,std::cos(angle*.5F)};
++    };
++    const auto deltaDegrees = [=](math::Quat a, math::Quat b) {
++        const auto q = animation::multiply(animation::conjugate(a), b);
++        return 2.F * std::atan2(std::sqrt(q.x*q.x + q.y*q.y + q.z*q.z),std::abs(q.w)) / rad;
++    };
++    auto base = animation::makeBindPose(skeleton);
++    const auto& left = rig.arms[1];
++    const auto distal = skeleton.joints[left.wrist].parent;
++    const auto first = animation::findJoint(skeleton,"DEF-f_pinky.01.L").value();
++    const auto second = animation::findJoint(skeleton,"DEF-f_pinky.02.L").value();
++    const auto last = animation::findJoint(skeleton,"DEF-f_pinky.03.L").value();
++    // Left M4 ready curl from the cook: almost all flexion on the first joint.
++    base.joints[first].rotation = animation::multiply(base.joints[first].rotation,
++        around(unit({.99955F,0,.03007F}),100.F*rad));
++    for (const auto& arm : rig.arms) {
++        base.joints[arm.elbow].rotation = animation::multiply(base.joints[arm.elbow].rotation,
++            around(arm.bendAxisMid,-.65F));
++    }
++    animation::GlobalPose global;
++    require(evaluator.evaluate(base,global), "bent five-joint Project arms evaluate");
++    PlayerHandTargets targets;
++    targets.projectRifleGrip = true;
++    animation::Mat4 right, leftPalm;
++    require(animation::evaluateSocket(skeleton,global,rig.arms[0].socketIndex,right) &&
++            animation::evaluateSocket(skeleton,global,left.socketIndex,leftPalm),"Project grip frames evaluate");
++    targets.rightGripWorld = rigidTarget(right,{});
++    const auto wrist = animation::matrixTranslation(global.joints[left.wrist]);
++    const auto axis = unit(wrist - animation::matrixTranslation(global.joints[distal]));
++    const auto fingerPoint = [&](const animation::GlobalPose& pose) {
++        return animation::transformPoint(pose.joints[last], {0,.014F,0});
++    };
++    animation::LocalPose previous, solved;
++    animation::GlobalPose final;
++    for (const float twist : {-179.F,179.F}) {
++        const auto rotation = around(axis,twist*rad);
++        const auto aboutWrist = animation::matrixFromTransform(
++            {wrist - animation::rotate(rotation,wrist),rotation,{1,1,1}});
++        targets.leftGripWorld = rigidTarget(animation::multiply(aboutWrist,leftPalm),{});
++        const auto result = applyPlayerHandConstraints(rig,skeleton,base,global,targets,solved,final,&evaluator);
++        require(result.reached[0] && result.reached[1] && result.residualMeters[1] < .001F &&
++                result.orientationResidualDegrees[1] < .5F, "rolled Project grips retain position and orientation");
++        const auto wristAxis = unit(base.joints[left.wrist].translation);
++        const auto d = animation::multiply(solved.joints[left.wrist].rotation,
++                                           animation::conjugate(skeleton.joints[left.wrist].bindLocal.rotation));
++        const auto roll = 2.F*std::atan2(dot({d.x,d.y,d.z},wristAxis),d.w);
++        std::cout << "Project rolled wrist=" << std::remainder(roll,6.2831853F)/rad
++                  << " distal=" << deltaDegrees(base.joints[distal].rotation,solved.joints[distal].rotation) << '\n';
++        require(std::abs(std::remainder(roll,6.2831853F)) < 12.F*rad &&
++                deltaDegrees(base.joints[distal].rotation,solved.joints[distal].rotation) > 40.F,
++                "arm roll is carried by weighted forearm, not concentrated in the wrist");
++        require(deltaDegrees(base.joints[second].rotation,solved.joints[second].rotation) > 14.F &&
++                deltaDegrees(base.joints[last].rotation,solved.joints[last].rotation) > 7.F,
++                "closed little finger curls its middle and distal phalanges");
++        if (!previous.joints.empty()) {
++            for (const auto joint : {static_cast<int>(left.elbow),distal,static_cast<int>(left.wrist)})
++                require(deltaDegrees(previous.joints[joint].rotation,solved.joints[joint].rotation) < 4.F,
++                        "whole Project forearm remains continuous across a half turn");
++        }
++        previous = solved;
++    }
++    const auto correctedTip = fingerPoint(final);
++    targets.projectSupportRelease = .5F;
++    require(applyPlayerHandConstraints(rig,skeleton,base,global,targets,solved,final,&evaluator).applied() &&
++            deltaDegrees(base.joints[second].rotation,solved.joints[second].rotation) > 7.F &&
++            deltaDegrees(base.joints[second].rotation,solved.joints[second].rotation) < 8.F,
++            "support fingers continuously release the ready grip on approach");
++    targets.projectSupportRelease = 1.F;
++    require(applyPlayerHandConstraints(rig,skeleton,base,global,targets,solved,final,&evaluator).applied(), "magazine pose is reachable");
++    std::cout << "Project grip tip shift m=" << std::sqrt((fingerPoint(final)-correctedTip).lengthSquared()) << '\n';
++    require(
++            deltaDegrees(base.joints[second].rotation,solved.joints[second].rotation) < .01F &&
++            std::sqrt((fingerPoint(final)-correctedTip).lengthSquared()) < .004F,
++            "magazine pose is restored and grip correction keeps fingertip within four millimetres");
++}
+ } // namespace
+ 
+ int main() {
+@@ -99,6 +180,7 @@ int main() {
+         require(buildPlayerHandConstraintRig(asset.skeleton, rig), "actual weighted five-segment chains calibrate");
+         animation::GlobalPoseEvaluator evaluator;
+         require(evaluator.prepare(asset.skeleton).valid(), "Project hierarchy prepares for repeated evaluation");
++        rifleForearmAndDigits(asset.skeleton, rig, evaluator);
+         auto broken = asset.skeleton;
+         const auto intermediate = animation::findJoint(broken, "DEF-forearm.R.001");
+         require(intermediate.has_value(), "weighted intermediate is present");
