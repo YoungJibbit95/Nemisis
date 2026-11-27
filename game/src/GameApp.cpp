@@ -4,7 +4,6 @@
 #include "nemisis/dev/DebugTarget.hpp"
 #include "nemisis/dev/GreyboxCollision.hpp"
 #include "nemisis/input/InputBindings.hpp"
-#include "nemisis/input/InputCommandBuilder.hpp"
 #include "nemisis/player/PlayerComponents.hpp"
 #include "nemisis/player/PlayerHealth.hpp"
 #include "nemisis/player/PlayerSpawn.hpp"
@@ -336,9 +335,11 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
     if (matchRequested() && menu_.gameplayActive()) {
         ensureLocalPlayer();
         auto command = player::PlayerInputCommand{};
+        command.tick = context.tickIndex;
         if (!uiConfirmReleasePending_ && !devConsole_.isOpen()) {
-            command = input::buildPlayerInputCommand(actions_, context.tickIndex, settings_);
-            gameplayInputBuffer_.consumeInto(command);
+            command = gameplayInputBuffer_.consumeTick(actions_, context.tickIndex);
+        } else {
+            gameplayInputBuffer_.clear();
         }
         try {
             tickFacilityMatch(command);
@@ -358,10 +359,13 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
 
     syncRuntimeLoadout();
 
-    auto command = devConsole_.isOpen() ? player::PlayerInputCommand{} :
-        input::buildPlayerInputCommand(actions_, context.tickIndex, settings_);
+    auto command = player::PlayerInputCommand{};
     command.tick = context.tickIndex;
-    gameplayInputBuffer_.consumeInto(command);
+    if (!devConsole_.isOpen()) {
+        command = gameplayInputBuffer_.consumeTick(actions_, context.tickIndex);
+    } else {
+        gameplayInputBuffer_.clear();
+    }
     if (options_.profileRange && options_.startInFacility) {
         command = facilityProfileCommand(context.tickIndex);
     }
@@ -921,8 +925,8 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
         uiConfirmReleasePending_ = actions_.stateOrDefault(input::actions::MenuConfirm).down ||
             actions_.stateOrDefault(input::actions::Fire).down;
     }
-    if (!consoleInput && menu_.gameplayActive() && !uiConfirmReleasePending_) {
-        gameplayInputBuffer_.captureFrameEdges(actions_);
+    if (!consoleInput && !devConsole_.isOpen() && menu_.gameplayActive() && !uiConfirmReleasePending_) {
+        gameplayInputBuffer_.captureFrame(actions_, settings_);
     } else {
         gameplayInputBuffer_.clear();
     }

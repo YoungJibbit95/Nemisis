@@ -1362,3 +1362,18 @@ heartbeats and matched terminal state under repeatable loss and 60–72 ms
 additional round-trip latency. A separate peer-departure check confirmed
 terminal state delivery to the surviving client. That check exposed unbounded
 test-only ACK trace output while a peer was missing; the host now caps it.
+
+## Fixed-tick gameplay input
+
+With Nemisis base `c4eecc581deda1f8d03c2127c161f97dbe8eee07` and NovaCore
+`50eb84408f6c8e8401ff37967aee8561f419cf36`, 240 horizontal mouse counts over one
+second followed by a 100 ms catch-up produced totals of 51.2, 26.0, 10.6 and 6.6
+at 30, 60, 144 and 240 render frames per second. The fixed-tick input buffer
+produces the expected 24.0 at each rate. The `nemisis_input_command_tests` target
+also covers simultaneous mouse and stick input, physical right-button ADS and
+short trigger presses. Run `ctest -R nemisis_input_command_tests --output-on-failure`
+in the configured build directory to repeat these checks.
+
+## 2026-11-27 public integration candidate
+
+Merged the current public main history into foundation/latest-dev, retaining the hosted match, private bots and developer console alongside the published input correction, art handoffs and studio rules. Both engine pins refer to `f72b6a31ffe1ff3837df0adeffa9e776cee00aef`, which integrates NovaCore PRs #32 and #33 with the newer renderer changes. Adapted both gameplay command paths and the movement replay to the fixed-tick input buffer; preserved console input suppression. This is a conflict-resolution candidate, not a new local Vulkan acceptance. Fresh combined consumer CI and playable validation are required.

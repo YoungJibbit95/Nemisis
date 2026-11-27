@@ -13,8 +13,10 @@ inline constexpr std::string_view MoveForward = "move_forward";
 inline constexpr std::string_view MoveBackward = "move_backward";
 inline constexpr std::string_view MoveLeft = "move_left";
 inline constexpr std::string_view MoveRight = "move_right";
-inline constexpr std::string_view LookRight = "look_right";
-inline constexpr std::string_view LookUp = "look_up";
+inline constexpr std::string_view MouseLookRight = "mouse_look_right";
+inline constexpr std::string_view MouseLookUp = "mouse_look_up";
+inline constexpr std::string_view StickLookRight = "stick_look_right";
+inline constexpr std::string_view StickLookUp = "stick_look_up";
 inline constexpr std::string_view Jump = "jump";
 inline constexpr std::string_view DoubleJump = "double_jump";
 inline constexpr std::string_view Dash = "dash";
@@ -86,7 +88,8 @@ inline constexpr std::uint16_t Right = 1003;
 namespace mouse_codes {
 
 inline constexpr std::uint16_t Left = 1;
-inline constexpr std::uint16_t Right = 2;
+// Window forwards SDL_MouseButtonEvent::button as the input control code.
+inline constexpr std::uint16_t Right = 3;
 
 } // namespace mouse_codes
 

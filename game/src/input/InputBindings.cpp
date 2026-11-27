@@ -108,8 +108,8 @@ novacore::platform::InputActionMap createDefaultActionMap() {
     bindButton(actionMap, actions::SelectMainMenu, keyboard(key_codes::Escape));
     bindButton(actionMap, actions::ResetRange, keyboard(key_codes::P));
     bindButton(actionMap, actions::CycleDrillVariant, keyboard(key_codes::V));
-    bindAxis(actionMap, actions::LookRight, mouseAxis(mouse_axes::X), 0.1F, 0.001F);
-    bindAxis(actionMap, actions::LookUp, mouseAxis(mouse_axes::Y), -0.1F, 0.001F);
+    bindAxis(actionMap, actions::MouseLookRight, mouseAxis(mouse_axes::X), 0.1F, 0.001F);
+    bindAxis(actionMap, actions::MouseLookUp, mouseAxis(mouse_axes::Y), -0.1F, 0.001F);
 
     bindAxis(actionMap, actions::MoveRight, gamepadAxis(gamepad_axes::LeftX), 1.0F, 0.08F);
     bindAxis(actionMap, actions::MoveLeft, gamepadAxis(gamepad_axes::LeftX), -1.0F, 0.08F);
@@ -140,8 +140,8 @@ novacore::platform::InputActionMap createDefaultActionMap() {
     bindButton(actionMap, actions::MenuBack, gamepadButton(gamepad_buttons::B));
     bindButton(actionMap, actions::SelectMainMenu, gamepadButton(gamepad_buttons::B));
     bindButton(actionMap, actions::DebugNextPage, gamepadButton(gamepad_buttons::Start));
-    bindAxis(actionMap, actions::LookRight, gamepadAxis(gamepad_axes::RightX), 2.4F, 0.06F);
-    bindAxis(actionMap, actions::LookUp, gamepadAxis(gamepad_axes::RightY), -2.0F, 0.06F);
+    bindAxis(actionMap, actions::StickLookRight, gamepadAxis(gamepad_axes::RightX), 2.4F, 0.06F);
+    bindAxis(actionMap, actions::StickLookUp, gamepadAxis(gamepad_axes::RightY), -2.0F, 0.06F);
 
     return actionMap;
 }

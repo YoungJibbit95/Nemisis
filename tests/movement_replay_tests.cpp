@@ -429,12 +429,11 @@ void testSprintSlideJumpAcrossFrameRates() {
             key(input::key_codes::C, nextTick >= 30 && nextTick < 42);
             key(input::key_codes::Space, nextTick >= 40 && nextTick < 42);
             actions.update(snapshot);
-            edges.captureFrameEdges(actions);
+            edges.captureFrame(actions);
             clock.advance(1.0 / hz);
             while (clock.shouldStep() && path.size() < 100) {
                 const auto tick = clock.consumedSteps();
-                auto command = input::buildPlayerInputCommand(actions, tick);
-                edges.consumeInto(command);
+                auto command = edges.consumeTick(actions, tick);
                 launches += command.jumpPressed;
                 state = movement.simulate(state, player::commandRelativeToView(command, {}), dt);
                 path.push_back(state);

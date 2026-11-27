@@ -1,12 +1,15 @@
 #pragma once
 
 #include "nemisis/player/PlayerInputCommand.hpp"
+#include "nemisis/settings/GameSettings.hpp"
 
 #include "novacore/platform/InputAction.hpp"
 
 namespace nemisis::input {
 
 struct GameplayInputBufferState final {
+    novacore::math::Vec2 mouseLookDelta{};
+    bool firePressed = false;
     bool jumpPressed = false;
     bool doubleJumpPressed = false;
     bool slidePressed = false;
@@ -22,14 +25,16 @@ struct GameplayInputBufferState final {
 class GameplayInputBuffer final {
 public:
     void clear();
-    void captureFrameEdges(const novacore::platform::InputActionMap& actions);
-    void consumeInto(player::PlayerInputCommand& command);
+    void captureFrame(const novacore::platform::InputActionMap& actions, const settings::GameSettings& settings = {});
+    [[nodiscard]] player::PlayerInputCommand consumeTick(
+        const novacore::platform::InputActionMap& actions, std::uint64_t tick);
 
     [[nodiscard]] const GameplayInputBufferState& state() const;
     [[nodiscard]] bool hasPendingEdges() const;
 
 private:
     GameplayInputBufferState pending_{};
+    novacore::math::Vec2 stickLookPerTick_{};
 };
 
 } // namespace nemisis::input

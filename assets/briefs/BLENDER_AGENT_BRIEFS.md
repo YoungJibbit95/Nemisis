@@ -2,6 +2,8 @@
 
 These briefs are designed for a Blender-capable agent or a local Blender automation script. All output must be original project work and must follow `docs/16_ASSET_PRODUCTION_PLAN.md`.
 
+For first-person Vesper work, use the four [Nysa player-camera references and animation cues](fpv-nysa/REFERENZEN.md) alongside actual mounted game captures.
+
 ## Brief 00 - Dev Player Capsule Proxy
 
 Asset id: `chr_player_capsule_proxy_01`
