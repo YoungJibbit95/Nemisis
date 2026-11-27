@@ -89,7 +89,7 @@ void MatchArena::record(const MatchFrame& frame) {
     for (unsigned i = 0; i < 2 * frame.rules.teamSize; ++i) {
         const auto& actor = frame.players[i];
         sample.poses[i] = {actor.movement.position, actor.view.yawDegrees,
-            1.0F - 0.28F * std::clamp(actor.movement.crouchFraction, 0.0F, 1.0F),
+            dev::hitZoneHeightScale(actor.movement.crouchFraction),
             actor.spawnTick, !actor.health.eliminated};
     }
 }
