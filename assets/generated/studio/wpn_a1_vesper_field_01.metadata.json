@@ -1,0 +1,44 @@
+{
+  "id": "wpn_a1_vesper_field_01",
+  "category": "weapon",
+  "source": "assets/source/blender/weapons/wpn_a1_vesper_field_01.blend",
+  "export": "assets/generated/studio/wpn_a1_vesper_field_01.glb",
+  "scale_meters": true,
+  "runtime_up_axis": "Y",
+  "gameplay_forward_axis": "+Z",
+  "collision": "none",
+  "sockets": [
+    "socket_eject",
+    "socket_grip_l",
+    "socket_grip_r",
+    "socket_muzzle",
+    "socket_vfx",
+    "socket_ads_sight",
+    "socket_reload_l",
+    "socket_field_sprint",
+    "socket_field_exchange"
+  ],
+  "lods": [
+    "VesperReceiver",
+    "VesperCell"
+  ],
+  "license": "original_project_asset",
+  "generated_by": "tools/blender/cook_vesper_cell.py",
+  "bytes": 2828388,
+  "editable_parts": 107,
+  "rigid_cell_parts": 12,
+  "index_lods": {
+    "VesperReceiver": [
+      4052,
+      2754
+    ],
+    "VesperCell": [
+      770,
+      600
+    ]
+  },
+  "animations": [
+    "vesper_field_cell_exchange",
+    "vesper_field_finger_cup"
+  ]
+}
