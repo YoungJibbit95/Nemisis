@@ -3,7 +3,6 @@
 #include "nemisis/dev/DebugTarget.hpp"
 #include "nemisis/dev/GreyboxCollision.hpp"
 #include "nemisis/input/InputBindings.hpp"
-#include "nemisis/input/InputCommandBuilder.hpp"
 #include "nemisis/player/PlayerComponents.hpp"
 #include "nemisis/player/PlayerHealth.hpp"
 #include "nemisis/player/PlayerSpawn.hpp"
@@ -298,8 +297,7 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
 
     syncRuntimeLoadout();
 
-    auto command = input::buildPlayerInputCommand(actions_, context.tickIndex, settings_);
-    gameplayInputBuffer_.consumeInto(command);
+    auto command = gameplayInputBuffer_.consumeTick(actions_, context.tickIndex);
     (void)localCommandQueue_.push(command);
 
     player::PlayerId playerId = 1;
@@ -834,7 +832,7 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
     menu_.update(actions_, settings_, activeLoadout_, attachmentRegistry_, buildMenuPointerState(window_, actions_));
     menu_.updateFrame(context.deltaSeconds);
     if (menu_.gameplayActive() && !uiConfirmReleasePending_) {
-        gameplayInputBuffer_.captureFrameEdges(actions_);
+        gameplayInputBuffer_.captureFrame(actions_, settings_);
     } else {
         gameplayInputBuffer_.clear();
     }
