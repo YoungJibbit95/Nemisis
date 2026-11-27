@@ -35,13 +35,15 @@ namespace {
 
 [[nodiscard]] novacore::platform::InputDeviceKind dominantDevice(
     const novacore::platform::InputActionMap& actions) {
-    const std::array<std::string_view, 20> actionNames{
+    const std::array<std::string_view, 22> actionNames{
         actions::MoveForward,
         actions::MoveBackward,
         actions::MoveLeft,
         actions::MoveRight,
-        actions::LookRight,
-        actions::LookUp,
+        actions::MouseLookRight,
+        actions::MouseLookUp,
+        actions::StickLookRight,
+        actions::StickLookUp,
         actions::Jump,
         actions::Dash,
         actions::Slide,
@@ -70,6 +72,20 @@ namespace {
 
 } // namespace
 
+PlayerLookInput readPlayerLookInput(
+    const novacore::platform::InputActionMap& actions,
+    const settings::GameSettings& settings) {
+    const bool ads = down(actions, actions::Ads);
+    const auto stickX = state(actions, actions::StickLookRight);
+    const auto stickY = state(actions, actions::StickLookUp);
+    return {
+        {state(actions, actions::MouseLookRight).value * settings::effectiveLookScaleX(settings, false, ads),
+         state(actions, actions::MouseLookUp).value * settings::effectiveLookScaleY(settings, false, ads)},
+        {(stickX.down ? stickX.value : 0.0F) * settings::effectiveLookScaleX(settings, true, ads),
+         (stickY.down ? stickY.value : 0.0F) * settings::effectiveLookScaleY(settings, true, ads)}
+    };
+}
+
 player::PlayerInputCommand buildPlayerInputCommand(
     const novacore::platform::InputActionMap& actions,
     std::uint64_t tick) {
@@ -80,8 +96,19 @@ player::PlayerInputCommand buildPlayerInputCommand(
     const novacore::platform::InputActionMap& actions,
     std::uint64_t tick,
     const settings::GameSettings& settings) {
+    const auto look = readPlayerLookInput(actions, settings);
+    return buildPlayerInputCommandWithLook(actions, tick, {
+        look.mouseDelta.x + look.stickPerTick.x,
+        look.mouseDelta.y + look.stickPerTick.y});
+}
+
+player::PlayerInputCommand buildPlayerInputCommandWithLook(
+    const novacore::platform::InputActionMap& actions,
+    std::uint64_t tick,
+    novacore::math::Vec2 look) {
     player::PlayerInputCommand command{};
     command.tick = tick;
+    command.look = look;
 
     const float right = activePositiveValue(actions, actions::MoveRight);
     const float left = activePositiveValue(actions, actions::MoveLeft);
@@ -111,12 +138,6 @@ player::PlayerInputCommand buildPlayerInputCommand(
     command.switchWeaponSmgPressed = pressed(actions, actions::SwitchWeaponSmg);
     command.switchWeaponSidearmPressed = pressed(actions, actions::SwitchWeaponSidearm);
     command.device = dominantDevice(actions);
-
-    const bool controller = command.device == novacore::platform::InputDeviceKind::Controller;
-    command.look.x = state(actions, actions::LookRight).value *
-        settings::effectiveLookScaleX(settings, controller, command.adsHeld);
-    command.look.y = state(actions, actions::LookUp).value *
-        settings::effectiveLookScaleY(settings, controller, command.adsHeld);
 
     return command;
 }

@@ -1139,3 +1139,14 @@ Dev Range transition/back. Physical Escape stopped Computer Use; no subsequent
 GUI actions were made. Larger-resolution visual/resize/GPU timing acceptance
 remains open. See docs/ui/UI_ROADMAP.md and UI_DESIGN_SYSTEM.md for the bounded
 milestone, reproducible launch and remaining phases.
+
+## Fixed-tick gameplay input
+
+With Nemisis base `c4eecc581deda1f8d03c2127c161f97dbe8eee07` and NovaCore
+`50eb84408f6c8e8401ff37967aee8561f419cf36`, 240 horizontal mouse counts over one
+second followed by a 100 ms catch-up produced totals of 51.2, 26.0, 10.6 and 6.6
+at 30, 60, 144 and 240 render frames per second. The fixed-tick input buffer
+produces the expected 24.0 at each rate. The `nemisis_input_command_tests` target
+also covers simultaneous mouse and stick input, physical right-button ADS and
+short trigger presses. Run `ctest -R nemisis_input_command_tests --output-on-failure`
+in the configured build directory to repeat these checks.

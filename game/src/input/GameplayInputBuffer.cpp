@@ -1,6 +1,7 @@
 #include "nemisis/input/GameplayInputBuffer.hpp"
 
 #include "nemisis/input/InputBindings.hpp"
+#include "nemisis/input/InputCommandBuilder.hpp"
 
 namespace nemisis::input {
 
@@ -17,11 +18,8 @@ void mergeEdge(bool& pending, bool current) {
 }
 
 void consumeEdge(bool& pending, bool& destination) {
-    if (!pending) {
-        return;
-    }
-
-    destination = true;
+    // Several fixed ticks can read the same action-map frame. Only the first owns its edges.
+    destination = pending;
     pending = false;
 }
 
@@ -29,9 +27,16 @@ void consumeEdge(bool& pending, bool& destination) {
 
 void GameplayInputBuffer::clear() {
     pending_ = {};
+    stickLookPerTick_ = {};
 }
 
-void GameplayInputBuffer::captureFrameEdges(const novacore::platform::InputActionMap& actions) {
+void GameplayInputBuffer::captureFrame(
+    const novacore::platform::InputActionMap& actions, const settings::GameSettings& settings) {
+    const auto look = readPlayerLookInput(actions, settings);
+    pending_.mouseLookDelta.x += look.mouseDelta.x;
+    pending_.mouseLookDelta.y += look.mouseDelta.y;
+    stickLookPerTick_ = look.stickPerTick;
+    mergeEdge(pending_.firePressed, pressed(actions, actions::Fire));
     mergeEdge(pending_.jumpPressed, pressed(actions, actions::Jump));
     mergeEdge(pending_.doubleJumpPressed, pressed(actions, actions::DoubleJump));
     mergeEdge(pending_.slidePressed, pressed(actions, actions::Slide));
@@ -44,7 +49,15 @@ void GameplayInputBuffer::captureFrameEdges(const novacore::platform::InputActio
     mergeEdge(pending_.switchWeaponSidearmPressed, pressed(actions, actions::SwitchWeaponSidearm));
 }
 
-void GameplayInputBuffer::consumeInto(player::PlayerInputCommand& command) {
+player::PlayerInputCommand GameplayInputBuffer::consumeTick(
+    const novacore::platform::InputActionMap& actions, std::uint64_t tick) {
+    // Mouse motion is displacement. A held stick requests another rotation each simulation tick.
+    auto command = buildPlayerInputCommandWithLook(actions, tick, {
+        pending_.mouseLookDelta.x + stickLookPerTick_.x,
+        pending_.mouseLookDelta.y + stickLookPerTick_.y});
+    pending_.mouseLookDelta = {};
+    command.fireHeld = command.fireHeld || pending_.firePressed;
+    pending_.firePressed = false;
     consumeEdge(pending_.jumpPressed, command.jumpPressed);
     consumeEdge(pending_.doubleJumpPressed, command.doubleJumpPressed);
     consumeEdge(pending_.slidePressed, command.slidePressed);
@@ -55,6 +68,7 @@ void GameplayInputBuffer::consumeInto(player::PlayerInputCommand& command) {
     consumeEdge(pending_.switchWeaponPrimaryPressed, command.switchWeaponPrimaryPressed);
     consumeEdge(pending_.switchWeaponSmgPressed, command.switchWeaponSmgPressed);
     consumeEdge(pending_.switchWeaponSidearmPressed, command.switchWeaponSidearmPressed);
+    return command;
 }
 
 const GameplayInputBufferState& GameplayInputBuffer::state() const {
@@ -62,7 +76,8 @@ const GameplayInputBufferState& GameplayInputBuffer::state() const {
 }
 
 bool GameplayInputBuffer::hasPendingEdges() const {
-    return pending_.jumpPressed ||
+    return pending_.firePressed ||
+        pending_.jumpPressed ||
         pending_.doubleJumpPressed ||
         pending_.slidePressed ||
         pending_.dashPressed ||
