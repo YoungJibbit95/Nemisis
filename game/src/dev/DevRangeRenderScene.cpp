@@ -1373,8 +1373,10 @@ DevRangeRenderSceneStats DevRangeRenderSceneBuilder::append(
 
     appendSkyboxMesh(frame, desc, stats);
     appendWorldGeometry(frame, desc, stats);
-    appendStaticShowcaseMeshes(frame, desc, stats);
-    appendTargetLaneMeshes(frame, desc, stats);
+    if (!desc.greyboxWorld->authored) {
+        appendStaticShowcaseMeshes(frame, desc, stats);
+        appendTargetLaneMeshes(frame, desc, stats);
+    }
     stats.firstPersonViewmodelActive = desc.player.hasCameraRig;
     appendLocalPlayerBodyMesh(frame, desc, stats);
     if (stats.firstPersonViewmodelActive) {
@@ -1484,7 +1486,7 @@ void DevRangeRenderSceneBuilder::appendWorldGeometry(
     }
 
     for (const auto& primitive : desc.greyboxWorld->primitives) {
-        if (desc.greyboxWorld->id == kOuterFacilityWorldId && primitive.id.starts_with("grove_trunk_") &&
+        if (!desc.greyboxWorld->authored && desc.greyboxWorld->id == kOuterFacilityWorldId && primitive.id.starts_with("grove_trunk_") &&
             findMesh(desc, "map_facility_grove_01").isValid()) {
             continue; // Matching visible trunks are bundled into the grove resource.
         }

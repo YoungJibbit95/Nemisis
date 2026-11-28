@@ -73,6 +73,7 @@ namespace {
 [[nodiscard]] novacore::physics::PhysicsWorld buildPhysicsWorld(const GreyboxWorld& world) {
     novacore::physics::PhysicsWorld physicsWorld;
     physicsWorld.setBounds(world.boundsHalfExtents);
+    physicsWorld.setImplicitBoundaryCollision(!world.authored);
 
     for (const auto& primitive : world.primitives) {
         if (!primitive.blocksMovement) {

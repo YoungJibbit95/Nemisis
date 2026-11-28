@@ -1,0 +1,10 @@
+{"schemaVersion":1,"id":"editor-room","objects":[
+{"id":"floor","name":"Floor","position":[0,-0.15,0],"kind":"box","halfExtents":[5,0.15,5],"blocksMovement":true},
+{"id":"door-left","name":"Door left wall","position":[-3,1.5,2],"kind":"box","halfExtents":[2,1.5,0.15],"blocksMovement":true},
+{"id":"door-right","name":"Door right wall","position":[3,1.5,2],"kind":"box","halfExtents":[2,1.5,0.15],"blocksMovement":true},
+{"id":"back","name":"Back wall","position":[0,1.5,4.85],"kind":"box","halfExtents":[5,1.5,0.15],"blocksMovement":true},
+{"id":"side-a","name":"Left exterior wall","position":[-4.85,1.5,0],"kind":"box","halfExtents":[0.15,1.5,5],"blocksMovement":true},
+{"id":"side-b","name":"Right exterior wall","position":[4.85,1.5,0],"kind":"box","halfExtents":[0.15,1.5,5],"blocksMovement":true},
+{"id":"visual","name":"Nonblocking test box","position":[0,0.5,0],"kind":"box","halfExtents":[0.3,0.5,0.3],"blocksMovement":false},
+{"id":"spawn","name":"Spawn","position":[0,0,-2],"kind":"marker","markerType":"spawn"}
+]}

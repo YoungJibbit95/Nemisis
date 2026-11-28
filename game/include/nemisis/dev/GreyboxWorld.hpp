@@ -44,6 +44,8 @@ struct GreyboxWorld final {
     novacore::math::Vec3 boundsHalfExtents{22.0F, 4.0F, 16.0F};
     novacore::math::Vec3 playerSpawn{0.0F, 0.0F, 0.0F};
     std::vector<GreyboxPrimitive> primitives;
+    bool authored = false;
+    std::string playerSpawnId;
 };
 
 [[nodiscard]] GreyboxWorld createDevRangeGreyboxWorld();
