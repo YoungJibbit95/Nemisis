@@ -1,6 +1,6 @@
 # Authored world playtest candidate (Phase A)
 
-This validation-only candidate pins both engine files to 09116ff0135de4fb88f48f552c6a6a2caa140f67,
+This validation-only candidate pins both engine files to d73a657efc814cf85035638e846918be5e9b422d,
 an isolated public assembly of NovaCore #40 and #42 (both parent histories).
 This is not an integration into main and must not be merged before the individual
 engine PRs are independently reviewed, integrated, and the actual main-reachable
@@ -68,3 +68,13 @@ checks the frame count, geometry count and extent while the process is alive.
 It also waits for a flushed successful child-process exit report and verifies
 the game executable hash remains unchanged throughout the original/modified
 map tests. The existing readiness deadline was not increased.
+
+
+The next run (46167732560) confirmed the readiness signal, editor modification
+of door-left X from -3 to -2.75, saved JSON, actual game launch and exit code
+zero. Its remaining failure was an X11 BadWindow after xdotool windowclose
+destroyed the client window without a window manager. The harness now sends
+the advertised WM_DELETE_WINDOW ClientMessage and requires zero editor exit
+status plus renderer cleanup. The message layout/protocol was exercised with a
+real X11 client under local Xvfb before publication. This does not alter the
+editor's graphical acceptance criteria or disable any test.
