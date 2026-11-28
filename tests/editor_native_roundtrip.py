@@ -4,6 +4,7 @@ This does not stand in for hardware or human visual acceptance.
 """
 import argparse
 import copy
+import hashlib
 import json
 import pathlib
 import re
@@ -69,12 +70,21 @@ def run_editor(editor, game, source, output, diagnostics, edit, launch):
             xdo("windowfocus", "--sync", wid)
             geometry = subprocess.check_output(["xdotool", "getwindowgeometry", "--shell", wid], text=True)
             assert "WIDTH=1280" in geometry and "HEIGHT=800" in geometry, geometry
+            expected_boxes = sum(o["kind"] == "box" for o in read(source)["objects"])
             def renderer_ready():
                 if proc.poll() is not None:
                     raise RuntimeError("Editor stopped before rendering")
-                return "Vulkan backend active:" in diagnostics.read_text(errors="replace")
-            wait_for(renderer_ready)
-            time.sleep(1)
+                for line in diagnostics.read_text(errors="replace").splitlines():
+                    match = re.fullmatch(
+                        r"NOVACORE_EDITOR_READY backend=vulkan-world frames=(\d+) boxes=(\d+) lines=(\d+) extent=(\d+)x(\d+)",
+                        line)
+                    if match:
+                        frames, boxes, lines, width, height = map(int, match.groups())
+                        assert frames >= 3 and boxes == expected_boxes and lines > 0, line
+                        assert (width, height) == (1280, 800), line
+                        return line
+                return None
+            print(wait_for(renderer_ready), flush=True)
             if edit:
                 click(wid, 90, 143)       # second hierarchy row: door-left
                 click(wid, 1250, 185)     # inspector X + 0.25 m
@@ -99,10 +109,24 @@ def run_editor(editor, game, source, output, diagnostics, edit, launch):
                 def child_closed():
                     return not find_game()
                 wait_for(child_closed, 30)
+                def child_reaped():
+                    if proc.poll() is not None:
+                        raise RuntimeError("Editor exited before reaping the game")
+                    for line in diagnostics.read_text(errors="replace").splitlines():
+                        match = re.fullmatch(r"NOVACORE_PLAYTEST_EXIT code=(-?\d+)", line)
+                        if match:
+                            assert int(match.group(1)) == 0, line
+                            return line
+                    return None
+                print(wait_for(child_reaped), flush=True)
                 assert "Authored world loaded: editor-room spawn=spawn" in diagnostics.read_text(errors="replace")
                 xdo("windowfocus", "--sync", wid)
             xdo("windowclose", wid)
             assert proc.wait(timeout=20) == 0
+        except Exception:
+            print(f"Editor diagnostic before teardown ({diagnostics}):", flush=True)
+            print(diagnostics.read_text(errors="replace")[-12000:], flush=True)
+            raise
         finally:
             if proc.poll() is None:
                 proc.terminate()
@@ -120,6 +144,7 @@ def main():
     parser.add_argument("--output", type=pathlib.Path, required=True)
     args = parser.parse_args()
     editor, game, out = args.editor.resolve(), args.game.resolve(), args.output.resolve()
+    game_digest = hashlib.sha256(game.read_bytes()).hexdigest()
     out.mkdir(parents=True, exist_ok=True)
     source = pathlib.Path("configs/maps/editor-room.world.json").resolve()
     modified = out / "modified.world.json"
@@ -138,6 +163,7 @@ def main():
         assert "Authored Vulkan smoke passed: world=editor-room spawn=spawn" in log_text
     for log in out.glob("*.log"):
         assert not re.search(r"Validation Error|ERROR / SPEC|VUID-", log.read_text(errors="replace"), re.I), log
+    assert hashlib.sha256(game.read_bytes()).hexdigest() == game_digest, "Game executable changed during round-trip"
     print("Editor input/save/reopen/Play Map + unchanged game executable original/modified Vulkan smoke passed")
 
 

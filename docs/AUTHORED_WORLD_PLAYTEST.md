@@ -1,6 +1,6 @@
 # Authored world playtest candidate (Phase A)
 
-This validation-only candidate pins both engine files to 8d53e3ff131011a63e2a495a977284425067fc46,
+This validation-only candidate pins both engine files to 09116ff0135de4fb88f48f552c6a6a2caa140f67,
 an isolated public assembly of NovaCore #40 and #42 (both parent histories).
 This is not an integration into main and must not be merged before the individual
 engine PRs are independently reviewed, integrated, and the actual main-reachable
@@ -56,3 +56,15 @@ selects door-left in the hierarchy, changes X by 0.25 m, saves, launches Play Ma
 reopens and resaves, and loads both files with the same game executable.
 The job is a candidate test; do not claim success until its current-head CI passes.
 Physical GPU and human interactive/visual acceptance remain required.
+
+
+## Readiness regression
+
+The original CI artifact (run 46166234933, job 141044266761) contained
+successful Vulkan initialization and world/UI draw-submission messages, despite
+a timeout waiting for the buffered backend log. The interaction harness now
+waits for the editor's explicitly flushed submitted-frame readiness line and
+checks the frame count, geometry count and extent while the process is alive.
+It also waits for a flushed successful child-process exit report and verifies
+the game executable hash remains unchanged throughout the original/modified
+map tests. The existing readiness deadline was not increased.
