@@ -15,8 +15,9 @@ int main(int argc, char** argv) {
     for (int i=1; i<argc; ++i) {
         if (std::string_view(argv[i]) != "--map") continue;
         const bool check = argc == 4 && std::string_view(argv[3]) == "--check-map";
-        if (i != 1 || (argc != 3 && !check) || std::string_view(argv[2]).empty()) {
-            std::cerr << "Usage: nemisis_game --map FILE [--check-map]\n"; return 2;
+        const bool smoke = argc == 4 && std::string_view(argv[3]) == "--vulkan-smoke";
+        if (i != 1 || (argc != 3 && !check && !smoke) || std::string_view(argv[2]).empty()) {
+            std::cerr << "Usage: nemisis_game --map FILE [--check-map | --vulkan-smoke]\n"; return 2;
         }
         try {
             if (check) {
@@ -34,10 +35,11 @@ int main(int argc, char** argv) {
             nemisis::game::GameAppOptions options{};
             options.authoredMap=argv[2]; options.autoEnterDevRange=true; options.lockDevRange=true;
             options.preferVulkanRenderer=true; options.requireVulkanRenderer=true;
+            options.authoredVulkanSmoke=smoke;
             // GameApp owns large fixed-size simulation buffers. Keep it off
             // the Windows executable's default thread stack in every profile.
             auto game=std::make_unique<nemisis::game::GameApp>(options);
-            novacore::core::Application app({"nemisis_authored_map",60.0,0});
+            novacore::core::Application app({"nemisis_authored_map",60.0,smoke?120U:0U});
             app.run(*game);
             return 0;
         } catch (const std::exception& error) {

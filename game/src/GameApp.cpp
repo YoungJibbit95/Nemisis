@@ -253,6 +253,13 @@ void GameApp::onStartup() {
     }
     rebuildActiveAttachmentSummary();
     ensureLocalPlayer();
+    if (options_.authoredVulkanSmoke) {
+        const auto* state=world_.getComponent<movement::PlayerMovementState>(localPlayerEntity_);
+        if (!greyboxWorld_.authored || !state ||
+            (state->position-greyboxWorld_.playerSpawn).lengthSquared()>0.000001F ||
+            staticCollision_.implicitBoundaryCollision() || !targetRange_.lanes.empty())
+            throw std::runtime_error("Authored Vulkan smoke: incorrect spawn, boundaries or target state");
+    }
     if (options_.projectFPSLookDown) {
         if (auto* view = world_.getComponent<player::PlayerViewComponent>(localPlayerEntity_)) { view->pitchDegrees = -70.0F; }
     }
@@ -340,6 +347,8 @@ void GameApp::onShutdown() {
     releaseDevMeshResources();
     renderer_.shutdown();
     window_.shutdown();
+    if (options_.authoredVulkanSmoke && !authoredVulkanSmokePassed_)
+        throw std::runtime_error("Authored Vulkan smoke ended without actual world frame submission");
     if (options_.runPrivateMatchSmoke && privateSmokeStage_ != 3)
         throw std::runtime_error("Private match smoke ended before returning to the menu");
 }
@@ -1092,6 +1101,31 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
     const auto submitStart = options_.profileRange ? Clock::now() : Clock::time_point{};
     renderer_.beginFrame(frameInfo);
     renderer_.endFrame();
+    if (options_.authoredVulkanSmoke && !authoredVulkanSmokePassed_) {
+        const auto stats=renderer_.backendFrameStats();
+        if (stats.submittedFrames>=3 && stats.swapchainReady) {
+            if (renderer_.backendName()!="vulkan-world" || stats.pipelineCreateFailureCount ||
+                stats.lastWorldBoxCount!=frameInfo.worldBoxes.size() || stats.lastWorldBoxCount<greyboxWorld_.primitives.size())
+                throw std::runtime_error("Authored Vulkan smoke: actual world draw submission failed");
+            for (const auto& box:greyboxWorld_.primitives) {
+                const auto visible=std::ranges::any_of(frameInfo.worldBoxes,[&](const auto& draw) {
+                    return (draw.center-box.center).lengthSquared()<0.000001F &&
+                           (draw.halfExtents-box.halfExtents).lengthSquared()<0.000001F;
+                });
+                const auto* collider=staticCollision_.findStaticCollider(box.id);
+                if (!visible || (collider!=nullptr)!=box.blocksMovement ||
+                    (collider && ((collider->center-box.center).lengthSquared()>0.000001F ||
+                                   (collider->halfExtents-box.halfExtents).lengthSquared()>0.000001F)))
+                    throw std::runtime_error("Authored Vulkan smoke: render/collider parity failed for "+box.id);
+            }
+            authoredVulkanSmokePassed_=true;
+            novacore::core::logInfo("game","Authored Vulkan smoke passed: world="+greyboxWorld_.id+
+                " spawn="+greyboxWorld_.playerSpawnId+" frames="+std::to_string(stats.submittedFrames)+
+                " authored_boxes="+std::to_string(greyboxWorld_.primitives.size())+
+                " colliders="+std::to_string(staticCollision_.staticColliders().size()));
+            uiQuitRequested_=true;
+        }
+    }
     // The negotiated world and its resources have now reached an actual frame.
     if (facilityMatch_ && menu_.gameplayActive() && !window_.isHeadless())
         facilityMatch_->confirmMapReady();
