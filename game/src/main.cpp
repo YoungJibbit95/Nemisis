@@ -8,6 +8,7 @@
 #include <string_view>
 #include <iostream>
 #include <exception>
+#include <memory>
 
 int main(int argc, char** argv) {
     // Isolated local map profile. Other preview/network flags cannot override it.
@@ -33,9 +34,11 @@ int main(int argc, char** argv) {
             nemisis::game::GameAppOptions options{};
             options.authoredMap=argv[2]; options.autoEnterDevRange=true; options.lockDevRange=true;
             options.preferVulkanRenderer=true; options.requireVulkanRenderer=true;
-            nemisis::game::GameApp game(options);
+            // GameApp owns large fixed-size simulation buffers. Keep it off
+            // the Windows executable's default thread stack in every profile.
+            auto game=std::make_unique<nemisis::game::GameApp>(options);
             novacore::core::Application app({"nemisis_authored_map",60.0,0});
-            app.run(game);
+            app.run(*game);
             return 0;
         } catch (const std::exception& error) {
             std::cerr << "Authored world playtest failed: " << error.what() << '\n'; return 1;
@@ -236,10 +239,10 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    nemisis::game::GameApp game(gameOptions);
-    novacore::core::Application app(desc);
     try {
-        app.run(game);
+        auto game=std::make_unique<nemisis::game::GameApp>(gameOptions);
+        novacore::core::Application app(desc);
+        app.run(*game);
     } catch (const std::exception& error) {
         std::cerr << "Nemisis startup/runtime failed: " << error.what() << '\n';
         return 1;
