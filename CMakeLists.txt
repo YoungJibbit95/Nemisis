@@ -59,6 +59,7 @@ else()
 endif()
 
 add_executable(nemisis_game
+    game/src/dev/AuthoredWorld.cpp
     game/src/dev/DevConsole.cpp
     game/src/GameApp.cpp
     game/src/assets/DevAssetBindings.cpp
@@ -600,6 +601,30 @@ target_include_directories(nemisis_greybox_collision_tests
 target_link_libraries(nemisis_greybox_collision_tests PRIVATE Novacore::Engine)
 add_test(NAME nemisis_greybox_collision_tests COMMAND nemisis_greybox_collision_tests)
 
+add_executable(nemisis_authored_world_tests
+    game/src/dev/AuthoredWorld.cpp
+    game/src/dev/OuterFacility.cpp
+    game/src/dev/GreyboxWorld.cpp
+    game/src/dev/GreyboxCollision.cpp
+    game/src/dev/DevRangeRenderScene.cpp
+    game/src/dev/DevTargetRange.cpp
+    game/src/dev/DebugTarget.cpp
+    game/src/assets/GameAssetCatalog.cpp
+    game/src/movement/MovementSystem.cpp
+    game/src/player/PlayerAnimation.cpp
+    game/src/player/PlayerFirstPersonRig.cpp
+    game/src/player/PlayerView.cpp
+    tests/authored_world_tests.cpp
+)
+target_include_directories(nemisis_authored_world_tests PRIVATE game/include)
+target_link_libraries(nemisis_authored_world_tests PRIVATE Novacore::Engine)
+add_test(NAME nemisis_authored_world_tests COMMAND nemisis_authored_world_tests
+    "${CMAKE_CURRENT_SOURCE_DIR}/configs/maps/editor-room.world.json"
+    "${CMAKE_CURRENT_SOURCE_DIR}/configs/assets/nemisis_assets.json")
+add_test(NAME nemisis_authored_map_check COMMAND nemisis_game
+    --map "${CMAKE_CURRENT_SOURCE_DIR}/configs/maps/editor-room.world.json" --check-map)
+set_tests_properties(nemisis_authored_map_check PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" TIMEOUT 30)
+
 add_executable(nemisis_dev_range_rigid_bodies_tests
     game/src/dev/DevRangeRigidBodies.cpp
     game/src/dev/GreyboxCollision.cpp
@@ -797,6 +822,7 @@ foreach(nemisis_runtime_target IN ITEMS
     nemisis_dev_sandbox_tests
     nemisis_greybox_world_tests
     nemisis_greybox_collision_tests
+    nemisis_authored_world_tests
     nemisis_weapon_shot_tests
     nemisis_weapon_metrics_tests
     nemisis_weapon_attachments_tests

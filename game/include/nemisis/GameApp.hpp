@@ -80,6 +80,7 @@ struct GameAppOptions final {
     bool physicsProps = false;
     bool directionalShadows = false;
     bool materialTextures = false;
+    std::filesystem::path authoredMap;
 };
 
 class GameApp final : public novacore::core::IApplicationDelegate {

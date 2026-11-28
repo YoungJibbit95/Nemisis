@@ -1,4 +1,5 @@
 #include "nemisis/GameApp.hpp"
+#include "nemisis/dev/AuthoredWorld.hpp"
 
 #include "novacore/core/Application.hpp"
 
@@ -9,6 +10,37 @@
 #include <exception>
 
 int main(int argc, char** argv) {
+    // Isolated local map profile. Other preview/network flags cannot override it.
+    for (int i=1; i<argc; ++i) {
+        if (std::string_view(argv[i]) != "--map") continue;
+        const bool check = argc == 4 && std::string_view(argv[3]) == "--check-map";
+        if (i != 1 || (argc != 3 && !check) || std::string_view(argv[2]).empty()) {
+            std::cerr << "Usage: nemisis_game --map FILE [--check-map]\n"; return 2;
+        }
+        try {
+            if (check) {
+                nemisis::assets::GameAssetCatalog catalog;
+                const auto loaded = catalog.loadFromJson("configs/assets/nemisis_assets.json");
+                if (!loaded.ok()) { std::cerr << "Asset catalog unavailable: " << loaded.errors.front() << '\n'; return 1; }
+                nemisis::dev::GreyboxWorld world;
+                if (auto error = nemisis::dev::loadAuthoredWorld(argv[2],catalog,world)) {
+                    std::cerr << *error << '\n'; return 1;
+                }
+                std::cout << "Authored world validated (CPU): " << world.id << " boxes=" << world.primitives.size()
+                    << " spawn=" << world.playerSpawnId << '\n';
+                return 0;
+            }
+            nemisis::game::GameAppOptions options{};
+            options.authoredMap=argv[2]; options.autoEnterDevRange=true; options.lockDevRange=true;
+            options.preferVulkanRenderer=true; options.requireVulkanRenderer=true;
+            nemisis::game::GameApp game(options);
+            novacore::core::Application app({"nemisis_authored_map",60.0,0});
+            app.run(game);
+            return 0;
+        } catch (const std::exception& error) {
+            std::cerr << "Authored world playtest failed: " << error.what() << '\n'; return 1;
+        }
+    }
     novacore::core::ApplicationDesc desc{};
     desc.name = "nemisis_game";
     desc.fixedTickHz = 60.0;

@@ -1,5 +1,6 @@
 #include "nemisis/GameApp.hpp"
 #include "nemisis/dev/OuterFacility.hpp"
+#include "nemisis/dev/AuthoredWorld.hpp"
 
 #include "nemisis/dev/DebugTarget.hpp"
 #include "nemisis/dev/GreyboxCollision.hpp"
@@ -173,7 +174,17 @@ void GameApp::onStartup() {
     actions_ = input::createDefaultActionMap();
     attachmentRegistry_.registerPrototypeAttachments();
     activeLoadout_ = weapons::defaultPrototypeLoadout(std::string(kDefaultWeaponId));
-    if (options_.runDeploymentSmoke) {
+    if (!options_.authoredMap.empty()) {
+        const auto catalog = assetCatalog_.loadFromJson("configs/assets/nemisis_assets.json");
+        if (!catalog.ok()) throw std::runtime_error("Authored map catalog load failed: " + catalog.errors.front());
+        assetCatalogInitialized_ = true;
+        if (auto error = dev::loadAuthoredWorld(options_.authoredMap, assetCatalog_, greyboxWorld_))
+            throw std::runtime_error("Authored map: " + *error);
+        targetRange_ = {};
+        menu_.showDevRange();
+        novacore::core::logInfo("game", "Authored world loaded: " + greyboxWorld_.id +
+            " spawn=" + greyboxWorld_.playerSpawnId + " boxes=" + std::to_string(greyboxWorld_.primitives.size()));
+    } else if (options_.runDeploymentSmoke) {
         menu_.showLoadingScreen(ui::GameScreen::DevRange);
     } else if (options_.startInFacility) {
         menu_.showOuterFacility();
@@ -215,6 +226,8 @@ void GameApp::onStartup() {
     rendererInfo.preferVulkan = options_.preferVulkanRenderer;
     rendererInfo.requireVulkan = options_.requireVulkanRenderer;
     renderer_.create(window_, rendererInfo);
+    if (greyboxWorld_.authored && (window_.isHeadless() || renderer_.backendName() != "vulkan-world"))
+        throw std::runtime_error("Authored playtest requires actual Vulkan; use --check-map for CPU validation");
     if (!options_.fullGame || menu_.gameplayActive()) {
         loadPlayableResources(menu_.screen());
         if (physicsProps_) { physicsProps_->reset(greyboxWorld_); }
@@ -396,7 +409,7 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
             ? player::viewVectors(*view).forward
             : novacore::math::Vec3{0.0F, 0.0F, 1.0F};
         *movementState = movement_.simulate(*movementState, movementCommand,
-            static_cast<float>(context.fixedDeltaSeconds), viewForward);
+            static_cast<float>(context.fixedDeltaSeconds), viewForward, !greyboxWorld_.authored);
         dev::GreyboxCollisionQuery collisionQuery{};
         collisionQuery.position = movementState->position;
         collisionQuery.previousPosition = previousMovementPosition;
@@ -494,6 +507,12 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
         }
     }
 
+    if (greyboxWorld_.authored && movementState &&
+        (std::abs(movementState->position.x) > greyboxWorld_.boundsHalfExtents.x + 50 ||
+         std::abs(movementState->position.z) > greyboxWorld_.boundsHalfExtents.z + 50 ||
+         movementState->position.y < -greyboxWorld_.boundsHalfExtents.y - 50)) {
+        resetDevRangeState(); return;
+    }
     if (physicsProps_ && movementState) { physicsProps_->tick(movementState->position); }
     processGameplayWeaponInteractions(command);
 
@@ -551,7 +570,7 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
     dev::DebugTargetHitResult targetHit{};
     dev::DevTargetRangeHitResult targetRangeHit{};
     if (hasShotTrace) {
-        dev::ensureDevTargetRange(targetRange_);
+        if (!greyboxWorld_.authored) dev::ensureDevTargetRange(targetRange_);
         auto contact = dev::traceDevRangeShot(targetRange_, shotTrace, greyboxWorld_.primitives);
         if (physicsProps_) {
             (void)physicsProps_->impact(shotTrace.origin, shotTrace.direction * contact.distanceMeters);
@@ -574,7 +593,7 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
         if (targetRangeHit.laneIndex < targetRange_.lanes.size()) {
             shotScoreContext.targetMaxHealth = targetRange_.lanes[targetRangeHit.laneIndex].target.maxHealth;
         }
-    } else if (const auto* lane = dev::activeTargetLane(targetRange_); lane != nullptr) {
+    } else if (const auto* lane = greyboxWorld_.authored ? nullptr : dev::activeTargetLane(targetRange_); lane != nullptr) {
         shotScoreContext.laneKnown = true;
         shotScoreContext.laneIndex = targetRange_.lanes.empty()
             ? 0U
@@ -592,12 +611,14 @@ void GameApp::onFixedTick(const novacore::core::FrameContext& context) {
         dev::beginTargetLaneRespawn(targetRange_, targetRangeHit.laneIndex, devRangeTuning_.targetRespawnDelaySeconds);
     }
 
-    (void)dev::tickDevTargetRangeRespawns(targetRange_, static_cast<float>(context.fixedDeltaSeconds));
-    devRangeSession_.targetRespawnSeconds = dev::nextTargetRespawnSeconds(targetRange_);
-    dev::updateDevTargetRangePressure(
-        targetRange_,
-        movementState != nullptr ? movementState->position : greyboxWorld_.playerSpawn,
-        static_cast<float>(context.fixedDeltaSeconds));
+    if (!greyboxWorld_.authored) {
+        (void)dev::tickDevTargetRangeRespawns(targetRange_, static_cast<float>(context.fixedDeltaSeconds));
+        devRangeSession_.targetRespawnSeconds = dev::nextTargetRespawnSeconds(targetRange_);
+        dev::updateDevTargetRangePressure(
+            targetRange_,
+            movementState != nullptr ? movementState->position : greyboxWorld_.playerSpawn,
+            static_cast<float>(context.fixedDeltaSeconds));
+    }
     const auto lanePressure = dev::strongestDevTargetRangePressure(targetRange_);
 
     player::PlayerHealthComponent healthSample{};
@@ -907,7 +928,11 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
         }
     } else
 #endif
-    if (!consoleInput) menu_.update(actions_, settings_, activeLoadout_, attachmentRegistry_, menuPointer);
+    if (!consoleInput) {
+        if (greyboxWorld_.authored) {
+            if (actionPressed(actions_, input::actions::MenuBack)) uiQuitRequested_ = true;
+        } else menu_.update(actions_, settings_, activeLoadout_, attachmentRegistry_, menuPointer);
+    }
     if (menu_.consumePrivateMatchRequest()) privateMatchRequested_ = true;
     bool playableResourcesReady = true;
     if (options_.fullGame && !options_.runMenuFlowSmoke) {
@@ -940,15 +965,15 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
     if (!consoleInput && !matchRequested() && menu_.gameplayActive() && actionPressed(actions_, input::actions::ResetRange)) {
         resetDevRangeState();
     }
-    if (!consoleInput && menu_.screen() == ui::GameScreen::DevRange && actionPressed(actions_, input::actions::CycleDrillVariant)) {
+    if (!greyboxWorld_.authored && !consoleInput && menu_.screen() == ui::GameScreen::DevRange && actionPressed(actions_, input::actions::CycleDrillVariant)) {
         dev::cycleDevRangeDrillVariant(devRangeSession_, devRangeTuning_);
         dev::configureDevTargetRangeForDrillVariant(targetRange_, devRangeSession_.drill.variant);
     }
     syncRelativeMouseMode();
 #if NEMISIS_HAS_RMLUI
-    window_.setTitle(uiShowcase_ ? "NEMISIS | UI Showcase" : menu_.title());
+    window_.setTitle(greyboxWorld_.authored ? "NEMISIS | " + greyboxWorld_.id : (uiShowcase_ ? "NEMISIS | UI Showcase" : menu_.title()));
 #else
-    window_.setTitle(menu_.title());
+    window_.setTitle(greyboxWorld_.authored ? "NEMISIS | " + greyboxWorld_.id : menu_.title());
 #endif
 
     for (const auto& event : configRegistry_.pollReloads()) {
@@ -982,13 +1007,13 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
             frameInfo,
             dev::DevRangeRenderSceneDesc{
                 &greyboxWorld_,
-                matchRequested() ? nullptr : &targetRange_,
+                matchRequested() || greyboxWorld_.authored ? nullptr : &targetRange_,
                 &devSandbox_.latestSample().collision,
                 &devMeshResources_,
                 currentPlayerRenderState(),
                 renderTuning_.sky,
                 renderTuning_.lighting,
-                renderTuning_.showWorldDebugLines && settings_.video.showDebugWorldLines,
+                !greyboxWorld_.authored && renderTuning_.showWorldDebugLines && settings_.video.showDebugWorldLines,
                 renderTuning_.verticalFovDegrees,
                 renderTuning_.nearPlane,
                 renderTuning_.farPlane,
@@ -1024,6 +1049,12 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
         drawFacilityMatch(frameInfo);
         ui::fitInterfaceCanvas(frameInfo, renderer_.backendFrameStats(), firstRect, firstLine, firstText,
                                settings_.video.hudScale);
+    } else if (greyboxWorld_.authored) {
+        const auto w = static_cast<float>(std::max(1, window_.width()));
+        const auto h = static_cast<float>(std::max(1, window_.height()));
+        frameInfo.debugRects.push_back({w*0.5F-4,h*0.5F,9,1,{1,1,1,1}});
+        frameInfo.debugRects.push_back({w*0.5F,h*0.5F-4,1,9,{1,1,1,1}});
+        frameInfo.debugTexts.push_back({12,12,2,{1,1,1,1},"AUTHORED MAP | P RESET | ESC EXIT"});
     } else menu_.appendRenderCommands(
         frameInfo,
         devSandbox_.latestSample(),
@@ -1047,7 +1078,7 @@ void GameApp::onFrame(const novacore::core::FrameContext& context) {
     }
 #endif
     const auto* localMatch = facilityMatch_ && facilityMatch_->isPrivateMatch() ? &facilityMatch_->authoritative() : nullptr;
-    const bool practice = menu_.gameplayActive() && !matchRequested();
+    const bool practice = menu_.gameplayActive() && !matchRequested() && !greyboxWorld_.authored;
     const auto beforeZones = frameInfo.worldLines.size();
     devConsole_.apply(frameInfo,practice ? &targetRange_ : nullptr,localMatch,localMatch ? facilityMatch_->slot() : 0);
     if (options_.runPrivateMatchSmoke && localMatch && consoleSmokeStep_ == 6) {
@@ -1413,6 +1444,7 @@ void GameApp::loadUserSettings() {
 }
 
 void GameApp::persistUserSettingsIfChanged() {
+    if (greyboxWorld_.authored) return;
     if (options_.projectFPSPreview && !options_.fullGame) { return; }
     const settings::UserSettingsSnapshot snapshot{settings_, activeLoadout_};
     const auto serialized = settings::serializeUserSettingsSnapshot(snapshot);
@@ -1486,6 +1518,7 @@ void GameApp::processGameplayWeaponInteractions(const player::PlayerInputCommand
         requestedWeaponId = "sidearm_01";
         requestedLabel = "COMPACT SIDEARM";
     } else if (command.pickupWeaponPressed) {
+        if (greyboxWorld_.authored) return;
         novacore::math::Vec3 playerPosition = greyboxWorld_.playerSpawn;
         if (const auto* movementState = world_.getComponent<movement::PlayerMovementState>(localPlayerEntity_);
             movementState != nullptr) {
@@ -1578,8 +1611,10 @@ void GameApp::syncMatchMap(net::MatchMap map) {
 
 void GameApp::enterPlayableMap() {
     loadPlayableResources(menu_.screen());
-    greyboxWorld_ = menu_.screen() == ui::GameScreen::OuterFacility
-        ? dev::createOuterFacilityWorld() : dev::createDevRangeGreyboxWorld();
+    if (!greyboxWorld_.authored) {
+        greyboxWorld_ = menu_.screen() == ui::GameScreen::OuterFacility
+            ? dev::createOuterFacilityWorld() : dev::createDevRangeGreyboxWorld();
+    }
     if (!physicsProps_) { staticCollision_ = dev::buildGreyboxPhysicsWorld(greyboxWorld_); }
     dev::resetDevRangeSession(devRangeSession_);
     devSandbox_ = {};
@@ -1592,7 +1627,9 @@ void GameApp::resetDevRangeState() {
     ensureLocalPlayer();
     rebuildActiveAttachmentSummary();
     dev::recordRangeReset(devRangeSession_, devRangeTuning_);
-    if (menu_.screen() == ui::GameScreen::OuterFacility) {
+    if (greyboxWorld_.authored) {
+        targetRange_ = {};
+    } else if (menu_.screen() == ui::GameScreen::OuterFacility) {
         targetRange_ = dev::makeOuterFacilityTargets();
     } else {
         dev::configureDevTargetRangeForDrillVariant(targetRange_, devRangeSession_.drill.variant);
@@ -1641,7 +1678,7 @@ void GameApp::resetDevRangeState() {
 }
 
 void GameApp::tickRangeSession(float fixedDeltaSeconds) {
-    if (menu_.screen() == ui::GameScreen::DevRange) {
+    if (!greyboxWorld_.authored && menu_.screen() == ui::GameScreen::DevRange) {
         dev::tickDevRangeDrill(devRangeSession_, fixedDeltaSeconds, devRangeTuning_);
     }
     dev::tickSessionFeedback(devRangeSession_, fixedDeltaSeconds);
