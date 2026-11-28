@@ -1,0 +1,31 @@
+name: World Editor Windows launcher contract
+
+on:
+  pull_request:
+    paths:
+      - 'tools/Launch-WorldEditor.ps1'
+      - 'tests/world_editor_launcher_test.ps1'
+      - '.github/workflows/editor-launcher.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/Launch-WorldEditor.ps1'
+      - 'tests/world_editor_launcher_test.ps1'
+      - '.github/workflows/editor-launcher.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  launcher:
+    name: Windows PowerShell launcher safety
+    runs-on: windows-2022
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Test real launcher against isolated Git fixture (no GPU/build)
+        shell: powershell
+        run: .\tests\world_editor_launcher_test.ps1
