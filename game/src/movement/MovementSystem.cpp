@@ -237,12 +237,12 @@ void cancelHoloStep(PlayerMovementState& state) {
 }
 
 void advanceHoloStep(PlayerMovementState& state, novacore::math::Vec3 previousFeet,
-                     const MovementTuning& tuning, float dt) {
+                     const MovementTuning& tuning, float dt, bool legacyFloor) {
     auto& step = state.holoStep;
     if (!step.active) {
         return;
     }
-    if (state.mode != MovementMode::Airborne || state.position.y <= 0.0F) {
+    if (state.mode != MovementMode::Airborne || (legacyFloor && state.position.y <= 0.0F)) {
         cancelHoloStep(state);
         return;
     }
@@ -293,7 +293,7 @@ PlayerMovementState MovementSystem::simulate(
     PlayerMovementState state,
     const player::PlayerInputCommand& command,
     float fixedDeltaSeconds,
-    novacore::math::Vec3 facing) const {
+    novacore::math::Vec3 facing, bool legacyFloor) const {
     fixedDeltaSeconds = std::clamp(fixedDeltaSeconds, 0.0F, 1.0F / 30.0F);
     beginMovementTechFrame(state.tech, fixedDeltaSeconds);
     if (state.holoStep.active && state.mode != MovementMode::Airborne) {
@@ -319,7 +319,7 @@ PlayerMovementState MovementSystem::simulate(
     state.coyoteTimeRemaining = isGroundedLike(state.mode)
         ? tuning_.coyoteTimeSeconds
         : consumeCooldown(state.coyoteTimeRemaining, fixedDeltaSeconds);
-    if (state.mode == MovementMode::Grounded && state.position.y <= 0.001F && state.velocity.y <= 0.001F) {
+    if (state.mode == MovementMode::Grounded && (!legacyFloor || state.position.y <= 0.001F) && state.velocity.y <= 0.001F) {
         state.groundJumpAvailable = true;
         state.hasDoubleJump = true;
     }
@@ -357,11 +357,11 @@ PlayerMovementState MovementSystem::simulate(
     targetSpeed *= input.magnitude;
 
     if (state.mode == MovementMode::Dashing && state.dashTimeRemaining <= 0.0F) {
-        state.mode = state.position.y <= 0.001F ? MovementMode::Grounded : MovementMode::Airborne;
+        state.mode = legacyFloor && state.position.y <= 0.001F ? MovementMode::Grounded : MovementMode::Airborne;
     }
     if (state.mode == MovementMode::Sliding &&
         (state.slideTimeRemaining <= 0.0F || horizontalSpeed(state.velocity) <= tuning_.slideEndSpeed)) {
-        state.mode = state.position.y <= 0.001F ? MovementMode::Grounded : MovementMode::Airborne;
+        state.mode = legacyFloor && state.position.y <= 0.001F ? MovementMode::Grounded : MovementMode::Airborne;
         state.crouched = command.crouchHeld;
     }
     if (state.mode == MovementMode::WallRunning && state.wallRunTimeRemaining <= 0.0F) {
@@ -562,9 +562,9 @@ PlayerMovementState MovementSystem::simulate(
     const float impactSpeed = std::max(0.0F, -state.velocity.y);
     const auto previousFeet = state.position;
     state.position = state.position + (state.velocity * fixedDeltaSeconds);
-    advanceHoloStep(state, previousFeet, tuning_, fixedDeltaSeconds);
+    advanceHoloStep(state, previousFeet, tuning_, fixedDeltaSeconds, legacyFloor);
 
-    if (state.position.y <= 0.0F) {
+    if (legacyFloor && state.position.y <= 0.0F) {
         const bool consumeBufferedLandingJump =
             state.jumpBufferRemaining > 0.0F &&
             state.mode != MovementMode::Mantling &&

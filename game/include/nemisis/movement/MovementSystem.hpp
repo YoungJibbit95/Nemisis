@@ -86,7 +86,8 @@ public:
         PlayerMovementState state,
         const player::PlayerInputCommand& command,
         float fixedDeltaSeconds,
-        novacore::math::Vec3 facing = {0.0F, 0.0F, 1.0F}) const;
+        novacore::math::Vec3 facing = {0.0F, 0.0F, 1.0F},
+        bool legacyFloor = true) const;
 
     [[nodiscard]] PlayerMovementState applyWallRunContact(
         PlayerMovementState state,
