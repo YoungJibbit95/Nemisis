@@ -1,0 +1,73 @@
+name: Authored world native round-trip candidate
+
+on:
+  pull_request:
+    paths:
+      - 'game/**'
+      - 'configs/maps/**'
+      - 'cmake/novacore-revision.txt'
+      - 'cmake/novacore-ui-revision.txt'
+      - 'tests/editor_native_roundtrip.py'
+      - '.github/workflows/editor-roundtrip.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-roundtrip:
+    name: Editor / Nemisis software Vulkan round-trip
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: Nemisis
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          path: Nemisis
+          persist-credentials: false
+      - name: Read and verify exact shared engine pin
+        id: engine
+        shell: bash
+        run: |
+          revision=$(tr -d '\r\n' < cmake/novacore-revision.txt)
+          test "$revision" = "$(tr -d '\r\n' < cmake/novacore-ui-revision.txt)"
+          [[ "$revision" =~ ^[0-9a-f]{40}$ ]]
+          echo "revision=$revision" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: YoungJibbit95/Novacore-Engine
+          ref: ${{ steps.engine.outputs.revision }}
+          path: Novacore-Engine
+          persist-credentials: false
+      - name: Install SDL/Vulkan build and virtual display dependencies
+        run: |
+          test "$(git -C ../Novacore-Engine rev-parse HEAD)" = "$(tr -d '\r\n' < cmake/novacore-revision.txt)"
+          sudo apt-get update
+          sudo apt-get install -y libvulkan-dev glslc mesa-vulkan-drivers vulkan-validationlayers xvfb xauth xdotool libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxfixes-dev libxss-dev libxkbcommon-dev libudev-dev libasound2-dev
+      - name: Build both executables against identical NovaCore revision
+        run: |
+          cmake --preset linux-clang-debug -DNOVACORE_BUILD_WORLD_EDITOR=ON -DNOVACORE_REQUIRE_EDITOR_NATIVE=ON -DNEMISIS_COPY_RUNTIME_DATA=OFF
+          cmake --build --preset linux-clang-debug --target nemisis_game novacore_world_editor --parallel 2
+      - name: Exercise actual editor input, persistence and game launch
+        shell: bash
+        run: |
+          set -o pipefail
+          icd=$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' -print -quit)
+          test -n "$icd"
+          export VK_ICD_FILENAMES="$icd"
+          export VK_INSTANCE_LAYERS=VK_LAYER_KHRONOS_validation
+          export SDL_VIDEODRIVER=x11
+          timeout 420s xvfb-run -a -s '-screen 0 1280x800x24' python3 tests/editor_native_roundtrip.py --editor build/linux-clang-debug/Novacore-Engine/novacore_world_editor --game build/linux-clang-debug/nemisis_game --output build/editor-roundtrip
+      - name: Record validation boundary
+        if: always()
+        run: echo 'Software Vulkan and automated virtual-display UI only; physical GPU, human visual acceptance, free camera navigation, HiDPI and manual walking remain separate gates.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload round-trip evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: editor-roundtrip-diagnostics
+          path: Nemisis/build/editor-roundtrip
+          retention-days: 7
+          if-no-files-found: warn

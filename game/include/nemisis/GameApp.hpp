@@ -81,6 +81,7 @@ struct GameAppOptions final {
     bool directionalShadows = false;
     bool materialTextures = false;
     std::filesystem::path authoredMap;
+    bool authoredVulkanSmoke = false;
 };
 
 class GameApp final : public novacore::core::IApplicationDelegate {
@@ -177,6 +178,7 @@ private:
     std::unique_ptr<ui::UiShowcase> uiShowcase_;
 #endif
     bool uiQuitRequested_ = false;
+    bool authoredVulkanSmokePassed_ = false;
     bool uiConfirmReleasePending_ = false;
     settings::GameSettings settings_;
     movement::MovementSystem movement_;

@@ -1,8 +1,10 @@
 # Authored world playtest candidate (Phase A)
 
-Depends on NovaCore PR #40, which includes #37 and #38. Both engine pins
-refer to the exact public candidate; do not merge before the dependencies
-are integrated and both pins updated/retested.
+This validation-only candidate pins both engine files to 8d53e3ff131011a63e2a495a977284425067fc46,
+an isolated public assembly of NovaCore #40 and #42 (both parent histories).
+This is not an integration into main and must not be merged before the individual
+engine PRs are independently reviewed, integrated, and the actual main-reachable
+revision pinned and retested.
 
 Supported: one v1 document, one spawn marker, up to 4096 objects, axis-aligned
 solid boxes and nonblocking visible boxes. IDs are preserved. The actual
@@ -36,3 +38,21 @@ actual Vulkan. Open the same JSON in the editor, save to a separate path,
 walk through the central doorway, test wall and nonblocking box, exit and
 relaunch against modified JSON without rebuilding. Capture real GPU logs and
 screenshots. Do not overwrite the shipped release.
+
+
+## Same-engine validation assembly
+
+Use the pinned engine branch editor/phase-a-validation-assembly for both the
+editor and game. In the Nemisis worktree:
+
+    cmake --preset windows-msvc-debug -DNOVACORE_ENGINE_ROOT=<absolute-pinned-engine-worktree> -DNOVACORE_BUILD_WORLD_EDITOR=ON -DNOVACORE_REQUIRE_EDITOR_NATIVE=ON
+    cmake --build --preset windows-msvc-debug --target nemisis_game novacore_world_editor
+    .\build\windows-msvc-debug\Debug\nemisis_game.exe --map .\configs\maps\editor-room.world.json --vulkan-smoke
+
+The smoke exits successfully only after actual Vulkan world frame submission,
+authored spawn validation and render/static collider parity checks. The automated
+Linux software-Vulkan job drives the real editor on a virtual 1280x800 display,
+selects door-left in the hierarchy, changes X by 0.25 m, saves, launches Play Map,
+reopens and resaves, and loads both files with the same game executable.
+The job is a candidate test; do not claim success until its current-head CI passes.
+Physical GPU and human interactive/visual acceptance remain required.
