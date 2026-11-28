@@ -1,0 +1,22 @@
+{
+  "id": "map_facility_trim_01",
+  "source": "tools/assets/cook_outer_facility_trim.py",
+  "export": "assets/generated/outer_facility/map_facility_trim_01.glb",
+  "category": "environment",
+  "scale_meters": true,
+  "runtime_up_axis": "Y",
+  "gameplay_forward_axis": "+Z",
+  "origin": "Map origin; trim coordinates are authored in world meters.",
+  "collision": "none",
+  "lods": [
+    "map_facility_trim_01_lod0"
+  ],
+  "license": "original_project_asset",
+  "external_assets": false,
+  "generated_by": "tools/assets/cook_outer_facility_trim.py",
+  "stats": {
+    "mesh_objects": 1,
+    "triangles_estimate": 58
+  },
+  "sockets": []
+}

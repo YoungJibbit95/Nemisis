@@ -1,6 +1,7 @@
 #include "nemisis/dev/DevRangeRenderScene.hpp"
 #include "nemisis/dev/DevRangeSession.hpp"
 #include "nemisis/dev/GreyboxWorld.hpp"
+#include "nemisis/dev/OuterFacility.hpp"
 #include "nemisis/player/PlayerFirstPersonRig.hpp"
 #include "nemisis/player/PlayerView.hpp"
 #if defined(NEMISIS_PROJECT_FPS_CANDIDATE_ROOT)
@@ -59,7 +60,10 @@ novacore::assets::GltfMeshData makeMesh() {
 }
 
 nemisis::dev::MeshResourceLookup registerSceneMeshes(novacore::render::Renderer& renderer) {
-    static constexpr std::array<std::string_view, 36> kSceneMeshes{
+    static constexpr std::array<std::string_view, 39> kSceneMeshes{
+        "map_facility_grove_01",
+        "map_facility_trim_01",
+        "prop_range_foliage_01",
         nemisis::dev::kLocalPlayerBodyResourceId,
         "env_test_arena_kit_01",
         "env_project_skybox1",
@@ -301,10 +305,10 @@ void testDevRangeRenderSceneBuildsExpectedSubmissions() {
     expect(stats.skyPassEnabled, "dev range render scene reports active sky pass");
 
     expect(!world.primitives.empty(), "greybox world fixture has primitives");
-    expect(stats.worldBoxCount == (world.primitives.size() - 1U) + targetRange.lanes.size() + 13U, "dev range render scene emits world, lane, asset stage, and pickup pads without duplicate arm proxies");
+    expect(stats.worldBoxCount == (world.primitives.size() - 1U) + targetRange.lanes.size() + 12U, "dev range render scene emits world, lane, asset stage, and pickup pads without duplicate arm proxies");
     expect(frame.worldBoxes.size() == stats.worldBoxCount, "world box count matches frame");
-    expect(stats.meshInstanceCount == 34, "first-person scene emits world, target, showcase, weapon, and arms meshes without a duplicate local world model");
-    expect(frame.worldMeshes.size() == 34, "frame receives all world and exclusive viewmodel mesh instances");
+    expect(stats.meshInstanceCount == 35, "first-person scene emits world, target, showcase, weapon, and arms meshes without a duplicate local world model");
+    expect(frame.worldMeshes.size() == 35, "frame receives all world and exclusive viewmodel mesh instances");
     expect(stats.skyFallbackMeshCount == 0, "dev range render scene skips legacy skybox mesh while sky pass is active");
     expect(stats.skippedMeshInstanceCount == 0, "dev range render scene skips no mesh when lookup is complete");
     expect(stats.materialFallbackProfileCount == stats.meshInstanceCount, "dev range render scene assigns material fallback profiles to submitted GLB meshes");
@@ -763,8 +767,18 @@ void testDevRangeRenderScenePlacesShowcaseAssetsInSpawnView() {
             player,
         });
 
-    expect(stats.meshInstanceCount == 34, "spawn view scene emits expected meshes without the old first-person fullbody T-pose mesh");
+    expect(stats.meshInstanceCount == 35, "spawn view scene emits expected meshes without the old first-person fullbody T-pose mesh");
     expect(stats.skippedMeshInstanceCount == 0, "spawn view scene has no skipped A2 meshes");
+    const auto* backboard = nemisis::dev::findPrimitive(world, "asset_stage_backboard_collision");
+    expect(backboard != nullptr, "showcase backboard has a world collider");
+    if (backboard) {
+        const auto boards = std::ranges::count_if(frame.worldBoxes, [&](const auto& box) {
+            return box.center.x == backboard->center.x && box.center.z == backboard->center.z &&
+                box.halfExtents.x == backboard->halfExtents.x;
+        });
+        expect(boards == 1 && backboard->center.y + backboard->halfExtents.y < 1.0F,
+               "a single low backboard leaves the standing firing line visible");
+    }
     expect(stats.skyPassEnabled, "spawn view uses renderer sky pass");
     expect(frame.sky.enabled, "spawn view frame carries sky pass data");
     expect(stats.firstPersonBodyPrimitiveCount == 0, "spawn view keeps the actual arms without duplicate proxy geometry");
@@ -967,6 +981,40 @@ void testFirstPersonArmsHaveOnePresentationOwner() {
         "missing arms retain the existing safe procedural fallback");
 }
 
+void testHoloStepRendersWithoutDiagnostics() {
+    const auto world = nemisis::dev::createDevRangeGreyboxWorld();
+    const nemisis::dev::MeshResourceLookup meshes{};
+    nemisis::dev::DevRangeRenderSceneDesc desc{};
+    desc.greyboxWorld = &world;
+    desc.meshResources = &meshes;
+    desc.showWorldDebugLines = false;
+    auto& step = desc.player.movementTech;
+    step.energyPlatformSeconds = 0.2F;
+    step.energyPlatformPreviousCenter = {6.0F, 2.0F, 3.0F};
+    step.energyPlatformCenter = {6.1F, 1.6F, 3.0F};
+    step.energyPlatformInFlight = true;
+    nemisis::dev::DevRangeRenderSceneBuilder builder;
+    novacore::render::RenderFrameInfo flight;
+    (void)builder.append(flight, desc);
+    const auto atCenter = [&](const auto& box) {
+        return (box.center - step.energyPlatformCenter).lengthSquared() == 0.0F && !box.castsShadow;
+    };
+    expect(std::ranges::any_of(flight.worldBoxes, [&](const auto& box) {
+        return atCenter(box) && box.halfExtents.x < 0.12F;
+    }), "normal play draws the compact flying emitter at its simulated position");
+    expect(std::ranges::any_of(flight.worldLines, [&](const auto& line) {
+        return (line.start - step.energyPlatformPreviousCenter).lengthSquared() == 0.0F &&
+            (line.end - step.energyPlatformCenter).lengthSquared() == 0.0F;
+    }), "flight trail joins consecutive fixed-tick positions");
+    step.energyPlatformInFlight = false;
+    step.energyPlatformCenter = {6.2F, 1.1F, 3.0F};
+    novacore::render::RenderFrameInfo contact;
+    (void)builder.append(contact, desc);
+    expect(std::ranges::any_of(contact.worldBoxes, [&](const auto& box) {
+        return atCenter(box) && box.halfExtents.x == 0.50F;
+    }), "normal play draws the deployed footprint at its contact position");
+}
+
 void testDevRangeRenderSceneDrawsSocketDrivenShotFeedback() {
     novacore::render::Renderer renderer;
     auto lookup = registerSceneMeshes(renderer);
@@ -982,25 +1030,46 @@ void testDevRangeRenderSceneDrawsSocketDrivenShotFeedback() {
     player.cameraView.pitchDegrees = -4.0F;
     player.activeWeaponId = "ar_01";
     player.activeWeaponClass = nemisis::weapons::WeaponClass::AssaultRifle;
+    player.weapon.weaponId = "ar_01";
     player.weapon.shotIndex = 2;
-    player.weapon.timeSinceLastShotSeconds = 0.02F;
     player.animation.fireAlpha = 1.0F;
     player.hasAnimationFrame = true;
-    player.firedThisFrame = true;
-    player.hitThisFrame = true;
-    player.hasLatestShotTrace = true;
-    player.latestShotOrigin = player.cameraPosition;
-    player.latestShotEnd = targetRange.lanes[1].target.position;
-    player.hitDistanceMeters = 18.0F;
+    const auto impact = targetRange.lanes[1].target.position;
+    player.shotFeedback = nemisis::dev::FirstPersonShotFeedback{"ar_01", 2U, impact, true, false};
 
-    novacore::render::RenderFrameInfo frame{};
-    const auto stats = nemisis::dev::DevRangeRenderSceneBuilder{}.append(
-        frame,
-        nemisis::dev::DevRangeRenderSceneDesc{&world, &targetRange, nullptr, &lookup, player});
+    nemisis::dev::DevRangeRenderSceneDesc desc{&world, &targetRange, nullptr, &lookup, player};
+    desc.showWorldDebugLines = false;
+    for (const float age : {0.0F, 2.0F / 60.0F}) {
+        desc.player.weapon.timeSinceLastShotSeconds = age;
+        novacore::render::RenderFrameInfo frame{};
+        const auto stats = nemisis::dev::DevRangeRenderSceneBuilder{}.append(frame, desc);
 
-    expect(stats.firstPersonFeedbackPrimitiveCount >= 4U, "first-person shot feedback emits muzzle, casing, and hit primitives");
-    expect(stats.hitFeedbackLineCount == 1U, "first-person shot feedback emits a socket-driven trace line");
-    expect(frame.worldLines.size() == stats.worldLineCount, "shot feedback line contributes to world line stats");
+        expect(stats.firstPersonFeedbackPrimitiveCount == 4U, "shot window includes muzzle, casing and hit");
+        expect(stats.hitFeedbackLineCount == 1U, "a frame after multiple ticks still shows the shot trace");
+        expect(std::ranges::any_of(frame.worldLines, [impact](const auto& line) {
+            return (line.end - impact).lengthSquared() < 1e-9F;
+        }), "the retained trace still ends at the simulation hit");
+    }
+
+    desc.player.weapon.timeSinceLastShotSeconds = 0.075F;
+    novacore::render::RenderFrameInfo expiredFrame{};
+    const auto expired = nemisis::dev::DevRangeRenderSceneBuilder{}.append(expiredFrame, desc);
+    expect(expired.firstPersonFeedbackPrimitiveCount == 0U && expired.hitFeedbackLineCount == 0U,
+           "expired feedback never follows the longer animation kick");
+
+    desc.player.weapon.weaponId = "sidearm_01";
+    desc.player.weapon.timeSinceLastShotSeconds = 0.0F;
+    desc.player.weapon.shotIndex = 0U;
+    novacore::render::RenderFrameInfo switchedFrame{};
+    const auto switched = nemisis::dev::DevRangeRenderSceneBuilder{}.append(switchedFrame, desc);
+    expect(switched.firstPersonFeedbackPrimitiveCount == 0U && switched.hitFeedbackLineCount == 0U,
+           "a fresh weapon does not inherit the previous muzzle flash, tracer or hit");
+
+    desc.player.weapon.shotIndex = 2U;
+    novacore::render::RenderFrameInfo newShotFrame{};
+    const auto newShot = nemisis::dev::DevRangeRenderSceneBuilder{}.append(newShotFrame, desc);
+    expect(newShot.firstPersonFeedbackPrimitiveCount == 3U && newShot.hitFeedbackLineCount == 0U,
+           "a new weapon can flash without reusing an old weapon's result with the same shot index");
 }
 
 void testDevRangeRenderSceneDrawsLanePressure() {
@@ -1024,7 +1093,7 @@ void testDevRangeRenderSceneDrawsLanePressure() {
         nemisis::dev::DevRangeRenderSceneDesc{&world, &targetRange, nullptr, &lookup, player});
 
     expect(stats.activeLanePressurePrimitiveCount == 3U, "lane pressure emits ring, beam, and threat line");
-    expect(stats.worldBoxCount == (world.primitives.size() - 1U) + targetRange.lanes.size() + 15U, "lane pressure adds two world-box primitives");
+    expect(stats.worldBoxCount == (world.primitives.size() - 1U) + targetRange.lanes.size() + 14U, "lane pressure adds two world-box primitives");
     expect(stats.worldLineCount == 2U, "lane pressure adds one threat line plus aim line");
 }
 
@@ -1049,6 +1118,70 @@ void testDevRangeRenderSceneAcceptsSpeedClearTargetLayout() {
     expect(stats.targetMeshCount == targetRange.lanes.size(), "render scene emits one actor mesh per speed-clear target lane");
     expect(stats.worldBoxCount >= targetRange.lanes.size(), "render scene emits lane target boxes for speed-clear layout");
     expect(nemisis::dev::activeTargetLane(targetRange) != nullptr, "speed-clear target layout exposes an active lane");
+}
+
+void testOuterFacilitySubmitsBoundedPresentation() {
+    novacore::render::Renderer renderer;
+    auto lookup = registerSceneMeshes(renderer);
+    const auto world = nemisis::dev::createOuterFacilityWorld();
+    const auto targets = nemisis::dev::makeOuterFacilityTargets();
+    nemisis::dev::DevRangeRenderSceneDesc desc{};
+    desc.greyboxWorld = &world;
+    desc.targetRange = &targets;
+    desc.meshResources = &lookup;
+    desc.player.position = world.playerSpawn;
+    novacore::render::RenderFrameInfo frame{};
+    (void)nemisis::dev::DevRangeRenderSceneBuilder{}.append(frame, desc);
+    expect(std::ranges::count_if(frame.worldMeshes, [](const auto& mesh) {
+        return mesh.assetId == "prop_range_foliage_01" && !mesh.castsShadow;
+    }) == 4, "facility uses four shadow-free foliage clusters");
+    expect(std::ranges::count_if(frame.worldMeshes, [](const auto& mesh) {
+        return mesh.assetId == "map_facility_grove_01" && !mesh.castsShadow;
+    }) == 4, "facility uses four batched six-tree groves");
+    expect(std::ranges::count_if(frame.worldMeshes, [](const auto& mesh) {
+        return mesh.assetId == "map_facility_trim_01" && !mesh.castsShadow;
+    }) == 1, "facility submits a single textured trim mesh");
+    expect(std::ranges::none_of(frame.worldMeshes, [](const auto& mesh) {
+        return mesh.assetId == "env_test_arena_kit_01";
+    }), "facility excludes the Dev Range showcase arena");
+    expect(frame.worldBoxes.size() <= 48, "facility box budget remains bounded");
+    lookup.erase("map_facility_grove_01");
+    novacore::render::RenderFrameInfo groveFallback{};
+    (void)nemisis::dev::DevRangeRenderSceneBuilder{}.append(groveFallback, desc);
+    expect(groveFallback.worldBoxes.size() == frame.worldBoxes.size() + 24,
+           "missing grove resource renders its collision trunks as fallback");
+    lookup.erase("prop_range_foliage_01");
+    novacore::render::RenderFrameInfo fallback{};
+    (void)nemisis::dev::DevRangeRenderSceneBuilder{}.append(fallback, desc);
+    expect(std::ranges::count_if(fallback.worldBoxes, [](const auto& box) {
+        return !box.castsShadow && !box.receivesShadow && box.center.y == 0.34F;
+    }) == 4, "facility foliage has four bounded visual fallbacks");
+}
+
+void testFoliagePlacementAndFallback() {
+    novacore::render::Renderer renderer;
+    auto lookup = registerSceneMeshes(renderer);
+    const auto world = nemisis::dev::createDevRangeGreyboxWorld();
+    nemisis::dev::DevRangeRenderSceneDesc desc{};
+    desc.greyboxWorld = &world;
+    desc.meshResources = &lookup;
+    novacore::render::RenderFrameInfo frame{};
+    (void)nemisis::dev::DevRangeRenderSceneBuilder{}.append(frame, desc);
+    const auto foliage = std::ranges::find_if(frame.worldMeshes, [](const auto& mesh) {
+        return mesh.assetId == "prop_range_foliage_01";
+    });
+    expect(foliage != frame.worldMeshes.end(), "foliage cluster is submitted");
+    if (foliage != frame.worldMeshes.end()) {
+        expect(foliage->position.x == 12.0F && foliage->position.z == -9.0F &&
+            !foliage->castsShadow && !foliage->receivesShadow, "cluster stays on the side without shadow cost");
+    }
+    lookup.erase("prop_range_foliage_01");
+    novacore::render::RenderFrameInfo fallback{};
+    (void)nemisis::dev::DevRangeRenderSceneBuilder{}.append(fallback, desc);
+    const auto fallbackBox = std::ranges::find_if(fallback.worldBoxes, [](const auto& box) {
+        return box.center.x == 12.0F && box.center.z == -9.0F && !box.castsShadow && !box.receivesShadow;
+    });
+    expect(fallbackBox != fallback.worldBoxes.end(), "missing foliage handle retains a bounded visible landmark");
 }
 
 void testDevRangeRenderSceneCountsMissingMeshHandles() {
@@ -1079,8 +1212,8 @@ void testDevRangeRenderSceneCountsMissingMeshHandles() {
             player,
         });
 
-    expect(stats.meshInstanceCount == 30, "dev range render scene still emits available static, A2, Project, and target lane meshes");
-    expect(frame.worldMeshes.size() == 30, "frame mesh count drops missing weapon, arms, and first-person T-pose body handles");
+    expect(stats.meshInstanceCount == 31, "dev range render scene still emits available static, A2, Project, and target lane meshes");
+    expect(frame.worldMeshes.size() == 31, "frame mesh count drops missing weapon, arms, and first-person T-pose body handles");
     expect(stats.skippedMeshInstanceCount == 6, "dev range render scene counts missing showcase, primary, fallback, and first-person arm handles");
     expect(stats.materialFallbackProfileCount == stats.meshInstanceCount, "missing handles do not count material fallback profiles for skipped meshes");
     expect(stats.firstPersonMeshCount == 0, "first-person mesh stats reports no valid arms or weapon when those handles are missing");
@@ -1569,7 +1702,7 @@ void testArmedIdleReadability(const novacore::assets::GltfMeshData& arms,
            "actual source-weighted firing hand remains readable around its physical pistol grip after weapon occlusion");
 }
 
-void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false) {
+void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false, bool aimSequence = false) {
     using namespace novacore;
     namespace dev = nemisis::dev;
     namespace player = nemisis::player;
@@ -1584,6 +1717,12 @@ void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false) 
     }
     if (!imported) {
         expect(false, "actual Ready variants import");
+        return;
+    }
+    const auto sight = std::ranges::find(weapon.nodeMarkers, std::string_view("socket_ads_sight"),
+                                         &assets::GltfNodeMarker::name);
+    if (sight == weapon.nodeMarkers.end()) {
+        expect(false, "actual M4 sight frame survives the cook and engine import");
         return;
     }
     player::PlayerSkeletalAnimator animator;
@@ -1656,9 +1795,12 @@ void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false) 
     desc.player.hasAnimationFrame = true;
     desc.player.hasMovementState = true;
     desc.player.activeWeaponId = "ar_01";
+    desc.player.weapon.weaponId = "ar_01";
     float largestResidual = 0;
     float smallestForwardDot = 1;
     float smallestRightMargin = 1000;
+    float maximumSightError = 0;
+    std::size_t sightSamples = 0;
     std::size_t ticks = 0;
     std::array<std::size_t, 2> visibleHandVertices{};
     player::CharacterAnimationState animationState;
@@ -1670,16 +1812,46 @@ void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false) 
         std::pair{Clip::Sprint, 2}, std::pair{Clip::Walk, 2}, std::pair{Clip::Idle, 2},
         std::pair{Clip::Sprint, 2}, std::pair{Clip::Idle, 24}, std::pair{Clip::Walk, 2},
         std::pair{Clip::Sprint, 2}, std::pair{Clip::Idle, 24}};
+    const std::array<std::size_t, 4> shotTicks{16, 79, 84, 144};
+    const std::array<std::size_t, 3> reloadStartTicks{36, 106, 207};
+    const math::Vec3 shotEnd{8, 1, 24};
+    const auto dot = [](math::Vec3 a, math::Vec3 b) { return a.x * b.x + a.y * b.y + a.z * b.z; };
     for (auto [clip, frames] : requests) {
         desc.player.animation.locomotionClip = clip;
         desc.player.animation.stride01 = .65F;
         for (int phase = 0; phase < frames; ++phase) {
+            auto& weaponState = desc.player.weapon;
+            weaponState.timeSinceLastShotSeconds += 1.F / 60;
+            const bool fired = std::ranges::find(shotTicks, ticks) != shotTicks.end() ||
+                (aimSequence && (ticks == 258 || ticks == 298));
+            if (fired) {
+                ++weaponState.shotIndex;
+                weaponState.timeSinceLastShotSeconds = 0;
+                desc.player.shotFeedback = dev::FirstPersonShotFeedback{"ar_01", weaponState.shotIndex, shotEnd, true, false};
+            }
+            const auto reloadStart = std::ranges::find_if(reloadStartTicks, [ticks](const std::size_t start) {
+                return ticks >= start && ticks - start < 24;
+            });
+            weaponState.reloading = reloadStart != reloadStartTicks.end();
+            weaponState.reloadProgress = weaponState.reloading
+                ? static_cast<float>(ticks - *reloadStart) / 24.F : 1.F;
+            const bool aimHeld = aimSequence && ticks > 0 &&
+                (ticks < 116 || (ticks >= 129 && ticks < 197) || ticks >= 216);
+            const float aimTarget = aimHeld && !weaponState.reloading ? 1.F : 0.F;
+            desc.player.adsAlpha += std::clamp(aimTarget - desc.player.adsAlpha, -1.F / 9, 1.F / 9);
+            weaponState.adsAlpha = desc.player.adsAlpha;
+
             desc.player.cameraRollDegrees = std::sin(static_cast<float>(ticks) * .13F) * 12.F;
             desc.player.animation.thirdPersonBodyPitchDegrees = clip == player::CharacterAnimationClip::Sprint ? 8 : 0;
             desc.player.animation.thirdPersonBodyRollDegrees = std::sin(static_cast<float>(ticks) * .1F) * 2;
             desc.player.position = {3, 0, -5};
             desc.player.view.yawDegrees = static_cast<float>(ticks) * 2;
             desc.player.cameraView = desc.player.view;
+            if (aimSequence) {
+                desc.player.cameraView.yawDegrees += std::sin(static_cast<float>(ticks) * .103F) * 10.F;
+                desc.player.cameraView.pitchDegrees = std::sin(static_cast<float>(ticks) * .079F) *
+                    (ticks < 240 ? 32.F : 87.F);
+            }
             if (productionComposition) {
                 player::CharacterAnimationInput input;
                 const auto facing = player::viewVectors(desc.player.view);
@@ -1691,11 +1863,18 @@ void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false) 
                                   std::cos(static_cast<float>(ticks) * .07F) * speed};
                 input.cameraRollDegrees = desc.player.cameraRollDegrees;
                 input.sprintHeld = clip == Clip::Sprint;
+                input.adsHeld = aimHeld;
+                input.weapon = weaponState;
                 desc.player.animation = player::updateCharacterAnimation(animationState, input);
                 expect(desc.player.animation.locomotionClip == clip,
                        "actual gameplay animation composition follows Idle/Walk/Sprint requests with view-relative facing");
             }
-            expect(animator.samplePose(desc.player.animation, 1.F / 60), "one fixed-tick sample");
+            const player::ProjectRifleAim aim{
+                desc.player.adsAlpha,
+                desc.player.cameraView.pitchDegrees + desc.player.animation.thirdPersonBodyPitchDegrees,
+                desc.player.cameraView.yawDegrees - desc.player.view.yawDegrees,
+            };
+            expect(animator.samplePose(desc.player.animation, 1.F / 60, aim), "one fixed-tick sample");
             expect(!animator.samplePose(desc.player.animation, 1.F / 60), "an unconsumed sample cannot advance twice");
             expect(!animator.skinnedMesh() && !animator.skinnedCompanion(),
                    "sample never exposes stale mesh as the new skin");
@@ -1708,9 +1887,51 @@ void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false) 
             const auto model = player::firstPersonAttachmentMatrix(dev::projectFPSPlayerAttachment(desc.player));
             desc.player.cameraPosition = animation::transformPoint(model, animation::matrixTranslation(eye));
             auto presentation = dev::evaluateFirstPersonPresentation(desc);
-            if (!presentation.rightGripWorld || !presentation.leftGripWorld) {
+            if (!presentation.muzzleWorld || !presentation.rightGripWorld || !presentation.leftGripWorld) {
                 expect(false, "real M4 contact goals");
                 return;
+            }
+            if (desc.player.adsAlpha >= .999F && !weaponState.reloading &&
+                weaponState.timeSinceLastShotSeconds >= .115F) {
+                const auto cameraForward = player::viewVectors(desc.player.cameraView).forward;
+                const auto sightForward = animation::transformDirection(presentation.weaponWorld, sight->worldForward);
+                const auto rear = animation::transformPoint(presentation.weaponWorld, sight->worldPosition);
+                const auto eyeToRear = rear - desc.player.cameraPosition;
+                const float depth = dot(eyeToRear, cameraForward);
+                const float error = std::sqrt((eyeToRear - cameraForward * depth).lengthSquared());
+                maximumSightError = std::max(maximumSightError, error);
+                ++sightSamples;
+                expect(depth > .10F && error < .0001F && dot(sightForward, cameraForward) > .999995F,
+                       "settled M4 aperture and front sight are centered along the displayed camera ray");
+                if (ticks == 14) {
+                    auto hip = desc;
+                    hip.player.adsAlpha = 0;
+                    const auto hipRear = animation::transformPoint(
+                        dev::evaluateFirstPersonPresentation(hip).weaponWorld, sight->worldPosition);
+                    expect((hipRear - rear).lengthSquared() > .06F * .06F,
+                           "ADS physically raises and centers the real sight from the hip pose");
+                }
+            }
+            if (fired || ticks == 23 || (weaponState.reloading && (ticks - *reloadStart) % 12 == 0) || ticks == 60) {
+                auto neutral = desc;
+                neutral.player.weapon = {};
+                const auto base = dev::evaluateFirstPersonPresentation(neutral);
+                const auto displacement = animation::matrixTranslation(presentation.weaponWorld) -
+                                          animation::matrixTranslation(base.weaponWorld);
+                const auto baseUp = animation::transformDirection(base.weaponWorld, {0, 1, 0});
+                if (fired) {
+                    const auto baseForward = animation::transformDirection(base.weaponWorld, {0, 0, 1});
+                    const auto shotForward = animation::transformDirection(presentation.weaponWorld, {0, 0, 1});
+                    const float kickScale = 1.F - .30F * weaponState.adsAlpha;
+                    expect(dot(displacement, baseForward) < -.023F * kickScale &&
+                               dot(shotForward, baseUp) > .05F * kickScale,
+                           "M4 backs into the shoulder and pitches up immediately on a shot");
+                } else if (weaponState.reloading && weaponState.reloadProgress == .5F) {
+                    expect(dot(displacement, baseUp) < -.039F, "the actual reload timer drives a visible two-handed dip");
+                } else {
+                    expect(displacement.lengthSquared() < 1e-12F && presentation.weaponWorld.values == base.weaponWorld.values,
+                           "kick recovery, reload start and reload completion meet the idle mount");
+                }
             }
             const player::PlayerHandTargets targets{model, *presentation.rightGripWorld, *presentation.leftGripWorld};
             const auto physicalFiring = std::ranges::find(weapon.nodeMarkers, std::string_view("socket_grip_r"),
@@ -1738,10 +1959,11 @@ void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false) 
             // Derive it independently from the public camera angles.
             const auto cameraRight = horizontalRight * std::cos(roll) + unrolledUp * std::sin(roll);
             const auto firingOffset = animation::matrixTranslation(targets.rightGripWorld) - desc.player.cameraPosition;
-            const auto dot = [](math::Vec3 a, math::Vec3 b) { return a.x * b.x + a.y * b.y + a.z * b.z; };
             const float rightMargin = dot(firingOffset, cameraRight);
-            smallestRightMargin = std::min(smallestRightMargin, rightMargin);
-            if (rightMargin <= 0) {
+            if (desc.player.adsAlpha == 0) {
+                smallestRightMargin = std::min(smallestRightMargin, rightMargin);
+            }
+            if (desc.player.adsAlpha == 0 && rightMargin <= 0) {
                 const auto authoredWorld = animation::multiply(model, chestMount);
                 const auto authoredX = animation::transformDirection(authoredWorld, {1, 0, 0});
                 const auto eyeLocal = animation::matrixTranslation(eye);
@@ -1752,7 +1974,7 @@ void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false) 
                           << " eye_model=" << eyeLocal.x << ',' << eyeLocal.y << ',' << eyeLocal.z
                           << " mount_model=" << mountLocal.x << ',' << mountLocal.y << ',' << mountLocal.z << '\n';
             }
-            expect(rightMargin > 0,
+            expect(desc.player.adsAlpha > 0 || rightMargin > 0,
                    "hip firing grip stays right of anatomical camera across movement and yaw");
             const auto weaponForward = animation::transformPoint(presentation.weaponWorld, {0, 0, 1}) -
                                        animation::matrixTranslation(presentation.weaponWorld);
@@ -1766,7 +1988,8 @@ void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false) 
             expect(animator.skinPose(&targets), "common constrained pose skins both original meshes");
             const auto& result = animator.stats().handConstraints;
             if (result.status != player::HandConstraintStatus::Applied) {
-                std::cerr << "Ready tick=" << ticks << " residual=" << result.residualMeters[0] << ','
+                std::cerr << "Ready tick=" << ticks << " ADS=" << desc.player.adsAlpha
+                          << " pitch=" << desc.player.cameraView.pitchDegrees << " residual=" << result.residualMeters[0] << ','
                           << result.residualMeters[1] << '\n';
             }
             expect(result.status == player::HandConstraintStatus::Applied,
@@ -1876,6 +2099,22 @@ void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false) 
                     }
                 }
                 expect(stats.projectFPSBodyActive && stats.projectFPSArmsActive, "both actual subsets submitted");
+                const bool recent = weaponState.shotIndex > 0 && weaponState.timeSinceLastShotSeconds < .075F;
+                expect(stats.hitFeedbackLineCount == static_cast<std::size_t>(recent),
+                       "the recent real-M4 shot owns exactly one trace");
+                if (recent) {
+                    const auto muzzle = animation::matrixTranslation(*presentation.muzzleWorld);
+                    const auto flashTip = animation::transformPoint(*presentation.muzzleWorld, {0, 0, .075F});
+                    for (const auto point : {muzzle, flashTip}) {
+                        expect(std::ranges::any_of(frame.worldBoxes, [point](const auto& box) {
+                            return !box.castsShadow && (box.center - point).lengthSquared() < 1e-10F;
+                        }), "both flash points follow the moving cooked muzzle frame");
+                    }
+                    expect(std::ranges::any_of(frame.worldLines, [muzzle, shotEnd](const auto& line) {
+                        return (line.start - muzzle).lengthSquared() < 1e-10F &&
+                               (line.end - shotEnd).lengthSquared() < 1e-10F;
+                    }), "cooked muzzle starts the retained trace, and the simulation owns the endpoint");
+                }
                 const auto rifle = std::ranges::find(frame.worldMeshes, dev::kProjectReadyWeaponAssetId,
                                                      &render::RenderMesh3D::assetId);
                 expect(rifle != frame.worldMeshes.end() && rifle->layer == render::RenderMeshLayer::World,
@@ -1911,12 +2150,15 @@ void testProjectReadyUsesOneConstrainedPose(bool productionComposition = false) 
                    "settled Idle returns to its authored clip without a stale Developer mask after interrupted requests");
         }
     }
-    std::cout << "Project Ready " << (productionComposition ? "production-input" : "direct-frame-stress")
+    std::cout << "Project Ready " << (aimSequence ? "ADS" : productionComposition ? "production-input" : "direct-frame-stress")
               << " common-pose ticks=" << ticks << " max_world_contact_m=" << largestResidual
               << " min_weapon_camera_forward_dot=" << smallestForwardDot
               << " min_firing_camera_right_m=" << smallestRightMargin
               << " hip_hand_frustum_vertices=" << visibleHandVertices[0] << ',' << visibleHandVertices[1]
-              << "; developer Ready over original locomotion, no directional/ADS/reload completeness claim\n";
+              << " centered_sight_samples=" << sightSamples << " max_sight_error_m=" << maximumSightError << '\n';
+    if (aimSequence) {
+        expect(sightSamples > 80U, "held ADS endpoint is exercised throughout the action sequence");
+    }
     expect(visibleHandVertices[0] > 10 && visibleHandVertices[1] > 10,
            "both actual weighted hands intersect the anatomical hip camera frustum (not an occlusion/pixel oracle)");
     auto mismatch = body;
@@ -1941,7 +2183,7 @@ void testLocalShadowPolicyPreservesSharedWorldResources() {
     desc.player.hasMovementState = true;
     desc.player.hasCameraRig = true;
     desc.player.activeWeaponId = "ar_01";
-    desc.player.firedThisFrame = true;
+    desc.player.weapon.shotIndex = 1U;
     desc.showFirstPersonRigDiagnostics = true;
     render::RenderFrameInfo frame;
     const auto stats = dev::DevRangeRenderSceneBuilder{}.append(frame, desc);
@@ -1974,6 +2216,11 @@ int main(int argc, char** argv) {
     if (argc == 2 && std::string_view(argv[1]) == "--ready-only") {
         testProjectReadyUsesOneConstrainedPose();
         testProjectReadyUsesOneConstrainedPose(true);
+        testProjectReadyUsesOneConstrainedPose(true, true);
+        return failures == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+    }
+    if (argc == 2 && std::string_view(argv[1]) == "--ads-only") {
+        testProjectReadyUsesOneConstrainedPose(true, true);
         return failures == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
     }
 #else
@@ -1997,8 +2244,11 @@ int main(int argc, char** argv) {
     testDevRangeRenderSceneRigsFirstPersonBodyForLookDown();
     testFirstPersonArmsHaveOnePresentationOwner();
     testDevRangeRenderSceneDrawsSocketDrivenShotFeedback();
+    testHoloStepRendersWithoutDiagnostics();
     testDevRangeRenderSceneDrawsLanePressure();
     testDevRangeRenderSceneAcceptsSpeedClearTargetLayout();
+    testOuterFacilitySubmitsBoundedPresentation();
+    testFoliagePlacementAndFallback();
     testDevRangeRenderSceneCountsMissingMeshHandles();
     testDevRangeRenderSceneKeepsSkyboxMeshFallbackWhenSkyPassDisabled();
     testDevRangeRenderSceneHandlesMissingInputs();

@@ -39,6 +39,9 @@ void expect(bool condition, std::string_view message) {
 
 std::vector<AssetSpec> requiredSpecs() {
     return {
+        {"map_facility_grove_01", "mesh", "environment", "tools/assets/cook_outer_facility_grove.py", "assets/generated/outer_facility/map_facility_grove_01.glb"},
+        {"map_facility_trim_01", "mesh", "environment", "tools/assets/cook_outer_facility_trim.py", "assets/generated/outer_facility/map_facility_trim_01.glb"},
+        {"prop_range_foliage_01", "mesh", "prop", "tools/assets/cook_dev_range_foliage.py", "assets/generated/dev_range/prop_range_foliage_01.glb"},
         {"prop_target_dummy_01", "mesh", "prop", "assets/source/blender/props/prop_target_dummy_01.blend", "assets/export/gltf/props/prop_target_dummy_01.glb", "col_prop_target_dummy_01"},
         {"wpn_ar_01", "mesh", "weapon", "assets/source/blender/weapons/wpn_ar_01.blend", "assets/export/gltf/weapons/wpn_ar_01.glb"},
         {"wpn_smg_01", "mesh", "weapon", "assets/source/blender/weapons/wpn_smg_01.blend", "assets/export/gltf/weapons/wpn_smg_01.glb"},
@@ -524,6 +527,118 @@ void testGlockPhysicalPistolGripAndMuzzle() {
     }
 }
 
+void testWorldPresentationAssets() {
+    const std::filesystem::path root{NEMISIS_SOURCE_ROOT};
+    nemisis::assets::GameAssetCatalog catalog;
+    expect(catalog.loadFromJson(root / "configs/assets/nemisis_assets.json").ok(), "world asset catalog loads");
+    nemisis::assets::DevAssetBindings bindings;
+    const std::array<std::string_view, 4> ids{"env_test_arena_kit_01", "prop_range_foliage_01", "map_facility_trim_01", "map_facility_grove_01"};
+    expect(bindings.bindAssets(catalog, ids, root).ready(), "packaged arena and foliage bind through runtime path");
+    const auto* arena = bindings.meshCatalog().findByAssetId(ids[0]);
+    const auto* foliage = bindings.meshCatalog().findByAssetId(ids[1]);
+    if (!arena || !arena->meshData || !foliage || !foliage->meshData) {
+        expect(false, "world mesh data is available");
+        return;
+    }
+    novacore::assets::GltfMeshData original;
+    expect(novacore::assets::loadGltfMeshData(arena->meshData->path, original).ok(), "original arena GLB loads");
+    expect(arena->meshData->primitiveCount() < original.primitiveCount() && !arena->meshData->primitives.empty(),
+           "arena removes collision helpers while preserving visible geometry");
+    for (const auto& primitive : arena->meshData->primitives) {
+        const auto node = std::ranges::find_if(arena->meshData->nodes, [&](const auto& value) {
+            return primitive.nodeIndex >= 0 && value.nodeIndex == static_cast<std::size_t>(primitive.nodeIndex);
+        });
+        expect(node != arena->meshData->nodes.end() && !node->name.starts_with("col_"), "collision helper is not rendered");
+    }
+    const auto* trim = bindings.meshCatalog().findByAssetId(ids[2]);
+    expect(trim && trim->meshData && trim->meshData->primitiveCount() == 1 &&
+           trim->meshData->indexCount() == 174 && trim->meshData->materials.size() == 1 &&
+           trim->meshData->materials[0].baseColorTextureIndex == 0 && trim->meshData->images.size() == 1 &&
+           trim->meshData->images[0].encodedBytes && !trim->meshData->images[0].encodedBytes->empty(),
+           "packaged facility trim retains one primitive, UV texture, and embedded image");
+    const auto* grove = bindings.meshCatalog().findByAssetId(ids[3]);
+    expect(grove && grove->meshData && grove->meshData->primitiveCount() == 2 &&
+           grove->meshData->indexCount() == 648 && grove->meshData->materials.size() == 2,
+           "packaged grove batches six trees into two material primitives");
+    const auto& mesh = *foliage->meshData;
+    expect(mesh.primitiveCount() == 1 && mesh.indexCount() == 504, "foliage uses one primitive and 168 triangles");
+    expect(mesh.materials.size() == 1, "foliage has a packaged matte material");
+    for (const auto& primitive : mesh.primitives) {
+        for (const auto& point : primitive.positions) {
+            expect(point.x >= -1.4F && point.x <= 1.4F && point.y >= 0.0F && point.y <= 1.1F &&
+                   point.z >= -0.7F && point.z <= 0.7F, "foliage bounds stay within its edge placement");
+        }
+    }
+}
+
+void testMissingBatchCanRetryAfterPartialImport() {
+    const auto root = std::filesystem::temp_directory_path() / "nemisis_dev_asset_bindings_retry";
+    std::filesystem::remove_all(root);
+    std::filesystem::create_directories(root);
+    const std::array<AssetSpec, 2> specs{{
+        {"first", "mesh", "prop", "source/first", "assets/first.glb"},
+        {"second", "mesh", "prop", "source/second", "assets/second.glb"},
+    }};
+    writeManifest(root / "assets.json", specs);
+    writeMetadata(root, specs[0]);
+    writeTinyGlb(root / specs[0].cooked, specs[0].id);
+    writeTinyGlb(root / specs[1].cooked, specs[1].id);
+    nemisis::assets::GameAssetCatalog catalog;
+    expect(catalog.loadFromJson(root / "assets.json").ok(), "retry fixture catalog loads");
+    nemisis::assets::DevAssetBindings bindings;
+    const std::array<std::string_view, 2> ids{"first", "second"};
+    const auto first = bindings.bindMissingAssets(catalog, ids, root);
+    expect(!first.ready() && bindings.meshCount() == 1, "failed later asset leaves earlier import available");
+    writeMetadata(root, specs[1]);
+    const auto retry = bindings.bindMissingAssets(catalog, ids, root);
+    expect(retry.ready() && retry.requiredAssetCount == 1 && bindings.meshCount() == 2,
+           "retry skips existing mesh and imports only repaired missing asset");
+    const auto noOp = bindings.bindMissingAssets(catalog, ids, root);
+    expect(noOp.ready() && noOp.requiredAssetCount == 0 && bindings.meshCount() == 2,
+           "repeating complete batch is an idempotent no-op");
+    std::filesystem::remove_all(root);
+}
+
+void testFacilityAssetBatchAndSummary() {
+    using namespace nemisis::assets;
+    const auto facility = outerFacilityRenderableAssetIds();
+    const auto& all = requiredDevSandboxRenderableAssetIds();
+    expect(facility.size() == 17 && facility.size() < all.size(), "facility loads a strict subset");
+    for (const auto id : facility) {
+        expect(std::ranges::count(all, id) == 1 && std::ranges::count(facility, id) == 1,
+               "facility ID appears once in both facility and complete lists");
+    }
+    GameAssetCatalog catalog;
+    const std::filesystem::path root{NEMISIS_SOURCE_ROOT};
+    expect(catalog.loadFromJson(root / "configs/assets/nemisis_assets.json").ok(), "actual asset catalog loads");
+    DevAssetBindings bindings;
+    const auto first = bindings.bindAssets(catalog, facility.first(8), root);
+    const auto second = bindings.bindAssets(catalog, facility.subspan(8), root, true);
+    expect(first.ready() && second.ready(), "both real facility batches import successfully");
+    auto total = first;
+    total.include(second);
+    expect(total.ready() && total.requiredAssetCount == facility.size() && bindings.meshCount() == facility.size(),
+           "aggregated batches retain correct readiness and count");
+    DevAssetBindingSummary unit{};
+    unit.requiredAssetCount = unit.renderableAssetCount = unit.metadataAssetCount = unit.importedAssetCount = 1;
+    unit.totalMeshCount = unit.totalNodeCount = unit.totalMaterialCount = unit.skinnedAssetCount = 1;
+    unit.animatedAssetCount = unit.totalSkinCount = unit.totalAnimationCount = unit.extractedAssetCount = 1;
+    unit.totalPrimitiveCount = unit.totalVertexCount = unit.totalIndexCount = unit.totalBinaryBytes = 1;
+    unit.missingAssetCount = 1;
+    unit.errors.push_back("sample error");
+    auto sum = unit;
+    sum.include(unit);
+    expect(sum.requiredAssetCount == 2 && sum.renderableAssetCount == 2 && sum.metadataAssetCount == 2 &&
+           sum.importedAssetCount == 2 && sum.totalMeshCount == 2 && sum.totalNodeCount == 2 &&
+           sum.totalMaterialCount == 2 && sum.skinnedAssetCount == 2 && sum.animatedAssetCount == 2 &&
+           sum.totalSkinCount == 2 && sum.totalAnimationCount == 2 && sum.extractedAssetCount == 2 &&
+           sum.totalPrimitiveCount == 2 && sum.totalVertexCount == 2 && sum.totalIndexCount == 2 &&
+           sum.totalBinaryBytes == 2 && sum.missingAssetCount == 2 && sum.errors.size() == 2 && !sum.ready(),
+           "include accumulates every counter and retains failure diagnostics");
+    unit.include(unit);
+    expect(unit.errors.size() == 2 && unit.requiredAssetCount == 2, "self-include preserves diagnostics safely");
+}
+
 void testFirstPersonArmsExcludeAuthoringHelpers() {
     const std::filesystem::path sourceRoot{NEMISIS_SOURCE_ROOT};
     nemisis::assets::GameAssetCatalog catalog;
@@ -567,7 +682,10 @@ int main() {
     testRepresentativeCookedWeaponContract();
     testFR17PhysicalGripOwnership();
     testGlockPhysicalPistolGripAndMuzzle();
+    testMissingBatchCanRetryAfterPartialImport();
+    testFacilityAssetBatchAndSummary();
     testFirstPersonArmsExcludeAuthoringHelpers();
+    testWorldPresentationAssets();
 
     if (failures > 0) {
         std::cerr << failures << " dev asset binding test(s) failed\n";

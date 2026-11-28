@@ -89,12 +89,14 @@ ShotTraceResult buildShotTrace(
     const float pitchRadians = degreesToRadians(spreadPitch + recoilPitch);
 
     const auto forward = normalized(request.forward);
-    auto direction = novacore::math::Vec3{
-        forward.x + yawRadians,
-        forward.y + pitchRadians,
-        forward.z,
-    };
-    direction = normalized(direction);
+    const float horizontalLength = std::hypot(forward.x, forward.z);
+    const auto yawAxis = horizontalLength > 0.000001F
+        ? novacore::math::Vec3{forward.z / horizontalLength, 0.0F, -forward.x / horizontalLength}
+        : novacore::math::Vec3{1.0F, 0.0F, 0.0F};
+    const novacore::math::Vec3 pitchAxis{
+        forward.y * yawAxis.z, forward.z * yawAxis.x - forward.x * yawAxis.z, -forward.y * yawAxis.x};
+    const auto yawed = forward * std::cos(yawRadians) + yawAxis * std::sin(yawRadians);
+    const auto direction = normalized(yawed * std::cos(pitchRadians) + pitchAxis * std::sin(pitchRadians));
 
     ShotTraceResult result{};
     result.origin = request.origin;

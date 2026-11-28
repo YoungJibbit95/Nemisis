@@ -1,6 +1,8 @@
 #include "nemisis/ui/GameMenu.hpp"
+#include <utility>
 
 #include "nemisis/input/InputBindings.hpp"
+#include "nemisis/dev/OuterFacility.hpp"
 #include "nemisis/ui/UiCanvas.hpp"
 #include "nemisis/weapons/WeaponMetrics.hpp"
 
@@ -10,6 +12,7 @@
 #include <cstddef>
 #include <iomanip>
 #include <sstream>
+#include <span>
 #include <string>
 #include <utility>
 
@@ -83,7 +86,7 @@ struct HudLayout final {
 [[nodiscard]] UiRect menuRowRect(MenuTab tab, std::size_t index) {
     switch (tab) {
     case MenuTab::Play:
-        return UiRect{416.0F, 216.0F + static_cast<float>(index) * 56.0F, 520.0F, 44.0F};
+        return UiRect{416.0F, 216.0F + static_cast<float>(index) * 56.0F, 700.0F, 44.0F};
     case MenuTab::Gamemodes:
         return UiRect{66.0F, 222.0F + static_cast<float>(index) * 60.0F, 500.0F, 44.0F};
     case MenuTab::Loadout:
@@ -429,6 +432,7 @@ void addHudMetric(
     std::size_t wall = 0;
     std::size_t bounds = 0;
     std::size_t sweep = 0;
+    std::size_t ceiling = 0;
     for (const auto& contact : collision.contacts) {
         switch (contact.role) {
         case dev::GreyboxContactRole::Ground:
@@ -443,6 +447,9 @@ void addHudMetric(
         case dev::GreyboxContactRole::Bounds:
             ++bounds;
             break;
+        case dev::GreyboxContactRole::Ceiling:
+            ++ceiling;
+            break;
         case dev::GreyboxContactRole::Sweep:
             ++sweep;
             break;
@@ -450,7 +457,7 @@ void addHudMetric(
     }
 
     std::ostringstream stream;
-    stream << "G" << ground << " S" << step << " W" << wall << " B" << bounds << " X" << sweep;
+    stream << "G" << ground << " S" << step << " W" << wall << " B" << bounds << " X" << sweep << " C" << ceiling;
     return stream.str();
 }
 
@@ -573,21 +580,47 @@ void addStatBar(
     addProgress(frame, {x + 118.0F, y - 2.0F, 180.0F, 10.0F}, value, {0.06F, 0.08F, 0.09F, 1.0F}, color);
 }
 
+void renderDeploymentPlan(novacore::render::RenderFrameInfo& frame, bool range) {
+    static const auto facilityWorld = dev::createOuterFacilityWorld();
+    static const auto rangeWorld = dev::createDevRangeGreyboxWorld();
+    const auto& world = range ? rangeWorld : facilityWorld;
+    constexpr UiRect panel{66.0F, 216.0F, 310.0F, 186.0F};
+    addPanel(frame, panel.x, panel.y, panel.width, panel.height, 8.0F, palette::Accent, true);
+    const float scale = std::min(230.0F / (2.0F * world.boundsHalfExtents.x),
+                                 144.0F / (2.0F * world.boundsHalfExtents.z));
+    const auto x = [&](float coord) { return panel.x + panel.width * 0.5F + coord * scale; };
+    const auto y = [&](float coord) { return panel.y + panel.height * 0.5F - coord * scale; };
+    for (const auto& shape : world.primitives) {
+        if (!shape.blocksMovement || shape.kind == dev::GreyboxPrimitiveKind::Floor) { continue; }
+        const auto color = shape.kind == dev::GreyboxPrimitiveKind::WallRunPanel ? palette::Accent : palette::TextSecondary;
+        addRect(frame, x(shape.center.x - shape.halfExtents.x), y(shape.center.z + shape.halfExtents.z),
+                std::max(1.2F, 2.0F * shape.halfExtents.x * scale),
+                std::max(1.2F, 2.0F * shape.halfExtents.z * scale), color);
+    }
+    const float sx = x(world.playerSpawn.x);
+    const float sy = y(world.playerSpawn.z);
+    addLine(frame, sx - 4.0F, sy + 4.0F, sx, sy - 3.0F, palette::Warning);
+    addLine(frame, sx, sy - 3.0F, sx + 4.0F, sy + 4.0F, palette::Warning);
+    addText(frame, panel.x + 12.0F, panel.y + 10.0F, 1.0F, palette::Accent, range ? "RANGE" : "RELAY YARD");
+    addText(frame, panel.x + 12.0F, panel.y + panel.height - 17.0F, 1.0F, palette::Warning, "INSERTION");
+}
+
 void renderPlayTab(
     novacore::render::RenderFrameInfo& frame,
     std::size_t selectedIndex,
     const weapons::AttachmentBuildSummary& buildSummary) {
-    addImage(frame, {66.0F, 216.0F, 310.0F, 180.0F}, "assets/ui/icons/firing_range.svg");
-    addSelectableRow(frame, 416.0F, 216.0F, 520.0F, "Firing Range", "Load live Vulkan range", selectedIndex == 0U);
-    addSelectableRow(frame, 416.0F, 272.0F, 520.0F, "Gamemode Browser", "TDM / Control prototypes", selectedIndex == 1U);
-    addSelectableRow(frame, 416.0F, 328.0F, 520.0F, "Loadout Editor", "Attachments and weapon tuning", selectedIndex == 2U);
+    renderDeploymentPlan(frame, selectedIndex == 1U);
+    addSelectableRow(frame, 416.0F, 216.0F, 700.0F, "Outer Facility", "Deploy to the relay yard", selectedIndex == 0U);
+    addSelectableRow(frame, 416.0F, 272.0F, 700.0F, "Firing Range", "Training drills", selectedIndex == 1U);
+    addSelectableRow(frame, 416.0F, 328.0F, 700.0F, "Loadout", "Weapons and attachments", selectedIndex == 2U);
+    addSelectableRow(frame, 416.0F, 384.0F, 700.0F, "Private Match with Bots", "Outer Facility / 2 vs 2", selectedIndex == 3U);
+    addSelectableRow(frame, 416.0F, 440.0F, 700.0F, "Exit to desktop", "", selectedIndex == 4U);
 
-    addPanel(frame, 66.0F, 430.0F, 870.0F, 126.0F, 10.0F, palette::Accent, true);
-    addText(frame, 88.0F, 452.0F, 2.0F, palette::Accent, "CURRENT READY CHECK");
-    addMetric(frame, 88.0F, 486.0F, "EFFECTIVE MAG", std::to_string(buildSummary.effectiveMagazineSize));
-    addMetric(frame, 402.0F, 486.0F, "ADS", fixedTwo(buildSummary.effectiveWeapon.adsTimeSeconds) + "s");
-    addMetric(frame, 650.0F, 486.0F, "RELOAD", fixedTwo(buildSummary.effectiveWeapon.reloadTimeSeconds) + "s");
-    addText(frame, 88.0F, 526.0F, 2.0F, palette::TextSecondary, "Loading screens, UI tabs, player camera, weapon runtime and attachment build are live systems now.");
+    addPanel(frame, 66.0F, 496.0F, 870.0F, 126.0F, 10.0F, palette::Accent, true);
+    addText(frame, 88.0F, 518.0F, 2.0F, palette::Accent, "EQUIPPED LOADOUT");
+    addMetric(frame, 88.0F, 552.0F, "EFFECTIVE MAG", std::to_string(buildSummary.effectiveMagazineSize));
+    addMetric(frame, 402.0F, 552.0F, "ADS", fixedTwo(buildSummary.effectiveWeapon.adsTimeSeconds) + "s");
+    addMetric(frame, 650.0F, 552.0F, "RELOAD", fixedTwo(buildSummary.effectiveWeapon.reloadTimeSeconds) + "s");
 }
 
 void renderGamemodesTab(novacore::render::RenderFrameInfo& frame, std::size_t selectedIndex) {
@@ -660,6 +693,7 @@ void renderSettingsTab(
     addSelectableRow(frame, 340.0F, 328.0F, 620.0F, "HUD Scale", fixedTwo(settings.video.hudScale), selectedIndex == 2U, palette::Accent);
     addSelectableRow(frame, 340.0F, 384.0F, 620.0F, "Aim Assist", std::string(yesNo(settings.controller.aimAssistEnabled)), selectedIndex == 3U, palette::Warning);
     addSelectableRow(frame, 340.0F, 440.0F, 620.0F, "Damage Numbers", std::string(yesNo(settings.gameplay.showDamageNumbers)), selectedIndex == 4U, palette::Warning);
+    addSelectableRow(frame, 340.0F, 496.0F, 620.0F, "Hit Markers", std::string(yesNo(settings.gameplay.showHitMarkers)), selectedIndex == 5U, palette::Warning);
     addPanel(frame, 72.0F, 400.0F, 220.0F, 96.0F, 10.0F, palette::Accent, true);
     addText(frame, 90.0F, 424.0F, 2.0F, palette::TextPrimary, "LEFT/RIGHT");
     addText(frame, 90.0F, 456.0F, 1.0F, palette::TextSecondary, "Adjusts values live.");
@@ -697,7 +731,7 @@ void renderMainMenuShell(
     addRoundedRect(frame, 28.0F, 24.0F, 1218.0F, 650.0F, 16.0F, {0.010F, 0.017F, 0.021F, 0.76F});
     addRoundedRect(frame, 46.0F, 196.0F, 1180.0F, 392.0F, 14.0F, {0.018F, 0.030F, 0.036F, 0.82F});
     addLine(frame, 66.0F, 198.0F, 1206.0F, 198.0F, {0.05F, 0.28F, 0.34F, 0.95F});
-    addHeader(frame, "MAIN MENU", "Q/E OR LB/RB TABS  -  LEFT/RIGHT ADJUST  -  ENTER/A CONFIRM  -  1 RANGE");
+    addHeader(frame, "NEMISIS", "Q/E OR LB/RB TABS  -  LEFT/RIGHT ADJUST  -  ENTER/A CONFIRM  -  1 RANGE");
     addTopTabs(frame, tab);
 
     switch (tab) {
@@ -729,13 +763,47 @@ void renderLoadingScreen(
     const weapons::AttachmentBuildSummary& attachmentSummary) {
     addRect(frame, 0.0F, 0.0F, 1280.0F, 720.0F, {0.005F, 0.012F, 0.014F, 1.0F});
     addImage(frame, {120.0F, 104.0F, 760.0F, 356.0F}, "assets/ui/loading/dev_range_loading.svg", {0.08F, 0.20F, 0.24F, 0.98F});
-    addText(frame, 930.0F, 128.0F, 4.0F, palette::TextPrimary, target == GameScreen::DevRange ? "FIRING RANGE" : "MATCH SHELL");
-    addText(frame, 932.0F, 184.0F, 2.0F, palette::TextSecondary, "Streaming greybox, weapons, input, UI and debug layers.");
+    const auto destination = target == GameScreen::OuterFacility ? "OUTER FACILITY" :
+        target == GameScreen::DevRange ? "FIRING RANGE" : "MATCH PREVIEW";
+    addText(frame, 890.0F, 128.0F, 3.0F, palette::TextPrimary, destination);
     addMetric(frame, 932.0F, 252.0F, "WEAPON", attachmentSummary.effectiveWeapon.displayName);
     addMetric(frame, 932.0F, 286.0F, "CLASS", std::string(weaponClassName(attachmentSummary.effectiveWeapon.weaponClass)));
     addMetric(frame, 932.0F, 320.0F, "MAG", std::to_string(attachmentSummary.effectiveMagazineSize));
     addProgress(frame, {120.0F, 510.0F, 990.0F, 20.0F}, progress, {0.05F, 0.07F, 0.075F, 1.0F}, palette::Accent);
-    addText(frame, 120.0F, 552.0F, 2.0F, palette::TextSecondary, "Design target: readable BO-like gunfights, Apex-lite motion, server-authoritative spine.");
+    addText(frame, 120.0F, 552.0F, 2.0F, palette::TextSecondary, "ESC / B   CANCEL");
+}
+
+void renderHitFeedback(
+    novacore::render::RenderFrameInfo& frame,
+    const dev::DevRangeSessionState& session,
+    const settings::GameplaySettings& settings,
+    const HudLayout& layout) {
+    if (session.hitFeedbackSeconds <= 0.0F) {
+        return;
+    }
+
+    const float remaining = std::clamp(session.hitFeedbackSeconds / dev::kHitFeedbackDurationSeconds, 0.0F, 1.0F);
+    const float opacity = std::min(1.0F, remaining * 2.0F);
+    const auto& hit = session.lastConfirmedHit;
+    auto ink = hit.eliminated ? palette::Warning : palette::TextPrimary;
+    ink[3] *= opacity;
+    if (settings.showHitMarkers) {
+        const float inner = 6.0F + 3.0F * remaining;
+        const float outer = inner + (hit.eliminated ? 9.0F : 5.0F);
+        for (const float x : {-1.0F, 1.0F}) {
+            for (const float y : {-1.0F, 1.0F}) {
+                const float x0 = 640.0F + x * inner;
+                const float y0 = 360.0F + y * inner;
+                const float x1 = 640.0F + x * outer;
+                const float y1 = 360.0F + y * outer;
+                addHudLine(frame, layout, x0, y0 + 1.0F, x1, y1 + 1.0F, {0.0F, 0.0F, 0.0F, 0.85F * opacity});
+                addHudLine(frame, layout, x0, y0, x1, y1, ink);
+            }
+        }
+    }
+    if (settings.showDamageNumbers) {
+        addHudText(frame, layout, 665.0F, 331.0F, 1.40F, ink, "-" + fixedOne(hit.damageApplied));
+    }
 }
 
 void renderDevRangeHud(
@@ -743,18 +811,18 @@ void renderDevRangeHud(
     const dev::DevSandboxSample& sample,
     const weapons::AttachmentBuildSummary& attachmentSummary,
     const settings::GameSettings& settings,
-    const HudLayout& layout) {
+    const HudLayout& layout,
+    bool facility,
+    float physicalSightWeight) {
     const float crosshairGap = 6.0F +
         (sample.fire.movementSpreadDegrees * 1.4F) -
         (std::clamp(sample.weapon.adsAlpha, 0.0F, 1.0F) * 1.6F);
-    addHudCrosshair(
-        frame,
-        layout,
-        640.0F,
-        360.0F,
-        std::max(4.0F, crosshairGap),
-        12.0F,
-        sample.targetHit.hit ? palette::Danger : palette::TextPrimary);
+    if (physicalSightWeight < 0.995F) {
+        auto ink = palette::TextPrimary;
+        ink[3] *= 1.0F - physicalSightWeight;
+        addHudCrosshair(frame, layout, 640.0F, 360.0F, std::max(4.0F, crosshairGap), 12.0F, ink);
+    }
+    renderHitFeedback(frame, sample.rangeSession, settings.gameplay, layout);
 
     const float healthRatio = sample.playerHealth.maxHealth > 0.0F
         ? std::clamp(sample.playerHealth.health / sample.playerHealth.maxHealth, 0.0F, 1.0F)
@@ -794,7 +862,7 @@ void renderDevRangeHud(
     addHudProgress(
         frame,
         layout,
-        {layout.safeInsetX + 16.0F, 720.0F - layout.safeInsetY - 18.0F, 284.0F, 12.0F},
+        {layout.safeInsetX + 16.0F, 720.0F - layout.safeInsetY - 22.0F, 284.0F, 7.0F},
         healthRatio,
         {0.08F, 0.05F, 0.05F, 0.95F},
         healthColor);
@@ -833,22 +901,34 @@ void renderDevRangeHud(
         1.15F,
         palette::TextSecondary,
         "/ " + std::to_string(attachmentSummary.effectiveMagazineSize));
-    addHudMetric(
-        frame,
-        layout,
-        1280.0F - layout.safeInsetX - 334.0F,
-        720.0F - layout.safeInsetY - 40.0F,
-        "ADS",
-        fixedOne(sample.weapon.adsAlpha));
-    const float reloadProgress = sample.weapon.reloading ? sample.weapon.reloadProgress : 0.0F;
+    const float magazineRatio = attachmentSummary.effectiveMagazineSize > 0
+        ? static_cast<float>(sample.weapon.ammoInMagazine) / static_cast<float>(attachmentSummary.effectiveMagazineSize)
+        : 0.0F;
+    const bool lowAmmo = magazineRatio <= 0.25F;
+    if (sample.weapon.reloading || lowAmmo) {
+        const char* status = sample.weapon.reloading ? "RELOADING" : sample.weapon.ammoInMagazine == 0 ? "EMPTY" : "LOW AMMO";
+        addHudText(frame, layout, 1280.0F - layout.safeInsetX - 334.0F,
+            720.0F - layout.safeInsetY - 41.0F, 1.20F, palette::Warning, status);
+    }
     addHudProgress(
         frame,
         layout,
-        {1280.0F - layout.safeInsetX - 334.0F, 720.0F - layout.safeInsetY - 14.0F, 306.0F, 8.0F},
-        sample.weapon.reloading ? reloadProgress : sample.weapon.adsAlpha,
+        {1280.0F - layout.safeInsetX - 334.0F, 720.0F - layout.safeInsetY - 24.0F, 314.0F, 7.0F},
+        sample.weapon.reloading ? sample.weapon.reloadProgress : magazineRatio,
         {0.06F, 0.07F, 0.075F, 0.92F},
-        sample.weapon.reloading ? palette::Warning : palette::Accent);
+        (sample.weapon.reloading || lowAmmo) ? palette::Warning : palette::Accent);
 
+    if (facility) {
+        const auto total = dev::totalTargetCount(sample.targetRange);
+        const auto remaining = dev::aliveTargetCount(sample.targetRange);
+        addHudPanel(frame, layout, 454.0F, layout.safeInsetY, 372.0F, 54.0F, 8.0F, palette::Accent, true);
+        addHudText(frame, layout, 472.0F, layout.safeInsetY + 8.0F, 1.2F, palette::Accent, "OUTER FACILITY");
+        const std::string objective = total == 0 ? "Entering relay yard" : remaining == 0
+            ? "Yard clear  /  P replay  /  Esc menu"
+            : "Clear the relay yard   " + std::to_string(total - remaining) + " / " + std::to_string(total);
+        addHudText(frame, layout, 472.0F, layout.safeInsetY + 28.0F, 1.2F, palette::TextPrimary, objective);
+        return;
+    }
     addHudPanel(frame, layout, 386.0F, layout.safeInsetY, 508.0F, 84.0F, 10.0F, palette::Success, true);
     addHudText(
         frame,
@@ -904,19 +984,6 @@ void renderDevRangeHud(
             "  LIVE " + std::to_string(dev::aliveTargetCount(sample.targetRange)) + "/" +
             std::to_string(dev::totalTargetCount(sample.targetRange)));
 
-    if (sample.fire.fired) {
-        addHudText(
-            frame,
-            layout,
-            sample.targetHit.hit ? 598.0F : 586.0F,
-            286.0F,
-            2.25F,
-            sample.targetHit.hit ? palette::Danger : palette::Warning,
-            sample.targetHit.hit ? "HIT" : "MISS");
-    }
-    if (sample.targetHit.hit && settings.gameplay.showDamageNumbers) {
-        addHudText(frame, layout, 674.0F, 292.0F, 1.30F, palette::Warning, "-" + fixedOne(sample.targetHit.damageApplied));
-    }
     if (!sample.rangeSession.eventText.empty()) {
         addHudText(frame, layout, 536.0F, 248.0F, 1.70F, palette::Accent, sample.rangeSession.eventText);
     }
@@ -1091,6 +1158,30 @@ void renderDebugOverlay(
 
 } // namespace
 
+void fitInterfaceCanvas(novacore::render::RenderFrameInfo& frame,
+    const novacore::render::RenderBackendFrameStats& backend, std::size_t firstRect,
+    std::size_t firstLine, std::size_t firstText, float textScale) {
+    const auto layout = makeHudLayout(backend, {});
+    if (layout.scale == 1.0F && layout.originX == 0.0F && layout.originY == 0.0F && textScale == 1.0F) return;
+    for (auto& rect : std::span(frame.debugRects).subspan(firstRect)) {
+        rect.x = hudX(layout, rect.x);
+        rect.y = hudY(layout, rect.y);
+        rect.width *= layout.scale;
+        rect.height *= layout.scale;
+    }
+    for (auto& line : std::span(frame.debugLines).subspan(firstLine)) {
+        line.x0 = hudX(layout, line.x0);
+        line.x1 = hudX(layout, line.x1);
+        line.y0 = hudY(layout, line.y0);
+        line.y1 = hudY(layout, line.y1);
+    }
+    for (auto& text : std::span(frame.debugTexts).subspan(firstText)) {
+        text.x = hudX(layout, text.x);
+        text.y = hudY(layout, text.y);
+        text.scale *= layout.scale * textScale;
+    }
+}
+
 void GameMenu::update(const novacore::platform::InputActionMap& actions) {
     settings::GameSettings settings;
     weapons::AttachmentRegistry attachments;
@@ -1184,12 +1275,13 @@ void GameMenu::update(
     updatePointer(pointer, settings, loadout, attachments);
 }
 
-void GameMenu::updateFrame(double deltaSeconds) {
+void GameMenu::updateFrame(double deltaSeconds, bool playableResourcesReady) {
     if (screen_ != GameScreen::Loading) {
         return;
     }
 
-    loadingProgress_ = std::min(1.0F, loadingProgress_ + static_cast<float>(std::max(0.0, deltaSeconds) * 1.75));
+    const float ceiling = loadingPlayableMap() && !playableResourcesReady ? 0.95F : 1.0F;
+    loadingProgress_ = std::min(ceiling, loadingProgress_ + static_cast<float>(std::max(0.0, deltaSeconds) * 1.75));
     if (loadingProgress_ >= 1.0F) {
         setScreen(loadingTarget_);
     }
@@ -1206,8 +1298,14 @@ void GameMenu::showLoadingScreen(GameScreen target, float progress) {
     screen_ = GameScreen::Loading;
 }
 
+bool GameMenu::consumePrivateMatchRequest() { return std::exchange(privateMatchRequested_, false); }
+
 void GameMenu::showDevRange() {
     setScreen(GameScreen::DevRange);
+}
+
+void GameMenu::showOuterFacility() {
+    setScreen(GameScreen::OuterFacility);
 }
 
 void GameMenu::showTeamDeathmatch() {
@@ -1233,21 +1331,45 @@ void GameMenu::appendRenderCommands(
     const weapons::WeaponLoadout& loadout,
     const weapons::AttachmentRegistry& attachments,
     const weapons::AttachmentBuildSummary& attachmentSummary,
-    const player::AccountStats& accountStats) const {
+    const player::AccountStats& accountStats,
+    float physicalSightWeight) const {
     const auto layout = makeHudLayout(backendFrameStats, settings);
     addRect(frame, 0.0F, 0.0F, layout.screenWidth, layout.screenHeight, {0.0F, 0.0F, 0.0F, 0.05F});
 
+    const auto firstRect = frame.debugRects.size();
+    const auto firstLine = frame.debugLines.size();
+    const auto firstText = frame.debugTexts.size();
     if (screen_ == GameScreen::Loading) {
         renderLoadingScreen(frame, loadingTarget_, loadingProgress_, attachmentSummary);
     } else if (screen_ == GameScreen::MainMenu) {
         renderMainMenuShell(frame, tab_, selectedIndex_, settings, loadout, attachments, attachmentSummary, accountStats);
-    } else if (screen_ == GameScreen::DevRange) {
+    } else if (gameplayActive()) {
         (void)greyboxWorld;
-        renderDevRangeHud(frame, sample, attachmentSummary, settings, layout);
+        renderDevRangeHud(frame, sample, attachmentSummary, settings, layout, screen_ == GameScreen::OuterFacility, physicalSightWeight);
     } else {
         renderPlaceholderMode(frame, screen_);
     }
 
+    // Menu drawing and pointer hit-testing share a centered 1280 x 720 canvas.
+    if (!gameplayActive() && (layout.scale != 1.0F || layout.originX != 0.0F || layout.originY != 0.0F)) {
+        for (auto& rect : std::span(frame.debugRects).subspan(firstRect)) {
+            rect.x = hudX(layout, rect.x);
+            rect.y = hudY(layout, rect.y);
+            rect.width *= layout.scale;
+            rect.height *= layout.scale;
+        }
+        for (auto& line : std::span(frame.debugLines).subspan(firstLine)) {
+            line.x0 = hudX(layout, line.x0);
+            line.x1 = hudX(layout, line.x1);
+            line.y0 = hudY(layout, line.y0);
+            line.y1 = hudY(layout, line.y1);
+        }
+        for (auto& text : std::span(frame.debugTexts).subspan(firstText)) {
+            text.x = hudX(layout, text.x);
+            text.y = hudY(layout, text.y);
+            text.scale *= layout.scale;
+        }
+    }
     if (debugOverlayEnabled_) {
         renderDebugOverlay(
             frame,
@@ -1275,7 +1397,12 @@ MenuTab GameMenu::tab() const {
 }
 
 bool GameMenu::gameplayActive() const {
-    return screen_ == GameScreen::DevRange;
+    return screen_ == GameScreen::DevRange || screen_ == GameScreen::OuterFacility;
+}
+
+bool GameMenu::loadingPlayableMap() const {
+    return screen_ == GameScreen::Loading &&
+        (loadingTarget_ == GameScreen::DevRange || loadingTarget_ == GameScreen::OuterFacility);
 }
 
 bool GameMenu::debugOverlayEnabled() const {
@@ -1322,6 +1449,8 @@ std::string_view GameMenu::screenName() const {
         return "Main Menu";
     case GameScreen::Loading:
         return "Loading";
+    case GameScreen::OuterFacility:
+        return "Outer Facility";
     case GameScreen::DevRange:
         return "Dev Range";
     case GameScreen::TeamDeathmatch:
@@ -1368,6 +1497,7 @@ std::array<float, 4> GameMenu::clearColor() const {
         return {0.016F, 0.024F, 0.028F, 1.0F};
     case GameScreen::Loading:
         return {0.005F, 0.012F, 0.014F, 1.0F};
+    case GameScreen::OuterFacility:
     case GameScreen::DevRange:
         return {0.028F, 0.040F, 0.052F, 1.0F};
     case GameScreen::TeamDeathmatch:
@@ -1385,11 +1515,16 @@ void GameMenu::activateSelection(
     switch (tab_) {
     case MenuTab::Play:
         if (selectedIndex_ == 0U) {
-            startLoading(GameScreen::DevRange);
+            startLoading(GameScreen::OuterFacility);
         } else if (selectedIndex_ == 1U) {
-            setTab(MenuTab::Gamemodes);
-        } else {
+            startLoading(GameScreen::DevRange);
+        } else if (selectedIndex_ == 2U) {
             setTab(MenuTab::Loadout);
+        } else if (selectedIndex_ == 3U) {
+            privateMatchRequested_ = true;
+            startLoading(GameScreen::OuterFacility);
+        } else {
+            quitRequested_ = true;
         }
         break;
     case MenuTab::Gamemodes:
@@ -1458,6 +1593,9 @@ void GameMenu::adjustCurrentValue(
         case 4:
             settings::toggleDamageNumbers(settings);
             break;
+        case 5:
+            settings.gameplay.showHitMarkers = !settings.gameplay.showHitMarkers;
+            break;
         default:
             break;
         }
@@ -1503,7 +1641,9 @@ void GameMenu::updatePointer(
     settings::GameSettings& settings,
     weapons::WeaponLoadout& loadout,
     const weapons::AttachmentRegistry& attachments) {
-    if (!pointer.available || screen_ != GameScreen::MainMenu) {
+    const bool moved = !previousPointer_.available || pointer.x != previousPointer_.x || pointer.y != previousPointer_.y;
+    previousPointer_ = pointer;
+    if (!pointer.available || (!moved && !pointer.primaryPressed) || screen_ != GameScreen::MainMenu) {
         return;
     }
 
@@ -1533,7 +1673,7 @@ void GameMenu::updatePointer(
 std::size_t GameMenu::itemCountForTab() const {
     switch (tab_) {
     case MenuTab::Play:
-        return 3U;
+        return 5U;
     case MenuTab::Gamemodes:
         return 2U;
     case MenuTab::Loadout:
@@ -1541,7 +1681,7 @@ std::size_t GameMenu::itemCountForTab() const {
     case MenuTab::Character:
         return 4U;
     case MenuTab::Settings:
-        return 5U;
+        return 6U;
     case MenuTab::Account:
         return 4U;
     }

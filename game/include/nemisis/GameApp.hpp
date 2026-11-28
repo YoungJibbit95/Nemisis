@@ -1,4 +1,5 @@
 #pragma once
+#include "nemisis/dev/DevConsole.hpp"
 
 #include "nemisis/assets/DevAssetBindings.hpp"
 #include "nemisis/assets/GameAssetCatalog.hpp"
@@ -12,6 +13,7 @@
 #include "nemisis/movement/MovementConfig.hpp"
 #include "nemisis/movement/MovementSystem.hpp"
 #include "nemisis/net/LoopbackCommandBridge.hpp"
+#include "nemisis/net/FacilityMatch.hpp"
 #include "nemisis/net/PredictionHistory.hpp"
 #include "nemisis/net/SnapshotInterpolation.hpp"
 #include "nemisis/player/PlayerAnimation.hpp"
@@ -39,21 +41,35 @@
 #include "novacore/render/Renderer.hpp"
 
 #include <array>
+#include <atomic>
+#include <exception>
+#include <thread>
+#include <chrono>
 #include <filesystem>
 #include <memory>
 #include <optional>
+#include <span>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 
 namespace nemisis::game {
 
+inline constexpr std::uint64_t kRangeProfileWarmupFrames = 12;
+
 struct GameAppOptions final {
+    bool fullGame = false;
+    std::uint16_t localMatchPort = 0;
+    std::string matchHost = "127.0.0.1";
+    bool startInFacility = false;
+    bool profileRange = false;
     bool preferVulkanRenderer = true;
     bool requireVulkanRenderer = true;
     bool autoEnterDevRange = false;
     bool lockDevRange = false;
     bool runMenuFlowSmoke = false;
+    bool runDeploymentSmoke = false;
+    bool runPrivateMatchSmoke = false;
     bool uiShowcase = false;
     int uiPreviewWidth = 1280;
     int uiPreviewHeight = 720;
@@ -69,6 +85,7 @@ struct GameAppOptions final {
 class GameApp final : public novacore::core::IApplicationDelegate {
 public:
     explicit GameApp(GameAppOptions options = {});
+    ~GameApp() override;
 
     void onStartup() override;
     void onShutdown() override;
@@ -78,6 +95,22 @@ public:
     [[nodiscard]] bool isHeadless() const override;
 
 private:
+    [[nodiscard]] bool usesProjectRig() const;
+    [[nodiscard]] bool usesFirstPersonHandConstraints() const;
+    void enterPlayableMap();
+    void tickFacilityMatch(player::PlayerInputCommand command);
+    void syncMatchMap(net::MatchMap map);
+    void updateRemoteMatchPose(unsigned slot, float deltaSeconds);
+    void releaseRemoteOperators();
+    void drawFacilityMatch(novacore::render::RenderFrameInfo& frame) const;
+    void leaveFacilityMatch();
+    void drivePrivateMatchSmoke(ui::MenuPointerState& pointer, std::uint64_t frame);
+    [[nodiscard]] bool matchRequested() const { return privateMatchRequested_ || options_.localMatchPort != 0; }
+    void loadPlayableResources(ui::GameScreen screen);
+    [[nodiscard]] bool updatePlayableResourceLoading();
+    void finishPlayableResources(ui::GameScreen screen);
+    void stopAssetImport();
+    void updateVisiblePlayerPose(float animationDelta);
     void loadAssetCatalog();
     void applyConfig(std::string_view name);
     void applyLoadedConfigs();
@@ -92,11 +125,27 @@ private:
     void tickRangeSession(float fixedDeltaSeconds);
     void advanceMenuFlowSmoke(const novacore::core::FrameContext& context);
     void syncRelativeMouseMode();
-    void registerDevMeshResources();
+    void registerDevMeshResources(std::span<const std::string_view> assetIds, bool includePreview = true);
     void releaseDevMeshResources();
     [[nodiscard]] dev::DevRangePlayerRenderState currentPlayerRenderState() const;
 
     GameAppOptions options_;
+    std::unique_ptr<net::FacilityMatchClient> facilityMatch_;
+    bool privateMatchRequested_ = false;
+    unsigned privateSmokeStage_ = 0;
+    unsigned consoleSmokeStep_ = 0;
+    struct RemotePose {
+        std::unique_ptr<player::PlayerSkeletalAnimator> animator;
+        novacore::render::MeshResourceHandle mesh;
+        player::CharacterAnimationState animation{};
+        novacore::math::Vec3 velocity{};
+        float elapsed = 0;
+        bool posed = false;
+    };
+    std::array<RemotePose, net::maxMatchPlayers> remotePoses_{};
+    std::uint32_t confirmedHitUntil_ = 0;
+    std::chrono::steady_clock::time_point lastProfileFrameEnd_{};
+    std::uint64_t lastProfileTick_ = 0;
     novacore::platform::InputSystem input_;
     novacore::platform::InputActionMap actions_;
     input::GameplayInputBuffer gameplayInputBuffer_;
@@ -115,10 +164,14 @@ private:
     dev::DevRangeSessionTuning devRangeTuning_;
     dev::DevSandbox devSandbox_;
     dev::GreyboxWorld greyboxWorld_ = dev::createDevRangeGreyboxWorld();
+    novacore::physics::PhysicsWorld staticCollision_;
     std::unique_ptr<dev::DevRangeRigidBodies> physicsProps_;
     dev::DevRangeRenderSceneBuilder devRangeRenderer_;
+    bool playableResourcesLoaded_ = false;
+    bool rangeResourcesLoaded_ = false;
     dev::DevRangeRenderSceneStats latestDevRangeRenderStats_;
     ui::GameMenu menu_;
+    dev::DevConsole devConsole_;
 #if NEMISIS_HAS_RMLUI
     std::unique_ptr<ui::UiShowcase> uiShowcase_;
 #endif
@@ -134,13 +187,17 @@ private:
     player::PlayerCommandQueue localCommandQueue_;
     player::CharacterAnimationState characterAnimation_;
     player::CharacterAnimationFrame latestCharacterAnimationFrame_;
+    float pendingAnimationSeconds_ = 0.0F;
     player::PlayerSkeletalAnimator skeletalBodyAnimator_;
     player::PlayerSkeletalAnimator skeletalArmsAnimator_;
+    player::PlayerSkeletalAnimator alternateArmsAnimator_;
     std::optional<dev::FirstPersonPresentation> firstPersonPresentation_;
+    std::optional<dev::FirstPersonShotFeedback> firstPersonShotFeedback_;
     std::uint64_t armVertexUpdateCount_ = 0;
     std::uint64_t fpsBodyVertexUpdateCount_ = 0;
     std::uint64_t worldBodyVertexUpdateCount_ = 0;
     bool projectFPSBodySubmitted_ = false;
+    std::uint64_t projectFPSRenderFrames_ = 0;
     bool projectFPSArmsSubmitted_ = false;
     player::CameraRigState cameraRig_;
     player::AccountStats accountStats_ = player::prototypeAccountStats();
@@ -154,6 +211,30 @@ private:
     std::size_t menuFlowSmokeStage_ = static_cast<std::size_t>(-1);
     bool relativeMouseDesired_ = false;
     bool hasCharacterAnimationFrame_ = false;
+
+    struct ImportResult final {
+        assets::DevAssetBindingSummary summary;
+        std::vector<std::string_view> imported;
+        std::exception_ptr error;
+        bool catalogReady = false;
+    };
+    ImportResult importResult_;
+    std::atomic_bool importFinished_{false};
+    // The barrier is enabled only by the deterministic deployment smoke.
+    std::atomic_bool deploymentSmokeAllowImport_{false};
+    std::atomic_bool deploymentRangeOnlyImported_{false};
+    std::vector<std::string_view> pendingMeshRegistrations_;
+    ui::GameScreen importTarget_ = ui::GameScreen::MainMenu;
+    bool assetCatalogInitialized_ = false;
+    bool previewResourcesRegistered_ = false;
+    std::uint64_t deploymentLoadingFrames_ = 0;
+    std::uint64_t deploymentWorkerFrames_ = 0;
+    std::uint32_t deploymentPlayableFrames_ = 0;
+    std::uint32_t deploymentMenuFrames_ = 0;
+    std::uint32_t deploymentSmokeStage_ = 0;
+    // Must be destroyed before every member the worker accesses, even if
+    // Application::run exits through an exception without onShutdown().
+    std::jthread assetImportThread_;
 };
 
 } // namespace nemisis::game

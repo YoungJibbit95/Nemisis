@@ -35,6 +35,14 @@ inline constexpr std::string_view kProjectFPSArmsAssetId = "chr_project_male1_fp
 inline constexpr std::string_view kProjectFPSBodyResourceId = "player/local/fps_body";
 inline constexpr std::string_view kProjectFPSArmsResourceId = "player/local/fps_arms";
 
+struct FirstPersonShotFeedback final {
+    std::string weaponId;
+    std::uint32_t shotIndex = 0;
+    novacore::math::Vec3 traceEnd{};
+    bool hit = false;
+    bool eliminated = false;
+};
+
 struct DevRangePlayerRenderState final {
     novacore::math::Vec3 position{};
     player::PlayerViewComponent view{};
@@ -55,17 +63,11 @@ struct DevRangePlayerRenderState final {
     weapons::WeaponRuntimeState weapon{};
     std::uint16_t effectiveMagazineSize = 0;
     player::CharacterAnimationFrame animation{};
-    novacore::math::Vec3 latestShotOrigin{};
-    novacore::math::Vec3 latestShotEnd{};
-    float hitDistanceMeters = 0.0F;
     bool hasMovementState = false;
     bool hasCameraRig = false;
     bool hasWallRunContact = false;
     bool hasAnimationFrame = false;
-    bool firedThisFrame = false;
-    bool hitThisFrame = false;
-    bool eliminatedThisFrame = false;
-    bool hasLatestShotTrace = false;
+    std::optional<FirstPersonShotFeedback> shotFeedback;
     // Sampled anatomical chest mount, read before arm constraints; never a
     // render-time animation evaluation or feedback from the constrained hands.
     std::optional<novacore::animation::Mat4> rifleReadyMount;
@@ -107,6 +109,7 @@ struct FirstPersonPresentation final {
     std::array<float, 4> armsColor{};
     novacore::animation::Mat4 weaponWorld{};
     std::optional<novacore::animation::Mat4> muzzleWorld;
+    std::optional<novacore::animation::Mat4> ejectionWorld;
     std::optional<novacore::animation::Mat4> rightGripWorld;
     std::optional<novacore::animation::Mat4> leftGripWorld;
     std::size_t cookedSocketCount = 0;

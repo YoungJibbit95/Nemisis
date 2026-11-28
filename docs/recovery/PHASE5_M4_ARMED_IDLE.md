@@ -83,8 +83,67 @@ channels, matching masked rotations and explicit mount TRS at both endpoints.
 
 Run is also the existing selector fallback for the Sprint request and several
 advanced states. These compositions are not authored armed Walk/Run/Sprint or
-directional animation. Crouch, ADS, fire, reload, slide, mantle, airborne states,
-world-model weapon animation and full combat animation acceptance remain open.
+directional animation. Crouch, slide, mantle, airborne
+states, world-model weapon animation and authored combat clips remain open.
+
+## M4 fire and reload presentation
+
+The existing fixed-tick weapon state now drives a short rearward/upward kick
+and a two-handed reload dip on the rigid chest socket. The dip fades in and out
+over the reload timer and ends when the magazine refills. Both palm constraints,
+the visible rifle and cooked effect sockets use that final weapon pose. The
+reload gesture keeps both hands on their grips. A magazine insertion animation
+would need separately authored clips and hand targets.
+
+The flash follows the cooked barrel, and the ejection cue uses the cooked port
+when the asset supplies one. The Dev Range retains the latest trace and hit for
+its active weapon and shot index during the 75 ms effect window. Its endpoint
+comes from the simulated shot, including when multiple ticks precede a frame.
+
+To review in Vulkan, launch with `--project-rifle-ready` and reset with `P`.
+Aim at a lane target, fire once and review the first frame where ammo drops.
+Check that the flash starts at the moving barrel, the trace ends at the hit
+and the aiming point remains visible. Hold fire briefly while walking sideways,
+then release and watch the rifle settle. Press `R` with a partly used magazine.
+Check both hands stay on their grips as the rifle dips and rises, and try firing
+during the dip. The next shot should appear once the reload finishes. The
+preview uses the M4 throughout.
+
+## M4 iron-sight ADS
+
+The cook appends `socket_ads_sight` to the hash-checked rifle. Its origin is
+the center of the original `Sight_2` aperture and its forward axis passes
+through the measured tip of the LOD0 front post. The source mesh is unchanged.
+
+The existing smoothed camera ADS weight blends from the sampled chest mount
+to a compact sight mount 14 cm ahead of the anatomical eye. The sampled
+Rigify chest control and its separate weighted deform branch turn toward the
+view before the eye and weapon sockets are read. That keeps the left support
+arm within reach while the lower body continues its locomotion. The final
+weapon transform drives both hand goals and all weapon effects through
+shots, reload, and the return to hip. Settle under ADS to bring the front
+post into the rear aperture.
+
+For the Vulkan review, hold the aim input at a lane target, strafe, and fire
+a short burst through the sights. Reload with aim held and check the rifle
+lowers and returns to alignment. Repeat while looking up and down and while
+turning into a sprint. The Ready CPU test covers those joint and sightline
+contracts. The Vulkan sight picture still needs review.
+
+With NovaCore `fbbbfb3a18e945c28c2dc0bc7c5a8d8f8d541f56`, the focused GNU
+13.2 Release build passed all six scene, skeletal animator, viewmodel, weapon
+simulation, Ready, and cook suites. The 350-frame ADS sequence exercises
+idle/walk/sprint, both aim endpoints, six shots, three reloads, pitch up to
+87 degrees in either direction, and camera yaw and roll. Both palms stayed
+within 1 mm and 0.5 degrees in every sample. Across 195 settled aim frames,
+the aperture position deviated from the camera ray by less than 1 micrometre.
+The two original 350-frame hip sequences also passed.
+
+Configure the headless build with `NEMISIS_BUILD_PROJECT_FPS_CANDIDATE=ON`
+and `NEMISIS_ENABLE_HAND_IK=ON`. Build `nemisis_dev_range_render_scene_tests`
+to cook the assets and run `ctest -R '^nemisis_project_rifle_ready_(tests|cook_tests)$'`
+from that build directory. Use `--ads-only` on the scene test executable to
+repeat the single ADS sequence.
 
 ## Strict CPU gates
 

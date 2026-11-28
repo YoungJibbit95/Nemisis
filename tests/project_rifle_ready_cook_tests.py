@@ -163,6 +163,49 @@ class ReadyCookTests(unittest.TestCase):
         self.assertEqual(old["meshes"], new["meshes"])
         self.assertEqual(old["nodes"], new["nodes"][: len(old["nodes"])])
 
+    def test_ads_socket_matches_the_original_sight_geometry(self):
+        doc, binary = ready.read(OUTPUT / "rifle_ready.glb")
+        metadata = json.loads((OUTPUT / "rifle_ready.metadata.json").read_text())
+        self.assertIn("socket_ads_sight", metadata["sockets"])
+        nodes = doc["nodes"]
+        parents = {child: i for i, node in enumerate(nodes) for child in node.get("children", [])}
+
+        def world(index):
+            local = ready.gltf_node_local_matrix(nodes[index])
+            return ready.mat4_multiply(world(parents[index]), local) if index in parents else local
+
+        def vertices(name):
+            index = next(i for i, node in enumerate(nodes) if node.get("name") == name)
+            matrix = world(index)
+            for primitive in doc["meshes"][nodes[index]["mesh"]]["primitives"]:
+                accessor = doc["accessors"][primitive["attributes"]["POSITION"]]
+                self.assertEqual(accessor["componentType"], 5126)
+                self.assertEqual(accessor["type"], "VEC3")
+                view = doc["bufferViews"][accessor["bufferView"]]
+                start = view.get("byteOffset", 0) + accessor.get("byteOffset", 0)
+                for i in range(accessor["count"]):
+                    vertex = struct.unpack_from("<3f", binary, start + i * view.get("byteStride", 12))
+                    yield tuple(sum(matrix[row][col] * vertex[col] for col in range(3)) +
+                                matrix[row][3] for row in range(3))
+
+        rear = list(vertices("Sight_2"))
+        aperture_z = max(p[2] for p in rear)
+        aperture_top = max(p[1] for p in rear)
+        ring = [p for p in rear if abs(p[2] - aperture_z) < 1e-6 and p[1] > aperture_top - .0105]
+        rear_center = [0.5 * (min(p[axis] for p in ring) + max(p[axis] for p in ring))
+                       for axis in range(3)]
+        front = [p for p in vertices("wpn_project_rifle_m4a1_lod0") if abs(p[0]) < .004 and p[2] > .3]
+        front_height = max(p[1] for p in front)
+        tip = [p for p in front if abs(p[1] - front_height) < 1e-6]
+        front_center = [0.5 * (min(p[axis] for p in tip) + max(p[axis] for p in tip))
+                        for axis in range(3)]
+        socket = next(n["matrix"] for n in nodes if n.get("name") == "socket_ads_sight")
+        origin, direction = socket[12:15], socket[8:11]
+        self.assertGreater(direction[2], .99)
+        self.assertLess(math.dist(origin, rear_center), .0001)
+        distance = (front_center[2] - origin[2]) / direction[2]
+        self.assertLess(math.dist([o + d * distance for o, d in zip(origin, direction)], front_center), .0001)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,149 @@
+#include "FacilityMatchCodec.hpp"
+#include "PrivateMatch.hpp"
+#include "nemisis/net/FacilityMatch.hpp"
+#include "nemisis/net/MatchRules.hpp"
+#include "novacore/net/LocalDatagram.hpp"
+#include <algorithm>
+#include <chrono>
+#include <cmath>
+#include <deque>
+#include <stdexcept>
+namespace nemisis::net {
+namespace {
+using Clock = std::chrono::steady_clock;
+using Command = player::PlayerInputCommand;
+
+} // namespace
+struct FacilityMatchClient::Impl {
+    explicit Impl(novacore::net::DatagramEndpoint endpoint)
+        : remote(endpoint), socket(novacore::net::DatagramEndpoint::any(0)) {}
+    novacore::net::DatagramEndpoint remote;
+    novacore::net::DatagramSocket socket;
+    std::unique_ptr<MatchArena> arena;
+    unsigned slot = 0;
+    MatchFrame frame{};
+    Duelist predicted{};
+    std::deque<MatchInput> pending;
+    std::uint64_t nextInput = 0, token = 0;
+    bool received = false;
+    bool ready = false;
+    Clock::time_point lastSeen = Clock::now();
+    Clock::time_point lastRetry{};
+    Clock::time_point challengeTime{};
+};
+FacilityMatchClient::FacilityMatchClient(std::uint16_t port)
+    : FacilityMatchClient(*novacore::net::DatagramEndpoint::parse("127.0.0.1", port)) {}
+FacilityMatchClient::FacilityMatchClient(novacore::net::DatagramEndpoint remote)
+    : impl_(std::make_unique<Impl>(remote)) {}
+FacilityMatchClient::FacilityMatchClient(const MatchRules& rules) : local_(std::make_unique<PrivateMatch>(rules)) {}
+const dev::GreyboxWorld* FacilityMatchClient::negotiatedWorld() const {
+    if (local_) return &local_->world();
+    return impl_->received && impl_->arena ? &impl_->arena->world() : nullptr;
+}
+FacilityMatchClient::~FacilityMatchClient() = default;
+unsigned FacilityMatchClient::slot() const { return local_ ? 0U : impl_->slot; }
+const MatchFrame &FacilityMatchClient::authoritative() const { return local_ ? local_->frame() : impl_->frame; }
+const Duelist &FacilityMatchClient::predicted() const { return local_ ? local_->frame().players[0] : impl_->predicted; }
+void FacilityMatchClient::confirmMapReady() {
+    if (local_) { local_->ready(); return; }
+    if (impl_->received && impl_->frame.phase == MatchPhase::Waiting)
+        impl_->ready = true;
+}
+void FacilityMatchClient::tick(std::optional<Command> command) {
+    if (local_) {
+        if (command) local_->tick(*command, local_->frame().tick);
+        return;
+    }
+    auto &c = *impl_;
+    const bool wasPlaying = c.frame.phase == MatchPhase::Playing;
+    const auto observedTick = c.frame.tick;
+    if (c.frame.phase == MatchPhase::Finished)
+        return;
+    std::optional<MatchMessage> newest;
+    for (unsigned i = 0; i < 64; ++i) {
+        auto packet = c.socket.receive();
+        if (!packet)
+            break;
+        if (!(packet->source == c.remote))
+            continue;
+        if (auto challenge = decodeMatchChallenge(packet->bytes)) {
+            if (!c.received) {
+                c.token = *challenge;
+                c.challengeTime = Clock::now();
+                c.socket.send(c.remote, encodeMatchAccept(c.token));
+            }
+            continue;
+        }
+        auto snapshot = decodeMatch(packet->bytes);
+        if (!snapshot || !c.token || snapshot->token != c.token)
+            continue;
+        if (c.received &&
+            (snapshot->frame.tick < c.frame.tick ||
+             (snapshot->frame.tick == c.frame.tick &&
+              static_cast<unsigned>(snapshot->frame.phase) < static_cast<unsigned>(c.frame.phase))))
+            continue;
+        if (!newest || snapshot->frame.tick > newest->frame.tick ||
+            (snapshot->frame.tick == newest->frame.tick &&
+             static_cast<unsigned>(snapshot->frame.phase) > static_cast<unsigned>(newest->frame.phase)))
+            newest = std::move(snapshot);
+    }
+    if (newest) {
+        c.lastSeen = Clock::now();
+        c.received = true;
+        c.slot = newest->slot;
+        const auto map = newest->frame.rules.map;
+        if (!c.arena || c.frame.rules.map != map)
+            c.arena = std::make_unique<MatchArena>(map);
+        c.frame = std::move(newest->frame);
+        c.predicted = c.frame.players[c.slot];
+        while (!c.pending.empty() && c.pending.front().command.tick <= c.predicted.acknowledged)
+            c.pending.pop_front();
+        if (c.frame.phase == MatchPhase::Finished) {
+            c.pending.clear();
+            return;
+        }
+        for (const auto &input : c.pending)
+            c.arena->simulate(c.predicted, input.command);
+    }
+    // Consume queued playing snapshots before considering a fresh lobby handshake.
+    if (!newest && c.received && c.frame.phase == MatchPhase::Waiting &&
+        Clock::now() - c.lastSeen > std::chrono::seconds(3)) {
+        c.received = false;
+        c.ready = false;
+        c.token = 0;
+        c.lastRetry = {};
+        c.lastSeen = Clock::now();
+    }
+    if (Clock::now() - c.lastSeen > std::chrono::seconds(10))
+        throw std::runtime_error("Match server timed out");
+    if (c.frame.phase == MatchPhase::Waiting) {
+        const auto now = Clock::now();
+        if (now - c.lastRetry >= std::chrono::milliseconds(250)) {
+            if (c.token && (c.received || now - c.challengeTime < std::chrono::seconds(2)))
+                c.socket.send(c.remote, c.ready ? encodeMatchReady(c.token) : encodeMatchAccept(c.token));
+            else {
+                if (!c.received)
+                    c.token = 0;
+                c.socket.send(c.remote, encodeMatchJoin());
+            }
+            c.lastRetry = now;
+        }
+        return;
+    }
+    if (command && c.pending.size() < 120) {
+        command->tick = ++c.nextInput;
+        sanitizeMatchCommand(*command);
+        c.pending.push_back({*command, wasPlaying ? observedTick : c.frame.tick});
+        c.arena->simulate(c.predicted, *command);
+    }
+    if (!c.pending.empty()) {
+        // Carry the first gap as well as fresh inputs, even if the RTT exceeds eight ticks.
+        const auto recent = std::min<std::size_t>(7, c.pending.size() - 1);
+        std::vector<MatchInput> inputs;
+        inputs.reserve(1 + recent);
+        inputs.push_back(c.pending.front());
+        inputs.insert(inputs.end(), c.pending.end() - recent, c.pending.end());
+        c.socket.send(c.remote, encodeMatchCommands(c.slot, c.token, inputs));
+    }
+}
+} // namespace nemisis::net

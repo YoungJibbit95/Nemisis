@@ -11,7 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(NEMISIS_WARNINGS_AS_ERRORS "Treat warnings as errors" OFF)
-option(NEMISIS_COPY_RUNTIME_DATA "Copy configs and asset docs beside the game executable" ON)
+option(NEMISIS_COPY_RUNTIME_DATA "Stage runtime configs and assets beside the game executable" ON)
 set(NOVACORE_ENGINE_ROOT "" CACHE PATH "Path to a NovaCore Engine checkout")
 
 if(MSVC)
@@ -59,47 +59,33 @@ else()
 endif()
 
 add_executable(nemisis_game
+    game/src/dev/DevConsole.cpp
     game/src/GameApp.cpp
     game/src/assets/DevAssetBindings.cpp
     game/src/assets/GameAssetCatalog.cpp
-    game/src/dev/DebugTarget.cpp
     game/src/dev/DevRangeRenderScene.cpp
     game/src/dev/DevRangeRigidBodies.cpp
     game/src/dev/DevRangeSession.cpp
     game/src/dev/DevSandbox.cpp
-    game/src/dev/DevTargetRange.cpp
-    game/src/dev/GreyboxCollision.cpp
-    game/src/dev/GreyboxWorld.cpp
     game/src/input/InputBindings.cpp
     game/src/input/InputCommandBuilder.cpp
     game/src/input/GameplayInputBuffer.cpp
     game/src/main.cpp
     game/src/movement/MovementConfig.cpp
-    game/src/movement/MovementSystem.cpp
-    game/src/net/CommandMessages.cpp
     game/src/net/LoopbackCommandBridge.cpp
-    game/src/net/PredictionHistory.cpp
     game/src/net/SnapshotInterpolation.cpp
-    game/src/net/SnapshotMessages.cpp
     game/src/player/PlayerAnimation.cpp
     game/src/player/PlayerCommandQueue.cpp
-    game/src/player/PlayerCameraRig.cpp
     game/src/player/PlayerFirstPersonRig.cpp
-    game/src/player/PlayerHealth.cpp
     game/src/player/PlayerProfile.cpp
     game/src/player/PlayerSkeletalAnimator.cpp
     game/src/player/PlayerSpawn.cpp
-    game/src/player/PlayerView.cpp
     game/src/render/RenderTuning.cpp
     game/src/settings/GameSettings.cpp
     game/src/settings/UserSettingsPersistence.cpp
     game/src/ui/GameMenu.cpp
     game/src/ui/UiCanvas.cpp
     game/src/weapons/WeaponAttachments.cpp
-    game/src/weapons/WeaponMetrics.cpp
-    game/src/weapons/WeaponShot.cpp
-    game/src/weapons/WeaponSimulation.cpp
-    game/src/weapons/WeaponSystem.cpp
 )
 
 target_include_directories(nemisis_game
@@ -107,19 +93,23 @@ target_include_directories(nemisis_game
         ${CMAKE_CURRENT_SOURCE_DIR}/game/include
 )
 
-target_link_libraries(nemisis_game PRIVATE Novacore::Engine)
+find_package(Threads REQUIRED)
+target_link_libraries(nemisis_game PRIVATE Novacore::Engine Threads::Threads)
+
+# CLion filters profiles by the selected build target. The executable remains
+# nemisis_game, while this target identifies the optimized playable preset.
+option(NEMISIS_LATEST_DEV_PROFILE "Expose the Latest Dev playtest target to the IDE" OFF)
+if(NEMISIS_LATEST_DEV_PROFILE)
+    add_custom_target(nemisis_latest_dev DEPENDS nemisis_game)
+endif()
 set_target_properties(nemisis_game PROPERTIES
     VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
 )
 
 if(NEMISIS_COPY_RUNTIME_DATA)
     add_custom_command(TARGET nemisis_game POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${CMAKE_CURRENT_SOURCE_DIR}/configs"
-            "$<TARGET_FILE_DIR:nemisis_game>/configs"
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${CMAKE_CURRENT_SOURCE_DIR}/assets"
-            "$<TARGET_FILE_DIR:nemisis_game>/assets"
+        COMMAND ${CMAKE_COMMAND} "-DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}"
+            "-DDEST=$<TARGET_FILE_DIR:nemisis_game>" -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/StageRuntimeData.cmake"
         VERBATIM
     )
 endif()
@@ -217,10 +207,17 @@ function(nemisis_add_runtime_smoke test_name argument require_vulkan)
     )
 endfunction()
 
+add_test(NAME nemisis_game_deployment_smoke
+    COMMAND ${CMAKE_COMMAND} "-DGAME_EXECUTABLE=$<TARGET_FILE:nemisis_game>"
+        "-DSMOKE_ARGUMENT=--game-deploy-smoke-test" -DREQUIRE_VULKAN=OFF
+        -DREQUIRE_DEPLOYMENT=ON -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/RunGameSmoke.cmake")
+set_tests_properties(nemisis_game_deployment_smoke PROPERTIES
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" TIMEOUT 240)
+
 nemisis_add_runtime_smoke(nemisis_game_smoke --smoke-test OFF)
 nemisis_add_runtime_smoke(nemisis_game_vulkan_smoke --vulkan-smoke-test ON)
 nemisis_add_runtime_smoke(nemisis_game_vulkan_dev_range_smoke --vulkan-dev-range-smoke-test ON)
-nemisis_add_runtime_smoke(nemisis_game_menu_flow_smoke --menu-flow-smoke-test ON)
+nemisis_add_runtime_smoke(nemisis_game_menu_flow_smoke "--game;--menu-flow-smoke-test" ON)
 
 # These exercise real cooked assets/configs without copying the authoring tree.
 set_tests_properties(
@@ -244,9 +241,12 @@ set_tests_properties(
 )
 
 add_executable(nemisis_movement_replay_tests
+    game/src/input/GameplayInputBuffer.cpp
+    game/src/input/InputBindings.cpp
     game/src/input/InputCommandBuilder.cpp
     game/src/movement/MovementConfig.cpp
     game/src/movement/MovementSystem.cpp
+    game/src/player/PlayerView.cpp
     game/src/settings/GameSettings.cpp
     tests/movement_replay_tests.cpp
 )
@@ -277,6 +277,8 @@ add_test(NAME nemisis_input_command_tests COMMAND nemisis_input_command_tests)
 
 add_executable(nemisis_game_menu_tests
     game/src/dev/DebugTarget.cpp
+    game/src/dev/OuterFacility.cpp
+    game/src/dev/GreyboxWorld.cpp
     game/src/dev/DevRangeSession.cpp
     game/src/dev/DevTargetRange.cpp
     game/src/input/InputBindings.cpp
@@ -310,7 +312,20 @@ target_include_directories(nemisis_ui_canvas_tests
 target_link_libraries(nemisis_ui_canvas_tests PRIVATE Novacore::Engine)
 add_test(NAME nemisis_ui_canvas_tests COMMAND nemisis_ui_canvas_tests)
 
+add_executable(nemisis_outer_facility_tests
+    game/src/dev/OuterFacility.cpp
+    game/src/dev/GreyboxWorld.cpp
+    game/src/dev/GreyboxCollision.cpp
+    game/src/dev/DevTargetRange.cpp
+    game/src/dev/DebugTarget.cpp
+    tests/outer_facility_tests.cpp
+)
+target_include_directories(nemisis_outer_facility_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/game/include)
+target_link_libraries(nemisis_outer_facility_tests PRIVATE Novacore::Engine)
+add_test(NAME nemisis_outer_facility_tests COMMAND nemisis_outer_facility_tests)
+
 add_executable(nemisis_dev_range_render_scene_tests
+    game/src/dev/OuterFacility.cpp
     game/src/dev/DebugTarget.cpp
     game/src/dev/DevRangeRenderScene.cpp
     game/src/dev/DevTargetRange.cpp
@@ -571,6 +586,7 @@ target_link_libraries(nemisis_greybox_world_tests PRIVATE Novacore::Engine)
 add_test(NAME nemisis_greybox_world_tests COMMAND nemisis_greybox_world_tests)
 
 add_executable(nemisis_greybox_collision_tests
+    game/src/movement/MovementSystem.cpp
     game/src/dev/GreyboxCollision.cpp
     game/src/dev/GreyboxWorld.cpp
     tests/greybox_collision_tests.cpp
@@ -694,6 +710,7 @@ add_test(NAME nemisis_dev_range_session_tests COMMAND nemisis_dev_range_session_
 add_executable(nemisis_dev_target_range_tests
     game/src/dev/DebugTarget.cpp
     game/src/dev/DevTargetRange.cpp
+    game/src/dev/GreyboxWorld.cpp
     tests/dev_target_range_tests.cpp
 )
 
@@ -871,3 +888,4 @@ if(NEMISIS_ENABLE_HAND_IK)
 endif()
 
 include(cmake/RmlUi.cmake)
+include(cmake/FacilityMatch.cmake)

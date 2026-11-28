@@ -36,6 +36,15 @@ void testCameraInitializesAtEyeHeight() {
     expectNear(frame.position.x, 2.0F, 0.001F, "camera x starts at player x");
     expect(frame.position.y > 1.6F && frame.position.y < 1.7F, "camera starts at eye height");
     expectNear(frame.view.yawDegrees, 45.0F, 0.001F, "camera starts at authored yaw");
+    for (const bool crouch : {false, true}) {
+        input.crouchHeld = crouch;
+        input.movementMode = crouch ? nemisis::movement::MovementMode::Grounded : nemisis::movement::MovementMode::Sliding;
+        nemisis::player::resetCameraRig(state);
+        const auto aim = nemisis::player::gameplayEyePosition(input.playerPosition, input.movementMode, crouch);
+        const auto lowered = nemisis::player::updateCameraRig(state, input);
+        expect(aim.y < frame.position.y - 0.4F, "crouch and slide lower the shot below standing cover");
+        expectNear(lowered.position.y, aim.y, 0.001F, "camera and shot origin share the stance height");
+    }
 }
 
 void testSprintExpandsFovAndBob() {
@@ -65,7 +74,7 @@ void testWeaponRecoilAffectsVisualView() {
 
     const auto frame = nemisis::player::updateCameraRig(state, input);
 
-    expect(frame.view.pitchDegrees < 0.0F, "recoil pulls visual pitch upward");
+    expect(nemisis::player::viewVectors(frame.view).forward.y > 0.0F, "positive recoil raises the view in world space");
     expect(frame.view.yawDegrees > 0.0F, "recoil nudges visual yaw");
 }
 
@@ -95,6 +104,7 @@ void testFastLookProducesBoundedWeaponInertia() {
 
     input.authoredView.yawDegrees = -28.0F;
     const auto hip = nemisis::player::updateCameraRig(state, input);
+    expectNear(hip.view.yawDegrees, -28.0F, 0.001F, "camera follows mouse yaw in the same tick");
     expect(hip.weaponSwayOffset.x < -0.01F, "fast right look lags the weapon left");
     expect(hip.weaponSwayOffset.x >= -0.061F, "look inertia remains inside the viewmodel clipping budget");
 
@@ -104,6 +114,7 @@ void testFastLookProducesBoundedWeaponInertia() {
     (void)nemisis::player::updateCameraRig(adsState, input);
     input.authoredView.yawDegrees = -28.0F;
     const auto ads = nemisis::player::updateCameraRig(adsState, input);
+    expectNear(ads.view.yawDegrees, -28.0F, 0.001F, "ADS preserves immediate aim");
     expect(-ads.weaponSwayOffset.x < -hip.weaponSwayOffset.x, "ADS damps look inertia for sight stability");
 }
 

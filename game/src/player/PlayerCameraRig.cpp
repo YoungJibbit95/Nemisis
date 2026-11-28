@@ -68,13 +68,6 @@ constexpr float kPi = 3.14159265358979323846F;
     return clamp01(cameraRigHorizontalSpeed(input.playerVelocity) / kFastReferenceSpeed);
 }
 
-[[nodiscard]] float targetEyeHeight(const CameraRigInput& input, const CameraRigTuning& tuning) {
-    if (input.crouchHeld || isSliding(input.movementMode)) {
-        return tuning.crouchEyeHeight;
-    }
-    return tuning.eyeHeight;
-}
-
 [[nodiscard]] float targetFov(const CameraRigInput& input, const CameraRigTuning& tuning, float speed01) {
     float target = tuning.baseVerticalFovDegrees;
     if (input.tacticalSprintHeld) {
@@ -176,7 +169,7 @@ constexpr float kPi = 3.14159265358979323846F;
     novacore::math::Vec3 headBob) {
     PlayerViewComponent view = input.authoredView;
     view.pitchDegrees = std::clamp(
-        view.pitchDegrees -
+        view.pitchDegrees +
             (input.weapon.recoilPitchOffsetDegrees * tuning.recoilPitchVisualScale) +
             (headBob.y * 14.0F),
         -tuning.maxVisualPitchDegrees,
@@ -189,6 +182,13 @@ constexpr float kPi = 3.14159265358979323846F;
 }
 
 } // namespace
+
+novacore::math::Vec3 gameplayEyePosition(novacore::math::Vec3 feet,
+    movement::MovementMode mode, float crouchFraction, const CameraRigTuning& tuning) {
+    const float fraction = isSliding(mode) ? 1.0F : std::clamp(crouchFraction, 0.0F, 1.0F);
+    feet.y += std::lerp(tuning.eyeHeight, tuning.crouchEyeHeight, fraction);
+    return feet;
+}
 
 void resetCameraRig(CameraRigState& state) {
     state = CameraRigState{};
@@ -214,8 +214,8 @@ CameraRigFrame updateCameraRig(
     state.landingKick *= std::exp(-std::max(0.0F, tuning.landingKickRecovery) * dt);
 
     if (state.initialized && dt > 0.00001F) {
-        const float targetYawVelocity = shortestAngleDelta(state.view.yawDegrees, input.authoredView.yawDegrees) / dt;
-        const float targetPitchVelocity = (input.authoredView.pitchDegrees - state.view.pitchDegrees) / dt;
+        const float targetYawVelocity = shortestAngleDelta(state.previousAuthoredView.yawDegrees, input.authoredView.yawDegrees) / dt;
+        const float targetPitchVelocity = (input.authoredView.pitchDegrees - state.previousAuthoredView.pitchDegrees) / dt;
         const float velocityT = smoothFactor(tuning.lookVelocitySharpness, dt);
         state.lookYawVelocity = lerp(state.lookYawVelocity, targetYawVelocity, velocityT);
         state.lookPitchVelocity = lerp(state.lookPitchVelocity, targetPitchVelocity, velocityT);
@@ -236,10 +236,7 @@ CameraRigFrame updateCameraRig(
         state.lookYawVelocity,
         state.lookPitchVelocity,
         state.landingKick);
-    const auto targetPosition =
-        input.playerPosition +
-        novacore::math::Vec3{0.0F, targetEyeHeight(input, tuning), 0.0F} +
-        targetBob;
+    const auto targetPosition = gameplayEyePosition(input.playerPosition, input.movementMode, input.crouchHeld, tuning) + targetBob;
     const auto targetView = targetVisualView(input, tuning, targetBob);
     const float desiredFov = targetFov(input, tuning, speed01);
     const float desiredRoll = targetRoll(input, tuning);
@@ -261,15 +258,20 @@ CameraRigFrame updateCameraRig(
         state.position = lerpVec3(state.position, targetPosition, positionT);
         state.headBobOffset = lerpVec3(state.headBobOffset, targetBob, positionT);
         state.weaponSwayOffset = lerpVec3(state.weaponSwayOffset, targetSway, positionT);
-        state.view.yawDegrees = wrapDegrees(
-            state.view.yawDegrees +
-            shortestAngleDelta(state.view.yawDegrees, targetView.yawDegrees) * viewT);
-        state.view.pitchDegrees = lerp(state.view.pitchDegrees, targetView.pitchDegrees, viewT);
+        // Apply look on this tick. Only the added recoil and movement offsets ease.
+        const float previousYawOffset = shortestAngleDelta(state.previousAuthoredView.yawDegrees, state.view.yawDegrees);
+        const float targetYawOffset = shortestAngleDelta(input.authoredView.yawDegrees, targetView.yawDegrees);
+        state.view.yawDegrees = wrapDegrees(input.authoredView.yawDegrees + lerp(previousYawOffset, targetYawOffset, viewT));
+        const float pitchOffset = lerp(state.view.pitchDegrees - state.previousAuthoredView.pitchDegrees,
+            targetView.pitchDegrees - input.authoredView.pitchDegrees, viewT);
+        state.view.pitchDegrees = std::clamp(input.authoredView.pitchDegrees + pitchOffset,
+            -tuning.maxVisualPitchDegrees, tuning.maxVisualPitchDegrees);
         state.rollDegrees = lerp(state.rollDegrees, desiredRoll, viewT);
         state.verticalFovDegrees = lerp(state.verticalFovDegrees, desiredFov, fovT);
         state.speed01 = lerp(state.speed01, speed01, positionT);
         state.adsAlpha = lerp(state.adsAlpha, input.weapon.adsAlpha, fovT);
     }
+    state.previousAuthoredView = input.authoredView;
     state.previousMovementMode = input.movementMode;
 
     return CameraRigFrame{

@@ -11,11 +11,19 @@
 
 namespace nemisis::dev {
 
+inline constexpr float kPlayerCapsuleRadius = 0.42F;
+inline constexpr float kPlayerStandingHeight = 1.80F;
+inline constexpr float kPlayerCrouchHeight = 1.33F;
+
+[[nodiscard]] float playerCapsuleHeight(float crouchFraction);
+[[nodiscard]] bool canStandFromCrouch(const novacore::physics::PhysicsWorld& physicsWorld,
+    novacore::math::Vec3 feet, float crouchFraction);
+
 struct GreyboxCollisionQuery final {
     novacore::math::Vec3 position{};
     novacore::math::Vec3 previousPosition{};
-    float radius = 0.42F;
-    float height = 1.80F;
+    float radius = kPlayerCapsuleRadius;
+    float height = kPlayerStandingHeight;
     float maxStepHeight = 0.42F;
     float snapDownDistance = 0.35F;
     float walkableSlopeCosine = 0.68F;
@@ -36,6 +44,7 @@ enum class GreyboxContactRole {
     Wall,
     Bounds,
     Sweep,
+    Ceiling,
 };
 
 struct GreyboxContact final {
@@ -73,6 +82,7 @@ struct GreyboxCollisionResult final {
     bool mantleCandidate = false;
     bool swept = false;
     bool sweepHit = false;
+    bool ceilingHit = false;
     std::string lastPrimitiveId;
     std::string groundPrimitiveId;
     std::string wallPrimitiveId;
@@ -103,6 +113,8 @@ struct GreyboxCollisionResult final {
     const GreyboxWorld& world,
     const novacore::physics::PhysicsWorld& physicsWorld,
     GreyboxCollisionQuery query);
+[[nodiscard]] novacore::math::Vec3 clipGreyboxVelocity(
+    novacore::math::Vec3 velocity, const GreyboxCollisionResult& collision, bool wallRunning);
 [[nodiscard]] const char* greyboxContactRoleName(GreyboxContactRole role);
 
 } // namespace nemisis::dev

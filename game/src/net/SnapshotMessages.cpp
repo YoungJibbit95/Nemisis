@@ -3,6 +3,7 @@
 #include "novacore/net/BitStream.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 #include <string>
 #include <string_view>
@@ -16,6 +17,10 @@ constexpr std::uint32_t kSnapshotMagic = 0x4E534E50U;
 constexpr std::uint16_t kProtocolVersion = 1;
 constexpr std::size_t kMaxWeaponIdBytes = 96;
 
+[[nodiscard]] bool readFinite(novacore::net::PacketReader& reader, float& value) {
+    return reader.readFloat(value) && std::isfinite(value);
+}
+
 void writeVec3(novacore::net::PacketWriter& writer, novacore::math::Vec3 value) {
     writer.writeFloat(value.x);
     writer.writeFloat(value.y);
@@ -23,9 +28,9 @@ void writeVec3(novacore::net::PacketWriter& writer, novacore::math::Vec3 value) 
 }
 
 [[nodiscard]] bool readVec3(novacore::net::PacketReader& reader, novacore::math::Vec3& value) {
-    return reader.readFloat(value.x) &&
-        reader.readFloat(value.y) &&
-        reader.readFloat(value.z);
+    return readFinite(reader, value.x) &&
+        readFinite(reader, value.y) &&
+        readFinite(reader, value.z);
 }
 
 void writeString(novacore::net::PacketWriter& writer, const std::string& value) {
@@ -79,13 +84,13 @@ void writeMovement(novacore::net::PacketWriter& writer, const movement::PlayerMo
         !reader.readU8(mode) ||
         !reader.readU8(hasDoubleJump) ||
         !reader.readU8(hasWallRunContact) ||
-        !reader.readFloat(movement.lastHorizontalSpeed) ||
-        !reader.readFloat(movement.inputMagnitude) ||
-        !reader.readFloat(movement.coyoteTimeRemaining) ||
-        !reader.readFloat(movement.jumpBufferRemaining) ||
-        !reader.readFloat(movement.wallRunTimeRemaining) ||
-        !reader.readFloat(movement.mantleTimeRemaining) ||
-        !reader.readFloat(movement.mantleProgressSeconds)) {
+        !readFinite(reader, movement.lastHorizontalSpeed) ||
+        !readFinite(reader, movement.inputMagnitude) ||
+        !readFinite(reader, movement.coyoteTimeRemaining) ||
+        !readFinite(reader, movement.jumpBufferRemaining) ||
+        !readFinite(reader, movement.wallRunTimeRemaining) ||
+        !readFinite(reader, movement.mantleTimeRemaining) ||
+        !readFinite(reader, movement.mantleProgressSeconds)) {
         return false;
     }
     if (mode > static_cast<std::uint8_t>(movement::MovementMode::Mantling)) {
@@ -120,13 +125,13 @@ void writeWeapon(novacore::net::PacketWriter& writer, const weapons::WeaponRunti
         !reader.readU16(weapon.ammoInMagazine) ||
         !reader.readU32(weapon.shotIndex) ||
         !reader.readU32(weapon.burstShotCount) ||
-        !reader.readFloat(weapon.fireCooldownRemaining) ||
-        !reader.readFloat(weapon.reloadTimeRemaining) ||
-        !reader.readFloat(weapon.adsAlpha) ||
-        !reader.readFloat(weapon.recoilPitchOffsetDegrees) ||
-        !reader.readFloat(weapon.recoilYawOffsetDegrees) ||
-        !reader.readFloat(weapon.timeSinceLastShotSeconds) ||
-        !reader.readFloat(weapon.reloadProgress) ||
+        !readFinite(reader, weapon.fireCooldownRemaining) ||
+        !readFinite(reader, weapon.reloadTimeRemaining) ||
+        !readFinite(reader, weapon.adsAlpha) ||
+        !readFinite(reader, weapon.recoilPitchOffsetDegrees) ||
+        !readFinite(reader, weapon.recoilYawOffsetDegrees) ||
+        !readFinite(reader, weapon.timeSinceLastShotSeconds) ||
+        !readFinite(reader, weapon.reloadProgress) ||
         !reader.readU8(reloading)) {
         return false;
     }
@@ -177,8 +182,8 @@ void writePlayerSnapshot(novacore::net::PacketWriter& writer, const PlayerSnapsh
         return false;
     }
     if (snapshot.state.hasView &&
-        (!reader.readFloat(snapshot.state.view.yawDegrees) ||
-            !reader.readFloat(snapshot.state.view.pitchDegrees))) {
+        (!readFinite(reader, snapshot.state.view.yawDegrees) ||
+            !readFinite(reader, snapshot.state.view.pitchDegrees))) {
         return false;
     }
     if (snapshot.state.hasWeapon && !readWeapon(reader, snapshot.state.weapon)) {
@@ -188,6 +193,13 @@ void writePlayerSnapshot(novacore::net::PacketWriter& writer, const PlayerSnapsh
 }
 
 } // namespace
+
+void writeWeaponRuntime(novacore::net::PacketWriter& writer, const weapons::WeaponRuntimeState& state) {
+    writeWeapon(writer, state);
+}
+bool readWeaponRuntime(novacore::net::PacketReader& reader, weapons::WeaponRuntimeState& state) {
+    return readWeapon(reader, state);
+}
 
 PlayerSnapshotState makePlayerSnapshotState(
     player::PlayerId playerId,
@@ -235,7 +247,7 @@ std::optional<SnapshotPacket> deserializeSnapshotPacket(const std::vector<std::u
         magic != kSnapshotMagic ||
         version != kProtocolVersion ||
         !reader.readU64(packet.serverTick) ||
-        !reader.readU16(count)) {
+        !reader.readU16(count) || count > reader.remaining() / 31) {
         return std::nullopt;
     }
 

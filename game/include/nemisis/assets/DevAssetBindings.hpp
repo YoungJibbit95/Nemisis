@@ -15,7 +15,7 @@
 
 namespace nemisis::assets {
 
-using RequiredDevAssetIds = std::array<std::string_view, 36>;
+using RequiredDevAssetIds = std::array<std::string_view, 39>;
 
 struct DevAssetBindingSummary final {
     std::size_t requiredAssetCount = 0;
@@ -37,6 +37,9 @@ struct DevAssetBindingSummary final {
     std::size_t missingAssetCount = 0;
     std::vector<std::string> errors;
 
+    // Accumulate disjoint asset batches, retaining every diagnostic.
+    void include(const DevAssetBindingSummary& batch);
+
     [[nodiscard]] bool ready() const {
         return missingAssetCount == 0 &&
             errors.empty() &&
@@ -48,6 +51,7 @@ struct DevAssetBindingSummary final {
 };
 
 [[nodiscard]] const RequiredDevAssetIds& requiredDevSandboxRenderableAssetIds();
+[[nodiscard]] std::span<const std::string_view> outerFacilityRenderableAssetIds();
 
 class DevAssetBindings final {
 public:
@@ -62,6 +66,12 @@ public:
         std::span<const std::string_view> assetIds,
         const std::filesystem::path& runtimeRoot,
         bool append = false);
+
+    // Retryable import: already bound IDs are left untouched and not counted.
+    [[nodiscard]] DevAssetBindingSummary bindMissingAssets(
+        const GameAssetCatalog& catalog,
+        std::span<const std::string_view> assetIds,
+        const std::filesystem::path& runtimeRoot);
 
     [[nodiscard]] const novacore::render::MeshCatalog& meshCatalog() const;
     [[nodiscard]] std::size_t meshCount() const;

@@ -22,6 +22,7 @@ enum class GameScreen {
     MainMenu,
     Loading,
     DevRange,
+    OuterFacility,
     TeamDeathmatch,
     Control,
 };
@@ -50,8 +51,13 @@ struct MenuPointerState final {
     bool primaryReleased = false;
 };
 
+void fitInterfaceCanvas(novacore::render::RenderFrameInfo& frame,
+    const novacore::render::RenderBackendFrameStats& backend, std::size_t firstRect,
+    std::size_t firstLine, std::size_t firstText, float textScale = 1.0F);
+
 class GameMenu final {
 public:
+    explicit GameMenu(bool showDebugOverlay = true) : debugOverlayEnabled_(showDebugOverlay) {}
     void update(const novacore::platform::InputActionMap& actions);
     void update(
         const novacore::platform::InputActionMap& actions,
@@ -64,10 +70,12 @@ public:
         weapons::WeaponLoadout& loadout,
         const weapons::AttachmentRegistry& attachments,
         MenuPointerState pointer);
-    void updateFrame(double deltaSeconds);
+    void updateFrame(double deltaSeconds, bool playableResourcesReady = true);
     void showMainMenu(MenuTab tab = MenuTab::Play);
     void showLoadingScreen(GameScreen target, float progress = 0.0F);
     void showDevRange();
+    bool consumePrivateMatchRequest();
+    void showOuterFacility();
     void showTeamDeathmatch();
     void showControl();
     void appendRenderCommands(
@@ -85,11 +93,15 @@ public:
         const weapons::WeaponLoadout& loadout,
         const weapons::AttachmentRegistry& attachments,
         const weapons::AttachmentBuildSummary& attachmentSummary,
-        const player::AccountStats& accountStats) const;
+        const player::AccountStats& accountStats,
+        float physicalSightWeight = 0.0F) const;
 
     [[nodiscard]] GameScreen screen() const;
     [[nodiscard]] MenuTab tab() const;
     [[nodiscard]] bool gameplayActive() const;
+    [[nodiscard]] bool quitRequested() const { return quitRequested_; }
+    [[nodiscard]] bool loadingPlayableMap() const;
+    [[nodiscard]] GameScreen loadingTarget() const { return loadingTarget_; }
     [[nodiscard]] bool debugOverlayEnabled() const;
     [[nodiscard]] DebugPage debugPage() const;
     [[nodiscard]] float loadingProgress() const;
@@ -129,6 +141,9 @@ private:
     DebugPage debugPage_ = DebugPage::Gameplay;
     std::size_t selectedIndex_ = 0;
     float loadingProgress_ = 0.0F;
+    MenuPointerState previousPointer_{};
+    bool quitRequested_ = false;
+    bool privateMatchRequested_ = false;
     bool debugOverlayEnabled_ = true;
 };
 

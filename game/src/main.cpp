@@ -2,6 +2,8 @@
 
 #include "novacore/core/Application.hpp"
 
+#include <charconv>
+#include <cstdint>
 #include <string_view>
 #include <iostream>
 #include <exception>
@@ -13,10 +15,29 @@ int main(int argc, char** argv) {
     desc.maxFrames = 0;
 
     nemisis::game::GameAppOptions gameOptions{};
+    gameOptions.fullGame = argc == 1;
+    std::uint32_t measuredFrames = 60;
     bool smokeTest = false;
+    if (const auto result = nemisis::net::runMatchCommandLine(argc, argv, false,
+            gameOptions.matchHost, gameOptions.localMatchPort)) return *result;
+    if (gameOptions.localMatchPort) {
+        gameOptions.fullGame = true;
+        gameOptions.startInFacility = true;
+    }
     for (int i = 1; i < argc; ++i) {
         const std::string_view argument(argv[i]);
-        if (argument == "--ui-showcase") {
+        if (argument == "--private-match-smoke") {
+            gameOptions.fullGame = true;
+            gameOptions.runPrivateMatchSmoke = true;
+            smokeTest = true;
+        } else if (argument == "--game-deploy-smoke-test") {
+            gameOptions.fullGame = true;
+            gameOptions.runDeploymentSmoke = true;
+            smokeTest = true;
+        } else if (argument == "--game" || argument == "--outer-facility") {
+            gameOptions.fullGame = true;
+            if (argument == "--outer-facility") { gameOptions.startInFacility = true; }
+        } else if (argument == "--ui-showcase") {
 #if NEMISIS_HAS_RMLUI
             gameOptions.uiShowcase = true;
             gameOptions.autoEnterDevRange = false;
@@ -31,6 +52,17 @@ int main(int argc, char** argv) {
             else if (size == "1920x1080") { gameOptions.uiPreviewWidth = 1920; gameOptions.uiPreviewHeight = 1080; }
             else if (size == "2560x1440") { gameOptions.uiPreviewWidth = 2560; gameOptions.uiPreviewHeight = 1440; }
             else { std::cerr << "UI size must be 1280x720, 1920x1080 or 2560x1440\n"; return 2; }
+        } else if (argument == "--profile-range" || argument.starts_with("--profile-range=")) {
+            if (argument.starts_with("--profile-range=")) {
+                const auto count = argument.substr(std::string_view("--profile-range=").size());
+                const auto end = count.data() + count.size();
+                const auto parsed = std::from_chars(count.data(), end, measuredFrames);
+                if (parsed.ec != std::errc{} || parsed.ptr != end || measuredFrames == 0) {
+                    std::cerr << "--profile-range expects a positive frame count\n";
+                    return 2;
+                }
+            }
+            gameOptions.profileRange = true;
         } else if (argument == "--physics-props") {
             gameOptions.physicsProps = true;
         } else if (argument == "--directional-shadows") {
@@ -110,6 +142,15 @@ int main(int argc, char** argv) {
         }
     }
 
+    if (gameOptions.fullGame) {
+        gameOptions.materialTextures = true;
+        gameOptions.physicsProps = !gameOptions.localMatchPort && novacore::physics::RigidBodyWorld::backendAvailable();
+#if defined(NEMISIS_PROJECT_FPS_PREVIEW) && defined(NEMISIS_ENABLE_HAND_IK)
+        gameOptions.projectRifleReady = true;
+        gameOptions.projectFPSPreview = true;
+        gameOptions.firstPersonHandIK = true;
+#endif
+    }
     if (gameOptions.uiShowcase) {
         if (gameOptions.runMenuFlowSmoke || gameOptions.projectFPSPreview || gameOptions.firstPersonHandIK || gameOptions.physicsProps || gameOptions.directionalShadows || gameOptions.materialTextures) {
             std::cerr << "UI showcase cannot be combined with other preview profiles\n"; return 2;
@@ -134,13 +175,28 @@ int main(int argc, char** argv) {
         gameOptions.lockDevRange = true;
     }
     if (smokeTest) {
-        desc.maxFrames = gameOptions.physicsProps ? 120 : gameOptions.runMenuFlowSmoke ? 44 :
+        desc.maxFrames = (gameOptions.runDeploymentSmoke || gameOptions.runPrivateMatchSmoke) ? 0 : gameOptions.runMenuFlowSmoke ? 58 : gameOptions.physicsProps ? 120 :
             (gameOptions.firstPersonHandIK || gameOptions.projectFPSPreview) ? 60 : 5;
+    }
+    if (gameOptions.profileRange) {
+        if (gameOptions.uiShowcase || smokeTest || gameOptions.localMatchPort) {
+            std::cerr << "--profile-range requires a dedicated Dev Range run\n";
+            return 2;
+        }
+        gameOptions.requireVulkanRenderer = true;
+        gameOptions.preferVulkanRenderer = true;
+        gameOptions.autoEnterDevRange = true;
+        gameOptions.lockDevRange = true;
+        desc.maxFrames = nemisis::game::kRangeProfileWarmupFrames + measuredFrames;
     }
 
     if (gameOptions.projectFPSLookDown && !gameOptions.projectFPSPreview) {
         std::cerr << "--project-fps-look-down requires --project-fps-preview\n";
         return 2;
+    }
+    if (gameOptions.fullGame) {
+        gameOptions.autoEnterDevRange = gameOptions.profileRange && !gameOptions.startInFacility;
+        gameOptions.lockDevRange = false;
     }
     if (gameOptions.projectFPSPreview && gameOptions.firstPersonHandIK && !gameOptions.projectRifleReady) {
         std::cerr << "Project hand IK is blocked: five weighted deform segments, nonuniform animated scales "
