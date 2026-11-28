@@ -68,3 +68,33 @@ checks the frame count, geometry count and extent while the process is alive.
 It also waits for a flushed successful child-process exit report and verifies
 the game executable hash remains unchanged throughout the original/modified
 map tests. The existing readiness deadline was not increased.
+
+
+## Windows one-command launcher
+
+From the Nemisis checkout:
+
+    powershell -NoProfile -File .\tools\Launch-WorldEditor.ps1
+
+The launcher checks the two identical engine pins and verifies their
+reachability from the fetched remote main. It creates a separate detached
+engine worktree under build/world-editor-local and an isolated incremental
+Debug build for both executables. It never resets, stashes, or overwrites your
+existing release. It launches from the project root so the asset catalog and
+cooked data resolve. It opens the example map without authorizing overwrite.
+
+While Phase A remains an unmerged candidate, explicitly opt in:
+
+    powershell -NoProfile -File .\tools\Launch-WorldEditor.ps1 -CandidateRef editor/phase-a-validation-assembly
+
+Use -EngineRepository to locate a different original engine repository,
+-EngineCheckout to use an already clean exact pinned engine worktree,
+-Map to choose another JSON file, -SaveAs only to authorize a destination,
+-ValidateOnly for pin/worktree/catalog checks without building, or -BuildOnly
+to build without opening a window. The existing Visual Studio 2022, SDL3,
+Vulkan SDK and glslc requirements remain. The script does not install tools.
+
+Expected executables under build/world-editor-local/<game SHA>-<engine SHA>:
+Debug/nemisis_game.exe and Novacore-Engine/Debug/novacore_world_editor.exe.
+The launcher reports exact paths only after both are present. The Windows
+graphical launch remains a local acceptance gate.
