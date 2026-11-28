@@ -88,7 +88,7 @@ if ($EngineCheckout) {
 } else {
     if (-not $EngineRepository) { $EngineRepository = "../Novacore-Engine" }
     $engineRepo = (Resolve-Path -LiteralPath (Resolve-ProjectPath $gameRoot $EngineRepository)).Path
-    $engineRoot = Join-Path $localRoot "engine-$pin"
+    $engineRoot = Join-Path $localRoot ("e" + $pin.Substring(0,12))
 }
 
 # The release path accepts only a pin reachable from the actual remote main.
@@ -116,6 +116,9 @@ if (-not $EngineCheckout) {
     Assert-PinnedCheckout $engineRoot $pin
 }
 
+if (Read-Git $gameRoot @("status", "--porcelain", "--untracked-files=no")) {
+    Write-Warning "Nemisis has tracked local changes. This local build includes those changes; its HEAD alone is not a clean-release identity."
+}
 Write-Host "Nemisis: $gameRevision"
 Write-Host "NovaCore: $pin (reachable from $remoteRef)"
 Write-Host "Engine checkout: $engineRoot"
@@ -123,7 +126,22 @@ Write-Host "Map: $mapPath"
 if ($ValidateOnly) { return }
 
 $null = Get-Command cmake -ErrorAction Stop
-$buildRoot = Join-Path $localRoot "$gameRevision-$pin"
+# Short directory keys avoid unnecessary Windows path-length pressure;
+# the identity file prevents accidental reuse even if short keys collide.
+$buildRoot = Join-Path $localRoot ("g" + $gameRevision.Substring(0,12) + "-e" + $pin.Substring(0,12))
+$identityPath = Join-Path $buildRoot "world-editor-revisions.txt"
+if (Test-Path -LiteralPath $buildRoot) {
+    if (-not (Test-Path -LiteralPath $identityPath -PathType Leaf)) {
+        throw "Existing isolated build directory has no verified revision identity; refusing reuse."
+    }
+    $identity = @(Get-Content -LiteralPath $identityPath)
+    if ($identity.Count -ne 2 -or $identity[0] -cne $gameRevision -or $identity[1] -cne $pin) {
+        throw "Existing isolated build directory belongs to different revisions."
+    }
+} else {
+    $null = New-Item -ItemType Directory -Path $buildRoot -Force
+    Set-Content -LiteralPath $identityPath -Value @($gameRevision,$pin) -Encoding ascii
+}
 # This independent CMake build never replaces existing playable Release output.
 Invoke-Checked cmake @("-S", $gameRoot, "-B", $buildRoot, "-G", "Visual Studio 17 2022", "-A", "x64",
     "-DNOVACORE_ENGINE_ROOT=$engineRoot", "-DNOVACORE_ENABLE_SDL3=ON", "-DNOVACORE_ENABLE_VULKAN=ON",

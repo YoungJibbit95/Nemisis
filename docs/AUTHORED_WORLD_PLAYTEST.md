@@ -1,6 +1,6 @@
 # Authored world playtest candidate (Phase A)
 
-This validation-only candidate pins both engine files to 09116ff0135de4fb88f48f552c6a6a2caa140f67,
+This validation-only candidate pins both engine files to d73a657efc814cf85035638e846918be5e9b422d,
 an isolated public assembly of NovaCore #40 and #42 (both parent histories).
 This is not an integration into main and must not be merged before the individual
 engine PRs are independently reviewed, integrated, and the actual main-reachable
@@ -70,6 +70,16 @@ the game executable hash remains unchanged throughout the original/modified
 map tests. The existing readiness deadline was not increased.
 
 
+The next run (46167732560) confirmed the readiness signal, editor modification
+of door-left X from -3 to -2.75, saved JSON, actual game launch and exit code
+zero. Its remaining failure was an X11 BadWindow after xdotool windowclose
+destroyed the client window without a window manager. The harness now sends
+the advertised WM_DELETE_WINDOW ClientMessage and requires zero editor exit
+status plus renderer cleanup. The message layout/protocol was exercised with a
+real X11 client under local Xvfb before publication. This does not alter the
+editor's graphical acceptance criteria or disable any test.
+
+
 ## Windows one-command launcher
 
 From the Nemisis checkout:
@@ -94,7 +104,14 @@ Use -EngineRepository to locate a different original engine repository,
 to build without opening a window. The existing Visual Studio 2022, SDL3,
 Vulkan SDK and glslc requirements remain. The script does not install tools.
 
-Expected executables under build/world-editor-local/<game SHA>-<engine SHA>:
+Expected executables under build/world-editor-local/g<12-char game SHA>-e<12-char engine SHA>:
 Debug/nemisis_game.exe and Novacore-Engine/Debug/novacore_world_editor.exe.
 The launcher reports exact paths only after both are present. The Windows
 graphical launch remains a local acceptance gate.
+
+
+The full revision IDs are recorded in the isolated build directory before
+CMake runs. The Windows CI launcher contract uses a disposable local Git
+fixture to test exact pin validation, unmerged-revision rejection, explicit
+candidate opt-in, dirty checkout rejection and preservation of the original
+checkout. It does not build or exercise real graphical hardware.

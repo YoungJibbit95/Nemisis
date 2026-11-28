@@ -4,6 +4,7 @@ This does not stand in for hardware or human visual acceptance.
 """
 import argparse
 import copy
+import ctypes as C
 import hashlib
 import json
 import pathlib
@@ -30,6 +31,68 @@ def window(name):
 
 def xdo(*args):
     subprocess.run(["xdotool", *map(str, args)], check=True, timeout=8)
+
+
+# Xvfb has no window manager. xdotool windowclose destroys the X window
+# directly, leaving SDL/Vulkan with a stale native window. Send the same
+# WM_DELETE_WINDOW request a real window manager would send instead.
+class ClientData(C.Union):
+    _fields_ = [("bytes", C.c_char * 20), ("shorts", C.c_short * 10), ("longs", C.c_long * 5)]
+
+
+class ClientMessage(C.Structure):
+    _fields_ = [("type", C.c_int), ("serial", C.c_ulong), ("send_event", C.c_int),
+                ("display", C.c_void_p), ("window", C.c_ulong), ("message_type", C.c_ulong),
+                ("format", C.c_int), ("data", ClientData)]
+
+
+class XEvent(C.Union):
+    _fields_ = [("client", ClientMessage), ("pad", C.c_long * 24)]
+
+
+def request_close(wid):
+    x = C.CDLL("libX11.so.6")
+    x.XOpenDisplay.argtypes = [C.c_char_p]
+    x.XOpenDisplay.restype = C.c_void_p
+    x.XInternAtom.argtypes = [C.c_void_p, C.c_char_p, C.c_int]
+    x.XInternAtom.restype = C.c_ulong
+    x.XGetWMProtocols.argtypes = [C.c_void_p, C.c_ulong, C.POINTER(C.POINTER(C.c_ulong)), C.POINTER(C.c_int)]
+    x.XGetWMProtocols.restype = C.c_int
+    x.XFree.argtypes = [C.c_void_p]
+    x.XSendEvent.argtypes = [C.c_void_p, C.c_ulong, C.c_int, C.c_long, C.POINTER(XEvent)]
+    x.XSendEvent.restype = C.c_int
+    x.XSync.argtypes = [C.c_void_p, C.c_int]
+    x.XCloseDisplay.argtypes = [C.c_void_p]
+    display = x.XOpenDisplay(None)
+    if not display:
+        raise RuntimeError("Cannot open X11 test display")
+    try:
+        target = int(wid)
+        protocols = x.XInternAtom(display, b"WM_PROTOCOLS", 1)
+        delete = x.XInternAtom(display, b"WM_DELETE_WINDOW", 1)
+        supported = C.POINTER(C.c_ulong)()
+        count = C.c_int()
+        if not protocols or not delete or not x.XGetWMProtocols(display, target, C.byref(supported), C.byref(count)):
+            raise RuntimeError("Editor does not advertise WM_DELETE_WINDOW")
+        try:
+            if delete not in [supported[i] for i in range(count.value)]:
+                raise RuntimeError("Editor does not advertise WM_DELETE_WINDOW")
+        finally:
+            x.XFree(supported)
+        event = XEvent()
+        event.client.type = 33  # X11 ClientMessage
+        event.client.send_event = 1
+        event.client.display = display
+        event.client.window = target
+        event.client.message_type = protocols
+        event.client.format = 32
+        event.client.data.longs[0] = delete
+        event.client.data.longs[1] = 0  # CurrentTime
+        if not x.XSendEvent(display, target, 0, 0, C.byref(event)):
+            raise RuntimeError("Could not send WM_DELETE_WINDOW")
+        x.XSync(display, 0)
+    finally:
+        x.XCloseDisplay(display)
 
 
 def click(wid, x, y):
@@ -96,6 +159,7 @@ def run_editor(editor, game, source, output, diagnostics, edit, launch):
                 assert expected["objects"][1]["id"] == "door-left"
                 expected["objects"][1]["position"][0] += 0.25
             equivalent(read(output), expected)
+            print(f"Saved and verified {output.name} ({len(expected['objects'])} stable objects)", flush=True)
             if launch:
                 click(wid, 885, 49)       # actual Play Map launcher
                 def find_game():
@@ -121,8 +185,9 @@ def run_editor(editor, game, source, output, diagnostics, edit, launch):
                 print(wait_for(child_reaped), flush=True)
                 assert "Authored world loaded: editor-room spawn=spawn" in diagnostics.read_text(errors="replace")
                 xdo("windowfocus", "--sync", wid)
-            xdo("windowclose", wid)
-            assert proc.wait(timeout=20) == 0
+            request_close(wid)
+            assert proc.wait(timeout=20) == 0, "Editor did not shut down cleanly"
+            assert "Renderer shutdown" in diagnostics.read_text(errors="replace"), "Renderer cleanup missing"
         except Exception:
             print(f"Editor diagnostic before teardown ({diagnostics}):", flush=True)
             print(diagnostics.read_text(errors="replace")[-12000:], flush=True)
@@ -162,7 +227,7 @@ def main():
         log_text = (out / (label + "-game-vulkan.log")).read_text(errors="replace")
         assert "Authored Vulkan smoke passed: world=editor-room spawn=spawn" in log_text
     for log in out.glob("*.log"):
-        assert not re.search(r"Validation Error|ERROR / SPEC|VUID-", log.read_text(errors="replace"), re.I), log
+        assert not re.search(r"Validation Error|ERROR / SPEC|VUID-|X Error of failed request", log.read_text(errors="replace"), re.I), log
     assert hashlib.sha256(game.read_bytes()).hexdigest() == game_digest, "Game executable changed during round-trip"
     print("Editor input/save/reopen/Play Map + unchanged game executable original/modified Vulkan smoke passed")
 
